@@ -9,7 +9,7 @@ import { PressMarquee } from "@/components/sections/PressMarquee";
 import { Manifesto } from "@/components/sections/Manifesto";
 import { CommunityGrid } from "@/components/sections/CommunityGrid";
 import { CTABand } from "@/components/sections/CTABand";
-import { JournalPreview } from "@/components/sections/JournalPreview";
+import { Testimonials } from "@/components/sections/Testimonials";
 import { Footer } from "@/components/sections/Footer";
 
 export default function Home() {
@@ -27,7 +27,7 @@ export default function Home() {
         <Manifesto />
         <CommunityGrid />
         <CTABand />
-        <JournalPreview />
+        <Testimonials />
       </main>
       <Footer />
     </>

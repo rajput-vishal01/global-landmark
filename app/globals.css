@@ -40,6 +40,9 @@
 body {
   background: var(--color-cream);
   color: var(--color-ink);
+  /* Pinned/transformed sections must never cause sideways jiggle on
+     mobile; clip (not hidden) keeps position: sticky working. */
+  overflow-x: clip;
 }
 
 /* Lenis smooth scroll */
@@ -52,6 +55,28 @@ html.lenis body {
 }
 .lenis.lenis-stopped {
   overflow: hidden;
+}
+
+/* Loading rule sweep */
+@keyframes rule-sweep {
+  0% {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  50% {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  51% {
+    transform-origin: right;
+  }
+  100% {
+    transform: scaleX(0);
+    transform-origin: right;
+  }
+}
+.loading-rule {
+  animation: rule-sweep 1.6s cubic-bezier(0.77, 0, 0.175, 1) infinite;
 }
 
 /* Press marquee */

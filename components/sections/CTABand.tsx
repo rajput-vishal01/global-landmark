@@ -14,7 +14,7 @@ export function CTABand() {
         </p>
         <div data-reveal className="mt-3">
           <Magnetic strength={0.25}>
-            <Button href="/list-with-us" variant="corner" tone="dark">
+            <Button href="/contact" variant="corner" tone="dark">
               Request a Valuation
             </Button>
           </Magnetic>

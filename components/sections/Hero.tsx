@@ -106,7 +106,7 @@ export function Hero() {
 
         <span className="hero-rule absolute left-6 top-8 block h-px w-44 bg-gold md:left-14 md:top-12 md:w-60" />
 
-        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-8 px-6 pb-10 md:flex-row md:items-end md:justify-between md:px-14 md:pb-14">
+        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-5 px-5 pb-8 md:flex-row md:items-end md:justify-between md:gap-8 md:px-14 md:pb-14">
           <div className="max-w-3xl">
             <h1 className="hero-heading text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
               Landmark Living

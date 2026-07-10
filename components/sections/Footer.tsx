@@ -1,18 +1,4 @@
-import Link from "next/link";
-
 const CITIES = ["New York", "London", "Dubai", "Hong Kong"];
-
-const NAV = [
-  { label: "Home", href: "/" },
-  { label: "Exclusive Listings", href: "/properties" },
-  { label: "Sold Listings", href: "/properties?status=sold" },
-  { label: "Communities", href: "/communities" },
-  { label: "The Group", href: "/about" },
-  { label: "Our Agents", href: "/agents" },
-  { label: "Journal", href: "/journal" },
-  { label: "List With Us", href: "/list-with-us" },
-  { label: "Contact", href: "/contact" },
-];
 
 const SOCIALS = [
   {
@@ -132,28 +118,8 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="border-t border-border px-5 py-8 md:px-12">
-        <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-          Navigation
-        </span>
-        <nav className="mt-4 flex flex-wrap gap-y-3">
-          {NAV.map((link, i) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className={`text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold ${
-                i > 0 ? "border-l border-border pl-4" : ""
-              } ${i < NAV.length - 1 ? "pr-4" : ""}`}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
-
       {/* Disclaimer + legal */}
-      <div className="px-5 py-8 md:px-12">
+      <div className="border-t border-border px-5 py-8 md:px-12">
         <p className="max-w-4xl text-meta font-sans leading-relaxed text-ink-muted">
           All information provided herein is deemed reliable but is not
           guaranteed and should be independently verified. Listings are
@@ -169,9 +135,7 @@ export function Footer() {
 
       <div className="flex flex-col items-start gap-2 border-t border-border px-5 py-6 text-meta font-sans text-ink-muted md:flex-row md:items-center md:justify-between md:px-12">
         <span>&copy; {new Date().getFullYear()} Global Landmark Realty Group. All rights reserved.</span>
-        <Link href="/privacy" className="underline decoration-border underline-offset-4 transition-colors hover:decoration-gold">
-          Privacy Policy
-        </Link>
+        <span>New York · London · Dubai · Hong Kong</span>
       </div>
     </footer>
   );

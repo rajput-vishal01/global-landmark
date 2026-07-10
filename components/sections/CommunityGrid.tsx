@@ -41,7 +41,7 @@ export function CommunityGrid() {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 md:gap-5">
         {COMMUNITIES.map((community) => (
           <div
             key={community.name}

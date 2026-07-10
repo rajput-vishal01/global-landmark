@@ -74,7 +74,7 @@ export function FullscreenMenu({
               open: { transition: { staggerChildren: 0.05, delayChildren: 0.15 } },
               closed: {},
             }}
-            className="mx-auto grid max-w-6xl grid-cols-1 gap-x-16 gap-y-10 px-6 py-12 md:grid-cols-3 md:py-16"
+            className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-14 md:py-20"
           >
             {MENU_GROUPS.map((group) => (
               <motion.div
@@ -84,35 +84,18 @@ export function FullscreenMenu({
                   closed: { opacity: 0, y: 20 },
                 }}
                 transition={{ duration: 0.6, ease: EASE }}
-                className="flex flex-col gap-4"
+                className="flex items-baseline gap-6"
               >
-                <div className="flex items-baseline gap-3">
-                  <span className="text-eyebrow font-sans text-gold-highlight/70">
-                    {group.n}
-                  </span>
-                  <Link
-                    href={group.href}
-                    onClick={onClose}
-                    className="font-serif text-h4 uppercase tracking-[0.08em] text-cream transition-colors duration-300 hover:text-gold-highlight"
-                  >
-                    {group.label}
-                  </Link>
-                </div>
-                {group.items.length > 0 && (
-                  <ul className="flex flex-col gap-2.5 pl-8">
-                    {group.items.map((item) => (
-                      <li key={item.label}>
-                        <Link
-                          href={item.href}
-                          onClick={onClose}
-                          className="text-body font-sans text-cream/70 transition-colors duration-300 hover:text-cream"
-                        >
-                          {item.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <span className="text-eyebrow font-sans text-gold-highlight/70">
+                  {group.n}
+                </span>
+                <Link
+                  href={group.href}
+                  onClick={onClose}
+                  className="font-serif text-h2 uppercase tracking-[0.06em] text-cream transition-colors duration-300 hover:text-gold-highlight"
+                >
+                  {group.label}
+                </Link>
               </motion.div>
             ))}
           </motion.nav>
