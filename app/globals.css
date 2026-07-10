@@ -1,26 +1,76 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* next/font sets these at runtime on <html>; "inline" defers resolution to
+   the browser instead of trying to inline a build-time value. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme {
+  /* Palette — aaronkirman-style near-black/white/gold. Navy lives only in
+     the logo asset, not the UI. */
+  --color-ink: #141414;
+  --color-ink-muted: #646464;
+  --color-dark: #141414;
+  --color-dark-deep: #0f0f0f;
+  --color-gold: #c9992e;
+  --color-gold-highlight: #f5d98b;
+  --color-gold-deep: #8a5a22;
+  --color-cream: #faf9f6;
+  --color-border: #e2e0db;
+
+  /* Fluid type scale */
+  --text-eyebrow: clamp(0.6875rem, 0.6vw + 0.55rem, 0.875rem);
+  --text-eyebrow--line-height: 1.2;
+  --text-body: clamp(1rem, 0.2vw + 0.95rem, 1.125rem);
+  --text-body--line-height: 1.65;
+  --text-meta: clamp(0.8125rem, 0.15vw + 0.775rem, 0.875rem);
+  --text-meta--line-height: 1.4;
+  --text-h4: clamp(1.125rem, 0.6vw + 1rem, 1.5rem);
+  --text-h4--line-height: 1.3;
+  --text-h3: clamp(1.5rem, 1.4vw + 1.15rem, 2.25rem);
+  --text-h3--line-height: 1.2;
+  --text-h2: clamp(2rem, 2.6vw + 1.3rem, 3.5rem);
+  --text-h2--line-height: 1.15;
+  --text-h1: clamp(2.5rem, 4.6vw + 1.2rem, 5.5rem);
+  --text-h1--line-height: 1.08;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-ink);
+}
+
+/* Lenis smooth scroll */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Press marquee */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  animation: marquee 36s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
