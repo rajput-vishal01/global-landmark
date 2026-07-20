@@ -89,6 +89,21 @@ html.lenis body {
   animation: marquee 36s linear infinite;
 }
 
+/* Vertical testimonial loop — duplicated content makes -50% seamless */
+@keyframes marquee-y {
+  to {
+    transform: translateY(-50%);
+  }
+}
+.animate-marquee-y {
+  animation: marquee-y 48s linear infinite;
+}
+
+/* Activity ticker — slower than the press marquee, reads while moving */
+.animate-ticker {
+  animation: marquee 60s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

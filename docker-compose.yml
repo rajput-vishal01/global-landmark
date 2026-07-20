@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: global_landmark
+    ports:
+      - "5439:5432"
+    volumes:
+      # Named volume — data survives container recreation, so seeding is a
+      # one-time affair.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d global_landmark"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      # Overrides .env — inside the compose network the DB host is `db`.
+      DATABASE_URL: postgresql://postgres:dev@db:5432/global_landmark
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

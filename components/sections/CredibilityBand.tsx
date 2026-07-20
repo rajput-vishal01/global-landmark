@@ -1,4 +1,5 @@
 import { StatCounter } from "@/components/ui/StatCounter";
+import { CREDIBILITY } from "@/lib/data";
 
 /**
  * Centered "featured" stats moment: small underlined kicker, serif caps
@@ -13,32 +14,32 @@ export function CredibilityBand() {
           data-reveal
           className="text-eyebrow border-b border-ink/30 pb-1 font-sans font-medium uppercase tracking-[0.3em] text-ink-muted"
         >
-          Featured
+          {CREDIBILITY.eyebrow}
         </span>
         <h2
           data-reveal
           className="text-balance font-serif text-h2 uppercase tracking-[0.03em] text-ink"
         >
-          Over <span className="text-ink-muted/60">$2.4 Billion</span> in
-          landmark sales
+          {CREDIBILITY.headingPre}{" "}
+          <span className="text-ink-muted/60">{CREDIBILITY.headingHighlight}</span>{" "}
+          {CREDIBILITY.headingPost}
         </h2>
         <p data-reveal className="max-w-lg text-pretty text-body font-sans text-ink-muted">
-          Global Landmark represents considered residences across twelve
-          markets, trusted by the most private buyers and sellers in the
-          world.
+          {CREDIBILITY.sub}
         </p>
       </div>
 
       <div className="mx-auto mt-16 grid max-w-4xl grid-cols-1 gap-12 sm:grid-cols-3 md:mt-20">
-        <div data-reveal>
-          <StatCounter value={2.4} prefix="$" suffix="B+" label="Worth of Real Estate Sold" />
-        </div>
-        <div data-reveal>
-          <StatCounter value={340} suffix="+" label="Landmark Properties" />
-        </div>
-        <div data-reveal>
-          <StatCounter value={21} label="Years in Practice" />
-        </div>
+        {CREDIBILITY.stats.map((stat) => (
+          <div key={stat.label} data-reveal>
+            <StatCounter
+              value={stat.value}
+              prefix={stat.prefix}
+              suffix={stat.suffix}
+              label={stat.label}
+            />
+          </div>
+        ))}
       </div>
     </section>
   );

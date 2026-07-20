@@ -1,11 +1,4 @@
-const PRESS = [
-  "Forbes",
-  "The Wall Street Journal",
-  "Architectural Digest",
-  "Bloomberg",
-  "Robb Report",
-  "Mansion Global",
-];
+import { PRESS } from "@/lib/data";
 
 /**
  * Auto-scrolling press strip. Duplicated row for a seamless loop; the

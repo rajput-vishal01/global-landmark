@@ -1,31 +1,12 @@
 import Image from "next/image";
+import { PILLARS as PILLARS_DATA } from "@/lib/data";
 
-const PILLARS = [
-  {
-    title: ["Thoughtful", "Curation"],
-    body: "We represent few properties by intention. Every residence in the portfolio is walked, studied, and accepted on its architecture, its setting, and its provenance before it carries our name.",
-    image:
-      "https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=900&auto=format&fit=crop",
-    alt: "A composed interior with considered furnishing",
-    offset: "",
-  },
-  {
-    title: ["Quiet", "Discretion"],
-    body: "Landmark transactions move privately. Off-market introductions, unlisted showings, and negotiations handled by a single senior team from the first conversation to the closing table.",
-    image:
-      "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?q=80&w=900&auto=format&fit=crop",
-    alt: "A private residence interior in evening light",
-    offset: "md:mt-24",
-  },
-  {
-    title: ["Enduring", "Craft"],
-    body: "We hold presentation to the standard of the architecture itself. Photography, film, and print produced for each residence individually, never from a template.",
-    image:
-      "https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=900&auto=format&fit=crop",
-    alt: "Detailed architectural facade in warm light",
-    offset: "md:mt-12",
-  },
-];
+// Layout-only stagger per column; content comes from lib/data.
+const OFFSETS = ["", "md:mt-24", "md:mt-12"];
+const PILLARS = PILLARS_DATA.items.map((item, i) => ({
+  ...item,
+  offset: OFFSETS[i] ?? "",
+}));
 
 /**
  * Three-pillar editorial section: staggered grayscale imagery over serif
@@ -37,7 +18,7 @@ export function Pillars() {
       <div data-reveal className="mb-14 flex items-center gap-6 md:mb-20">
         <span aria-hidden className="hidden h-px flex-1 bg-border md:block" />
         <h2 className="text-center font-sans text-h4 font-light uppercase tracking-[0.18em] text-ink">
-          From First Viewing to Final Signature
+          {PILLARS_DATA.heading}
         </h2>
         <span aria-hidden className="hidden h-px flex-1 bg-border md:block" />
       </div>

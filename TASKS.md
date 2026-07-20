@@ -1,6 +1,17 @@
 # Tasks — Phased Build Roadmap
 
-Context-building phase (this run) produced all `.md` docs. Nothing below is started. Do not begin coding without explicit go-ahead per [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md).
+Context-building phase produced all `.md` docs; the build is now underway.
+Shipped since: landing page + subpages (earlier sessions), then the July 2026
+feature expansion — PostgreSQL/Drizzle data layer, admin panel behind the
+`admin.` subdomain (properties/projects/deals CRUD, Cloudinary galleries with
+cascade delete), live `/properties` + `[slug]` detail pages with category
+filter, portfolio search, hero Sale/Purchase/Lease/Invest rotator, Deal of
+the Week queue, scrolling testimonials, WhatsApp dock + inquiry pop-up,
+activity ticker, `/news` via newsdata.io. See [README.md](README.md).
+
+Outstanding from that expansion (client inputs): WhatsApp number, admin
+subdomain name + DNS, Cloudinary + newsdata.io keys, society naming
+conventions, ticker style sign-off (marquee vs. quieter toast).
 
 ## Phase 0 — Open decisions (resolve before or at start of Phase 1)
 

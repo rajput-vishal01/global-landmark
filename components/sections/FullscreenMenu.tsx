@@ -1,12 +1,14 @@
 "use client";
 
+import { EASE } from "@/lib/motion";
 import { useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { MENU_GROUPS } from "./nav-links";
-
-const EASE = [0.23, 1, 0.32, 1] as const;
+import { PropertySearch } from "@/components/PropertySearch";
+import { COMPANY } from "@/lib/data";
 
 /**
  * Fullscreen overlay menu — blurred page behind, centered wordmark,
@@ -52,9 +54,18 @@ export function FullscreenMenu({
             <Link
               href="/"
               onClick={onClose}
-              className="font-serif text-2xl uppercase tracking-[0.18em] text-cream md:text-3xl"
+              className="flex items-center gap-2.5 whitespace-nowrap font-serif uppercase text-cream sm:gap-3"
             >
-              Global Landmark
+              <Image
+                src="/logo.png"
+                alt=""
+                width={56}
+                height={56}
+                className="h-11 w-11 shrink-0 object-contain md:h-14 md:w-14"
+              />
+              <span className="text-lg tracking-[0.14em] sm:text-2xl sm:tracking-[0.18em] md:text-3xl">
+                {COMPANY.name}
+              </span>
             </Link>
             <button
               onClick={onClose}
@@ -66,6 +77,19 @@ export function FullscreenMenu({
               </svg>
             </button>
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.5, ease: EASE }}
+            className="mx-auto max-w-6xl px-6 pt-6"
+          >
+            <PropertySearch
+              tone="dark"
+              placeholder="Search residences, locations, projects"
+              className="max-w-md"
+            />
+          </motion.div>
 
           <motion.nav
             initial="closed"
@@ -111,9 +135,9 @@ export function FullscreenMenu({
                 Contact
               </span>
               <p className="text-meta font-sans text-cream/80">
-                inquiries@globallandmark.com
+                {COMPANY.email}
                 <br />
-                +1 (212) 555-0184
+                {COMPANY.phone} · {COMPANY.phoneAlt}
               </p>
             </div>
             <div className="flex flex-col gap-2">
@@ -121,9 +145,12 @@ export function FullscreenMenu({
                 Office
               </span>
               <p className="text-meta font-sans text-cream/80">
-                One Meridian Plaza, Suite 4400
-                <br />
-                New York, NY 10001
+                {COMPANY.addressLines.map((line, i) => (
+                  <span key={line}>
+                    {i > 0 && <br />}
+                    {line}
+                  </span>
+                ))}
               </p>
             </div>
             <div className="flex flex-col gap-2">
@@ -131,11 +158,14 @@ export function FullscreenMenu({
                 Follow
               </span>
               <p className="text-meta font-sans text-cream/80">
-                <a href="#" className="transition-colors hover:text-cream">Instagram</a>
-                {"  ·  "}
-                <a href="#" className="transition-colors hover:text-cream">LinkedIn</a>
-                {"  ·  "}
-                <a href="#" className="transition-colors hover:text-cream">Facebook</a>
+                {COMPANY.socials.map((social, i) => (
+                  <span key={social.label}>
+                    {i > 0 && "  ·  "}
+                    <a href={social.href} className="transition-colors hover:text-cream">
+                      {social.label}
+                    </a>
+                  </span>
+                ))}
               </p>
             </div>
           </motion.div>

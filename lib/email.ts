@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { COMPANY } from "@/lib/data";
 
 export type InquiryData = {
   name: string;
@@ -45,8 +46,8 @@ function shell(bodyHtml: string) {
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
         <tr>
           <td style="background-color:${BRAND.navy};padding:28px 32px;text-align:center;">
-            <span style="font-family:Georgia,'Times New Roman',serif;font-size:20px;letter-spacing:4px;color:${BRAND.cream};text-transform:uppercase;">Global Landmark</span><br/>
-            <span style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:4px;color:${BRAND.gold};text-transform:uppercase;">Realty Group</span>
+            <span style="font-family:Georgia,'Times New Roman',serif;font-size:20px;letter-spacing:4px;color:${BRAND.cream};text-transform:uppercase;">${COMPANY.name}</span><br/>
+            <span style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:4px;color:${BRAND.gold};text-transform:uppercase;">${COMPANY.tagline}</span>
           </td>
         </tr>
         <tr>
@@ -57,7 +58,7 @@ function shell(bodyHtml: string) {
         <tr>
           <td style="padding:20px 32px;text-align:center;">
             <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${BRAND.muted};">
-              Global Landmark Realty Group · One Meridian Plaza, Suite 4400, New York, NY 10001
+              ${COMPANY.legalName} · ${COMPANY.addressLines.join(", ")}
             </span>
           </td>
         </tr>
@@ -120,7 +121,7 @@ export function renderThanksEmail(data: InquiryData) {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows(data)}</table>
     <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${BRAND.ink};margin:24px 0 0;">
       With regards,<br/>
-      <span style="font-family:Georgia,'Times New Roman',serif;color:${BRAND.goldDeep};">Global Landmark Realty Group</span>
+      <span style="font-family:Georgia,'Times New Roman',serif;color:${BRAND.goldDeep};">${COMPANY.legalName}</span>
     </p>
   `);
 }
@@ -143,7 +144,7 @@ export async function sendContactEmails(data: InquiryData): Promise<boolean> {
   const admin = process.env.GMAIL_USER!;
 
   await transporter.sendMail({
-    from: `"Global Landmark Website" <${from}>`,
+    from: `"${COMPANY.name} Website" <${from}>`,
     to: admin,
     replyTo: data.email,
     subject: `New inquiry from ${data.name}`,
@@ -151,9 +152,9 @@ export async function sendContactEmails(data: InquiryData): Promise<boolean> {
   });
 
   await transporter.sendMail({
-    from: `"Global Landmark Realty Group" <${from}>`,
+    from: `"${COMPANY.legalName}" <${from}>`,
     to: data.email,
-    subject: "Thank you for reaching out to Global Landmark",
+    subject: `Thank you for reaching out to ${COMPANY.name}`,
     html: renderThanksEmail(data),
   });
 
