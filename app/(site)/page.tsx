@@ -27,15 +27,21 @@ export default async function Home() {
       <Header />
       <main>
         <Hero />
-        <CredibilityBand />
-        <FeaturedListings properties={featured} />
-        <DealOfWeek deal={activeDeal} />
-        <ArchReveal />
-        <Pillars />
-        <AboutSplit />
-        <PressMarquee />
-        <CTABand />
-        <Testimonials />
+        {/* Everything after the hero must stack ABOVE it: while pinned the
+            hero is position:fixed (a positioned element), which would
+            otherwise paint over the plain backgrounds of later sections —
+            visible as the hero bleeding through on short/narrow viewports. */}
+        <div className="relative z-10">
+          <CredibilityBand />
+          <FeaturedListings properties={featured} />
+          <DealOfWeek deal={activeDeal} />
+          <ArchReveal />
+          <Pillars />
+          <AboutSplit />
+          <PressMarquee />
+          <CTABand />
+          <Testimonials />
+        </div>
       </main>
       <Footer />
     </>
