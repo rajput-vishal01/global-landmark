@@ -46,7 +46,7 @@ fails — no orphaned images.
 - `components/sections/` — page sections (Hero, FeaturedListings, DealOfWeek, ...)
 - `components/ui/`, `components/admin/`, `components/gallery/` — primitives, admin forms, lightbox
 - `lib/db/` — Drizzle schema + fail-soft public queries; `lib/cloudinary.ts`, `lib/news.ts`, `lib/admin/`
-- `proxy.ts` — admin-subdomain rewrite + session gate
+- `proxy.ts` — /admin session gate
 
 Env vars are documented in [.env.example](.env.example). Empty Cloudinary
 keys fall back to paste-image-URL mode in the admin; an empty

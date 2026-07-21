@@ -28,22 +28,33 @@ export async function generateMetadata({
   const property = await getPropertyBySlug(slug);
   if (!property) return { title: "Not found", robots: { index: false } };
   const path = `/properties/${property.slug}`;
-  const title = `${property.title} — ${property.location}`;
+  // SERPs truncate around 60-65 chars; admin titles are unbounded.
+  const title = `${property.title} — ${property.location}`.slice(0, 65);
   const description =
     property.description.slice(0, 160) ||
     `${categoryLabel(property.category)} in ${property.location}.`;
+  const ogImages = property.images[0]
+    ? [{ url: optimizedImage(property.images[0].url, 1200) }]
+    : undefined;
+  // Both blocks set explicitly: a page that overrides openGraph but not
+  // twitter would inherit the homepage's generic Twitter card.
   return {
     title,
     description,
     alternates: { canonical: path },
     openGraph: {
       type: "website",
+      siteName: COMPANY.legalName,
       title,
       description,
       url: canonical(path),
-      images: property.images[0]
-        ? [{ url: optimizedImage(property.images[0].url, 1200) }]
-        : undefined,
+      images: ogImages,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ogImages,
     },
   };
 }
@@ -94,20 +105,30 @@ export default async function PropertyDetailPage({
   const amenities = property.amenities ?? [];
   const extras = property.extras ?? [];
 
+  // RealEstateListing wrapping the Residence — `broker` is not valid on a
+  // Place type, and the listing type is what property search features read.
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Residence",
+    "@type": "RealEstateListing",
     name: property.title,
     description: property.description,
     url: canonical(`/properties/${property.slug}`),
     image: property.images.map((img) => optimizedImage(img.url, 1200)),
-    address: {
-      "@type": "PostalAddress",
-      addressLocality: property.location,
-      addressCountry: "IN",
+    provider: {
+      "@type": "RealEstateAgent",
+      name: COMPANY.legalName,
+      url: canonical("/"),
     },
-    ...(property.beds != null ? { numberOfRooms: property.beds } : {}),
-    broker: { "@type": "RealEstateAgent", name: COMPANY.legalName, url: canonical("/") },
+    about: {
+      "@type": "Residence",
+      name: property.title,
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: property.location,
+        addressCountry: "IN",
+      },
+      ...(property.beds != null ? { numberOfRooms: property.beds } : {}),
+    },
   };
 
   return (

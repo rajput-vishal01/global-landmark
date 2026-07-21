@@ -64,7 +64,7 @@ export function AmenitiesField({ initial }: { initial: string[] }) {
                 type="button"
                 onClick={() => toggle(amenity)}
                 aria-label={`Remove ${amenity}`}
-                className="cursor-pointer text-[#9a2b2b] hover:opacity-70"
+                className="cursor-pointer text-error hover:opacity-70"
               >
                 ✕
               </button>

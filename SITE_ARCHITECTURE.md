@@ -1,6 +1,6 @@
 # Site Architecture
 
-> **Built so far (July 2026):** `/`, `/about`, `/contact`, `/properties` (live DB data + category filter), `/properties/[slug]`, `/news` — under the `(site)` route group — plus the admin panel served only on the `admin.` subdomain (`proxy.ts`). The rest of this sitemap is the longer-term target.
+> **Built so far (July 2026):** `/`, `/about`, `/contact`, `/properties` (live DB data + category filter), `/properties/[slug]`, `/news` — under the `(site)` route group — plus the admin panel served at `/admin` behind the password gate (`proxy.ts`). The rest of this sitemap is the longer-term target.
 
 Sitemap for the marketing site. Routes assume the `(marketing)` route group from [TECH_STACK.md](TECH_STACK.md#folder-structure).
 

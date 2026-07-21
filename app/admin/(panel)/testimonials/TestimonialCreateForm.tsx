@@ -1,11 +1,10 @@
 "use client";
 
-import { LABEL } from "@/components/admin/form-classes";
+import { FIELD, LABEL } from "@/components/form-classes";
 import { useActionState } from "react";
 import { createTestimonialVideo, type TestimonialFormState } from "./actions";
 
-const initialState: TestimonialFormState = {};const FIELD =
-  "border-b border-border bg-transparent py-2 font-sans text-body text-ink placeholder:text-ink-muted/60 focus:border-gold focus:outline-none";
+const initialState: TestimonialFormState = {};
 
 export function TestimonialCreateForm() {
   const [state, formAction, isPending] = useActionState(
@@ -37,7 +36,7 @@ export function TestimonialCreateForm() {
         {isPending ? "Adding..." : "Add video"}
       </button>
       {state.error && (
-        <p role="alert" className="w-full text-meta font-sans text-[#9a2b2b]">{state.error}</p>
+        <p role="alert" className="w-full text-meta font-sans text-error">{state.error}</p>
       )}
     </form>
   );

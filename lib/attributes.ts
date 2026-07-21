@@ -54,7 +54,7 @@ export const AREA_UNITS = [
 ] as const;
 
 
-export function areaUnitLabel(unit: string): string {
+function areaUnitLabel(unit: string): string {
   return AREA_UNITS.find((u) => u.value === unit)?.label ?? unit;
 }
 
@@ -63,6 +63,12 @@ export function formatArea(value: number, unit: string): string {
 }
 
 /** Offered as checkboxes in the admin; free-typed amenities are also kept. */
+/** Prepends an empty "any/none" choice to a Select option list. */
+export const withEmptyOption = (label: string, values: readonly string[]) => [
+  { value: "", label },
+  ...values.map((v) => ({ value: v, label: v })),
+];
+
 export const SUGGESTED_AMENITIES = [
   "Gated Community",
   "Lift",

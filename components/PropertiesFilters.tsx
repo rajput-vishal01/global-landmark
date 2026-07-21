@@ -6,12 +6,8 @@ import {
   FURNISHINGS,
   POSSESSION_STATUSES,
   PROPERTY_TYPES,
+  withEmptyOption as withAll,
 } from "@/lib/attributes";
-
-const withAll = (label: string, values: readonly string[]) => [
-  { value: "", label },
-  ...values.map((v) => ({ value: v, label: v })),
-];
 
 /**
  * Attribute filters for the listings page. Values live in the URL so

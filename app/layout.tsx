@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Prata, Manrope } from "next/font/google";
 import "./globals.css";
-import { SmoothScroll } from "@/components/SmoothScroll";
+import { MotionProvider } from "@/components/MotionProvider";
 import { COMPANY, SEO } from "@/lib/data";
 import { jsonLdHtml, organizationJsonLd, SITE_URL } from "@/lib/seo";
 
@@ -48,14 +48,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${prata.variable} ${manrope.variable}`}>
+    // suppressHydrationWarning: the head script stamps .js on <html> before
+    // hydration (deliberate — CSS pre-hide gate), which React would flag.
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${prata.variable} ${manrope.variable}`}
+    >
+      <head>
+        {/* Before first paint: lets CSS pre-hide reveal targets only when
+            JS will actually run the reveal (no-JS visitors keep content). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.documentElement.classList.add("js")`,
+          }}
+        />
+      </head>
       <body className="bg-cream font-sans text-ink antialiased">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLdHtml(organizationJsonLd()) }}
         />
-        <SmoothScroll />
-        {children}
+        <MotionProvider>{children}</MotionProvider>
       </body>
     </html>
   );

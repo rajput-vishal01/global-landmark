@@ -99,7 +99,7 @@ export function Footer() {
             Follow
           </span>
           <ul className="flex flex-wrap gap-3">
-            {COMPANY.socials.map((social) => (
+            {COMPANY.socials.filter((s) => s.href.startsWith("http")).map((social) => (
               <li key={social.label}>
                 <a
                   href={social.href}

@@ -1,13 +1,13 @@
 "use client";
 
 import { EASE } from "@/lib/motion";
-import { useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { MENU_GROUPS } from "./nav-links";
 import { PropertySearch } from "@/components/PropertySearch";
+import { useModalLock, useMounted } from "@/lib/hooks";
 import { COMPANY } from "@/lib/data";
 
 /**
@@ -23,30 +23,20 @@ export function FullscreenMenu({
   open: boolean;
   onClose: () => void;
 }) {
-  // Hydration-safe client check: false during SSR, true after mount.
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  );
-
-  useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [open]);
+  const mounted = useMounted();
+  useModalLock(open, onClose);
 
   if (!mounted) return null;
 
   return createPortal(
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: EASE }}
+          data-lenis-prevent
           className="fixed inset-0 z-50 overflow-y-auto bg-dark-deep/70 backdrop-blur-2xl"
         >
           <div className="flex items-center justify-between px-5 py-6 md:px-12">
@@ -78,7 +68,7 @@ export function FullscreenMenu({
             </button>
           </div>
 
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.5, ease: EASE }}
@@ -89,9 +79,9 @@ export function FullscreenMenu({
               placeholder="Search residences, locations, projects"
               className="max-w-md"
             />
-          </motion.div>
+          </m.div>
 
-          <motion.nav
+          <m.nav
             initial="closed"
             animate="open"
             variants={{
@@ -101,7 +91,7 @@ export function FullscreenMenu({
             className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-14 md:py-20"
           >
             {MENU_GROUPS.map((group) => (
-              <motion.div
+              <m.div
                 key={group.n}
                 variants={{
                   open: { opacity: 1, y: 0 },
@@ -120,11 +110,11 @@ export function FullscreenMenu({
                 >
                   {group.label}
                 </Link>
-              </motion.div>
+              </m.div>
             ))}
-          </motion.nav>
+          </m.nav>
 
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.6, ease: EASE }}
@@ -158,7 +148,7 @@ export function FullscreenMenu({
                 Follow
               </span>
               <p className="text-meta font-sans text-cream/80">
-                {COMPANY.socials.map((social, i) => (
+                {COMPANY.socials.filter((s) => s.href.startsWith("http")).map((social, i) => (
                   <span key={social.label}>
                     {i > 0 && "  ·  "}
                     <a href={social.href} className="transition-colors hover:text-cream">
@@ -168,8 +158,8 @@ export function FullscreenMenu({
                 ))}
               </p>
             </div>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       )}
     </AnimatePresence>,
     document.body

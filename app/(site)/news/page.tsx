@@ -6,12 +6,23 @@ import { Footer } from "@/components/sections/Footer";
 import { CTABand } from "@/components/sections/CTABand";
 import { fetchRealEstateNews } from "@/lib/news";
 import { NEWS_PAGE } from "@/lib/data";
+import { canonical } from "@/lib/seo";
+
+const PAGE_TITLE = "Market News";
+const PAGE_DESCRIPTION =
+  "Curated real-estate market coverage — the stories shaping property, development, and investment.";
 
 export const metadata: Metadata = {
-  title: "Market News",
-  description:
-    "Curated real-estate market coverage — the stories shaping property, development, and investment.",
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
   alternates: { canonical: "/news" },
+  openGraph: {
+    type: "website",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: canonical("/news"),
+  },
+  twitter: { card: "summary_large_image", title: PAGE_TITLE, description: PAGE_DESCRIPTION },
 };
 
 
@@ -60,45 +71,46 @@ export default async function NewsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-              {articles.map((article) => (
-                <a
-                  key={article.link}
-                  href={article.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-reveal
-                  className="group flex flex-col gap-4"
-                >
-                  <div className="relative aspect-[3/2] overflow-hidden bg-ink/5">
-                    <Image
-                      src={article.image}
-                      alt=""
-                      fill
-                      // News images come from arbitrary publisher hosts, which
-                      // remotePatterns intentionally does not allow.
-                      unoptimized
-                      sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
-                      className="object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.05]"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-gold-deep">
-                      {article.source}
-                      {formatDate(article.publishedAt)
-                        ? ` · ${formatDate(article.publishedAt)}`
-                        : ""}
-                    </p>
-                    <h2 className="text-balance font-serif text-h4 leading-snug text-ink transition-colors duration-300 group-hover:text-gold-deep">
-                      {article.title}
-                    </h2>
-                    {article.excerpt && (
-                      <p className="line-clamp-3 text-pretty text-meta font-sans leading-relaxed text-ink-muted">
-                        {article.excerpt}
+              {articles.map((article) => {
+                const published = formatDate(article.publishedAt);
+                return (
+                  <a
+                    key={article.link}
+                    href={article.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-reveal
+                    className="group flex flex-col gap-4"
+                  >
+                    <div className="relative aspect-[3/2] overflow-hidden bg-ink/5">
+                      <Image
+                        src={article.image}
+                        alt={article.title}
+                        fill
+                        // News images come from arbitrary publisher hosts, which
+                        // remotePatterns intentionally does not allow.
+                        unoptimized
+                        sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
+                        className="img-zoom"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-gold-deep">
+                        {article.source}
+                        {published ? ` · ${published}` : ""}
                       </p>
-                    )}
-                  </div>
-                </a>
-              ))}
+                      <h2 className="text-balance font-serif text-h4 leading-snug text-ink transition-colors duration-300 group-hover:text-gold-deep">
+                        {article.title}
+                      </h2>
+                      {article.excerpt && (
+                        <p className="line-clamp-3 text-pretty text-meta font-sans leading-relaxed text-ink-muted">
+                          {article.excerpt}
+                        </p>
+                      )}
+                    </div>
+                  </a>
+                );
+              })}
             </div>
           )}
         </section>

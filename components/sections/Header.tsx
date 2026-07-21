@@ -58,7 +58,7 @@ export function Header() {
       }`}
     >
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-4 sm:px-5 sm:py-5 md:px-12">
-        <nav className="hidden items-center gap-8 lg:flex">
+        <nav aria-label="Primary" className="hidden items-center gap-8 lg:flex">
           {HEADER_LINKS.map((link) => (
             <Link
               key={link.label}

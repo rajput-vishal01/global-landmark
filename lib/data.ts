@@ -18,7 +18,7 @@ export const COMPANY = {
   /** Wordmark line 2 / descriptor. */
   tagline: "Realty Group",
   legalName: "Global Landmark Realty Group",
-  license: "RERA-Compliant Real Estate Brokers (add registration no.)",
+  license: "RERA-Compliant Real Estate Brokers", // append registration no. when the client provides it
   compliance:
     "RERA Compliant · All transactions closed over verified documentation",
 

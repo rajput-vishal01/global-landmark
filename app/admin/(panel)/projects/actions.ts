@@ -22,7 +22,10 @@ export async function createProject(
     String(formData.get("description") ?? "").trim().slice(0, 2000) || null;
 
   try {
-    await db.insert(projects).values({ name, slug: slugify(name), description });
+    // Fallback mirrors resolveProjectId: a symbols-only name slugifies to ""
+    // and would collide on the unique index.
+    const slug = slugify(name) || `project-${Date.now()}`;
+    await db.insert(projects).values({ name, slug, description });
   } catch (err) {
     console.error("createProject failed:", err);
     return { error: "Could not save — a project with that name may already exist." };

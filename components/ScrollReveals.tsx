@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useGSAP, gsap, ScrollTrigger, EASE_HEAVY } from "@/lib/gsap";
 
 /**
@@ -15,6 +15,10 @@ import { useGSAP, gsap, ScrollTrigger, EASE_HEAVY } from "@/lib/gsap";
  */
 export function ScrollReveals() {
   const pathname = usePathname();
+  // Query-string navigations (the /properties filters) swap in new
+  // [data-reveal] nodes without a pathname change — without this dep they
+  // would stay CSS-pre-hidden forever.
+  const searchParams = useSearchParams();
 
   useGSAP(
     () => {
@@ -66,13 +70,14 @@ export function ScrollReveals() {
 
           // Scrubbed unveil: section grows from an inset rounded card to
           // full-bleed as it enters (same family as the arch reveal).
+          // clip-path, not border-radius — radius scrubs repaint per frame.
           gsap.utils.toArray<HTMLElement>("[data-unveil]").forEach((el) => {
             gsap.fromTo(
               el,
-              { scale: 0.92, borderRadius: "2.5rem" },
+              { scale: 0.92, clipPath: "inset(0% round 2.5rem)" },
               {
                 scale: 1,
-                borderRadius: "0rem",
+                clipPath: "inset(0% round 0rem)",
                 ease: "none",
                 transformOrigin: "center top",
                 scrollTrigger: {
@@ -113,7 +118,7 @@ export function ScrollReveals() {
 
       return () => mm.revert();
     },
-    { dependencies: [pathname], revertOnUpdate: true }
+    { dependencies: [pathname, searchParams], revertOnUpdate: true }
   );
 
   return null;

@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { asc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { properties, propertyImages } from "@/lib/db/schema";
-import { listProjects } from "@/lib/db/queries";
+import { properties } from "@/lib/db/schema";
+import { IMAGE_ORDER, listProjects } from "@/lib/db/queries";
 import { isCloudinaryConfigured } from "@/lib/cloudinary";
 import { PropertyForm } from "@/components/admin/PropertyForm";
 import { updateProperty } from "../../actions";
@@ -22,11 +22,9 @@ export default async function EditPropertyPage({
     db.query.properties.findFirst({
       where: eq(properties.id, numericId),
       with: {
-        // Must match the public queries' ordering — the uploader re-serializes
-        // list order as the new sortOrder (index 0 = cover image).
-        images: {
-          orderBy: [asc(propertyImages.sortOrder), asc(propertyImages.id)],
-        },
+        // The uploader re-serializes list order as the new sortOrder
+        // (index 0 = cover image), so this must be the canonical order.
+        images: { orderBy: IMAGE_ORDER },
         project: true,
       },
     }),

@@ -1,5 +1,5 @@
 export type VideoProvider = "youtube" | "instagram";
-export type ParsedVideo = { provider: VideoProvider; videoId: string };
+type ParsedVideo = { provider: VideoProvider; videoId: string };
 
 const YT_ID = /^[A-Za-z0-9_-]{11}$/;
 const IG_CODE = /^[A-Za-z0-9_-]{5,20}$/;

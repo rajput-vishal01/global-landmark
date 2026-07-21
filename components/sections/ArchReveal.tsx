@@ -17,12 +17,14 @@ export function ArchReveal() {
     () => {
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
+        // clip-path, not border-radius: radius is a paint property and
+        // scrubbing it rasterizes a near-fullscreen layer every frame.
         gsap.fromTo(
           ".arch-img",
-          { scale: 0.62, borderRadius: "50vw 50vw 0 0" },
+          { scale: 0.62, clipPath: "inset(0% 0% 0% 0% round 50vw 50vw 0 0)" },
           {
             scale: 1,
-            borderRadius: "0vw 0vw 0 0",
+            clipPath: "inset(0% 0% 0% 0% round 0vw 0vw 0 0)",
             ease: "none",
             scrollTrigger: {
               trigger: scope.current,
@@ -39,7 +41,7 @@ export function ArchReveal() {
 
   return (
     <section ref={scope} className="overflow-hidden bg-cream pt-20 md:pt-28">
-      <div className="arch-img relative h-[70vh] w-full overflow-hidden will-change-transform md:h-[90vh]">
+      <div className="arch-img relative h-[70vh] w-full overflow-hidden md:h-[90vh]">
         <Image
           src={ARCH_REVEAL.image}
           alt={ARCH_REVEAL.alt}

@@ -32,6 +32,20 @@ const MAX_IMAGES = 20;
 // a forged publicId must never be able to delete arbitrary account assets.
 const OWNED_PUBLIC_ID = /^global-landmark\/properties\//;
 
+// Must stay in sync with images.remotePatterns in next.config.ts — a stored
+// URL from any other host makes next/image throw at render and takes the
+// public pages down with it, so reject it here at the entry point.
+const IMAGE_HOSTS = new Set(["res.cloudinary.com", "images.unsplash.com"]);
+
+function isAllowedImageUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" && IMAGE_HOSTS.has(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
 function parseImages(json: string): ParsedImage[] | null {
   let raw: unknown;
   try {
@@ -44,7 +58,7 @@ function parseImages(json: string): ParsedImage[] | null {
   for (const item of raw) {
     if (typeof item !== "object" || item === null) return null;
     const { url, publicId, alt } = item as Record<string, unknown>;
-    if (typeof url !== "string" || !/^https?:\/\//.test(url)) return null;
+    if (typeof url !== "string" || !isAllowedImageUrl(url)) return null;
     const ownedId =
       typeof publicId === "string" && OWNED_PUBLIC_ID.test(publicId)
         ? publicId.slice(0, 300)
@@ -156,7 +170,13 @@ function parseProperty(formData: FormData):
   const projectName = String(formData.get("projectName") ?? "").trim().slice(0, 200);
 
   const images = parseImages(String(formData.get("imagesJson") ?? "[]"));
-  if (images === null) return { ok: false, error: "Image list is invalid." };
+  if (images === null) {
+    return {
+      ok: false,
+      error:
+        "Image list is invalid — images must be Cloudinary uploads or images.unsplash.com URLs.",
+    };
+  }
   if (!images.length) return { ok: false, error: "Add at least one image." };
 
   const beds = parseOptionalInt(formData.get("beds"));

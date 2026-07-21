@@ -1,9 +1,12 @@
 "use server";
 
 import { timingSafeEqual } from "crypto";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { clearAdminSession, setAdminSession } from "@/lib/admin/session";
+import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
-export type LoginState = { error?: string; success?: boolean };
+export type LoginState = { error?: string };
 
 function passwordMatches(input: string): boolean {
   const expected = process.env.ADMIN_PASSWORD ?? "";
@@ -17,20 +20,25 @@ export async function login(
   _prev: LoginState,
   formData: FormData
 ): Promise<LoginState> {
+  // One shared password — throttle guesses per connection, with a global
+  // cap that header spoofing cannot escape.
+  if (isRateLimited("admin-login", clientIp(await headers()), 10, 100)) {
+    return { error: "Too many attempts. Try again in an hour." };
+  }
   const password = String(formData.get("password") ?? "");
   if (!passwordMatches(password)) {
     return { error: "That password is not correct." };
   }
+  // Without this, login would "succeed" but every token verification fails —
+  // an undebuggable redirect loop. Fail loudly instead.
+  if (!process.env.ADMIN_SESSION_SECRET) {
+    return { error: "ADMIN_SESSION_SECRET is not configured on the server." };
+  }
   await setAdminSession();
-  // No server redirect: a client-router navigation would bypass the proxy's
-  // host rewrite and render the public site on the admin origin. The form
-  // does a full-page navigation instead.
-  return { success: true };
+  redirect("/admin");
 }
 
-export type LogoutState = { done?: boolean };
-
-export async function logout(): Promise<LogoutState> {
+export async function logout(): Promise<void> {
   await clearAdminSession();
-  return { done: true };
+  redirect("/admin/login");
 }

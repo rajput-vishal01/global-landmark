@@ -1,10 +1,11 @@
 "use client";
 
 import { EASE } from "@/lib/motion";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
+import { useOutsideClick } from "@/lib/hooks";
 
 type Result = {
   slug: string;
@@ -71,14 +72,10 @@ export function PropertySearch({
     };
   }, [query]);
 
-  // Close on outside click.
-  useEffect(() => {
-    const onPointerDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setIsOpen(false);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, []);
+  useOutsideClick(
+    rootRef,
+    useCallback(() => setIsOpen(false), [])
+  );
 
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Escape") {
@@ -145,7 +142,7 @@ export function PropertySearch({
 
       <AnimatePresence>
         {isOpen && (
-          <motion.ul
+          <m.ul
             id={listId}
             role="listbox"
             aria-label="Matching properties"
@@ -153,6 +150,7 @@ export function PropertySearch({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: openUpward ? -8 : 8 }}
             transition={{ duration: 0.35, ease: EASE }}
+            data-lenis-prevent
             className={`absolute left-0 right-0 z-40 max-h-96 overflow-y-auto border border-border bg-white shadow-[0_24px_60px_-24px_rgba(20,20,20,0.35)] ${
               openUpward ? "bottom-full mb-2" : "top-full mt-2"
             }`}
@@ -198,7 +196,7 @@ export function PropertySearch({
                 </li>
               ))
             )}
-          </motion.ul>
+          </m.ul>
         )}
       </AnimatePresence>
     </div>

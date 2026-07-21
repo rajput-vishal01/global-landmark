@@ -3,12 +3,23 @@ import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { ContactForm } from "@/components/ContactForm";
 import { COMPANY, CONTACT_PAGE } from "@/lib/data";
+import { canonical } from "@/lib/seo";
+
+const PAGE_TITLE = "Contact";
+const PAGE_DESCRIPTION =
+  "Speak with the group about buying, selling, or a private valuation across the Tricity.";
 
 export const metadata: Metadata = {
-  title: "Contact",
-  description:
-    "Speak with the group about buying, selling, or a private valuation across the Tricity.",
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
   alternates: { canonical: "/contact" },
+  openGraph: {
+    type: "website",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: canonical("/contact"),
+  },
+  twitter: { card: "summary_large_image", title: PAGE_TITLE, description: PAGE_DESCRIPTION },
 };
 
 export default function ContactPage() {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { getUploadSignature } from "@/app/admin/(panel)/properties/actions";
 
-export type UploaderImage = { url: string; publicId: string | null; alt: string };
+type UploaderImage = { url: string; publicId: string | null; alt: string };
 
 /**
  * Gallery editor: Cloudinary direct upload when configured, URL-paste
@@ -12,14 +12,22 @@ export type UploaderImage = { url: string; publicId: string | null; alt: string 
 export function ImageUploader({
   initial,
   cloudinaryEnabled,
+  onBusyChange,
 }: {
   initial: UploaderImage[];
   cloudinaryEnabled: boolean;
+  /** Lets the parent form block submit while uploads are in flight. */
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const [images, setImages] = useState<UploaderImage[]>(initial);
   const [pasteUrl, setPasteUrl] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusyState] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function setBusy(value: boolean) {
+    setBusyState(value);
+    onBusyChange?.(value);
+  }
 
   function move(index: number, dir: -1 | 1) {
     setImages((prev) => {
@@ -69,8 +77,16 @@ export function ImageUploader({
 
   function addPastedUrl() {
     const url = pasteUrl.trim();
-    if (!/^https?:\/\//.test(url)) {
-      setError("Enter a full image URL (https://...).");
+    // Same allowlist as the server action / next.config remotePatterns — an
+    // unlisted host would make next/image throw on the public pages.
+    let hostname = "";
+    try {
+      hostname = new URL(url).hostname;
+    } catch {
+      /* handled below */
+    }
+    if (!["res.cloudinary.com", "images.unsplash.com"].includes(hostname)) {
+      setError("Only res.cloudinary.com or images.unsplash.com URLs work here.");
       return;
     }
     setError(null);
@@ -121,7 +137,7 @@ export function ImageUploader({
                 <button type="button"
                   onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
                   aria-label="Remove image"
-                  className="cursor-pointer px-1.5 py-1 text-[#9a2b2b] hover:opacity-70">✕</button>
+                  className="cursor-pointer px-1.5 py-1 text-error hover:opacity-70">✕</button>
               </div>
             </li>
           ))}
@@ -160,7 +176,7 @@ export function ImageUploader({
       )}
 
       {error && (
-        <p role="alert" className="text-meta font-sans text-[#9a2b2b]">{error}</p>
+        <p role="alert" className="text-meta font-sans text-error">{error}</p>
       )}
     </div>
   );

@@ -27,14 +27,29 @@ export async function GET(
   }
 
   try {
-    const res = await fetch(
-      `https://www.instagram.com/p/${code}/media/?size=l`,
-      {
-        headers: { "User-Agent": UA },
-        redirect: "follow",
-        next: { revalidate: 86400 },
+    // Follow redirects by hand so the final byte source is pinned to
+    // Instagram's own CDNs — a hijacked Location can't turn this route into
+    // a proxy for arbitrary hosts.
+    const IG_CDN = /(\.cdninstagram\.com|\.fbcdn\.net|(^|\.)instagram\.com)$/;
+    let url = new URL(`https://www.instagram.com/p/${code}/media/?size=l`);
+    let res = await fetch(url, {
+      headers: { "User-Agent": UA },
+      redirect: "manual",
+      next: { revalidate: 86400 },
+    });
+    for (let hop = 0; hop < 4 && res.status >= 300 && res.status < 400; hop++) {
+      const loc = res.headers.get("location");
+      if (!loc) break;
+      url = new URL(loc, url);
+      if (!IG_CDN.test(url.hostname)) {
+        return new NextResponse(null, { status: 404 });
       }
-    );
+      res = await fetch(url, {
+        headers: { "User-Agent": UA },
+        redirect: "manual",
+        next: { revalidate: 86400 },
+      });
+    }
     const type = res.headers.get("content-type") ?? "";
     if (!res.ok || !type.startsWith("image/")) {
       return new NextResponse(null, { status: 404 });

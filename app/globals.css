@@ -19,6 +19,7 @@
   --color-gold-deep: #8a5a22;
   --color-cream: #faf9f6;
   --color-border: #e2e0db;
+  --color-error: #9a2b2b;
 
   /* Fluid type scale */
   --text-eyebrow: clamp(0.6875rem, 0.6vw + 0.55rem, 0.875rem);
@@ -53,8 +54,28 @@ html.lenis body {
 .lenis.lenis-smooth {
   scroll-behavior: auto !important;
 }
-.lenis.lenis-stopped {
-  overflow: hidden;
+
+/* Shared hover-zoom for imagery inside a `group` link/button. */
+.img-zoom {
+  object-fit: cover;
+  transition: transform 1.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.group:hover .img-zoom {
+  transform: scale(1.05);
+}
+
+/* Pre-hide scroll-reveal targets before GSAP takes over — only once JS has
+   stamped .js on <html> (inline script in the root layout), so content
+   stays visible without JS and for reduced-motion users. Prevents the
+   paint → hide → fade-back flash on slow devices. */
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-reveal] {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  .js .hero-img {
+    opacity: 0;
+  }
 }
 
 /* Loading rule sweep */

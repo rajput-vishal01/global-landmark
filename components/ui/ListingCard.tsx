@@ -24,11 +24,9 @@ export function propertySpecs(property: PropertyWithImages): string {
 export function ListingCard({
   property,
   className = "",
-  sizes = "(min-width: 1024px) 30vw, (min-width: 768px) 42vw, 100vw",
 }: {
   property: PropertyWithImages;
   className?: string;
-  sizes?: string;
 }) {
   const cover = property.images[0];
   const specs = propertySpecs(property);
@@ -44,8 +42,8 @@ export function ListingCard({
             src={optimizedImage(cover.url, 800)}
             alt={cover.alt || property.title}
             fill
-            sizes={sizes}
-            className="object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.05]"
+            sizes="(min-width: 1024px) 30vw, (min-width: 768px) 42vw, 100vw"
+            className="img-zoom"
           />
         )}
         <span className="text-eyebrow absolute left-4 top-4 bg-dark-deep/70 px-3 py-1.5 font-sans font-medium uppercase tracking-[0.2em] text-cream backdrop-blur-sm">

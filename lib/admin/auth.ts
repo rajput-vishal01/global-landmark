@@ -3,6 +3,9 @@ import { createHmac, timingSafeEqual } from "crypto";
 /**
  * Stateless admin session: `exp.hmac(exp)` signed with ADMIN_SESSION_SECRET.
  * Pure crypto only — imported by proxy.ts, server actions, and login.
+ *
+ * Revocation: tokens have no per-session kill switch — to force-logout a
+ * leaked session, rotate ADMIN_SESSION_SECRET (invalidates every session).
  */
 
 export const ADMIN_COOKIE = "gld_admin";

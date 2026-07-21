@@ -6,7 +6,6 @@ type ButtonProps = {
   children: ReactNode;
   variant?: "underline" | "outline" | "corner";
   tone?: "light" | "dark";
-  className?: string;
 };
 
 /**
@@ -19,14 +18,13 @@ export function Button({
   children,
   variant = "underline",
   tone = "light",
-  className = "",
 }: ButtonProps) {
   if (variant === "corner") {
     const text = tone === "dark" ? "text-cream" : "text-ink";
     return (
       <Link
         href={href}
-        className={`group relative inline-flex items-center px-10 py-5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] ${text} ${className}`}
+        className={`group relative inline-flex items-center px-10 py-5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] ${text}`}
       >
         <span
           aria-hidden
@@ -49,7 +47,7 @@ export function Button({
     return (
       <Link
         href={href}
-        className={`text-eyebrow inline-flex items-center border px-7 py-3.5 font-sans font-medium uppercase tracking-[0.18em] transition-colors duration-300 ${toneClasses} ${className}`}
+        className={`text-eyebrow inline-flex items-center border px-7 py-3.5 font-sans font-medium uppercase tracking-[0.18em] transition-colors duration-300 ${toneClasses}`}
       >
         {children}
       </Link>
@@ -60,7 +58,7 @@ export function Button({
   return (
     <Link
       href={href}
-      className={`group text-eyebrow inline-flex w-fit items-center font-sans font-medium uppercase tracking-[0.18em] ${textTone} ${className}`}
+      className={`group text-eyebrow inline-flex w-fit items-center font-sans font-medium uppercase tracking-[0.18em] ${textTone}`}
     >
       <span className="relative pb-1">
         {children}

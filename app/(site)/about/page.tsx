@@ -4,11 +4,22 @@ import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { Button } from "@/components/ui/Button";
 import { ABOUT_PAGE, COMPANY } from "@/lib/data";
+import { canonical } from "@/lib/seo";
+
+const PAGE_TITLE = "About";
+const PAGE_DESCRIPTION = `The group behind ${COMPANY.legalName} — its history, principals, and the standard it holds across the Tricity.`;
 
 export const metadata: Metadata = {
-  title: "About",
-  description: `The group behind ${COMPANY.legalName} — its history, principals, and the standard it holds across the Tricity.`,
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
   alternates: { canonical: "/about" },
+  openGraph: {
+    type: "website",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: canonical("/about"),
+  },
+  twitter: { card: "summary_large_image", title: PAGE_TITLE, description: PAGE_DESCRIPTION },
 };
 
 const MILESTONES = ABOUT_PAGE.milestones;

@@ -27,10 +27,10 @@ const IMG = {
 };
 
 const PROJECTS = [
-  ["Grand Mega Township", "grand-mega-township", "208-acre township in Panchkula Extension with 300 & 500 gaj premium plots.", "Global Landmark Realty Group", "Add RERA no."],
-  ["Homeland Urva Luxury", "homeland-urva-luxury", "Premium residential project at Sector 62, Mohali (Phase 8) — 12.5 & 5.5 acre development.", "Homeland", "Add RERA no."],
-  ["Imperial Residency", "imperial-residency", "RERA-approved gated township of 3 BHK apartments at Peer Muchalla, Zirakpur.", "Imperial", "Add RERA no."],
-  ["Trishla", "trishla", "Forest-inspired luxury living with a lazy river, wave pool and multi-tier security.", "Trishla", "Add RERA no."],
+  ["Grand Mega Township", "grand-mega-township", "208-acre township in Panchkula Extension with 300 & 500 gaj premium plots.", "Global Landmark Realty Group", null],
+  ["Homeland Urva Luxury", "homeland-urva-luxury", "Premium residential project at Sector 62, Mohali (Phase 8) — 12.5 & 5.5 acre development.", "Homeland", null],
+  ["Imperial Residency", "imperial-residency", "RERA-approved gated township of 3 BHK apartments at Peer Muchalla, Zirakpur.", "Imperial", null],
+  ["Trishla", "trishla", "Forest-inspired luxury living with a lazy river, wave pool and multi-tier security.", "Trishla", null],
 ];
 
 const PROPERTIES = [
@@ -149,7 +149,7 @@ for (const p of PROPERTIES) {
      returning id`,
     [p.slug, p.title, p.kind, p.category, p.project ? projectId[p.project] : null,
      p.description, p.location, p.propertyType, p.configuration, p.beds, p.baths,
-     p.area, p.unit ?? "sqft", p.facing, p.possession, p.furnishing,
+     p.area, p.unit, p.facing, p.possession, p.furnishing,
      p.amenities, JSON.stringify(p.extras)]
   );
   if (!res.rows.length) continue; // already seeded

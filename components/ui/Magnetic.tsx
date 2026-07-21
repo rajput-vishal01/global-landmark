@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { m, useMotionValue, useSpring } from "framer-motion";
 
 /**
  * Magnetic hover wrapper: children ease toward the pointer while it is
@@ -35,7 +35,7 @@ export function Magnetic({
   };
 
   return (
-    <motion.div
+    <m.div
       ref={ref}
       onPointerMove={onPointerMove}
       onPointerLeave={reset}
@@ -43,6 +43,6 @@ export function Magnetic({
       className={`w-fit ${className}`}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }

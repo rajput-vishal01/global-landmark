@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useActionState } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
+import { useModalLock } from "@/lib/hooks";
 import { EASE } from "@/lib/motion";
 import type { DeleteState } from "@/app/admin/(panel)/properties/actions";
 
@@ -25,12 +26,10 @@ export function DeleteButton({
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  useModalLock(
+    open,
+    useCallback(() => setOpen(false), [])
+  );
 
   return (
     <>
@@ -40,12 +39,12 @@ export function DeleteButton({
           type="button"
           onClick={() => setOpen(true)}
           disabled={isPending}
-          className="cursor-pointer text-meta font-sans text-[#9a2b2b] underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current disabled:cursor-wait disabled:opacity-50"
+          className="cursor-pointer text-meta font-sans text-error underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current disabled:cursor-wait disabled:opacity-50"
         >
           {isPending ? "Removing..." : label}
         </button>
         {state.error && (
-          <span role="alert" className="text-meta font-sans text-[#9a2b2b]">
+          <span role="alert" className="text-meta font-sans text-error">
             {state.error}
           </span>
         )}
@@ -55,7 +54,7 @@ export function DeleteButton({
         createPortal(
           <AnimatePresence>
             {open && (
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -63,7 +62,7 @@ export function DeleteButton({
                 className="fixed inset-0 z-50 flex items-center justify-center bg-dark-deep/60 p-5 backdrop-blur-sm"
                 onClick={() => setOpen(false)}
               >
-                <motion.div
+                <m.div
                   role="alertdialog"
                   aria-modal="true"
                   aria-label="Confirm removal"
@@ -92,13 +91,13 @@ export function DeleteButton({
                         setOpen(false);
                         formRef.current?.requestSubmit();
                       }}
-                      className="cursor-pointer bg-[#9a2b2b] px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+                      className="cursor-pointer bg-error px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
                     >
                       {label}
                     </button>
                   </div>
-                </motion.div>
-              </motion.div>
+                </m.div>
+              </m.div>
             )}
           </AnimatePresence>,
           document.body

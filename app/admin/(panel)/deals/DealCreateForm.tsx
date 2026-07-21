@@ -1,6 +1,6 @@
 "use client";
 
-import { LABEL } from "@/components/admin/form-classes";
+import { FIELD, LABEL } from "@/components/form-classes";
 import { useActionState, useState } from "react";
 import { createDeal, type DealFormState } from "./actions";
 
@@ -46,7 +46,7 @@ export function DealCreateForm({ items }: { items: DealPickerItem[] }) {
           aria-label="Search properties and projects"
           className="w-full appearance-none rounded-none border-b border-border bg-transparent py-2.5 font-sans text-body text-ink placeholder:text-ink-muted/60 focus:border-gold focus:outline-none [&::-webkit-search-cancel-button]:hidden"
         />
-        <ul className="max-h-56 overflow-y-auto border border-border">
+        <ul data-lenis-prevent className="max-h-56 overflow-y-auto border border-border">
           {matches.length === 0 ? (
             <li className="px-4 py-3 font-sans text-meta text-ink-muted">
               Nothing matches. Add it under Properties first.
@@ -93,12 +93,12 @@ export function DealCreateForm({ items }: { items: DealPickerItem[] }) {
         <div className="flex flex-col gap-1.5">
           <label htmlFor="startsAt" className={LABEL}>Starts</label>
           <input id="startsAt" name="startsAt" type="date" required
-            className="border-b border-border bg-transparent py-2 font-sans text-body text-ink focus:border-gold focus:outline-none" />
+            className={FIELD} />
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="endsAt" className={LABEL}>Ends</label>
           <input id="endsAt" name="endsAt" type="date" required
-            className="border-b border-border bg-transparent py-2 font-sans text-body text-ink focus:border-gold focus:outline-none" />
+            className={FIELD} />
         </div>
         <button
           type="submit"
@@ -109,7 +109,7 @@ export function DealCreateForm({ items }: { items: DealPickerItem[] }) {
         </button>
       </div>
       {state.error && (
-        <p role="alert" className="text-meta font-sans text-[#9a2b2b]">{state.error}</p>
+        <p role="alert" className="text-meta font-sans text-error">{state.error}</p>
       )}
     </form>
   );

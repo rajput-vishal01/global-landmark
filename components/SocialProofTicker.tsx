@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
+import { useMounted } from "@/lib/hooks";
 
 /**
  * Slim scrolling activity strip along the bottom edge. Entries are
@@ -25,11 +26,7 @@ function buildItems(): string[] {
 export function SocialProofTicker() {
   // Hydration-safe client gate; the pre-mount render is null on both sides,
   // so the randomized items never have to match server markup.
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  );
+  const mounted = useMounted();
   const [items] = useState(buildItems);
   const [isDismissed, setIsDismissed] = useState(
     () =>

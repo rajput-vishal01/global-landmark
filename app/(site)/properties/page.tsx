@@ -13,11 +13,22 @@ import {
   PROPERTY_TYPES,
 } from "@/lib/attributes";
 import { COMPANY, PROPERTIES_PAGE } from "@/lib/data";
+import { canonical } from "@/lib/seo";
+
+const PAGE_TITLE = "Exclusive Listings";
+const PAGE_DESCRIPTION = `The current portfolio of landmark residences represented by ${COMPANY.legalName}.`;
 
 export const metadata: Metadata = {
-  title: "Exclusive Listings",
-  description: `The current portfolio of landmark residences represented by ${COMPANY.legalName}.`,
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
   alternates: { canonical: "/properties" },
+  openGraph: {
+    type: "website",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: canonical("/properties"),
+  },
+  twitter: { card: "summary_large_image", title: PAGE_TITLE, description: PAGE_DESCRIPTION },
 };
 
 // Filter-driven (reads searchParams), so this route renders per request.
@@ -76,9 +87,10 @@ export default async function PropertiesPage({
             data-reveal
             className="mb-8 flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-border pb-5"
           >
-            <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+            {/* h2, not a span — the page would otherwise jump h1 → h3 (cards) */}
+            <h2 className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
               Portfolio
-            </span>
+            </h2>
             {FILTERS.map((filter) => {
               const isActive =
                 filter.value === "all" ? !category : category === filter.value;

@@ -1,14 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
+import { LABEL } from "@/components/form-classes";
 import { Select } from "@/components/ui/Select";
 import { submitInquiry, type InquiryState } from "@/app/(site)/contact/actions";
 
 const FIELD_CLASSES =
   "w-full appearance-none rounded-none border-b border-border bg-transparent py-3 font-sans text-body text-ink placeholder:text-ink-muted/60 focus:border-gold focus:outline-none";
-
-const LABEL_CLASSES =
-  "text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink";
 
 const initialState: InquiryState = { status: "idle" };
 
@@ -22,7 +20,7 @@ export function ContactForm({ idPrefix = "" }: { idPrefix?: string }) {
 
   if (state.status === "sent") {
     return (
-      <div data-reveal className="flex flex-col gap-5 self-start border border-border bg-white p-8 md:p-12">
+      <div className="flex flex-col gap-5 self-start border border-border bg-white p-8 md:p-12">
         <span aria-hidden className="block h-px w-12 bg-gold" />
         <h2 className="font-serif text-h3 text-ink">Your inquiry has been sent</h2>
         <p className="max-w-md text-pretty text-body font-sans text-ink-muted">
@@ -33,7 +31,7 @@ export function ContactForm({ idPrefix = "" }: { idPrefix?: string }) {
   }
 
   return (
-    <form data-reveal action={formAction} className="flex flex-col gap-8">
+    <form action={formAction} className="flex flex-col gap-8">
       {/* Honeypot — hidden from real users, tempting to bots */}
       <input
         type="text"
@@ -46,13 +44,13 @@ export function ContactForm({ idPrefix = "" }: { idPrefix?: string }) {
 
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <label htmlFor={fid("name")} className={LABEL_CLASSES}>
+          <label htmlFor={fid("name")} className={LABEL}>
             Name
           </label>
           <input id={fid("name")} name="name" type="text" required autoComplete="name" className={FIELD_CLASSES} />
         </div>
         <div className="flex flex-col gap-2">
-          <label htmlFor={fid("email")} className={LABEL_CLASSES}>
+          <label htmlFor={fid("email")} className={LABEL}>
             Email
           </label>
           <input id={fid("email")} name="email" type="email" required autoComplete="email" className={FIELD_CLASSES} />
@@ -61,13 +59,13 @@ export function ContactForm({ idPrefix = "" }: { idPrefix?: string }) {
 
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <label htmlFor={fid("phone")} className={LABEL_CLASSES}>
+          <label htmlFor={fid("phone")} className={LABEL}>
             Phone <span className="normal-case text-ink-muted">(optional)</span>
           </label>
           <input id={fid("phone")} name="phone" type="tel" autoComplete="tel" className={FIELD_CLASSES} />
         </div>
         <div className="flex flex-col gap-2">
-          <label htmlFor={fid("interest")} className={LABEL_CLASSES}>
+          <label htmlFor={fid("interest")} className={LABEL}>
             I am looking to
           </label>
           <Select
@@ -85,14 +83,14 @@ export function ContactForm({ idPrefix = "" }: { idPrefix?: string }) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <label htmlFor={fid("message")} className={LABEL_CLASSES}>
+        <label htmlFor={fid("message")} className={LABEL}>
           Message
         </label>
         <textarea id={fid("message")} name="message" rows={5} required className={FIELD_CLASSES} />
       </div>
 
       {state.status === "error" && (
-        <p role="alert" className="text-meta font-sans text-[#9a2b2b]">
+        <p role="alert" className="text-meta font-sans text-error">
           {state.message}
         </p>
       )}

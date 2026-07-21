@@ -8,13 +8,11 @@ export function StatCounter({
   prefix = "",
   suffix = "",
   label,
-  tone = "light",
 }: {
   value: number;
   prefix?: string;
   suffix?: string;
   label: string;
-  tone?: "light" | "dark";
 }) {
   const ref = useRef<HTMLSpanElement>(null);
   const decimals = Number.isInteger(value) ? 0 : 1;
@@ -33,17 +31,14 @@ export function StatCounter({
     });
   }, []);
 
-  const numberTone = tone === "dark" ? "text-cream" : "text-ink";
-  const labelTone = tone === "dark" ? "text-cream/60" : "text-ink-muted";
-
   return (
     <div className="flex flex-col items-center gap-4 text-center">
-      <p className={`font-serif text-[clamp(2.5rem,4.5vw,4.5rem)] leading-none ${numberTone}`}>
+      <p className="font-serif text-[clamp(2.5rem,4.5vw,4.5rem)] leading-none text-ink">
         {prefix}
         <span ref={ref}>0</span>
         {suffix}
       </p>
-      <p className={`text-eyebrow font-sans font-medium uppercase tracking-[0.18em] ${labelTone}`}>
+      <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-ink-muted">
         {label}
       </p>
     </div>

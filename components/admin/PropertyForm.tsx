@@ -1,8 +1,8 @@
 "use client";
 
-import { LABEL } from "@/components/admin/form-classes";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import type { Project, PropertyWithImages } from "@/lib/db/schema";
+import type { PropertyFormState } from "@/app/admin/(panel)/properties/actions";
 import { CATEGORIES } from "@/lib/categories";
 import {
   AREA_UNITS,
@@ -10,19 +10,16 @@ import {
   FURNISHINGS,
   POSSESSION_STATUSES,
   PROPERTY_TYPES,
+  withEmptyOption,
 } from "@/lib/attributes";
+import { LABEL } from "@/components/form-classes";
 import { Select } from "@/components/ui/Select";
 import { AmenitiesField } from "./AmenitiesField";
 import { ExtrasEditor } from "./ExtrasEditor";
 import { ImageUploader } from "./ImageUploader";
 import { ProjectSuggestInput } from "./ProjectSuggestInput";
 
-const NONE = { value: "", label: "— None —" };
-const withNone = (values: readonly string[]) => [
-  NONE,
-  ...values.map((v) => ({ value: v, label: v })),
-];
-import type { PropertyFormState } from "@/app/admin/(panel)/properties/actions";
+const withNone = (values: readonly string[]) => withEmptyOption("— None —", values);
 
 const FIELD =
   "w-full appearance-none rounded-none border-b border-border bg-transparent py-2.5 font-sans text-body text-ink focus:border-gold focus:outline-none";
@@ -43,6 +40,7 @@ export function PropertyForm({
   property?: PropertyWithImages;
 }) {
   const [state, formAction, isPending] = useActionState(action, {});
+  const [isUploading, setIsUploading] = useState(false);
 
   return (
     <form action={formAction} className="flex max-w-3xl flex-col gap-8">
@@ -185,6 +183,7 @@ export function PropertyForm({
         <span className={LABEL}>Gallery</span>
         <ImageUploader
           cloudinaryEnabled={cloudinaryEnabled}
+          onBusyChange={setIsUploading}
           initial={
             property?.images.map((img) => ({
               url: img.url,
@@ -196,15 +195,21 @@ export function PropertyForm({
       </div>
 
       {state.error && (
-        <p role="alert" className="text-meta font-sans text-[#9a2b2b]">{state.error}</p>
+        <p role="alert" className="text-meta font-sans text-error">{state.error}</p>
       )}
 
       <button
         type="submit"
-        disabled={isPending}
+        disabled={isPending || isUploading}
         className="w-fit cursor-pointer bg-ink px-8 py-3.5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
       >
-        {isPending ? "Saving..." : property ? "Save changes" : "Create property"}
+        {isUploading
+          ? "Uploading images..."
+          : isPending
+            ? "Saving..."
+            : property
+              ? "Save changes"
+              : "Create property"}
       </button>
     </form>
   );

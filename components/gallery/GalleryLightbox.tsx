@@ -3,8 +3,9 @@
 import { EASE } from "@/lib/motion";
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import type { PropertyImage } from "@/lib/db/schema";
+import { useModalLock } from "@/lib/hooks";
 import { optimizedImage } from "@/lib/images";
 
 /**
@@ -28,19 +29,20 @@ export function GalleryLightbox({
     [images.length]
   );
 
+  useModalLock(
+    openIndex !== null,
+    useCallback(() => setOpenIndex(null), [])
+  );
+
+  // Arrow-key navigation (Escape + scroll lock live in useModalLock).
   useEffect(() => {
     if (openIndex === null) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpenIndex(null);
       if (e.key === "ArrowLeft") step(-1);
       if (e.key === "ArrowRight") step(1);
     };
-    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [openIndex, step]);
 
   if (images.length === 0) return null;
@@ -63,8 +65,12 @@ export function GalleryLightbox({
               src={optimizedImage(img.url, 1000)}
               alt={img.alt || `${title} — image ${i + 1}`}
               fill
-              sizes="(min-width: 1024px) 60vw, 100vw"
-              className="object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.05]"
+              sizes={
+                i % 3 === 0
+                  ? "(min-width: 1024px) 60vw, 100vw"
+                  : "(min-width: 1024px) 30vw, (min-width: 640px) 50vw, 100vw"
+              }
+              className="img-zoom"
             />
             <span className="text-eyebrow absolute bottom-4 right-4 bg-dark-deep/60 px-2.5 py-1 font-sans tracking-[0.2em] text-cream opacity-0 backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-100">
               {String(i + 1).padStart(2, "0")}/{String(images.length).padStart(2, "0")}
@@ -75,7 +81,7 @@ export function GalleryLightbox({
 
       <AnimatePresence>
         {openIndex !== null && (
-          <motion.div
+          <m.div
             role="dialog"
             aria-modal="true"
             aria-label={`${title} gallery`}
@@ -103,7 +109,7 @@ export function GalleryLightbox({
               </button>
             </div>
 
-            <motion.div
+            <m.div
               key={openIndex}
               initial={{ opacity: 0, scale: 0.985 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -118,7 +124,7 @@ export function GalleryLightbox({
                 sizes="100vw"
                 className="object-contain"
               />
-            </motion.div>
+            </m.div>
 
             {images.length > 1 && (
               <div
@@ -147,7 +153,7 @@ export function GalleryLightbox({
                 </button>
               </div>
             )}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </>

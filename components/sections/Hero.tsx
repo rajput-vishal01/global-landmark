@@ -12,6 +12,13 @@ const SLIDES = HERO.slides;
 
 const ROTATE_MS = 6000;
 
+// Non-active slides mount only after the LCP image has had the bandwidth to
+// itself — well before the first 6s rotation.
+const WARM_DELAY_MS = 2500;
+
+const CROSSFADE =
+  "object-cover transition-opacity duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)]";
+
 /**
  * Inset cinematic hero: blurred darkened copy of the image at the edges,
  * sharp image inset within. Load-in: frame settles, gold rule draws,
@@ -23,6 +30,12 @@ export function Hero() {
   const scope = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [warm, setWarm] = useState(false);
+
+  useEffect(() => {
+    const id = setTimeout(() => setWarm(true), WARM_DELAY_MS);
+    return () => clearTimeout(id);
+  }, []);
 
   // Auto-advance; manual selection resets by re-running the effect.
   useEffect(() => {
@@ -42,9 +55,17 @@ export function Hero() {
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         // Intro must never touch .hero-frame — the exit scrub below owns its
         // scale/alpha, and two tweens on one prop desync on scroll-back.
+        // fromTo (not .from): CSS pre-hides .hero-img under html.js, so the
+        // start values must be explicit — .from would read opacity 0 and
+        // animate 0 → 0.
         gsap
           .timeline({ defaults: { ease: EASE_HEAVY } })
-          .from(".hero-img", { scale: 1.12, autoAlpha: 0, duration: 2 }, 0)
+          .fromTo(
+            ".hero-img",
+            { scale: 1.12, autoAlpha: 0 },
+            { scale: 1, autoAlpha: 1, duration: 1.2 },
+            0
+          )
           .from(".hero-rule", { scaleX: 0, duration: 1, transformOrigin: "left" }, 0.45)
           .from(".hero-cats", { autoAlpha: 0, y: 14, duration: 0.8 }, 0.9)
           .from(".hero-sub", { autoAlpha: 0, y: 14, duration: 0.8 }, 1.1)
@@ -97,37 +118,43 @@ export function Hero() {
       ref={scope}
       className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden bg-dark-deep"
     >
-      {/* Blurred backdrop tracks the active slide — same URLs as the inset
-          images, so the browser serves them from cache. */}
-      {SLIDES.map((slide, i) => (
-        <Image
-          key={`bg-${slide.category}`}
-          aria-hidden
-          src={slide.img}
-          alt=""
-          fill
-          sizes="100vw"
-          className={`scale-110 object-cover blur-2xl brightness-[0.4] transition-opacity duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
-            i === active ? "opacity-100" : "opacity-0"
-          }`}
-        />
-      ))}
-
-      <div className="hero-frame relative mx-4 mb-6 mt-20 flex-1 overflow-hidden md:mx-14 md:mb-9 md:mt-24">
-        <div className="hero-img absolute inset-0">
-          {SLIDES.map((slide, i) => (
+      {/* Blurred backdrop tracks the active slide. sizes="10vw" fetches a
+          tiny variant — full resolution is invisible under blur-2xl. */}
+      {SLIDES.map(
+        (slide, i) =>
+          (i === active || warm) && (
             <Image
-              key={slide.category}
+              key={`bg-${slide.category}`}
+              aria-hidden
               src={slide.img}
-              alt={i === active ? slide.alt : ""}
+              alt=""
               fill
-              priority={i === 0}
-              sizes="100vw"
-              className={`scale-105 object-cover transition-opacity duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)] ${
+              sizes="10vw"
+              className={`scale-110 blur-2xl brightness-[0.4] ${CROSSFADE} ${
                 i === active ? "opacity-100" : "opacity-0"
               }`}
             />
-          ))}
+          )
+      )}
+
+      <div className="hero-frame relative mx-4 mb-6 mt-20 flex-1 overflow-hidden md:mx-14 md:mb-9 md:mt-24">
+        <div className="hero-img absolute inset-0">
+          {SLIDES.map(
+            (slide, i) =>
+              (i === 0 || warm) && (
+                <Image
+                  key={slide.category}
+                  src={slide.img}
+                  alt={i === active ? slide.alt : ""}
+                  fill
+                  priority={i === 0}
+                  sizes="100vw"
+                  className={`scale-105 ${CROSSFADE} ${
+                    i === active ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              )
+          )}
         </div>
 
         {/* Legibility scrim: soft global darken + stronger lift at the base */}

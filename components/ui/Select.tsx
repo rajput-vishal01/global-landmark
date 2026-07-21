@@ -1,10 +1,11 @@
 "use client";
 
 import { EASE } from "@/lib/motion";
-import { useEffect, useId, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useId, useRef, useState } from "react";
+import { AnimatePresence, m } from "framer-motion";
+import { useOutsideClick } from "@/lib/hooks";
 
-export type SelectOption = { value: string; label: string };
+type SelectOption = { value: string; label: string };
 
 /**
  * Styled replacement for native selects — the browser popup can't be
@@ -34,14 +35,10 @@ export function Select({
 
   const selected = options.find((o) => o.value === value);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const onPointerDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setIsOpen(false);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [isOpen]);
+  useOutsideClick(
+    rootRef,
+    useCallback(() => setIsOpen(false), [])
+  );
 
   function choose(index: number) {
     if (options[index]) {
@@ -106,9 +103,10 @@ export function Select({
 
       <AnimatePresence>
         {isOpen && (
-          <motion.ul
+          <m.ul
             id={listId}
             role="listbox"
+            data-lenis-prevent
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 6 }}
@@ -135,7 +133,7 @@ export function Select({
                 </li>
               );
             })}
-          </motion.ul>
+          </m.ul>
         )}
       </AnimatePresence>
     </div>

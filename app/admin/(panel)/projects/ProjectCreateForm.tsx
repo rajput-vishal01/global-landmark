@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { FIELD, LABEL } from "@/components/form-classes";
 import { createProject, type ProjectFormState } from "./actions";
 
 const initialState: ProjectFormState = {};
@@ -14,19 +15,19 @@ export function ProjectCreateForm() {
       className="flex flex-wrap items-end gap-4 border border-border bg-white p-4"
     >
       <div className="flex min-w-48 flex-1 flex-col gap-1.5">
-        <label htmlFor="name" className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink">
+        <label htmlFor="name" className={LABEL}>
           Name
         </label>
         <input id="name" name="name" type="text" required maxLength={200}
           placeholder="e.g. Green Lotus"
-          className="border-b border-border bg-transparent py-2 font-sans text-body text-ink focus:border-gold focus:outline-none" />
+          className={FIELD} />
       </div>
       <div className="flex min-w-64 flex-[2] flex-col gap-1.5">
-        <label htmlFor="description" className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink">
+        <label htmlFor="description" className={LABEL}>
           Description <span className="normal-case text-ink-muted">(optional)</span>
         </label>
         <input id="description" name="description" type="text" maxLength={2000}
-          className="border-b border-border bg-transparent py-2 font-sans text-body text-ink focus:border-gold focus:outline-none" />
+          className={FIELD} />
       </div>
       <button
         type="submit"
@@ -36,7 +37,7 @@ export function ProjectCreateForm() {
         {isPending ? "Adding..." : "Add project"}
       </button>
       {state.error && (
-        <p role="alert" className="w-full text-meta font-sans text-[#9a2b2b]">{state.error}</p>
+        <p role="alert" className="w-full text-meta font-sans text-error">{state.error}</p>
       )}
     </form>
   );

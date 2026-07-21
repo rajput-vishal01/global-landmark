@@ -5,7 +5,9 @@ services:
       POSTGRES_PASSWORD: dev
       POSTGRES_DB: global_landmark
     ports:
-      - "5439:5432"
+      # Loopback-only — this compose file is for local testing; the DB must
+      # never be reachable from the network with this dev password.
+      - "127.0.0.1:5439:5432"
     volumes:
       # Named volume — data survives container recreation, so seeding is a
       # one-time affair.

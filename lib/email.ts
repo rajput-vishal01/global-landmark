@@ -90,7 +90,7 @@ function detailRows(data: InquiryData) {
     .join("");
 }
 
-export function renderAdminEmail(data: InquiryData) {
+function renderAdminEmail(data: InquiryData) {
   return shell(`
     <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:normal;color:${BRAND.ink};margin:0 0 8px;">New inquiry</h1>
     <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:${BRAND.muted};margin:0 0 24px;">
@@ -105,7 +105,7 @@ export function renderAdminEmail(data: InquiryData) {
   `);
 }
 
-export function renderThanksEmail(data: InquiryData) {
+function renderThanksEmail(data: InquiryData) {
   return shell(`
     <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:normal;color:${BRAND.ink};margin:0 0 8px;">Thank you for reaching out</h1>
     <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${BRAND.ink};margin:0 0 16px;">
@@ -151,12 +151,18 @@ export async function sendContactEmails(data: InquiryData): Promise<boolean> {
     html: renderAdminEmail(data),
   });
 
-  await transporter.sendMail({
-    from: `"${COMPANY.legalName}" <${from}>`,
-    to: data.email,
-    subject: `Thank you for reaching out to ${COMPANY.name}`,
-    html: renderThanksEmail(data),
-  });
+  // Confirmation is best-effort: once the admin has the inquiry, a failed
+  // courtesy email must not make the submitter retry (and double-notify).
+  try {
+    await transporter.sendMail({
+      from: `"${COMPANY.legalName}" <${from}>`,
+      to: data.email,
+      subject: `Thank you for reaching out to ${COMPANY.name}`,
+      html: renderThanksEmail(data),
+    });
+  } catch (err) {
+    console.error("Confirmation email failed (inquiry already delivered):", err);
+  }
 
   return true;
 }

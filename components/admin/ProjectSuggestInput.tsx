@@ -1,8 +1,9 @@
 "use client";
 
 import { EASE } from "@/lib/motion";
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useRef, useState } from "react";
+import { AnimatePresence, m } from "framer-motion";
+import { useOutsideClick } from "@/lib/hooks";
 
 /**
  * Free-text project field with suggestions from existing projects — never a
@@ -27,14 +28,10 @@ export function ProjectSuggestInput({
       name.toLowerCase() !== value.trim().toLowerCase()
   );
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const onPointerDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setIsOpen(false);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [isOpen]);
+  useOutsideClick(
+    rootRef,
+    useCallback(() => setIsOpen(false), [])
+  );
 
   return (
     <div ref={rootRef} className="relative">
@@ -56,11 +53,12 @@ export function ProjectSuggestInput({
       />
       <AnimatePresence>
         {isOpen && matches.length > 0 && (
-          <motion.ul
+          <m.ul
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 6 }}
             transition={{ duration: 0.25, ease: EASE }}
+            data-lenis-prevent
             className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto border border-border bg-white shadow-[0_18px_44px_-18px_rgba(20,20,20,0.3)]"
           >
             {matches.map((name) => (
@@ -77,7 +75,7 @@ export function ProjectSuggestInput({
                 </button>
               </li>
             ))}
-          </motion.ul>
+          </m.ul>
         )}
       </AnimatePresence>
     </div>

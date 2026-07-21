@@ -59,7 +59,7 @@ export function ExtrasEditor({ initial }: { initial: Extra[] }) {
               )
             }
             aria-label={`Remove additional detail ${i + 1}`}
-            className="cursor-pointer self-start px-1.5 py-2 text-[#9a2b2b] hover:opacity-70"
+            className="cursor-pointer self-start px-1.5 py-2 text-error hover:opacity-70"
           >
             ✕
           </button>

@@ -1,9 +1,10 @@
 "use client";
 
 import { EASE } from "@/lib/motion";
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useState } from "react";
+import { AnimatePresence, m } from "framer-motion";
 import type { TestimonialVideo } from "@/lib/db/schema";
+import { useModalLock } from "@/lib/hooks";
 import { videoEmbed } from "@/lib/video";
 import { VideoThumb } from "@/components/VideoThumb";
 
@@ -15,16 +16,10 @@ import { VideoThumb } from "@/components/VideoThumb";
 export function VideoTestimonials({ videos }: { videos: TestimonialVideo[] }) {
   const [openVideo, setOpenVideo] = useState<TestimonialVideo | null>(null);
 
-  useEffect(() => {
-    if (!openVideo) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpenVideo(null);
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [openVideo]);
+  useModalLock(
+    openVideo !== null,
+    useCallback(() => setOpenVideo(null), [])
+  );
 
   const isInstagram = openVideo?.provider === "instagram";
 
@@ -42,7 +37,7 @@ export function VideoTestimonials({ videos }: { videos: TestimonialVideo[] }) {
               <VideoThumb
                 provider={video.provider}
                 videoId={video.videoId}
-                className="h-full w-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.05]"
+                className="img-zoom h-full w-full"
               />
               <span
                 aria-hidden
@@ -69,7 +64,7 @@ export function VideoTestimonials({ videos }: { videos: TestimonialVideo[] }) {
 
       <AnimatePresence>
         {openVideo && (
-          <motion.div
+          <m.div
             role="dialog"
             aria-modal="true"
             aria-label={openVideo.caption || "Video"}
@@ -90,7 +85,7 @@ export function VideoTestimonials({ videos }: { videos: TestimonialVideo[] }) {
                 <path d="M4 4l16 16M20 4L4 20" />
               </svg>
             </button>
-            <motion.div
+            <m.div
               initial={{ opacity: 0, scale: 0.97 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, ease: EASE }}
@@ -118,8 +113,8 @@ export function VideoTestimonials({ videos }: { videos: TestimonialVideo[] }) {
                     : "h-full w-full"
                 }
               />
-            </motion.div>
-          </motion.div>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
     </>

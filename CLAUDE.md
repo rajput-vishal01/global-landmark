@@ -6,7 +6,7 @@ Luxury real-estate marketing site. Read this first; it links every other doc.
 
 ## Phase discipline
 
-This repo is in **build phase** (context-building ended; landing page, subpages, and the July 2026 feature expansion — DB, admin subdomain panel, live listings, news — are shipped; see [README.md](README.md) and [TASKS.md](TASKS.md)). Rules:
+This repo is in **build phase** (context-building ended; landing page, subpages, and the July 2026 feature expansion — DB, admin panel at /admin, live listings, news — are shipped; see [README.md](README.md) and [TASKS.md](TASKS.md)). Rules:
 - Every coding session starts by reading this file + the linked docs below.
 - Next.js in this repo is v16 (App Router, `proxy.ts` not `middleware.ts` — see [TECH_STACK.md](TECH_STACK.md)). Check `node_modules/next/dist/docs/` for anything that looks unfamiliar before writing code — do not assume prior Next.js training data holds.
 

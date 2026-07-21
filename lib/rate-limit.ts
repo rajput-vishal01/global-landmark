@@ -15,18 +15,32 @@ function hit(bucket: string, max: number): boolean {
   if (recent.length >= max) return true;
   recent.push(now);
   logs.set(bucket, recent);
-  if (logs.size > 10_000) logs.clear(); // memory backstop
+  if (logs.size > 10_000) {
+    // Memory backstop: evict per-key buckets only — the :g buckets are the
+    // spoofing backstop and must survive (an attacker fabricating keys must
+    // not be able to reset the global caps).
+    for (const k of logs.keys()) {
+      if (!k.endsWith(":g")) logs.delete(k);
+      if (logs.size <= 5_000) break;
+    }
+  }
   return false;
 }
 
-/** True when this key (or the scope as a whole) is over its hourly budget. */
+/**
+ * True when this key (or the scope as a whole) is over its hourly budget.
+ * Per-key is checked first so requests already rejected there don't consume
+ * the global budget — otherwise one hammering IP could exhaust the global
+ * cap and lock the endpoint for everyone.
+ */
 export function isRateLimited(
   scope: string,
   key: string,
   perKeyMax: number,
   globalMax: number
 ): boolean {
-  return hit(`${scope}:g`, globalMax) || hit(`${scope}:${key}`, perKeyMax);
+  if (hit(`${scope}:${key}`, perKeyMax)) return true;
+  return hit(`${scope}:g`, globalMax);
 }
 
 /** Best-effort client key for rate limiting; spoofable — pair with globalMax. */

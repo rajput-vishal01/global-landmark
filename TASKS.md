@@ -10,7 +10,7 @@ the Week queue, scrolling testimonials, WhatsApp dock + inquiry pop-up,
 activity ticker, `/news` via newsdata.io. See [README.md](README.md).
 
 Outstanding from that expansion (client inputs): WhatsApp number, admin
-subdomain name + DNS, Cloudinary + newsdata.io keys, society naming
+domain + DNS, Cloudinary + newsdata.io keys, society naming
 conventions, ticker style sign-off (marquee vs. quieter toast).
 
 ## Phase 0 — Open decisions (resolve before or at start of Phase 1)

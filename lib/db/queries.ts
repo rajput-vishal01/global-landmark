@@ -28,92 +28,104 @@ export function todayIST(): string {
   );
 }
 
-export type PropertyFilters = {
+/** Canonical gallery order — admin edit page must match the public pages. */
+export const IMAGE_ORDER = [asc(propertyImages.sortOrder), asc(propertyImages.id)];
+
+type PropertyFilters = {
   category?: CategoryValue;
   propertyType?: string;
   possessionStatus?: string;
   furnishing?: string;
 };
 
-async function listPropertiesUncached(
-  filters: PropertyFilters = {}
-): Promise<PropertyWithImages[]> {
-  const conditions = [
-    filters.category ? eq(properties.category, filters.category) : undefined,
-    filters.propertyType ? eq(properties.propertyType, filters.propertyType) : undefined,
-    filters.possessionStatus
-      ? eq(properties.possessionStatus, filters.possessionStatus)
-      : undefined,
-    filters.furnishing ? eq(properties.furnishing, filters.furnishing) : undefined,
-  ].filter((c): c is NonNullable<typeof c> => Boolean(c));
+/**
+ * Fail-soft wrapper OUTSIDE the cache: the cached inner query throws on DB
+ * failure (unstable_cache never stores errors), so a DB blip degrades that
+ * one render instead of poisoning the cache with empty data for an hour.
+ */
+function failSoft<A extends unknown[], R>(
+  fn: (...args: A) => Promise<R>,
+  label: string,
+  fallback: R
+): (...args: A) => Promise<R> {
+  return async (...args: A) => {
+    try {
+      return await fn(...args);
+    } catch (err) {
+      console.error(`${label} failed:`, err);
+      return fallback;
+    }
+  };
+}
 
-  try {
-    return await db.query.properties.findMany({
+const listPropertiesCached = unstable_cache(
+  async (filters: PropertyFilters = {}): Promise<PropertyWithImages[]> => {
+    const conditions = [
+      filters.category ? eq(properties.category, filters.category) : undefined,
+      filters.propertyType ? eq(properties.propertyType, filters.propertyType) : undefined,
+      filters.possessionStatus
+        ? eq(properties.possessionStatus, filters.possessionStatus)
+        : undefined,
+      filters.furnishing ? eq(properties.furnishing, filters.furnishing) : undefined,
+    ].filter((c): c is NonNullable<typeof c> => Boolean(c));
+
+    // Cards only render the cover image — fetching whole galleries here
+    // would bloat every cached list entry.
+    return db.query.properties.findMany({
       where: conditions.length ? and(...conditions) : undefined,
       with: {
-        images: { orderBy: [asc(propertyImages.sortOrder), asc(propertyImages.id)] },
+        images: { orderBy: IMAGE_ORDER, limit: 1 },
         project: true,
       },
       orderBy: [desc(properties.createdAt)],
     });
-  } catch (err) {
-    console.error("listProperties failed:", err);
-    return [];
-  }
-}
-
-export const listProperties = unstable_cache(
-  listPropertiesUncached,
+  },
   ["listProperties"],
   CACHE_OPTS
 );
 
-async function getFeaturedPropertiesUncached(
-  limit = 6
-): Promise<PropertyWithImages[]> {
-  try {
-    return await db.query.properties.findMany({
+export const listProperties = failSoft(listPropertiesCached, "listProperties", []);
+
+const getFeaturedPropertiesCached = unstable_cache(
+  async (limit = 6): Promise<PropertyWithImages[]> =>
+    db.query.properties.findMany({
       with: {
-        images: { orderBy: [asc(propertyImages.sortOrder), asc(propertyImages.id)] },
+        images: { orderBy: IMAGE_ORDER, limit: 1 },
         project: true,
       },
       orderBy: [desc(properties.createdAt)],
       limit,
-    });
-  } catch (err) {
-    console.error("getFeaturedProperties failed:", err);
-    return [];
-  }
-}
-
-export const getFeaturedProperties = unstable_cache(
-  getFeaturedPropertiesUncached,
+    }),
   ["getFeaturedProperties"],
   CACHE_OPTS
 );
 
-async function getPropertyBySlugUncached(
-  slug: string
-): Promise<PropertyWithImages | null> {
-  try {
+export const getFeaturedProperties = failSoft(
+  getFeaturedPropertiesCached,
+  "getFeaturedProperties",
+  []
+);
+
+const getPropertyBySlugCached = unstable_cache(
+  async (slug: string): Promise<PropertyWithImages | null> => {
     const row = await db.query.properties.findFirst({
       where: eq(properties.slug, slug),
       with: {
-        images: { orderBy: [asc(propertyImages.sortOrder), asc(propertyImages.id)] },
+        // Full gallery — the detail page renders every image.
+        images: { orderBy: IMAGE_ORDER },
         project: true,
       },
     });
     return row ?? null;
-  } catch (err) {
-    console.error("getPropertyBySlug failed:", err);
-    return null;
-  }
-}
-
-export const getPropertyBySlug = unstable_cache(
-  getPropertyBySlugUncached,
+  },
   ["getPropertyBySlug"],
   CACHE_OPTS
+);
+
+export const getPropertyBySlug = failSoft(
+  getPropertyBySlugCached,
+  "getPropertyBySlug",
+  null
 );
 
 export async function searchProperties(
@@ -145,7 +157,7 @@ export async function searchProperties(
     return await db.query.properties.findMany({
       where: and(...tokenConditions),
       with: {
-        images: { orderBy: [asc(propertyImages.sortOrder), asc(propertyImages.id)] },
+        images: { orderBy: IMAGE_ORDER, limit: 1 },
         project: true,
       },
       // Relevance: whole-phrase title hits first, then location hits,
@@ -165,8 +177,8 @@ export async function searchProperties(
 
 export type ActiveDeal = Deal & { property: PropertyWithImages };
 
-async function getActiveDealForDate(today: string): Promise<ActiveDeal | null> {
-  try {
+const getActiveDealCached = unstable_cache(
+  async (today: string): Promise<ActiveDeal | null> => {
     const row = await db.query.deals.findFirst({
       where: and(lte(deals.startsAt, today), gte(deals.endsAt, today)),
       orderBy: [asc(deals.startsAt)],
@@ -174,7 +186,7 @@ async function getActiveDealForDate(today: string): Promise<ActiveDeal | null> {
         property: {
           with: {
             images: {
-              orderBy: [asc(propertyImages.sortOrder), asc(propertyImages.id)],
+              orderBy: IMAGE_ORDER,
             },
             project: true,
           },
@@ -182,14 +194,7 @@ async function getActiveDealForDate(today: string): Promise<ActiveDeal | null> {
       },
     });
     return (row as ActiveDeal | undefined) ?? null;
-  } catch (err) {
-    console.error("getActiveDeal failed:", err);
-    return null;
-  }
-}
-
-const getActiveDealCached = unstable_cache(
-  getActiveDealForDate,
+  },
   ["getActiveDeal"],
   CACHE_OPTS
 );
@@ -198,25 +203,22 @@ const getActiveDealCached = unstable_cache(
  * The deal whose window covers today (IST); earliest start wins on overlap.
  * The date is part of the cache key, so the result rolls over at midnight.
  */
-export function getActiveDeal(): Promise<ActiveDeal | null> {
-  return getActiveDealCached(todayIST());
-}
+export const getActiveDeal = (): Promise<ActiveDeal | null> =>
+  failSoft(getActiveDealCached, "getActiveDeal", null)(todayIST());
 
-async function listTestimonialVideosUncached(): Promise<TestimonialVideo[]> {
-  try {
-    return await db.query.testimonialVideos.findMany({
+const listTestimonialVideosCached = unstable_cache(
+  async (): Promise<TestimonialVideo[]> =>
+    db.query.testimonialVideos.findMany({
       orderBy: [asc(testimonialVideos.sortOrder), desc(testimonialVideos.createdAt)],
-    });
-  } catch (err) {
-    console.error("listTestimonialVideos failed:", err);
-    return [];
-  }
-}
-
-export const listTestimonialVideos = unstable_cache(
-  listTestimonialVideosUncached,
+    }),
   ["listTestimonialVideos"],
   CACHE_OPTS
+);
+
+export const listTestimonialVideos = failSoft(
+  listTestimonialVideosCached,
+  "listTestimonialVideos",
+  []
 );
 
 export async function listProjects(): Promise<Project[]> {
