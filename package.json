@@ -5,7 +5,7 @@
   "scripts": {
     "predev": "node scripts/dev-db.mjs",
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/migrate.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "db:push": "drizzle-kit push",

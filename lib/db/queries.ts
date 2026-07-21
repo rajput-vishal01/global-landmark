@@ -42,6 +42,8 @@ type PropertyFilters = {
  * Fail-soft wrapper OUTSIDE the cache: the cached inner query throws on DB
  * failure (unstable_cache never stores errors), so a DB blip degrades that
  * one render instead of poisoning the cache with empty data for an hour.
+ * One delayed retry absorbs serverless-Postgres cold starts (Neon suspends
+ * on idle and the first query after wake often fails).
  */
 function failSoft<A extends unknown[], R>(
   fn: (...args: A) => Promise<R>,
@@ -52,8 +54,14 @@ function failSoft<A extends unknown[], R>(
     try {
       return await fn(...args);
     } catch (err) {
-      console.error(`${label} failed:`, err);
-      return fallback;
+      console.error(`${label} failed, retrying once:`, err);
+      await new Promise((r) => setTimeout(r, 1500));
+      try {
+        return await fn(...args);
+      } catch (retryErr) {
+        console.error(`${label} failed after retry:`, retryErr);
+        return fallback;
+      }
     }
   };
 }
