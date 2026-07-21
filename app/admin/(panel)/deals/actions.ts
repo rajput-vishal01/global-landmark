@@ -36,7 +36,7 @@ export async function createDeal(
     return { error: "Could not save the deal. Try again." };
   }
   revalidatePublicSite();
-  redirect("/deals");
+  redirect("/admin/deals");
 }
 
 export async function deleteDeal(
@@ -53,5 +53,5 @@ export async function deleteDeal(
     return { error: "Delete failed. Try again." };
   }
   revalidatePublicSite();
-  redirect("/deals");
+  redirect("/admin/deals");
 }

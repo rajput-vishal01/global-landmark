@@ -272,7 +272,7 @@ export async function createProperty(
     return { error: "Could not save the property. Check the fields and try again." };
   }
   revalidatePublicSite();
-  redirect("/properties");
+  redirect("/admin/properties");
 }
 
 export async function updateProperty(
@@ -323,7 +323,7 @@ export async function updateProperty(
     console.error("updateProperty: replaced Cloudinary images not removed:", removed, err);
   }
   revalidatePublicSite();
-  redirect("/properties");
+  redirect("/admin/properties");
 }
 
 export type DeleteState = { error?: string };
@@ -354,7 +354,7 @@ export async function deleteProperty(
     return { error: "Delete failed — remote images were not removed. Try again." };
   }
   revalidatePublicSite();
-  redirect("/properties");
+  redirect("/admin/properties");
 }
 
 /** Signed params for direct browser upload; null = paste-URL fallback mode. */

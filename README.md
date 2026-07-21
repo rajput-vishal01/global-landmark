@@ -24,12 +24,12 @@ docker compose up --build   # web (Dockerfile, standalone build) + db on :3000
 ```
 
 Same database volume as dev — whatever you seeded or added in the admin is
-what the containerized site serves. Admin at `http://admin.localhost:3000`.
+what the containerized site serves. Admin at `http://localhost:3000/admin`.
 
 ## Admin panel
 
-Served **only** on the `admin.` subdomain — `http://admin.localhost:3000` in
-dev. `/admin` on the main domain is a 404 by design (`proxy.ts`). Sign in
+Served at `/admin` — `http://localhost:3000/admin` in dev. Unauthenticated
+visits redirect to `/admin/login` (`proxy.ts`). Sign in
 with `ADMIN_PASSWORD`. Manages properties (multi-image galleries via
 Cloudinary or pasted URLs), projects/societies, and the Deal of the Week
 queue (date-windowed; the active window shows on the landing page, queued
@@ -41,7 +41,7 @@ fails — no orphaned images.
 ## Layout
 
 - `app/(site)/` — public routes (home, properties + `[slug]` detail, news, about, contact)
-- `app/admin/` — panel (login + `(panel)` CRUD pages), reachable via subdomain rewrite only
+- `app/admin/` — panel (login + `(panel)` CRUD pages), session-gated at /admin
 - `app/api/search` — portfolio search endpoint (hero + menu search UI)
 - `components/sections/` — page sections (Hero, FeaturedListings, DealOfWeek, ...)
 - `components/ui/`, `components/admin/`, `components/gallery/` — primitives, admin forms, lightbox

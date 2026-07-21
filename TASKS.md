@@ -3,7 +3,7 @@
 Context-building phase produced all `.md` docs; the build is now underway.
 Shipped since: landing page + subpages (earlier sessions), then the July 2026
 feature expansion — PostgreSQL/Drizzle data layer, admin panel behind the
-`admin.` subdomain (properties/projects/deals CRUD, Cloudinary galleries with
+`/admin` route (properties/projects/deals CRUD, Cloudinary galleries with
 cascade delete), live `/properties` + `[slug]` detail pages with category
 filter, portfolio search, hero Sale/Purchase/Lease/Invest rotator, Deal of
 the Week queue, scrolling testimonials, WhatsApp dock + inquiry pop-up,

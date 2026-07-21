@@ -14,7 +14,7 @@ export default async function AdminPropertiesPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-serif text-h2 text-ink">Properties</h1>
         <Link
-          href="/properties/new"
+          href="/admin/properties/new"
           className="bg-ink px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
         >
           Add property
@@ -51,7 +51,7 @@ export default async function AdminPropertiesPage() {
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-5">
                       <Link
-                        href={`/properties/${p.id}/edit`}
+                        href={`/admin/properties/${p.id}/edit`}
                         className="text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
                       >
                         Edit

@@ -22,9 +22,9 @@ export default async function AdminDashboard() {
   const [stats, activeDeal] = await Promise.all([counts(), getActiveDeal()]);
 
   const cards = [
-    { label: "Properties", value: stats.properties, href: "/properties" },
-    { label: "Projects", value: stats.projects, href: "/projects" },
-    { label: "Live & queued deals", value: stats.deals, href: "/deals" },
+    { label: "Properties", value: stats.properties, href: "/admin/properties" },
+    { label: "Projects", value: stats.projects, href: "/admin/projects" },
+    { label: "Live & queued deals", value: stats.deals, href: "/admin/deals" },
   ];
 
   return (
@@ -53,7 +53,7 @@ export default async function AdminDashboard() {
       </div>
       <div>
         <Link
-          href="/properties/new"
+          href="/admin/properties/new"
           className="inline-block bg-ink px-8 py-3.5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
         >
           Add a property

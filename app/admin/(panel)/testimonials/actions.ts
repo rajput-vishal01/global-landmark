@@ -33,7 +33,7 @@ export async function createTestimonialVideo(
     return { error: "Could not save the video. Try again." };
   }
   revalidatePublicSite();
-  redirect("/testimonials");
+  redirect("/admin/testimonials");
 }
 
 export async function deleteTestimonialVideo(
@@ -50,5 +50,5 @@ export async function deleteTestimonialVideo(
     return { error: "Delete failed. Try again." };
   }
   revalidatePublicSite();
-  redirect("/testimonials");
+  redirect("/admin/testimonials");
 }

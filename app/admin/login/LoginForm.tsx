@@ -10,7 +10,7 @@ export function LoginForm() {
 
   // Hard navigation so the request passes through the proxy's host rewrite.
   useEffect(() => {
-    if (state.success) window.location.replace("/");
+    if (state.success) window.location.replace("/admin");
   }, [state.success]);
 
   return (

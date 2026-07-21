@@ -28,7 +28,7 @@ export async function createProject(
     return { error: "Could not save — a project with that name may already exist." };
   }
   revalidatePublicSite();
-  redirect("/projects");
+  redirect("/admin/projects");
 }
 
 export async function deleteProject(
@@ -57,5 +57,5 @@ export async function deleteProject(
     return { error: "Delete failed. Try again." };
   }
   revalidatePublicSite();
-  redirect("/projects");
+  redirect("/admin/projects");
 }

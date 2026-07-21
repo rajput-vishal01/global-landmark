@@ -10,7 +10,7 @@ export function LogoutButton() {
 
   // Hard navigation so the request passes through the proxy's host rewrite.
   useEffect(() => {
-    if (state.done) window.location.replace("/login");
+    if (state.done) window.location.replace("/admin/login");
   }, [state.done]);
 
   return (
