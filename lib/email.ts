@@ -7,6 +7,8 @@ export type InquiryData = {
   phone: string;
   interest: string;
   message: string;
+  /** Set when the inquiry came from the enquiry cart (R-05) — every shortlisted property, ref code included. */
+  properties?: { refCode: string | null; title: string }[];
 };
 
 const BRAND = {
@@ -90,13 +92,34 @@ function detailRows(data: InquiryData) {
     .join("");
 }
 
+function propertiesList(data: InquiryData) {
+  if (!data.properties?.length) return "";
+  const rows = data.properties
+    .map(
+      (p) => `
+      <tr>
+        <td style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${BRAND.ink};padding:6px 0;border-top:1px solid ${BRAND.border};">
+          ${escapeHtml(p.title)}${p.refCode ? ` <span style="color:${BRAND.muted};">(${escapeHtml(p.refCode)})</span>` : ""}
+        </td>
+      </tr>`
+    )
+    .join("");
+  return `
+    <tr>
+      <td style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${BRAND.muted};padding:14px 0 4px;border-top:1px solid ${BRAND.border};">
+        Shortlisted properties (${data.properties.length})
+      </td>
+    </tr>
+    ${rows}`;
+}
+
 function renderAdminEmail(data: InquiryData) {
   return shell(`
     <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:normal;color:${BRAND.ink};margin:0 0 8px;">New inquiry</h1>
     <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:${BRAND.muted};margin:0 0 24px;">
       Submitted through the website contact form.
     </p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows(data)}</table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows(data)}${propertiesList(data)}</table>
     <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:24px;">
       <tr><td style="background-color:${BRAND.navy};">
         <a href="mailto:${escapeHtml(data.email)}" style="display:inline-block;padding:12px 28px;font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:${BRAND.cream};text-decoration:none;">Reply to ${escapeHtml(data.name)}</a>
@@ -118,7 +141,7 @@ function renderThanksEmail(data: InquiryData) {
     <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${BRAND.muted};margin:0 0 24px;">
       For your records, a copy of what you sent is below.
     </p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows(data)}</table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows(data)}${propertiesList(data)}</table>
     <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${BRAND.ink};margin:24px 0 0;">
       With regards,<br/>
       <span style="font-family:Georgia,'Times New Roman',serif;color:${BRAND.goldDeep};">${COMPANY.legalName}</span>

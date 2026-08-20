@@ -1,9 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { LABEL } from "@/components/form-classes";
 import { Select } from "@/components/ui/Select";
 import { submitInquiry, type InquiryState } from "@/app/(site)/contact/actions";
+
+const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"] as const;
 
 const FIELD_CLASSES =
   "w-full appearance-none rounded-none border-b border-border bg-transparent py-3 font-sans text-body text-ink placeholder:text-ink-muted/60 focus:border-gold focus:outline-none";
@@ -13,10 +16,37 @@ const initialState: InquiryState = { status: "idle" };
 /**
  * idPrefix keeps field ids unique when two forms are in the DOM at once —
  * the WhatsApp dock modal renders one over pages that already have one.
+ *
+ * `propertyIds` and `source` are set by the enquiry cart panel (R-05) so
+ * one submit covers every shortlisted property; every other caller omits
+ * them and gets the plain single-message form unchanged.
  */
-export function ContactForm({ idPrefix = "" }: { idPrefix?: string }) {
+export function ContactForm({
+  idPrefix = "",
+  propertyIds = [],
+  source,
+}: {
+  idPrefix?: string;
+  propertyIds?: number[];
+  source?: string;
+}) {
   const [state, formAction, isPending] = useActionState(submitInquiry, initialState);
   const fid = (name: string) => `${idPrefix}${name}`;
+  const pathname = usePathname();
+
+  // Written directly to the DOM after mount, not React state — these are
+  // uncontrolled hidden inputs, and useSearchParams() would force every
+  // page rendering this form into a Suspense boundary just to fill in
+  // five fields that are empty on the vast majority of visits anyway.
+  const utmRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    for (const key of UTM_KEYS) {
+      const value = params.get(key);
+      const input = utmRefs.current[key];
+      if (value && input) input.value = value;
+    }
+  }, []);
 
   if (state.status === "sent") {
     return (
@@ -41,6 +71,20 @@ export function ContactForm({ idPrefix = "" }: { idPrefix?: string }) {
         aria-hidden="true"
         className="hidden"
       />
+      <input type="hidden" name="propertyIdsJson" value={JSON.stringify(propertyIds)} />
+      <input type="hidden" name="pageUrl" value={pathname} />
+      <input type="hidden" name="source" value={source ?? "contact_form"} />
+      {UTM_KEYS.map((key) => (
+        <input
+          key={key}
+          ref={(el) => {
+            utmRefs.current[key] = el;
+          }}
+          type="hidden"
+          name={key}
+          defaultValue=""
+        />
+      ))}
 
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
