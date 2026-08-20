@@ -1,0 +1,29 @@
+# Doc manifest for /gsd-ingest-docs.
+# Precedence: lower wins. REQUIREMENTS_V2 is the signed scope contract for
+# this round and supersedes the older context docs where they disagree
+# (see its section 3.1).
+docs:
+  - path: docs/REQUIREMENTS_V2.md
+    type: SPEC
+    precedence: 0
+  - path: docs/TECH_STACK.md
+    type: ADR
+    precedence: 1
+  - path: docs/PROJECT_OVERVIEW.md
+    type: DOC
+    precedence: 2
+  - path: docs/BRAND_GUIDELINES.md
+    type: DOC
+    precedence: 2
+  - path: docs/DESIGN_LANGUAGE.md
+    type: DOC
+    precedence: 2
+  - path: docs/ANIMATION_GUIDELINES.md
+    type: DOC
+    precedence: 2
+  - path: docs/SITE_ARCHITECTURE.md
+    type: DOC
+    precedence: 3
+  - path: docs/CONTENT_MODEL.md
+    type: DOC
+    precedence: 3

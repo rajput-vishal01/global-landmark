@@ -1,0 +1,13 @@
+{
+  "source_path": "D:/syncai/global-landmark/docs/TECH_STACK.md",
+  "type": "ADR",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Tech Stack",
+  "summary": "Locked stack and structure decisions: Next.js 16 App Router, React 19, Tailwind v4 tokens, GSAP + Framer Motion, folder layout, ponytail code conventions.",
+  "scope": ["Next.js 16 App Router", "React 19", "proxy.ts", "Tailwind CSS v4", "design tokens", "GSAP", "@gsap/react useGSAP", "Framer Motion", "folder structure", "next/font", "ponytail conventions"],
+  "cross_refs": ["DESIGN_LANGUAGE.md", "BRAND_GUIDELINES.md", "ANIMATION_GUIDELINES.md", "CONTENT_MODEL.md", "../AGENTS.md", "../CLAUDE.md"],
+  "locked": false,
+  "precedence": 1,
+  "notes": "Type set by MANIFEST_TYPE=ADR (heuristics would read DOC/SPEC hybrid). No Status: Accepted field present, so locked=false per rule. Component library explicitly undecided."
+}

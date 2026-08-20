@@ -1,0 +1,13 @@
+{
+  "source_path": "D:/syncai/global-landmark/docs/BRAND_GUIDELINES.md",
+  "type": "DOC",
+  "confidence": "high",
+  "manifest_override": true,
+  "title": "Brand Guidelines",
+  "summary": "Brand palette, derived neutral tokens, typography direction, logo usage rules, and voice/tone guidance for Global Landmark.",
+  "scope": ["palette", "gold accent", "navy ink", "derived neutral tokens", "typography direction", "eyebrow labels", "logo usage", "voice and tone", "CTA copy"],
+  "cross_refs": ["DESIGN_REFERENCES.md", "DESIGN_LANGUAGE.md", "DESIGN_LANGUAGE.md#typography-scale", "TASKS.md"],
+  "locked": false,
+  "precedence": 2,
+  "notes": ""
+}
