@@ -697,6 +697,7 @@ export type PropertyImage = typeof propertyImages.$inferSelect;
 export type PropertyMedium = typeof propertyMedia.$inferSelect;
 export type Deal = typeof deals.$inferSelect;
 export type Lead = typeof leads.$inferSelect;
+export type CrmClient = typeof crmClients.$inferSelect;
 
 /**
  * The FULL row, internal columns included. Admin-only by construction —

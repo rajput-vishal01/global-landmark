@@ -20,7 +20,8 @@ const NAV: { label: string; href: string | null }[] = [
   { label: "Properties", href: "/admin/properties" },
   { label: "Projects", href: "/admin/projects" },
   { label: "Builders", href: "/admin/builders" },
-  { label: "Leads", href: null },
+  { label: "Leads", href: "/admin/leads" },
+  { label: "CRM", href: "/admin/crm" },
   { label: "Deal of the Week", href: "/admin/deals" },
   { label: "Testimonials", href: "/admin/testimonials" },
 ];
