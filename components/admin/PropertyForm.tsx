@@ -11,19 +11,18 @@ import {
   FURNISHINGS,
   POSSESSION_STATUSES,
   PROPERTY_TYPES,
+  SUGGESTED_AMENITIES,
   withEmptyOption,
 } from "@/lib/attributes";
-import { LABEL } from "@/components/form-classes";
+import { FIELD, LABEL } from "@/components/form-classes";
 import { Select } from "@/components/ui/Select";
-import { AmenitiesField } from "./AmenitiesField";
+import { ChecklistField } from "./ChecklistField";
 import { ExtrasEditor } from "./ExtrasEditor";
 import { ImageUploader } from "./ImageUploader";
 import { ProjectSuggestInput } from "./ProjectSuggestInput";
 
 const withNone = (values: readonly string[]) => withEmptyOption("— None —", values);
 
-const FIELD =
-  "w-full appearance-none rounded-none border-b border-border bg-transparent py-2.5 font-sans text-body text-ink focus:border-gold focus:outline-none";
 type Action = (
   prev: PropertyFormState,
   formData: FormData
@@ -174,7 +173,13 @@ export function PropertyForm({
 
       <div className="flex flex-col gap-2">
         <span className={LABEL}>Amenities</span>
-        <AmenitiesField initial={property?.amenities ?? []} />
+        <ChecklistField
+          name="amenitiesJson"
+          options={SUGGESTED_AMENITIES}
+          initial={property?.amenities ?? []}
+          allowCustom
+          customPlaceholder="Add an amenity not listed above"
+        />
       </div>
 
       <div className="flex flex-col gap-2">
