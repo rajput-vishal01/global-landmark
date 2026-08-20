@@ -1,93 +1,97 @@
 /**
- * Property attribute taxonomy — the non-CRM subset of the client's field
- * wishlist. Every field is optional on a property; empty values simply
- * don't render.
+ * Property attribute taxonomy — barrel.
+ *
+ * The real lists live in lib/taxonomy/* (they outgrew one file once the CFF
+ * field form landed). This file stays as the import surface every existing
+ * component already uses, so splitting the lists cost no call-site churn.
+ * New code may import from lib/taxonomy/* directly.
  */
 
-export const PROPERTY_TYPES = [
-  "Flat/Apartment",
-  "Builder Floor",
-  "Independent House",
-  "Villa",
-  "Penthouse",
-  "Studio Apartment",
-  "Farm House",
-  "Residential Plot",
-  "Commercial Plot",
-  "SCO",
-  "Shop",
-  "Office Space",
-  "Showroom",
-  "Warehouse",
-] as const;
+export {
+  AREA_UNITS,
+  AREA_MEASURES,
+  formatArea,
+  toSqft,
+  isAreaUnit,
+  type AreaUnit,
+  type AreaMeasureKey,
+} from "./taxonomy/area";
 
-export const FACINGS = [
-  "North",
-  "South",
-  "East",
-  "West",
-  "North-East",
-  "North-West",
-  "South-East",
-  "South-West",
-] as const;
+export {
+  PROPERTY_TYPES,
+  DEAL_ATTRIBUTES,
+  FACINGS,
+  POSSESSION_STATUSES,
+  PROPERTY_AGES,
+  FURNISHINGS,
+  FURNISHING_ITEMS,
+  CONFIGURATIONS,
+  CONFIGURATION_TEMPLATES,
+  ROOM_FLAGS,
+  isConfiguration,
+  type PropertyType,
+  type Configuration,
+} from "./taxonomy/property";
 
-export const POSSESSION_STATUSES = [
-  "Ready to Move",
-  "Under Construction",
-  "New Launch",
-] as const;
+export {
+  AMENITIES,
+  AMENITY_GROUPS,
+  PARKING_TYPES,
+  PLC_ATTRIBUTES,
+  LEGAL_FLAGS,
+  INTERNAL_LEGAL_FLAGS,
+  DOCUMENTATION_FLAGS,
+  LOAN_FLAGS,
+} from "./taxonomy/features";
 
-export const FURNISHINGS = [
-  "Unfurnished",
-  "Semi Furnished",
-  "Fully Furnished",
-  "Luxury Furnished",
-] as const;
+export {
+  CHARGE_TYPES,
+  CHARGE_BASES,
+  isChargeBasis,
+  formatRupees,
+  formatIndianShort,
+  allInPrice,
+  priceBand,
+  PRICE_BANDS,
+  type Charge,
+  type ChargeType,
+  type ChargeBasis,
+  type PriceBand,
+} from "./taxonomy/price";
 
-export const AREA_UNITS = [
-  { value: "sqft", label: "Sq Ft" },
-  { value: "sqyd", label: "Sq Yd" },
-  { value: "marla", label: "Marla" },
-  { value: "kanal", label: "Kanal" },
-  { value: "acre", label: "Acre" },
-] as const;
+export {
+  LISTING_STATUSES,
+  STATUS_BADGE,
+  PUBLIC_STATUSES,
+  PUBLICATION_STATES,
+  ADDED_BY,
+  SELLER_CATEGORIES,
+  OWNER_TYPES,
+  isPubliclyVisible,
+  refCode,
+  cityCode,
+  daysOnMarket,
+  type ListingStatus,
+  type PublicationState,
+} from "./taxonomy/status";
 
+export {
+  COLLECTIONS,
+  collectionOf,
+  collectionLabel,
+  isCollection,
+  typesInCollection,
+  type CollectionValue,
+} from "./taxonomy/collections";
 
-function areaUnitLabel(unit: string): string {
-  return AREA_UNITS.find((u) => u.value === unit)?.label ?? unit;
-}
+/**
+ * Amenity checkboxes in the admin. Kept as the old export name because the
+ * form imports it; free-typed amenities are still preserved alongside.
+ */
+export { AMENITIES as SUGGESTED_AMENITIES } from "./taxonomy/features";
 
-export function formatArea(value: number, unit: string): string {
-  return `${value.toLocaleString("en-IN")} ${areaUnitLabel(unit)}`;
-}
-
-/** Offered as checkboxes in the admin; free-typed amenities are also kept. */
 /** Prepends an empty "any/none" choice to a Select option list. */
 export const withEmptyOption = (label: string, values: readonly string[]) => [
   { value: "", label },
   ...values.map((v) => ({ value: v, label: v })),
 ];
-
-export const SUGGESTED_AMENITIES = [
-  "Gated Community",
-  "Lift",
-  "Power Backup",
-  "Covered Parking",
-  "Visitor Parking",
-  "Security / CCTV",
-  "Club House",
-  "Swimming Pool",
-  "Gym",
-  "Park Facing",
-  "Corner",
-  "Children's Play Area",
-  "Jogging Track",
-  "EV Charging",
-  "Modular Kitchen",
-  "Vastu Compliant",
-  "Terrace / Roof Rights",
-  "Servant Room",
-  "Pooja Room",
-  "Study Room",
-] as const;
