@@ -1,4 +1,4 @@
-import { COMPANY } from "@/lib/data";
+import { resolveCompany } from "@/lib/site-settings";
 
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -21,8 +21,9 @@ export function jsonLdHtml(data: object): string {
     .replace(/&/g, "\\u0026");
 }
 
-/** Organization / LocalBusiness JSON-LD for the whole site. */
-export function organizationJsonLd() {
+/** Organization / LocalBusiness JSON-LD for the whole site (R-36: contact details resolve through any admin override). */
+export async function organizationJsonLd() {
+  const COMPANY = await resolveCompany();
   return {
     "@context": "https://schema.org",
     "@type": "RealEstateAgent",

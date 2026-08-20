@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
-import { COMPANY } from "@/lib/data";
+import { resolveCompany } from "@/lib/site-settings";
+
+type ResolvedCompany = Awaited<ReturnType<typeof resolveCompany>>;
 
 export type InquiryData = {
   name: string;
@@ -39,7 +41,7 @@ function escapeHtml(value: string) {
 }
 
 /** Shared shell: cream background, navy header with serif wordmark, card body. */
-function shell(bodyHtml: string) {
+function shell(bodyHtml: string, company: ResolvedCompany) {
   return `<!DOCTYPE html>
 <html>
 <body style="margin:0;padding:0;background-color:${BRAND.cream};">
@@ -48,8 +50,8 @@ function shell(bodyHtml: string) {
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
         <tr>
           <td style="background-color:${BRAND.navy};padding:28px 32px;text-align:center;">
-            <span style="font-family:Georgia,'Times New Roman',serif;font-size:20px;letter-spacing:4px;color:${BRAND.cream};text-transform:uppercase;">${COMPANY.name}</span><br/>
-            <span style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:4px;color:${BRAND.gold};text-transform:uppercase;">${COMPANY.tagline}</span>
+            <span style="font-family:Georgia,'Times New Roman',serif;font-size:20px;letter-spacing:4px;color:${BRAND.cream};text-transform:uppercase;">${company.name}</span><br/>
+            <span style="font-family:Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:4px;color:${BRAND.gold};text-transform:uppercase;">${company.tagline}</span>
           </td>
         </tr>
         <tr>
@@ -60,7 +62,7 @@ function shell(bodyHtml: string) {
         <tr>
           <td style="padding:20px 32px;text-align:center;">
             <span style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${BRAND.muted};">
-              ${COMPANY.legalName} · ${COMPANY.addressLines.join(", ")}
+              ${company.legalName} · ${company.addressLines.join(", ")}
             </span>
           </td>
         </tr>
@@ -113,8 +115,9 @@ function propertiesList(data: InquiryData) {
     ${rows}`;
 }
 
-function renderAdminEmail(data: InquiryData) {
-  return shell(`
+function renderAdminEmail(data: InquiryData, company: ResolvedCompany) {
+  return shell(
+    `
     <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:normal;color:${BRAND.ink};margin:0 0 8px;">New inquiry</h1>
     <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:${BRAND.muted};margin:0 0 24px;">
       Submitted through the website contact form.
@@ -125,11 +128,14 @@ function renderAdminEmail(data: InquiryData) {
         <a href="mailto:${escapeHtml(data.email)}" style="display:inline-block;padding:12px 28px;font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:${BRAND.cream};text-decoration:none;">Reply to ${escapeHtml(data.name)}</a>
       </td></tr>
     </table>
-  `);
+  `,
+    company
+  );
 }
 
-function renderThanksEmail(data: InquiryData) {
-  return shell(`
+function renderThanksEmail(data: InquiryData, company: ResolvedCompany) {
+  return shell(
+    `
     <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:normal;color:${BRAND.ink};margin:0 0 8px;">Thank you for reaching out</h1>
     <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${BRAND.ink};margin:0 0 16px;">
       Dear ${escapeHtml(data.name)},
@@ -144,9 +150,11 @@ function renderThanksEmail(data: InquiryData) {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows(data)}${propertiesList(data)}</table>
     <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${BRAND.ink};margin:24px 0 0;">
       With regards,<br/>
-      <span style="font-family:Georgia,'Times New Roman',serif;color:${BRAND.goldDeep};">${COMPANY.legalName}</span>
+      <span style="font-family:Georgia,'Times New Roman',serif;color:${BRAND.goldDeep};">${company.legalName}</span>
     </p>
-  `);
+  `,
+    company
+  );
 }
 
 /**
@@ -161,27 +169,29 @@ export async function sendContactEmails(data: InquiryData): Promise<boolean> {
     return false;
   }
 
+  const company = await resolveCompany();
+
   // Gmail sends from the authenticated account; it also receives the
   // admin notification.
   const from = process.env.GMAIL_USER!;
   const admin = process.env.GMAIL_USER!;
 
   await transporter.sendMail({
-    from: `"${COMPANY.name} Website" <${from}>`,
+    from: `"${company.name} Website" <${from}>`,
     to: admin,
     replyTo: data.email,
     subject: `New inquiry from ${data.name}`,
-    html: renderAdminEmail(data),
+    html: renderAdminEmail(data, company),
   });
 
   // Confirmation is best-effort: once the admin has the inquiry, a failed
   // courtesy email must not make the submitter retry (and double-notify).
   try {
     await transporter.sendMail({
-      from: `"${COMPANY.legalName}" <${from}>`,
+      from: `"${company.legalName}" <${from}>`,
       to: data.email,
-      subject: `Thank you for reaching out to ${COMPANY.name}`,
-      html: renderThanksEmail(data),
+      subject: `Thank you for reaching out to ${company.name}`,
+      html: renderThanksEmail(data, company),
     });
   } catch (err) {
     console.error("Confirmation email failed (inquiry already delivered):", err);

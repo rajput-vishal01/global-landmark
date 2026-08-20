@@ -42,11 +42,12 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const orgJsonLd = await organizationJsonLd();
   return (
     // suppressHydrationWarning: the head script stamps .js on <html> before
     // hydration (deliberate — CSS pre-hide gate), which React would flag.
@@ -67,7 +68,7 @@ export default function RootLayout({
       <body className="bg-cream font-sans text-ink antialiased">
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: jsonLdHtml(organizationJsonLd()) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdHtml(orgJsonLd) }}
         />
         <MotionProvider>{children}</MotionProvider>
       </body>
