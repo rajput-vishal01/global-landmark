@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE, verifyAdminToken } from "@/lib/admin/auth";
 import { COMPANY } from "@/lib/data";
-import { LogoutButton } from "../LogoutButton";
+import { AdminSidebar, type NavItem } from "@/components/admin/AdminSidebar";
 
 /**
  * Panel information architecture (R-33). The order is the order a broker
@@ -15,7 +14,7 @@ import { LogoutButton } from "../LogoutButton";
  * part (it tells the client what is coming and where it will live), a dead
  * link is not. Give one an `href` in the phase that ships its page.
  */
-const NAV: { label: string; href: string | null }[] = [
+const NAV: NavItem[] = [
   { label: "Dashboard", href: "/admin" },
   { label: "Properties", href: "/admin/properties" },
   { label: "Projects", href: "/admin/projects" },
@@ -24,10 +23,8 @@ const NAV: { label: string; href: string | null }[] = [
   { label: "CRM", href: "/admin/crm" },
   { label: "Deal of the Week", href: "/admin/deals" },
   { label: "Testimonials", href: "/admin/testimonials" },
+  { label: "Settings", href: "/admin/settings" },
 ];
-
-const NAV_ITEM =
-  "text-eyebrow font-sans font-medium uppercase tracking-[0.18em] transition-colors";
 
 export default async function AdminPanelLayout({
   children,
@@ -40,45 +37,11 @@ export default async function AdminPanelLayout({
   }
 
   return (
-    <>
-      <header className="border-b border-border bg-white">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-4">
-          <Link href="/admin" className="flex items-baseline gap-3">
-            <span className="font-serif text-lg uppercase tracking-[0.18em] text-ink">
-              {COMPANY.name}
-            </span>
-            <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.3em] text-gold-deep">
-              Admin
-            </span>
-          </Link>
-          {/* Wraps rather than overflows: seven items do not fit on one line
-              at 360px, and the panel is used on a phone at site visits. */}
-          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            {NAV.map((item) =>
-              item.href ? (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className={`${NAV_ITEM} text-ink-muted hover:text-ink`}
-                >
-                  {item.label}
-                </Link>
-              ) : (
-                <span
-                  key={item.label}
-                  aria-disabled="true"
-                  title="Not built yet"
-                  className={`${NAV_ITEM} cursor-default text-ink-muted/40`}
-                >
-                  {item.label}
-                </span>
-              )
-            )}
-            <LogoutButton />
-          </nav>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-5 py-10">{children}</main>
-    </>
+    <div className="min-h-screen md:flex">
+      <AdminSidebar companyName={COMPANY.name} nav={NAV} />
+      <main className="min-w-0 flex-1 px-5 py-8 md:px-10 md:py-10">
+        <div className="mx-auto max-w-5xl">{children}</div>
+      </main>
+    </div>
   );
 }
