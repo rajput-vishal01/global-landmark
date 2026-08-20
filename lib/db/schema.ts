@@ -447,18 +447,6 @@ export const crmClients = pgTable("crm_clients", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-/** CFF-adjacent but internal: the pipeline ladder the client asked to CONFIRM (§11 item 19). */
-export const DEAL_STAGES = [
-  "Enquiry",
-  "Site Visit",
-  "Negotiation",
-  "Token",
-  "Agreement",
-  "Registry",
-  "Closed",
-  "Lost",
-] as const;
-
 /**
  * One property per deal, many deals per client — R-30's stated default
  * where the client didn't confirm otherwise. A lead shortlisting three
