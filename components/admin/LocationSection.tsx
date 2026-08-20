@@ -25,10 +25,22 @@ export function LocationSection({
   location: initialLocation,
   city: initialCity,
   locality: initialLocality,
+  sector: initialSector,
+  block: initialBlock,
+  society: initialSociety,
+  floorNumber: initialFloorNumber,
+  totalFloors: initialTotalFloors,
+  unitNumber: initialUnitNumber,
 }: {
   location?: string | null;
   city?: string | null;
   locality?: string | null;
+  sector?: string | null;
+  block?: string | null;
+  society?: string | null;
+  floorNumber?: number | null;
+  totalFloors?: number | null;
+  unitNumber?: string | null;
 }) {
   const [city, setCity] = useState(initialCity ?? "");
   const [locality, setLocality] = useState(initialLocality ?? "");
@@ -118,6 +130,99 @@ export function LocationSection({
               <input type="hidden" name="locality" value="" />
             </>
           )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="sector" className={LABEL}>
+            Sector
+          </label>
+          <input
+            id="sector"
+            name="sector"
+            type="text"
+            maxLength={120}
+            defaultValue={initialSector ?? ""}
+            placeholder="Sector 20"
+            className={FIELD}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="block" className={LABEL}>
+            Block
+          </label>
+          <input
+            id="block"
+            name="block"
+            type="text"
+            maxLength={120}
+            defaultValue={initialBlock ?? ""}
+            placeholder="Block C"
+            className={FIELD}
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label htmlFor="society" className={LABEL}>
+          Society / project
+        </label>
+        <input
+          id="society"
+          name="society"
+          type="text"
+          maxLength={200}
+          defaultValue={initialSociety ?? ""}
+          placeholder="Green Lotus Saksham"
+          className={FIELD}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="floorNumber" className={LABEL}>
+            Floor number
+          </label>
+          <input
+            id="floorNumber"
+            name="floorNumber"
+            type="number"
+            min={0}
+            inputMode="numeric"
+            defaultValue={initialFloorNumber ?? ""}
+            placeholder="4"
+            className={FIELD}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="totalFloors" className={LABEL}>
+            Total floors
+          </label>
+          <input
+            id="totalFloors"
+            name="totalFloors"
+            type="number"
+            min={0}
+            inputMode="numeric"
+            defaultValue={initialTotalFloors ?? ""}
+            placeholder="12"
+            className={FIELD}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="unitNumber" className={LABEL}>
+            Unit number
+          </label>
+          <input
+            id="unitNumber"
+            name="unitNumber"
+            type="text"
+            maxLength={60}
+            defaultValue={initialUnitNumber ?? ""}
+            placeholder="404"
+            className={FIELD}
+          />
         </div>
       </div>
     </FormSection>

@@ -296,6 +296,12 @@ export function PropertyForm({
         location={property?.location}
         city={property?.city}
         locality={property?.locality}
+        sector={property?.sector}
+        block={property?.block}
+        society={property?.society}
+        floorNumber={property?.floorNumber}
+        totalFloors={property?.totalFloors}
+        unitNumber={property?.unitNumber}
       />
 
       {visible.has("area") && (
