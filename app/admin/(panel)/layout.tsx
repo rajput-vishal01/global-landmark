@@ -5,12 +5,28 @@ import { ADMIN_COOKIE, verifyAdminToken } from "@/lib/admin/auth";
 import { COMPANY } from "@/lib/data";
 import { LogoutButton } from "../LogoutButton";
 
-const NAV = [
+/**
+ * Panel information architecture (R-33). The order is the order a broker
+ * works in: the portfolio first, the people around it second, the marketing
+ * surfaces last.
+ *
+ * `href: null` means the page is not built yet. It renders as visibly
+ * disabled text rather than a `#` or a link to a 404 — the IA is the useful
+ * part (it tells the client what is coming and where it will live), a dead
+ * link is not. Give one an `href` in the phase that ships its page.
+ */
+const NAV: { label: string; href: string | null }[] = [
+  { label: "Dashboard", href: "/admin" },
   { label: "Properties", href: "/admin/properties" },
   { label: "Projects", href: "/admin/projects" },
-  { label: "Deals", href: "/admin/deals" },
+  { label: "Builders", href: null },
+  { label: "Leads", href: null },
+  { label: "Deal of the Week", href: "/admin/deals" },
   { label: "Testimonials", href: "/admin/testimonials" },
 ];
+
+const NAV_ITEM =
+  "text-eyebrow font-sans font-medium uppercase tracking-[0.18em] transition-colors";
 
 export default async function AdminPanelLayout({
   children,
@@ -34,16 +50,29 @@ export default async function AdminPanelLayout({
               Admin
             </span>
           </Link>
-          <nav className="flex items-center gap-6">
-            {NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-ink-muted transition-colors hover:text-ink"
-              >
-                {item.label}
-              </Link>
-            ))}
+          {/* Wraps rather than overflows: seven items do not fit on one line
+              at 360px, and the panel is used on a phone at site visits. */}
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {NAV.map((item) =>
+              item.href ? (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`${NAV_ITEM} text-ink-muted hover:text-ink`}
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <span
+                  key={item.label}
+                  aria-disabled="true"
+                  title="Not built yet"
+                  className={`${NAV_ITEM} cursor-default text-ink-muted/40`}
+                >
+                  {item.label}
+                </span>
+              )
+            )}
             <LogoutButton />
           </nav>
         </div>

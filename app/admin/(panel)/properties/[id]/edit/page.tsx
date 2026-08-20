@@ -18,6 +18,9 @@ export default async function EditPropertyPage({
   if (!Number.isInteger(numericId)) notFound();
 
   const [property, projects] = await Promise.all([
+    // The full row plus its child tables — the admin is the one surface
+    // allowed to see owners, charges and the internal 1:1. None of this may
+    // ever be handed to a component under app/(site)/**.
     db.query.properties.findFirst({
       where: eq(properties.id, numericId),
       with: {
@@ -25,6 +28,10 @@ export default async function EditPropertyPage({
         // (index 0 = cover image), so this must be the canonical order.
         images: { orderBy: IMAGE_ORDER },
         project: true,
+        owners: true,
+        internal: true,
+        charges: true,
+        media: true,
       },
     }),
     listProjectsForAdmin(),

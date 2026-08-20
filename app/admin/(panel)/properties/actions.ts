@@ -6,8 +6,12 @@ import { db } from "@/lib/db";
 import {
   projects,
   properties,
+  propertyCharges,
   propertyDocuments,
   propertyImages,
+  propertyInternal,
+  propertyMedia,
+  propertyOwners,
 } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
@@ -26,6 +30,60 @@ export type PropertyFormState = { error?: string };
  */
 function modeFor(formData: FormData): ParseMode {
   return formData.get("publicationState") === "published" ? "publish" : "draft";
+}
+
+/**
+ * Writes the 1:N and 1:1 tables that hang off a property.
+ *
+ * Replace-in-place rather than diff-and-merge: these are small lists the
+ * admin edits as a whole, and a diff would need stable row ids the form does
+ * not carry. Everything runs inside the caller's transaction, so a failure
+ * halfway leaves neither the row nor its children changed.
+ *
+ * Note the asymmetry with images: images own files on disk, so their old
+ * rows are compared and orphaned files swept. Owners, charges and media own
+ * nothing outside the database and can simply be replaced.
+ */
+async function writeChildTables(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  propertyId: number,
+  data: {
+    owners: { name: string; [k: string]: unknown }[];
+    charges: { chargeType: string; [k: string]: unknown }[];
+    media: { kind: string; url: string; label: string }[];
+    circleRate: number | null;
+  }
+) {
+  await tx.delete(propertyOwners).where(eq(propertyOwners.propertyId, propertyId));
+  if (data.owners.length) {
+    await tx.insert(propertyOwners).values(
+      data.owners.map((o) => ({ ...o, propertyId })) as typeof propertyOwners.$inferInsert[]
+    );
+  }
+
+  await tx.delete(propertyCharges).where(eq(propertyCharges.propertyId, propertyId));
+  if (data.charges.length) {
+    await tx.insert(propertyCharges).values(
+      data.charges.map((c) => ({ ...c, propertyId })) as typeof propertyCharges.$inferInsert[]
+    );
+  }
+
+  await tx.delete(propertyMedia).where(eq(propertyMedia.propertyId, propertyId));
+  if (data.media.length) {
+    await tx.insert(propertyMedia).values(
+      data.media.map((m, i) => ({ ...m, propertyId, sortOrder: i }))
+    );
+  }
+
+  // property_internal is 1:1 and internal always — circle rate lives here
+  // and on no public table, so no public query can reach it.
+  await tx
+    .insert(propertyInternal)
+    .values({ propertyId, circleRate: data.circleRate })
+    .onConflictDoUpdate({
+      target: propertyInternal.propertyId,
+      set: { circleRate: data.circleRate },
+    });
 }
 
 /** Find a project by name (case-insensitive) or create it. Empty = none. */
@@ -95,7 +153,8 @@ export async function createProperty(
   await requireAdmin();
   const parsed = parseProperty(formData, modeFor(formData));
   if (!parsed.ok) return { error: parsed.error };
-  const { images, projectName, ...fields } = parsed.data;
+  const { images, projectName, owners, charges, media, circleRate, ...fields } =
+    parsed.data;
 
   try {
     const projectId = await resolveProjectId(projectName);
@@ -114,9 +173,12 @@ export async function createProperty(
         .update(properties)
         .set({ refCode: buildRefCode(fields.city, new Date().getFullYear(), row.id) })
         .where(eq(properties.id, row.id));
-      await tx.insert(propertyImages).values(
-        images.map((img, i) => ({ ...img, propertyId: row.id, sortOrder: i }))
-      );
+      if (images.length) {
+        await tx.insert(propertyImages).values(
+          images.map((img, i) => ({ ...img, propertyId: row.id, sortOrder: i }))
+        );
+      }
+      await writeChildTables(tx, row.id, { owners, charges, media, circleRate });
     });
   } catch (err) {
     console.error("createProperty failed:", err);

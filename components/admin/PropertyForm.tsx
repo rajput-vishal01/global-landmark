@@ -1,35 +1,74 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import type { AdminProperty, PropertyImage } from "@/lib/db/schema";
 import type { PublicProject } from "@/lib/db/public-columns";
 import type { PropertyFormState } from "@/app/admin/(panel)/properties/actions";
 import { CATEGORIES } from "@/lib/categories";
-import {
-  AREA_UNITS,
-  FACINGS,
-  FURNISHINGS,
-  POSSESSION_STATUSES,
-  PROPERTY_TYPES,
-  SUGGESTED_AMENITIES,
-  withEmptyOption,
-} from "@/lib/attributes";
+import { sectionsFor } from "@/lib/taxonomy/sections";
 import { FIELD, LABEL } from "@/components/form-classes";
 import { Select } from "@/components/ui/Select";
+import { FormSection } from "./FormSection";
 import { BasicDetailsSection } from "./BasicDetailsSection";
-import { ChecklistField } from "./ChecklistField";
 import { LocationSection } from "./LocationSection";
+import { ClassificationSection } from "./ClassificationSection";
+import { ConfigurationSection } from "./ConfigurationSection";
+import { AreaSection } from "./AreaSection";
+import { PriceSection } from "./PriceSection";
+import { FeaturesSection } from "./FeaturesSection";
+import { LegalLoanSection } from "./LegalLoanSection";
+import { SpecificationsSection } from "./SpecificationsSection";
+import { OwnersEditor } from "./OwnersEditor";
+import { MediaLinksSection } from "./MediaLinksSection";
 import { ExtrasEditor } from "./ExtrasEditor";
 import { ImageUploader } from "./ImageUploader";
 import { ProjectSuggestInput } from "./ProjectSuggestInput";
-
-const withNone = (values: readonly string[]) => withEmptyOption("— None —", values);
 
 type Action = (
   prev: PropertyFormState,
   formData: FormData
 ) => Promise<PropertyFormState>;
 
+/** Child rows, shaped by the edit page's query. */
+type PropertyWithChildren = AdminProperty & {
+  images: PropertyImage[];
+  project: { name: string } | null;
+  owners?: {
+    name: string;
+    sellerCategory: string | null;
+    ownerType: string | null;
+    ownerCount: number | null;
+    mobile: string | null;
+    altMobile: string | null;
+    address: string | null;
+    notes: string | null;
+  }[];
+  charges?: {
+    chargeType: string;
+    amount: number;
+    basis: string;
+    isIncludedInDemand: boolean;
+  }[];
+  media?: { kind: string; url: string; label: string }[];
+  internal?: { circleRate: number | null } | null;
+};
+
+/**
+ * The CFF property form, sectioned into the client's own twenty groups.
+ *
+ * Two things drive the shape of this file:
+ *
+ * 1. **No single page carries ~150 fields.** Each group is a collapsible
+ *    `FormSection`. Only the identity fields sit outside one — you cannot
+ *    collapse the thing you use to find the listing again.
+ *
+ * 2. **Which sections appear is one lookup, not scattered conditionals.**
+ *    `sectionsFor(propertyType)` owns it (R-12), and the selected type is
+ *    state here so sections appear and disappear as the broker changes it:
+ *    a Residential Plot stops asking for balconies the moment it is picked.
+ *    An unrecognised or unset type shows everything, because hiding a field
+ *    loses data while showing a spare one is only an annoyance.
+ */
 export function PropertyForm({
   action,
   projects,
@@ -41,17 +80,89 @@ export function PropertyForm({
    * The admin form is the one place that legitimately sees the full row —
    * the public types deliberately cannot express it.
    */
-  property?: AdminProperty & {
-    images: PropertyImage[];
-    project: { name: string } | null;
-  };
+  property?: PropertyWithChildren;
 }) {
   const [state, formAction, isPending] = useActionState(action, {});
   const [isUploading, setIsUploading] = useState(false);
+  const [propertyType, setPropertyType] = useState(property?.propertyType ?? "");
+  const [kind, setKind] = useState<string>(property?.kind ?? "unit");
+
+  const visible = useMemo(() => new Set(sectionsFor(propertyType)), [propertyType]);
 
   return (
-    <form action={formAction} className="flex max-w-3xl flex-col gap-8">
+    <form action={formAction} className="flex max-w-3xl flex-col gap-5">
       {property && <input type="hidden" name="id" value={property.id} />}
+
+      {/* Identity: never collapsed, because this is what the listing IS. */}
+      <div className="flex flex-col gap-5 border border-border bg-white px-5 py-6">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="title" className={LABEL}>
+            Title
+          </label>
+          <input
+            id="title"
+            name="title"
+            type="text"
+            required
+            maxLength={200}
+            defaultValue={property?.title}
+            className={FIELD}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          <div className="flex flex-col gap-2">
+            <label htmlFor="kind" className={LABEL}>
+              Listing type
+            </label>
+            <Select
+              id="kind"
+              name="kind"
+              defaultValue={kind}
+              onValueChange={setKind}
+              options={[
+                { value: "unit", label: "Unit (flat / villa / room)" },
+                { value: "project", label: "Project (whole society)" },
+              ]}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="category" className={LABEL}>
+              Category
+            </label>
+            <Select
+              id="category"
+              name="category"
+              defaultValue={property?.category ?? "sale"}
+              options={CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="projectName" className={LABEL}>
+              Project / society{" "}
+              <span className="normal-case text-ink-muted">(optional)</span>
+            </label>
+            <ProjectSuggestInput
+              id="projectName"
+              suggestions={projects.map((p) => p.name)}
+              defaultValue={property?.project?.name ?? ""}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <label htmlFor="description" className={LABEL}>
+            Description
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            rows={5}
+            defaultValue={property?.description}
+            className={FIELD}
+          />
+        </div>
+      </div>
 
       <BasicDetailsSection
         refCode={property?.refCode}
@@ -63,146 +174,89 @@ export function PropertyForm({
         sourceName={property?.sourceName}
       />
 
+      <ClassificationSection
+        propertyType={property?.propertyType}
+        dealAttributes={property?.dealAttributes ?? []}
+        facing={property?.facing}
+        possessionStatus={property?.possessionStatus}
+        propertyAge={property?.propertyAge}
+        onTypeChange={setPropertyType}
+      />
+
       <LocationSection
         location={property?.location}
         city={property?.city}
         locality={property?.locality}
       />
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="title" className={LABEL}>Title</label>
-        <input id="title" name="title" type="text" required maxLength={200}
-          defaultValue={property?.title} className={FIELD} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="kind" className={LABEL}>Listing type</label>
-          <Select
-            id="kind"
-            name="kind"
-            defaultValue={property?.kind ?? "unit"}
-            options={[
-              { value: "unit", label: "Unit (flat / villa / room)" },
-              { value: "project", label: "Project (whole society)" },
-            ]}
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="category" className={LABEL}>Category</label>
-          <Select
-            id="category"
-            name="category"
-            defaultValue={property?.category ?? "sale"}
-            options={CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="projectName" className={LABEL}>
-            Project / society{" "}
-            <span className="normal-case text-ink-muted">(optional — new names are created)</span>
-          </label>
-          <ProjectSuggestInput
-            id="projectName"
-            suggestions={projects.map((p) => p.name)}
-            defaultValue={property?.project?.name ?? ""}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="description" className={LABEL}>Description</label>
-        <textarea id="description" name="description" rows={6} required
-          defaultValue={property?.description} className={FIELD} />
-      </div>
-
-      {/* All attribute fields below are optional — empty simply doesn't render */}
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="propertyType" className={LABEL}>Property type</label>
-          <Select id="propertyType" name="propertyType"
-            defaultValue={property?.propertyType ?? ""}
-            options={withNone(PROPERTY_TYPES)} />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="configuration" className={LABEL}>
-            Configuration <span className="normal-case text-ink-muted">(e.g. 3+1 BHK, Duplex)</span>
-          </label>
-          <input id="configuration" name="configuration" type="text" maxLength={100}
-            defaultValue={property?.configuration ?? ""} className={FIELD} />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="facing" className={LABEL}>Facing</label>
-          <Select id="facing" name="facing"
-            defaultValue={property?.facing ?? ""}
-            options={withNone(FACINGS)} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="possessionStatus" className={LABEL}>Possession</label>
-          <Select id="possessionStatus" name="possessionStatus"
-            defaultValue={property?.possessionStatus ?? ""}
-            options={withNone(POSSESSION_STATUSES)} />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="furnishing" className={LABEL}>Furnishing</label>
-          <Select id="furnishing" name="furnishing"
-            defaultValue={property?.furnishing ?? ""}
-            options={withNone(FURNISHINGS)} />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="areaValue" className={LABEL}>Area</label>
-          <div className="flex gap-3">
-            <input id="areaValue" name="areaValue" type="number" min={0}
-              defaultValue={property?.areaValue ?? ""} className={`${FIELD} min-w-0 flex-1`} />
-            <Select name="areaUnit"
-              defaultValue={property?.areaUnit ?? "sqft"}
-              options={AREA_UNITS.map((u) => ({ value: u.value, label: u.label }))}
-              className="w-28 shrink-0" />
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-8 sm:max-w-md">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="beds" className={LABEL}>
-            Beds <span className="normal-case text-ink-muted">(optional)</span>
-          </label>
-          <input id="beds" name="beds" type="number" min={0}
-            defaultValue={property?.beds ?? ""} className={FIELD} />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="baths" className={LABEL}>
-            Baths <span className="normal-case text-ink-muted">(optional)</span>
-          </label>
-          <input id="baths" name="baths" type="number" min={0}
-            defaultValue={property?.baths ?? ""} className={FIELD} />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <span className={LABEL}>Amenities</span>
-        <ChecklistField
-          name="amenitiesJson"
-          options={SUGGESTED_AMENITIES}
-          initial={property?.amenities ?? []}
-          allowCustom
-          customPlaceholder="Add an amenity not listed above"
+      {visible.has("area") && (
+        <AreaSection
+          plotArea={property?.plotArea}
+          plotAreaUnit={property?.plotAreaUnit}
+          builtUpArea={property?.builtUpArea}
+          builtUpAreaUnit={property?.builtUpAreaUnit}
+          superArea={property?.superArea}
+          superAreaUnit={property?.superAreaUnit}
+          carpetArea={property?.carpetArea}
+          carpetAreaUnit={property?.carpetAreaUnit}
+          frontFeet={property?.frontFeet}
+          depthFeet={property?.depthFeet}
+          plcAttributes={property?.plcAttributes ?? []}
         />
-      </div>
+      )}
 
-      <div className="flex flex-col gap-2">
-        <span className={LABEL}>
-          Additional details{" "}
-          <span className="normal-case text-ink-muted">(anything not covered by the fields above)</span>
-        </span>
-        <ExtrasEditor initial={property?.extras ?? []} />
-      </div>
+      {visible.has("configuration") && (
+        <ConfigurationSection
+          kind={kind === "project" ? "project" : "unit"}
+          configuration={property?.configuration}
+          configurations={property?.configurations ?? []}
+          beds={property?.beds}
+          baths={property?.baths}
+          balconies={property?.balconies}
+          roomFlags={property?.roomFlags ?? []}
+        />
+      )}
 
-      <div className="flex flex-col gap-2">
-        <span className={LABEL}>Gallery</span>
+      <PriceSection
+        demandPrice={property?.demandPrice}
+        perSqftRate={property?.perSqftRate}
+        isNegotiable={property?.isNegotiable ?? false}
+        showPricePublicly={property?.showPricePublicly ?? false}
+        charges={property?.charges ?? []}
+        areaSqft={property?.areaSqft}
+        circleRate={property?.internal?.circleRate}
+      />
+
+      <OwnersEditor initial={property?.owners ?? []} />
+
+      <FeaturesSection
+        furnishing={property?.furnishing}
+        furnishingInventory={property?.furnishingInventory ?? []}
+        amenities={property?.amenities ?? []}
+        parkingTypes={property?.parkingTypes ?? []}
+        parkingSlots={property?.parkingSlots}
+        showFurnishing={visible.has("furnishing")}
+        showAmenities={visible.has("amenities")}
+        showParking={visible.has("parking")}
+      />
+
+      <LegalLoanSection
+        legalFlags={property?.legalFlags ?? []}
+        reraNumber={property?.reraNumber}
+        loanFlags={property?.loanFlags ?? []}
+        banksOnPanel={property?.banksOnPanel ?? []}
+        documentationFlags={property?.documentationFlags ?? []}
+      />
+
+      <SpecificationsSection
+        roadWidth={property?.roadWidth}
+        entranceWidth={property?.entranceWidth}
+        ceilingHeight={property?.ceilingHeight}
+        isCorner={property?.isCorner ?? false}
+        isParkFacing={property?.isParkFacing ?? false}
+      />
+
+      <FormSection title="Photos" hint="The first image is the cover" defaultOpen>
         <ImageUploader
           onBusyChange={setIsUploading}
           initial={
@@ -213,25 +267,43 @@ export function PropertyForm({
             })) ?? []
           }
         />
-      </div>
+      </FormSection>
+
+      <MediaLinksSection initial={property?.media ?? []} />
+
+      <FormSection
+        title="Additional details"
+        hint="Anything the fields above do not cover"
+      >
+        <ExtrasEditor initial={property?.extras ?? []} />
+      </FormSection>
 
       {state.error && (
-        <p role="alert" className="text-meta font-sans text-error">{state.error}</p>
+        <p
+          role="alert"
+          className="border border-error bg-error/5 px-4 py-3 text-meta font-sans text-error"
+        >
+          {state.error}
+        </p>
       )}
 
-      <button
-        type="submit"
-        disabled={isPending || isUploading}
-        className="w-fit cursor-pointer bg-ink px-8 py-3.5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
-      >
-        {isUploading
-          ? "Uploading images..."
-          : isPending
-            ? "Saving..."
-            : property
-              ? "Save changes"
-              : "Create property"}
-      </button>
+      {/* Sticky: the form is long enough that a button at the bottom would be
+          a long scroll away from most of it. */}
+      <div className="sticky bottom-0 border-t border-border bg-cream/95 py-4 backdrop-blur-sm">
+        <button
+          type="submit"
+          disabled={isPending || isUploading}
+          className="w-full cursor-pointer bg-ink px-8 py-3.5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60 sm:w-fit"
+        >
+          {isUploading
+            ? "Uploading images..."
+            : isPending
+              ? "Saving..."
+              : property
+                ? "Save changes"
+                : "Create property"}
+        </button>
+      </div>
     </form>
   );
 }

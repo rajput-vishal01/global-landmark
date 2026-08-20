@@ -502,6 +502,15 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
   media: many(propertyMedia),
   deals: many(deals),
   owners: many(propertyOwners),
+  /**
+   * 1:1 internal facts (circle rate, mortgage flag, private notes). Declared
+   * so the admin edit page can load them; deliberately absent from every
+   * allowlist in lib/db/public-columns.ts, and no public query names it.
+   */
+  internal: one(propertyInternal, {
+    fields: [properties.id],
+    references: [propertyInternal.propertyId],
+  }),
   charges: many(propertyCharges),
   documents: many(propertyDocuments),
   priceHistory: many(propertyPriceHistory),
