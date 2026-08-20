@@ -7,13 +7,13 @@
 Breaking changes from older Next.js knowledge, confirmed in `node_modules/next/dist/docs/`:
 - **`middleware.ts` is now `proxy.ts`.** Same functionality, new file name/export (`export function proxy(request)` or default export), lives at project root. Use for auth redirects, A/B rewrites, header injection — not for slow data fetching or full session management.
 - Routing files (`layout`, `page`, `loading`, `error`, `not-found`, `route`, `template`, `default`) and dynamic segments (`[slug]`, `[...slug]`, `[[...slug]]`) work as expected.
-- Route groups `(group)` for organizing without affecting URL (e.g. `(marketing)`) and private folders `_folder` for non-routable colocated code.
+- Route groups `(group)` for organizing without affecting URL (e.g. `(site)`, used for the whole public marketing surface) and private folders `_folder` for non-routable colocated code.
 - `next/font/google` and `next/font/local` for self-hosted, zero-layout-shift fonts — set on `<html className={font.className}>` in the root layout. Use this for both the display serif and body sans once selected (see [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md#typography-scale)).
 - Before writing any route/layout/data-fetching code later, check the relevant doc under `node_modules/next/dist/docs/01-app/` — do not assume App Router behavior from pre-16 training data (per [AGENTS.md](../AGENTS.md)).
 
 ## Styling approach
 
-**Tailwind CSS v4**, already installed (`@tailwindcss/postcss`, `postcss.config.mjs`) — this decision is made by the scaffold, not open. Use Tailwind's CSS-based theme config (`@theme` in `globals.css`, v4-style) to define the design tokens from [BRAND_GUIDELINES.md](BRAND_GUIDELINES.md) and [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) as first-class Tailwind theme values — colors (`navy`, `navy-90`, `gold`, `gold-highlight`, `gold-deep`, `off-white`, etc.), fluid spacing scale, fluid type scale — rather than hardcoding hex/px values in components.
+**Tailwind CSS v4**, already installed (`@tailwindcss/postcss`, `postcss.config.mjs`) — this decision is made by the scaffold, not open. Design tokens are defined via Tailwind's CSS-based theme config (`@theme` in `app/globals.css`, v4-style) as first-class Tailwind theme values — colors (`ink`, `ink-muted`, `dark`, `dark-deep`, `gold`, `gold-highlight`, `gold-deep`, `cream`, `border`, `error`), fluid type scale (`clamp()`-based `--text-*` variables) — rather than hardcoding hex/px values in components. There is no separate custom spacing scale; spacing uses Tailwind's default scale.
 
 No component library decided yet. Recommendation: hand-build components against Tailwind + the token system rather than pulling in shadcn/ui or similar — a luxury editorial site's visual signature (asymmetric layouts, custom motion, non-standard hover states) doesn't benefit from a general-purpose component kit, and ponytail's ladder says don't add a dependency a few lines of Tailwind can replace. Revisit only if a specific need arises (e.g. a date picker for a booking form).
 
@@ -21,7 +21,7 @@ No component library decided yet. Recommendation: hand-build components against 
 
 - `npm install gsap @gsap/react framer-motion` when code phase begins.
 - GSAP: use the `useGSAP()` hook from `@gsap/react` (never raw `useEffect` for GSAP setup) — register `gsap.registerPlugin(useGSAP, ScrollTrigger, ...)` once, at app entry (e.g. a client-only `lib/gsap.ts` imported where needed). All GSAP code is client-only — never called during SSR.
-- Framer Motion: standard `motion.*` components and hooks, used inside client components (`"use client"`) only. Server Components stay animation-free by default; a page is a Server Component unless it needs client interactivity.
+- Framer Motion: `m.*` components (not `motion.*`) under app-wide `LazyMotion strict` (`components/MotionProvider.tsx`) — `strict` throws if a full `motion.*` import sneaks back in, keeping only the ~6KB LazyMotion entry in the shared bundle. Used inside client components (`"use client"`) only. Server Components stay animation-free by default; a page is a Server Component unless it needs client interactivity.
 - Both libraries coexist per the division of labor in [ANIMATION_GUIDELINES.md](ANIMATION_GUIDELINES.md#division-of-labor) — do not duplicate the same interaction in both.
 
 ## Folder structure
@@ -30,7 +30,7 @@ Split-by-feature inside `app/`, project files colocated with routes where route-
 
 ```
 app/
-  (marketing)/                 route group — no URL segment
+  (site)/                      route group — no URL segment
     page.tsx                   home
     properties/
       page.tsx                 listings

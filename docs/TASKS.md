@@ -3,15 +3,23 @@
 Context-building phase produced all `.md` docs; the build is now underway.
 Shipped since: landing page + subpages (earlier sessions), then the July 2026
 feature expansion — PostgreSQL/Drizzle data layer, admin panel behind the
-`/admin` route (properties/projects/deals CRUD, Cloudinary galleries with
+`/admin` route (properties/projects/deals CRUD, filesystem-backed galleries with
 cascade delete), live `/properties` + `[slug]` detail pages with category
 filter, portfolio search, hero Sale/Purchase/Lease/Invest rotator, Deal of
 the Week queue, scrolling testimonials, WhatsApp dock + inquiry pop-up,
 activity ticker, `/news` via newsdata.io. See [README.md](../README.md).
 
 Outstanding from that expansion (client inputs): WhatsApp number, admin
-domain + DNS, Cloudinary + newsdata.io keys, society naming
+domain + DNS, newsdata.io key, society naming
 conventions, ticker style sign-off (marquee vs. quieter toast).
+
+**Since (Aug 2026):** [REQUIREMENTS_V2.md](REQUIREMENTS_V2.md)'s CFF field
+expansion — Phases 1–6 of [.planning/ROADMAP.md](../.planning/ROADMAP.md)
+have shipped (taxonomy/schema foundation, the admin property form rebuild,
+builders/projects/tower inventory, the public listings rework, the
+enquiry cart, and the CRM). ROADMAP.md's Progress table is the current
+source of truth for phase status; this file's task list below predates
+that work and is not being kept in step with it line by line.
 
 ## Phase 0 — Open decisions (resolve before or at start of Phase 1)
 
