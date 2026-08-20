@@ -29,6 +29,13 @@
       "when": 1787210822138,
       "tag": "0003_drop_db_blob_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787239638445,
+      "tag": "0004_crm_foundation",
+      "breakpoints": true
     }
   ]
 }

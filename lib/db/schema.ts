@@ -425,6 +425,131 @@ export const leads = pgTable(
   (t) => [index("leads_status_idx").on(t.status, t.createdAt)]
 );
 
+// ─── CRM — internal always, never imported by lib/db/queries.ts ────────────
+// Named crm_* deliberately: `deals` (above) is the unrelated Deal-of-the-Week
+// marketing feature, and the two must never collide on a shared name.
+
+export const crmClients = pgTable("crm_clients", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  phone: text("phone"),
+  email: text("email"),
+  requirementNotes: text("requirement_notes"),
+  budgetMin: bigint("budget_min", { mode: "number" }),
+  budgetMax: bigint("budget_max", { mode: "number" }),
+  preferredLocations: text("preferred_locations").array(),
+  preferredTypes: text("preferred_types").array(),
+  /** Set when this client originated from a website enquiry (R-30). */
+  convertedFromLeadId: integer("converted_from_lead_id").references(() => leads.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+/** CFF-adjacent but internal: the pipeline ladder the client asked to CONFIRM (§11 item 19). */
+export const DEAL_STAGES = [
+  "Enquiry",
+  "Site Visit",
+  "Negotiation",
+  "Token",
+  "Agreement",
+  "Registry",
+  "Closed",
+  "Lost",
+] as const;
+
+/**
+ * One property per deal, many deals per client — R-30's stated default
+ * where the client didn't confirm otherwise. A lead shortlisting three
+ * properties becomes one client and three deals on conversion, not one
+ * deal juggling three properties.
+ */
+export const crmDeals = pgTable(
+  "crm_deals",
+  {
+    id: serial("id").primaryKey(),
+    clientId: integer("client_id")
+      .notNull()
+      .references(() => crmClients.id, { onDelete: "cascade" }),
+    propertyId: integer("property_id").references(() => properties.id, {
+      onDelete: "set null",
+    }),
+    stage: text("stage").notNull().default("Enquiry"),
+    dealValue: bigint("deal_value", { mode: "number" }),
+    /** Percent of dealValue; the stored brokerage amount below can override it. */
+    brokeragePercent: bigint("brokerage_percent_bp", { mode: "number" }),
+    /** Basis points (1% = 100bp) — avoids float rounding on a money figure. */
+    brokerageAmountOverride: bigint("brokerage_amount_override", { mode: "number" }),
+    sharedWithName: text("shared_with_name"),
+    sharedAmount: bigint("shared_amount", { mode: "number" }),
+    assignedTo: text("assigned_to"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    closedAt: timestamp("closed_at"),
+  },
+  (t) => [
+    index("crm_deals_client_idx").on(t.clientId),
+    index("crm_deals_stage_idx").on(t.stage),
+  ]
+);
+
+/** Dated payment entries so partial brokerage receipts add up (R-31). */
+export const crmPayments = pgTable(
+  "crm_payments",
+  {
+    id: serial("id").primaryKey(),
+    dealId: integer("deal_id")
+      .notNull()
+      .references(() => crmDeals.id, { onDelete: "cascade" }),
+    amount: bigint("amount", { mode: "number" }).notNull(),
+    paidAt: date("paid_at").notNull(),
+    mode: text("mode"),
+    note: text("note"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [index("crm_payments_deal_idx").on(t.dealId)]
+);
+
+/** Call / site visit / note / WhatsApp / email, timestamped and authored (R-30). */
+export const crmActivities = pgTable(
+  "crm_activities",
+  {
+    id: serial("id").primaryKey(),
+    clientId: integer("client_id")
+      .notNull()
+      .references(() => crmClients.id, { onDelete: "cascade" }),
+    dealId: integer("deal_id").references(() => crmDeals.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    note: text("note"),
+    author: text("author"),
+    occurredAt: timestamp("occurred_at").defaultNow().notNull(),
+  },
+  (t) => [index("crm_activities_client_idx").on(t.clientId, t.occurredAt)]
+);
+
+export const crmClientsRelations = relations(crmClients, ({ many, one }) => ({
+  deals: many(crmDeals),
+  activities: many(crmActivities),
+  fromLead: one(leads, { fields: [crmClients.convertedFromLeadId], references: [leads.id] }),
+}));
+
+export const crmDealsRelations = relations(crmDeals, ({ one, many }) => ({
+  client: one(crmClients, { fields: [crmDeals.clientId], references: [crmClients.id] }),
+  property: one(properties, { fields: [crmDeals.propertyId], references: [properties.id] }),
+  payments: many(crmPayments),
+  activities: many(crmActivities),
+}));
+
+export const crmPaymentsRelations = relations(crmPayments, ({ one }) => ({
+  deal: one(crmDeals, { fields: [crmPayments.dealId], references: [crmDeals.id] }),
+}));
+
+export const crmActivitiesRelations = relations(crmActivities, ({ one }) => ({
+  client: one(crmClients, { fields: [crmActivities.clientId], references: [crmClients.id] }),
+  deal: one(crmDeals, { fields: [crmActivities.dealId], references: [crmDeals.id] }),
+}));
+
 /**
  * Admin-editable overrides for company details and stats, so changing a
  * phone number is not a code deploy. lib/data.ts stays the fallback default.
