@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { searchProperties } from "@/lib/db/queries";
+import { searchProperties, searchProjects } from "@/lib/db/queries";
 import { categoryLabel } from "@/lib/categories";
 import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
@@ -12,15 +12,26 @@ export async function GET(request: Request) {
   if (q.length < 2 || q.length > 100) {
     return NextResponse.json({ results: [] });
   }
-  const results = await searchProperties(q);
+  const [properties, projects] = await Promise.all([searchProperties(q), searchProjects(q)]);
   return NextResponse.json({
-    results: results.map((p) => ({
-      slug: p.slug,
-      title: p.title,
-      location: p.location,
-      category: categoryLabel(p.category),
-      // 64px thumbnail — don't make the optimizer pull the full original.
-      image: p.images[0] ? p.images[0].url : null,
-    })),
+    results: [
+      ...properties.map((p) => ({
+        type: "property" as const,
+        slug: p.slug,
+        title: p.title,
+        location: p.location,
+        category: categoryLabel(p.category),
+        // 64px thumbnail — don't make the optimizer pull the full original.
+        image: p.images[0] ? p.images[0].url : null,
+      })),
+      ...projects.map((p) => ({
+        type: "project" as const,
+        slug: p.slug,
+        title: p.name,
+        location: [p.locality, p.sector, p.city].filter(Boolean).join(", "),
+        category: "Project",
+        image: p.coverImage,
+      })),
+    ],
   });
 }

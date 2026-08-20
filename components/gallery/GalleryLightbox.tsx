@@ -1,15 +1,27 @@
 "use client";
 
 import { EASE } from "@/lib/motion";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, m } from "framer-motion";
 import type { PublicImage } from "@/lib/db/public-columns";
 import { useModalLock } from "@/lib/hooks";
 
+/** R-28: gallery tabbed by category. Matches property_images.media_kind. */
+const CATEGORY_ORDER = ["interior", "exterior", "floor_plan", "other"] as const;
+const CATEGORY_LABELS: Record<string, string> = {
+  interior: "Interior",
+  exterior: "Exterior",
+  floor_plan: "Floor Plan",
+  other: "General",
+};
+
 /**
  * Editorial two-column gallery with a fullscreen lightbox. Keyboard:
- * Esc closes, arrows navigate.
+ * Esc closes, arrows navigate. Tab chrome only appears once a second
+ * category is actually present — a single-category gallery (the common
+ * case today, since mediaKind defaults to "other") renders exactly as
+ * before.
  */
 export function GalleryLightbox({
   images,
@@ -18,14 +30,23 @@ export function GalleryLightbox({
   images: PublicImage[];
   title: string;
 }) {
+  const categories = useMemo(
+    () => CATEGORY_ORDER.filter((c) => images.some((img) => img.mediaKind === c)),
+    [images]
+  );
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const visible = activeCategory
+    ? images.filter((img) => img.mediaKind === activeCategory)
+    : images;
+
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const step = useCallback(
     (dir: -1 | 1) =>
       setOpenIndex((prev) =>
-        prev === null ? prev : (prev + dir + images.length) % images.length
+        prev === null ? prev : (prev + dir + visible.length) % visible.length
       ),
-    [images.length]
+    [visible.length]
   );
 
   useModalLock(
@@ -48,14 +69,34 @@ export function GalleryLightbox({
 
   return (
     <>
+      {categories.length > 1 && (
+        <div className="mb-6 flex flex-wrap gap-2">
+          {[{ value: null, label: "All" }, ...categories.map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))].map(
+            ({ value, label }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => setActiveCategory(value)}
+                className={`text-eyebrow cursor-pointer border px-4 py-2 font-sans font-medium uppercase tracking-[0.15em] transition-colors ${
+                  activeCategory === value
+                    ? "border-ink bg-ink text-cream"
+                    : "border-border text-ink-muted hover:border-gold"
+                }`}
+              >
+                {label}
+              </button>
+            )
+          )}
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        {images.map((img, i) => (
+        {visible.map((img, i) => (
           <button
             key={img.id}
             type="button"
             data-reveal
             onClick={() => setOpenIndex(i)}
-            aria-label={`Open image ${i + 1} of ${images.length}`}
+            aria-label={`Open image ${i + 1} of ${visible.length}`}
             className={`group relative cursor-zoom-in overflow-hidden bg-ink/5 ${
               i % 3 === 0 ? "sm:col-span-2 aspect-[3/2]" : "aspect-[4/5]"
             }`}
@@ -72,7 +113,7 @@ export function GalleryLightbox({
               className="img-zoom"
             />
             <span className="text-eyebrow absolute bottom-4 right-4 bg-dark-deep/60 px-2.5 py-1 font-sans tracking-[0.2em] text-cream opacity-0 backdrop-blur-sm transition-opacity duration-300 group-hover:opacity-100">
-              {String(i + 1).padStart(2, "0")}/{String(images.length).padStart(2, "0")}
+              {String(i + 1).padStart(2, "0")}/{String(visible.length).padStart(2, "0")}
             </span>
           </button>
         ))}
@@ -94,7 +135,7 @@ export function GalleryLightbox({
             <div className="flex items-center justify-between px-5 py-5 md:px-10">
               <span className="text-eyebrow font-sans tracking-[0.25em] text-cream/70">
                 {String(openIndex + 1).padStart(2, "0")} /{" "}
-                {String(images.length).padStart(2, "0")}
+                {String(visible.length).padStart(2, "0")}
               </span>
               <button
                 type="button"
@@ -117,15 +158,15 @@ export function GalleryLightbox({
               onClick={(e) => e.stopPropagation()}
             >
               <Image
-                src={images[openIndex].url}
-                alt={images[openIndex].alt || `${title} — image ${openIndex + 1}`}
+                src={visible[openIndex].url}
+                alt={visible[openIndex].alt || `${title} — image ${openIndex + 1}`}
                 fill
                 sizes="100vw"
                 className="object-contain"
               />
             </m.div>
 
-            {images.length > 1 && (
+            {visible.length > 1 && (
               <div
                 className="flex items-center justify-center gap-10 pb-8"
                 onClick={(e) => e.stopPropagation()}

@@ -13,5 +13,6 @@ export function revalidatePublicSite(): void {
   revalidatePath("/");
   revalidatePath("/properties");
   revalidatePath("/properties/[slug]", "page");
+  revalidatePath("/projects/[slug]", "page");
   revalidatePath("/sitemap.xml");
 }

@@ -5,13 +5,20 @@ import { Footer } from "@/components/sections/Footer";
 import { CTABand } from "@/components/sections/CTABand";
 import { ListingCard } from "@/components/ui/ListingCard";
 import { PropertiesFilters } from "@/components/PropertiesFilters";
-import { listProperties } from "@/lib/db/queries";
+import { CollectionGrid } from "@/components/CollectionGrid";
+import { CityTabs } from "@/components/CityTabs";
+import { ConfigTabs } from "@/components/ConfigTabs";
+import { listProperties, listCollectionCounts, listCityCounts } from "@/lib/db/queries";
 import { CATEGORIES, isCategory, type CategoryValue } from "@/lib/categories";
 import {
   FURNISHINGS,
   POSSESSION_STATUSES,
   PROPERTY_TYPES,
+  CONFIGURATIONS,
+  isCollection,
 } from "@/lib/attributes";
+import { isCity } from "@/lib/locations";
+import { propertiesHref, type PropertiesFilterParams } from "@/lib/properties-url";
 import { COMPANY, PROPERTIES_PAGE } from "@/lib/data";
 import { canonical } from "@/lib/seo";
 
@@ -47,23 +54,59 @@ export default async function PropertiesPage({
 }: {
   searchParams: Promise<{
     category?: string;
+    group?: string;
     type?: string;
     possession?: string;
     furnishing?: string;
+    city?: string;
+    locality?: string;
+    sector?: string;
+    configuration?: string;
   }>;
 }) {
   const params = await searchParams;
   const category =
     params.category && isCategory(params.category) ? params.category : undefined;
+  const group = params.group && isCollection(params.group) ? params.group : undefined;
   const propertyType = pick(params.type, PROPERTY_TYPES);
   const possessionStatus = pick(params.possession, POSSESSION_STATUSES);
   const furnishing = pick(params.furnishing, FURNISHINGS);
-  const properties = await listProperties({
+  const configuration = pick(params.configuration, CONFIGURATIONS);
+  const city = params.city && isCity(params.city) ? params.city : undefined;
+  const locality = params.locality?.trim() || undefined;
+  const sector = params.sector?.trim() || undefined;
+
+  const [properties, collectionCounts, cityCounts] = await Promise.all([
+    listProperties({
+      category,
+      collection: group,
+      propertyType,
+      configuration,
+      possessionStatus,
+      furnishing,
+      city,
+      locality,
+      sector,
+    }),
+    listCollectionCounts(),
+    listCityCounts(),
+  ]);
+
+  // Every server-rendered filter link (category chips, collection cards,
+  // configuration tabs) merges its own override onto this — so clicking one
+  // filter never drops the others (R-04/R-08/R-09's "all of it must
+  // compose" requirement, taken literally).
+  const current: PropertiesFilterParams = {
     category,
-    propertyType,
-    possessionStatus,
+    group,
+    type: propertyType,
+    possession: possessionStatus,
     furnishing,
-  });
+    city,
+    locality,
+    sector,
+    configuration,
+  };
 
   return (
     <>
@@ -81,7 +124,15 @@ export default async function PropertiesPage({
           </p>
         </section>
 
-        <section className="px-5 py-20 md:px-12 md:py-28">
+        <section className="px-5 py-16 md:px-12 md:py-20">
+          <span data-reveal className="mb-8 block h-px w-16 bg-gold" />
+          <h2 data-reveal className="mb-8 font-serif text-h3 text-ink">
+            Browse by Collection
+          </h2>
+          <CollectionGrid counts={collectionCounts} current={current} />
+        </section>
+
+        <section id="listings" className="px-5 py-20 md:px-12 md:py-28">
           <nav
             aria-label="Filter by category"
             data-reveal
@@ -94,15 +145,12 @@ export default async function PropertiesPage({
             {FILTERS.map((filter) => {
               const isActive =
                 filter.value === "all" ? !category : category === filter.value;
-              const chipParams = new URLSearchParams();
-              if (propertyType) chipParams.set("type", propertyType);
-              if (possessionStatus) chipParams.set("possession", possessionStatus);
-              if (furnishing) chipParams.set("furnishing", furnishing);
-              if (filter.value !== "all") chipParams.set("category", filter.value);
               return (
                 <Link
                   key={filter.value}
-                  href={`/properties${chipParams.size ? `?${chipParams}` : ""}`}
+                  href={propertiesHref(current, {
+                    category: filter.value === "all" ? undefined : filter.value,
+                  })}
                   aria-current={isActive ? "page" : undefined}
                   className={`text-eyebrow relative pb-1 font-sans font-medium uppercase tracking-[0.18em] transition-colors duration-300 ${
                     isActive ? "text-ink" : "text-ink-muted hover:text-ink"
@@ -119,6 +167,19 @@ export default async function PropertiesPage({
               );
             })}
           </nav>
+
+          <div data-reveal className="mb-10 border-b border-border pb-10">
+            <CityTabs
+              cities={cityCounts}
+              city={city ?? ""}
+              locality={locality ?? ""}
+              sector={sector ?? ""}
+            />
+          </div>
+
+          <div data-reveal className="mb-10 border-b border-border pb-10">
+            <ConfigTabs configuration={configuration} current={current} />
+          </div>
 
           <div data-reveal className="mb-14">
             <PropertiesFilters

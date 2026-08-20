@@ -145,7 +145,12 @@ function failSoft<A extends unknown[], R>(
 function collectionCondition(collection: CollectionValue) {
   if (collection === "projects") return eq(properties.kind, "project");
   const types = typesInCollection(collection);
-  return types.length ? inArray(properties.propertyType, types) : undefined;
+  // `kind` wins in collectionOf() (a whole society is Projects whatever its
+  // unit type) — the filter must agree, or a project-kind row could match
+  // both `?group=projects` and `?group=flats` while its own card only ever
+  // shows one badge.
+  const typeMatch = types.length ? inArray(properties.propertyType, types) : undefined;
+  return typeMatch ? and(eq(properties.kind, "unit"), typeMatch) : undefined;
 }
 
 const listPropertiesCached = unstable_cache(
@@ -402,6 +407,22 @@ export async function searchProperties(
     });
   } catch (err) {
     console.error("searchProperties failed:", err);
+    return [];
+  }
+}
+
+/** Matches project names for the search dropdown (R-27) — same ILIKE shape as searchProperties. */
+export async function searchProjects(q: string, limit = 4): Promise<PublicProject[]> {
+  const term = `%${q.trim()}%`;
+  try {
+    return await db.query.projects.findMany({
+      columns: PUBLIC_PROJECT_COLUMNS,
+      where: ilike(projects.name, term),
+      orderBy: [asc(projects.name)],
+      limit,
+    });
+  } catch (err) {
+    console.error("searchProjects failed:", err);
     return [];
   }
 }

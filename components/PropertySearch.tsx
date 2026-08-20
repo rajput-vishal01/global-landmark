@@ -8,6 +8,7 @@ import { AnimatePresence, m } from "framer-motion";
 import { useOutsideClick } from "@/lib/hooks";
 
 type Result = {
+  type?: "property" | "project";
   slug: string;
   title: string;
   location: string;
@@ -91,14 +92,14 @@ export function PropertySearch({
       setActiveIndex((prev) => (prev - 1 + results.length) % results.length);
     } else if (e.key === "Enter" && activeIndex >= 0) {
       e.preventDefault();
-      go(results[activeIndex].slug);
+      go(results[activeIndex]);
     }
   }
 
-  function go(slug: string) {
+  function go(result: Result) {
     setIsOpen(false);
     setQuery("");
-    router.push(`/properties/${slug}`);
+    router.push(result.type === "project" ? `/projects/${result.slug}` : `/properties/${result.slug}`);
   }
 
   const isDark = tone === "dark";
@@ -164,7 +165,7 @@ export function PropertySearch({
                 <li key={result.slug} role="option" aria-selected={i === activeIndex}>
                   <button
                     type="button"
-                    onClick={() => go(result.slug)}
+                    onClick={() => go(result)}
                     onMouseEnter={() => setActiveIndex(i)}
                     className={`flex w-full cursor-pointer items-center gap-4 px-4 py-3 text-left transition-colors duration-200 ${
                       i === activeIndex ? "bg-cream" : "bg-white"

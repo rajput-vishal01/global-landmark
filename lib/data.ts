@@ -271,6 +271,13 @@ export const PROPERTY_DETAIL = {
   whatsAppMessagePrefix: "Hi, I would like to know more about",
 };
 
+export const PROJECT_DETAIL = {
+  inquiryHeading: "Enquire About This Project",
+  inquirySub: "We respond within one business day.",
+  emptyUnitsNote:
+    "No units are currently listed for this project. Speak with us for off-market availability.",
+};
+
 export const CONTACT_PAGE = {
   title: "Contact",
   sub: "Answered personally within one business day.",
