@@ -28,6 +28,7 @@ export function LocationSection({
   sector: initialSector,
   block: initialBlock,
   society: initialSociety,
+  tower: initialTower,
   floorNumber: initialFloorNumber,
   totalFloors: initialTotalFloors,
   unitNumber: initialUnitNumber,
@@ -38,6 +39,8 @@ export function LocationSection({
   sector?: string | null;
   block?: string | null;
   society?: string | null;
+  /** The linked tower's name, if any — resolved to `towerId` server-side. */
+  tower?: string | null;
   floorNumber?: number | null;
   totalFloors?: number | null;
   unitNumber?: string | null;
@@ -177,6 +180,25 @@ export function LocationSection({
           placeholder="Green Lotus Saksham"
           className={FIELD}
         />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label htmlFor="towerName" className={LABEL}>
+          Tower
+        </label>
+        <input
+          id="towerName"
+          name="towerName"
+          type="text"
+          maxLength={200}
+          defaultValue={initialTower ?? ""}
+          placeholder="Tower A (leave empty for a single listing)"
+          className={FIELD}
+        />
+        <p className="font-sans text-meta text-ink-muted">
+          An unknown name creates the tower under the selected project — the
+          same way an unknown project name creates the project.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">

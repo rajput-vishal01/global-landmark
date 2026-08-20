@@ -460,6 +460,8 @@ export type ParsedProperty = {
   kind: "project" | "unit";
   category: "sale" | "purchase" | "lease" | "invest";
   projectName: string;
+  /** Free text, resolved to `towerId` the same way `projectName` resolves to `projectId`. */
+  towerName: string;
   description: string;
   location: string;
   propertyType: string | null;
@@ -505,6 +507,10 @@ export function parseProperty(
 
   // Free text — an unknown name creates the project (never a hard constraint).
   const projectName = String(formData.get("projectName") ?? "").trim().slice(0, 200);
+  // Same pattern, scoped to whichever project resolves above (R-12): a
+  // second flat in "Tower A" must not create a same-named tower under a
+  // different project.
+  const towerName = String(formData.get("towerName") ?? "").trim().slice(0, 200);
 
   const images = parseImages(String(formData.get("imagesJson") ?? "[]"));
   if (images === null) {
@@ -659,6 +665,7 @@ export function parseProperty(
       kind,
       category,
       projectName,
+      towerName,
       description: String(formData.get("description") ?? "").trim().slice(0, 10_000),
       location: String(formData.get("location") ?? "").trim().slice(0, 300),
       propertyType,

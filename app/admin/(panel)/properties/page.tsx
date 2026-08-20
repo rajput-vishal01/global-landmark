@@ -16,7 +16,7 @@ import {
 } from "@/lib/taxonomy/status";
 import { PROPERTY_TYPES } from "@/lib/attributes";
 import { CITY_NAMES } from "@/lib/locations";
-import { deleteProperty } from "./actions";
+import { deleteProperty, duplicateProperty } from "./actions";
 
 export const metadata = { title: "Properties" };
 
@@ -357,6 +357,17 @@ export default async function AdminPropertiesPage({
                           >
                             Edit
                           </Link>
+                          {/* R-12: the 2nd-10th flat in a tower starts from
+                              a clone, not a blank form. */}
+                          <form action={duplicateProperty}>
+                            <input type="hidden" name="id" value={p.id} />
+                            <button
+                              type="submit"
+                              className="cursor-pointer text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
+                            >
+                              Duplicate
+                            </button>
+                          </form>
                           <DeleteButton
                             action={deleteProperty}
                             id={p.id}

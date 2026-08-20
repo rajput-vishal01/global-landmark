@@ -54,6 +54,7 @@ function snapshotFormData(fd: FormData): string {
 type PropertyWithChildren = AdminProperty & {
   images: PropertyImage[];
   project: { name: string } | null;
+  tower: { name: string } | null;
   owners?: {
     name: string;
     sellerCategory: string | null;
@@ -299,6 +300,7 @@ export function PropertyForm({
         sector={property?.sector}
         block={property?.block}
         society={property?.society}
+        tower={property?.tower?.name}
         floorNumber={property?.floorNumber}
         totalFloors={property?.totalFloors}
         unitNumber={property?.unitNumber}

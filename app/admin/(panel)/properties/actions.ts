@@ -12,6 +12,7 @@ import {
   propertyInternal,
   propertyMedia,
   propertyOwners,
+  towers,
 } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
@@ -28,6 +29,13 @@ export type PropertyFormState = { error?: string };
  * fields are not enforced. Publishing is where the listing has to be
  * complete — which is the only moment it is visible to anyone.
  */
+/** A fresh shallow copy with `keys` dropped — the original is untouched. */
+function omit<T extends object, K extends keyof T>(obj: T, keys: readonly K[]): Omit<T, K> {
+  const copy: Partial<T> = { ...obj };
+  for (const k of keys) delete copy[k];
+  return copy as Omit<T, K>;
+}
+
 function modeFor(formData: FormData): ParseMode {
   return formData.get("publicationState") === "published" ? "publish" : "draft";
 }
@@ -134,6 +142,42 @@ async function resolveExistingProjectId(name: string): Promise<number | null> {
 }
 
 /**
+ * Find a tower by name (case-insensitive) scoped to `projectId`, or create
+ * it. Scoped because "Tower A" is a common name — without the project scope
+ * a second, unrelated project's "Tower A" would collide with the first.
+ * No project selected means no tower can be attached.
+ */
+async function resolveTowerId(
+  projectId: number | null,
+  name: string
+): Promise<number | null> {
+  if (!projectId || !name) return null;
+  const existing = await db
+    .select({ id: towers.id })
+    .from(towers)
+    .where(sql`${towers.projectId} = ${projectId} and lower(${towers.name}) = ${name.toLowerCase()}`);
+  if (existing.length) return existing[0].id;
+  const [row] = await db
+    .insert(towers)
+    .values({ projectId, name })
+    .returning({ id: towers.id });
+  return row.id;
+}
+
+/** Autosave variant — existing tower only, never creates (see resolveExistingProjectId). */
+async function resolveExistingTowerId(
+  projectId: number | null,
+  name: string
+): Promise<number | null> {
+  if (!projectId || !name) return null;
+  const existing = await db
+    .select({ id: towers.id })
+    .from(towers)
+    .where(sql`${towers.projectId} = ${projectId} and lower(${towers.name}) = ${name.toLowerCase()}`);
+  return existing[0]?.id ?? null;
+}
+
+/**
  * First free slug of the form `base`, `base-2`, `base-3`, ...
  *
  * Only the rows that could actually collide are read — `slug = base OR slug
@@ -189,6 +233,7 @@ export async function createProperty(
   const {
     images,
     projectName,
+    towerName,
     owners,
     charges,
     media,
@@ -199,11 +244,12 @@ export async function createProperty(
 
   try {
     const projectId = await resolveProjectId(projectName);
+    const towerId = await resolveTowerId(projectId, towerName);
     const slug = await uniqueSlug(fields.title);
     await db.transaction(async (tx) => {
       const [row] = await tx
         .insert(properties)
-        .values({ ...fields, projectId, slug })
+        .values({ ...fields, projectId, towerId, slug })
         .returning({ id: properties.id });
       // Ref code is assigned from the row id, inside the same transaction:
       // the id is already unique and monotonic, so two brokers saving at the
@@ -248,6 +294,7 @@ export async function updateProperty(
   const {
     images,
     projectName,
+    towerName,
     owners,
     charges,
     media,
@@ -282,11 +329,12 @@ export async function updateProperty(
       .filter((key) => !keepDocuments.has(key));
 
     const projectId = await resolveProjectId(projectName);
+    const towerId = await resolveTowerId(projectId, towerName);
     const slug = await uniqueSlug(fields.title, id);
     await db.transaction(async (tx) => {
       await tx
         .update(properties)
-        .set({ ...fields, projectId, slug, updatedAt: new Date() })
+        .set({ ...fields, projectId, towerId, slug, updatedAt: new Date() })
         .where(eq(properties.id, id));
 
       await tx.delete(propertyImages).where(eq(propertyImages.propertyId, id));
@@ -377,6 +425,7 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
   const {
     images,
     projectName,
+    towerName,
     owners,
     charges,
     media,
@@ -393,6 +442,7 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
 
   try {
     const projectId = await resolveExistingProjectId(projectName);
+    const towerId = await resolveExistingTowerId(projectId, towerName);
     const now = new Date();
 
     if (existingId) {
@@ -419,7 +469,7 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
       await db.transaction(async (tx) => {
         await tx
           .update(properties)
-          .set({ ...fields, projectId, slug, updatedAt: now })
+          .set({ ...fields, projectId, towerId, slug, updatedAt: now })
           .where(eq(properties.id, existingId));
         if (images.length) {
           await tx
@@ -459,7 +509,7 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
     await db.transaction(async (tx) => {
       const [row] = await tx
         .insert(properties)
-        .values({ ...fields, projectId, slug })
+        .values({ ...fields, projectId, towerId, slug })
         .returning({ id: properties.id });
       newId = row.id;
       await tx
@@ -487,6 +537,102 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
     console.error("saveDraft failed:", err);
     return { ok: false, error: "Autosave failed. Your work is still in this tab." };
   }
+}
+
+/**
+ * "Duplicate unit" (R-12): clones everything shared by every unit in the
+ * same tower/project, leaving only the per-unit specifics — floor, unit
+ * number, area, price and status — for the admin to fill in. A plain form
+ * action rather than the `(prevState, formData)` shape the rest of this file
+ * uses, so it can be called directly from `<form action={duplicateProperty}>`
+ * in a table row with no client wrapper.
+ *
+ * Owners, charges and media are copied: in the common case this clones a
+ * builder's own unsold tower inventory, where the same seller and the same
+ * society-wide charges/links genuinely apply to every unit. Images and legal
+ * documents are deliberately NOT copied — a photo or a sale deed belongs to
+ * one specific flat, and copying the row would misrepresent which unit it
+ * actually documents.
+ */
+export async function duplicateProperty(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const sourceId = Number(formData.get("id"));
+  if (!Number.isInteger(sourceId)) {
+    redirect("/admin/properties");
+  }
+
+  // redirect() throws a control-flow signal Next.js relies on — it must
+  // never land inside the try/catch below, or a legitimate "not found" exit
+  // would get logged as a failure and redirected twice.
+  const [source] = await db.select().from(properties).where(eq(properties.id, sourceId));
+  if (!source) {
+    redirect("/admin/properties");
+  }
+
+  let newId: number;
+  try {
+    const [sourceOwners, sourceCharges, sourceMedia, sourceInternalRows] =
+      await Promise.all([
+        db.select().from(propertyOwners).where(eq(propertyOwners.propertyId, sourceId)),
+        db.select().from(propertyCharges).where(eq(propertyCharges.propertyId, sourceId)),
+        db.select().from(propertyMedia).where(eq(propertyMedia.propertyId, sourceId)),
+        db.select().from(propertyInternal).where(eq(propertyInternal.propertyId, sourceId)),
+      ]);
+
+    const shared = omit(source, [
+      "id",
+      "slug",
+      "refCode",
+      "title",
+      "floorNumber",
+      "unitNumber",
+      "areaValue",
+      "plotArea",
+      "builtUpArea",
+      "superArea",
+      "carpetArea",
+      "areaSqft",
+      "demandPrice",
+      "perSqftRate",
+      "publicationState",
+      "listingStatus",
+      "createdAt",
+      "updatedAt",
+    ]);
+
+    const slug = await uniqueSlug(`${source.title} copy`);
+
+    newId = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(properties)
+        .values({
+          ...shared,
+          title: `${source.title} (copy)`,
+          slug,
+          publicationState: "draft",
+          listingStatus: "Available",
+        })
+        .returning({ id: properties.id });
+
+      await tx
+        .update(properties)
+        .set({ refCode: buildRefCode(shared.city, new Date().getFullYear(), row.id) })
+        .where(eq(properties.id, row.id));
+
+      await writeChildTables(tx, row.id, {
+        owners: sourceOwners.map((o) => omit(o, ["id", "propertyId", "createdAt"])),
+        charges: sourceCharges.map((c) => omit(c, ["id", "propertyId"])),
+        media: sourceMedia.map((m) => omit(m, ["id", "propertyId", "sortOrder"])),
+        circleRate: sourceInternalRows[0]?.circleRate ?? null,
+      });
+
+      return row.id;
+    });
+  } catch (err) {
+    console.error("duplicateProperty failed:", err);
+    redirect("/admin/properties");
+  }
+  redirect(`/admin/properties/${newId}/edit`);
 }
 
 export type DeleteState = { error?: string };

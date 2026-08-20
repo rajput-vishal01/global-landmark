@@ -19,7 +19,7 @@ const NAV: { label: string; href: string | null }[] = [
   { label: "Dashboard", href: "/admin" },
   { label: "Properties", href: "/admin/properties" },
   { label: "Projects", href: "/admin/projects" },
-  { label: "Builders", href: null },
+  { label: "Builders", href: "/admin/builders" },
   { label: "Leads", href: null },
   { label: "Deal of the Week", href: "/admin/deals" },
   { label: "Testimonials", href: "/admin/testimonials" },

@@ -28,6 +28,7 @@ export default async function EditPropertyPage({
         // (index 0 = cover image), so this must be the canonical order.
         images: { orderBy: IMAGE_ORDER },
         project: true,
+        tower: true,
         owners: true,
         internal: true,
         charges: true,
