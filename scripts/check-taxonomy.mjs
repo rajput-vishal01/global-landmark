@@ -22,8 +22,9 @@ try {
   // relative imports, and only CJS resolution tolerates them.
   execSync(
     `npx tsc lib/taxonomy/area.ts lib/taxonomy/property.ts lib/taxonomy/features.ts ` +
-      `lib/taxonomy/price.ts lib/taxonomy/status.ts lib/taxonomy/collections.ts lib/locations.ts ` +
-      `--outDir "${out}" --rootDir lib --target es2022 --module commonjs --skipLibCheck`,
+      `lib/taxonomy/price.ts lib/taxonomy/status.ts lib/taxonomy/collections.ts ` +
+      `lib/taxonomy/sections.ts lib/locations.ts lib/admin/property-parse.ts ` +
+      `--outDir "${out}" --rootDir lib --target es2022 --module commonjs --esModuleInterop --skipLibCheck`,
     { stdio: "pipe" }
   );
   // The repo's own package.json has no "type", but be explicit so these
@@ -39,6 +40,7 @@ try {
   const status = load("taxonomy/status.js");
   const collections = load("taxonomy/collections.js");
   const locations = load("locations.js");
+  const sections = load("taxonomy/sections.js");
 
   // --- CFF list completeness (section 2.2 of docs/REQUIREMENTS_V2.md) -------
   assert.equal(property.PROPERTY_TYPES.length, 23, "23 physical property types");
@@ -159,6 +161,72 @@ try {
   for (const c of locations.CITIES) {
     assert.notEqual(status.cityCode(c.name), "GEN", `city "${c.name}" has a ref-code prefix`);
   }
+
+  // --- Section registry and the conditional map (R-12) ---------------------
+  assert.equal(sections.SECTIONS.length, 20, "the CFF's twenty field groups");
+  const cffNumbers = sections.SECTIONS.map((s) => s.cff);
+  assert.deepEqual(
+    cffNumbers,
+    Array.from({ length: 20 }, (_, i) => i + 1),
+    "CFF numbers run 1..20 with no gaps or duplicates"
+  );
+  assert.equal(
+    new Set(sections.SECTIONS.map((s) => s.key)).size,
+    20,
+    "section keys are unique"
+  );
+
+  // Every property type resolves to a shape. A type without one would
+  // silently fall back to showing all twenty sections.
+  assert.deepEqual(
+    sections.unmappedPropertyTypes(),
+    [],
+    "every property type maps to a shape"
+  );
+  for (const t of property.PROPERTY_TYPES) {
+    assert.ok(sections.shapeOf(t), `"${t}" has a shape`);
+  }
+
+  // The rules the client stated, pinned verbatim.
+  assert.ok(
+    !sections.sectionsFor("Residential Plot").includes("configuration"),
+    "a Residential Plot never asks for a configuration (so never for balconies)"
+  );
+  assert.ok(
+    !sections.sectionsFor("Residential Plot").includes("furnishing"),
+    "a plot is not furnished"
+  );
+  const flatRequired = sections.requiredFieldsFor("Flat/Apartment");
+  assert.ok(
+    flatRequired.includes("floorNumber") && flatRequired.includes("unitNumber"),
+    "a tower flat must have floor and unit"
+  );
+  const plotRequired = sections.requiredFieldsFor("Residential Plot");
+  assert.ok(
+    !plotRequired.includes("floorNumber") && !plotRequired.includes("unitNumber"),
+    "a plot needs neither floor nor unit"
+  );
+  assert.ok(
+    sections.sectionsFor("Independent House").includes("configuration"),
+    "a house still has rooms to configure"
+  );
+  assert.ok(
+    !sections.sectionsFor("Warehouse").includes("amenities"),
+    "a warehouse has no society amenities"
+  );
+
+  // Unknown or unset type must not hide anything.
+  assert.equal(
+    sections.sectionsFor("Something Unmapped").length,
+    20,
+    "an unknown type shows every section rather than hiding fields"
+  );
+  assert.equal(sections.sectionsFor(null).length, 20, "an unset type shows every section");
+  assert.deepEqual(
+    sections.requiredFieldsFor("Something Unmapped"),
+    [],
+    "an unknown type requires nothing"
+  );
 
   console.log("check-taxonomy: all assertions passed");
 } finally {
