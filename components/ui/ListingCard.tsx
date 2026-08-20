@@ -8,6 +8,8 @@ import {
   formatArea,
   formatIndianShort,
 } from "@/lib/attributes";
+import { EnquiryToggleButton } from "@/components/EnquiryToggleButton";
+import { toEnquiryCartItem } from "@/lib/enquiry-cart-item";
 
 export function propertySpecs(property: PublicPropertyWithMedia): string {
   return [
@@ -77,6 +79,10 @@ export function ListingCard({
         <span className="text-eyebrow absolute left-4 top-4 bg-dark-deep/70 px-3 py-1.5 font-sans font-medium uppercase tracking-[0.2em] text-cream backdrop-blur-sm">
           {badge}
         </span>
+        <EnquiryToggleButton
+          item={toEnquiryCartItem(property)}
+          className="text-eyebrow absolute right-4 top-4 z-10 bg-dark-deep/70 px-3 py-1.5 font-sans font-medium uppercase tracking-[0.2em] text-cream backdrop-blur-sm transition-colors hover:bg-dark-deep/90"
+        />
       </div>
       <div className="flex flex-col gap-1.5">
         <h3 className="font-serif text-h4 text-ink">{property.title}</h3>

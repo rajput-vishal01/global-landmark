@@ -8,6 +8,8 @@ import { CTABand } from "@/components/sections/CTABand";
 import { ContactForm } from "@/components/ContactForm";
 import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
 import { ListingCard, propertySpecs } from "@/components/ui/ListingCard";
+import { EnquiryToggleButton } from "@/components/EnquiryToggleButton";
+import { toEnquiryCartItem } from "@/lib/enquiry-cart-item";
 import { getPropertyBySlug, listProperties } from "@/lib/db/queries";
 import { categoryLabel } from "@/lib/categories";
 import { AMENITY_GROUPS, formatArea, formatIndianShort } from "@/lib/attributes";
@@ -530,6 +532,10 @@ export default async function PropertyDetailPage({
                 >
                   Chat on WhatsApp
                 </a>
+                <EnquiryToggleButton
+                  item={toEnquiryCartItem(property)}
+                  className="text-eyebrow inline-flex justify-center border border-ink/25 px-7 py-4 text-center font-sans font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:border-gold"
+                />
               </div>
             </div>
           </aside>

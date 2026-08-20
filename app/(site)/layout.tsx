@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { ScrollReveals } from "@/components/ScrollReveals";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { WhatsAppDock } from "@/components/WhatsAppDock";
+import { EnquiryDock } from "@/components/EnquiryDock";
 import { SocialProofTicker } from "@/components/SocialProofTicker";
 
 // Public site shell. Smooth scroll + engagement layer (WhatsApp dock,
@@ -23,6 +24,7 @@ export default function SiteLayout({
       </Suspense>
       {children}
       <WhatsAppDock />
+      <EnquiryDock />
       <SocialProofTicker />
     </>
   );

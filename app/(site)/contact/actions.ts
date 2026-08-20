@@ -74,6 +74,14 @@ export async function submitInquiry(
   if (!INTERESTS.has(data.interest)) data.interest = "other";
 
   const propertyIds = parsePropertyIds(String(formData.get("propertyIdsJson") ?? "[]"));
+  // R-05: the enquiry cart path must never send silently without a phone —
+  // unlike the plain contact form, where phone stays optional.
+  if (propertyIds.length > 0 && !data.phone) {
+    return {
+      status: "error",
+      message: "Please add a phone number so we can reach you about these properties.",
+    };
+  }
   const pageUrl = String(formData.get("pageUrl") ?? "").trim().slice(0, 500) || null;
   const source = String(formData.get("source") ?? "").trim().slice(0, 100) || null;
   const utm = parseUtm(formData);

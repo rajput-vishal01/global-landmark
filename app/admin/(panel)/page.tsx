@@ -92,7 +92,7 @@ async function totalBrokeragePending(): Promise<number> {
       .select({
         id: crmDeals.id,
         dealValue: crmDeals.dealValue,
-        brokeragePercentBp: crmDeals.brokeragePercentBp,
+        brokeragePercent: crmDeals.brokeragePercent,
         brokerageAmountOverride: crmDeals.brokerageAmountOverride,
         stage: crmDeals.stage,
       })
@@ -109,7 +109,7 @@ async function totalBrokeragePending(): Promise<number> {
     let total = 0;
     for (const deal of openDeals) {
       if (isClosedStage(deal.stage)) continue;
-      const amount = brokerageAmount(deal.dealValue, deal.brokeragePercentBp, deal.brokerageAmountOverride);
+      const amount = brokerageAmount(deal.dealValue, deal.brokeragePercent, deal.brokerageAmountOverride);
       const pending = brokeragePending(amount, paymentsByDeal.get(deal.id) ?? []);
       if (pending != null) total += pending;
     }

@@ -19,20 +19,31 @@ const initialState: InquiryState = { status: "idle" };
  *
  * `propertyIds` and `source` are set by the enquiry cart panel (R-05) so
  * one submit covers every shortlisted property; every other caller omits
- * them and gets the plain single-message form unchanged.
+ * them and gets the plain single-message form unchanged. `onSuccess` lets
+ * the cart panel clear the shortlist once the lead is actually sent.
  */
 export function ContactForm({
   idPrefix = "",
   propertyIds = [],
   source,
+  onSuccess,
 }: {
   idPrefix?: string;
   propertyIds?: number[];
   source?: string;
+  onSuccess?: () => void;
 }) {
   const [state, formAction, isPending] = useActionState(submitInquiry, initialState);
   const fid = (name: string) => `${idPrefix}${name}`;
   const pathname = usePathname();
+  // R-05: the enquiry cart must never re-offer properties from an already-
+  // sent enquiry — clear it the moment the send actually succeeds.
+  useEffect(() => {
+    if (state.status === "sent") onSuccess?.();
+  }, [state.status, onSuccess]);
+  // R-05: "must never send silently without a name and phone" — required
+  // for the cart path specifically; the plain contact form keeps it optional.
+  const phoneRequired = propertyIds.length > 0;
 
   // Written directly to the DOM after mount, not React state — these are
   // uncontrolled hidden inputs, and useSearchParams() would force every
@@ -104,9 +115,17 @@ export function ContactForm({
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor={fid("phone")} className={LABEL}>
-            Phone <span className="normal-case text-ink-muted">(optional)</span>
+            Phone{" "}
+            {!phoneRequired && <span className="normal-case text-ink-muted">(optional)</span>}
           </label>
-          <input id={fid("phone")} name="phone" type="tel" autoComplete="tel" className={FIELD_CLASSES} />
+          <input
+            id={fid("phone")}
+            name="phone"
+            type="tel"
+            required={phoneRequired}
+            autoComplete="tel"
+            className={FIELD_CLASSES}
+          />
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor={fid("interest")} className={LABEL}>
