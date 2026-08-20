@@ -118,6 +118,22 @@ async function resolveProjectId(name: string): Promise<number | null> {
 }
 
 /**
+ * Draft-mode project lookup — existing project only, never creates one.
+ * Autosave fires every ~20s while a broker is still typing; if it created a
+ * project the same way a real save does, typing "Green" character by
+ * character would leave a project literally called "Green" in the database
+ * twenty seconds later, before the broker finishes "Green Lotus Saksham".
+ */
+async function resolveExistingProjectId(name: string): Promise<number | null> {
+  if (!name) return null;
+  const existing = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(sql`lower(${projects.name}) = ${name.toLowerCase()}`);
+  return existing[0]?.id ?? null;
+}
+
+/**
  * First free slug of the form `base`, `base-2`, `base-3`, ...
  *
  * Only the rows that could actually collide are read — `slug = base OR slug
@@ -151,6 +167,23 @@ export async function createProperty(
   formData: FormData
 ): Promise<PropertyFormState> {
   await requireAdmin();
+
+  // Autosave (saveDraft) may already have inserted this listing as a draft
+  // before the broker ever clicks "Create property" — the form's hidden id
+  // field gets written the moment that first tick succeeds. Without this
+  // check, clicking the visible submit button after autosave has already
+  // fired would insert a SECOND row and leave the autosaved one orphaned as
+  // an untitled duplicate. Forward to the same update path updateProperty
+  // uses whenever the id turns out to name a real row.
+  const existingId = Number(formData.get("id"));
+  if (Number.isInteger(existingId) && existingId > 0) {
+    const [row] = await db
+      .select({ id: properties.id })
+      .from(properties)
+      .where(eq(properties.id, existingId));
+    if (row) return updateProperty(_prev, formData);
+  }
+
   const parsed = parseProperty(formData, modeFor(formData));
   if (!parsed.ok) return { error: parsed.error };
   const {
@@ -297,6 +330,163 @@ export async function updateProperty(
   }
   revalidatePublicSite();
   redirect("/admin/properties");
+}
+
+export type SaveDraftState =
+  | { ok: true; id: number; savedAt: string }
+  | { ok: false; error: string };
+
+/**
+ * Autosave, fired from the client every ~20s while the form is dirty (§4.5).
+ * A half-entered listing mid-call is normal; this exists so a dropped
+ * connection does not lose it.
+ *
+ * Three things keep autosave from doing more than a broker asked for:
+ *
+ * 1. It NEVER writes publicationState or listingStatus. A new row lands at
+ *    the schema default (draft); an existing row keeps whatever state it
+ *    already has. Autosave firing every 20s must not be able to publish a
+ *    draft, and must not be able to quietly unpublish a live listing just
+ *    because the form re-submitted its current (published) values — those
+ *    two fields are simply never part of what this action writes.
+ * 2. The project lookup never creates — see resolveExistingProjectId above.
+ * 3. revalidatePublicSite() fires only when the row is ALREADY published.
+ *    A draft is never public, so revalidating on every autosave tick would
+ *    churn the public cache for nothing; an already-live listing being
+ *    autosaved (a broker editing a published property) should still reflect
+ *    on the public site without waiting for an explicit "Save changes".
+ *
+ * updatedAt DOES move on every autosave tick. That is a real edit — the
+ * broker is actively working the listing — and "Last updated" should say
+ * so. This is worth a note for Phase 6: the "not updated in 30+ days" stale-
+ * listing tile there will measure recent attention, not necessarily a
+ * meaningful content change, which is the correct trade for what that tile
+ * is for (finding listings nobody has looked at).
+ */
+export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
+  await requireAdmin();
+
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) {
+    // Nothing worth persisting yet — not an error, just nothing to do.
+    return { ok: false, error: "Add a title before autosave can save." };
+  }
+
+  const parsed = parseProperty(formData, "draft");
+  if (!parsed.ok) return { ok: false, error: parsed.error };
+  const {
+    images,
+    projectName,
+    owners,
+    charges,
+    media,
+    documents,
+    circleRate,
+    ...fields
+  } = parsed.data;
+
+  const idRaw = formData.get("id");
+  const existingId =
+    typeof idRaw === "string" && idRaw && Number.isInteger(Number(idRaw))
+      ? Number(idRaw)
+      : null;
+
+  try {
+    const projectId = await resolveExistingProjectId(projectName);
+    const now = new Date();
+
+    if (existingId) {
+      const [current] = await db
+        .select({ publicationState: properties.publicationState })
+        .from(properties)
+        .where(eq(properties.id, existingId));
+      if (!current) return { ok: false, error: "This listing no longer exists." };
+
+      // Documents own a private file on disk, the same way images own a
+      // public one — a document dropped from the vault mid-edit needs its
+      // file swept, and one still present must not be touched. Computed
+      // before the transaction so the sweep can run only after it commits.
+      const existingDocs = await db
+        .select({ storageKey: propertyDocuments.storageKey })
+        .from(propertyDocuments)
+        .where(eq(propertyDocuments.propertyId, existingId));
+      const keepDocs = new Set(documents.map((d) => d.storageKey));
+      const removedDocs = existingDocs
+        .map((row) => row.storageKey)
+        .filter((key) => !keepDocs.has(key));
+
+      const slug = await uniqueSlug(fields.title, existingId);
+      await db.transaction(async (tx) => {
+        await tx
+          .update(properties)
+          .set({ ...fields, projectId, slug, updatedAt: now })
+          .where(eq(properties.id, existingId));
+        if (images.length) {
+          await tx
+            .delete(propertyImages)
+            .where(eq(propertyImages.propertyId, existingId));
+          await tx.insert(propertyImages).values(
+            images.map((img, i) => ({ ...img, propertyId: existingId, sortOrder: i }))
+          );
+        }
+        await tx
+          .delete(propertyDocuments)
+          .where(eq(propertyDocuments.propertyId, existingId));
+        if (documents.length) {
+          await tx.insert(propertyDocuments).values(
+            documents.map((d) => ({ ...d, propertyId: existingId }))
+          );
+        }
+        await writeChildTables(tx, existingId, { owners, charges, media, circleRate });
+      });
+
+      if (removedDocs.length) {
+        try {
+          await deleteStoredFiles(removedDocs, "private");
+        } catch (err) {
+          console.error("saveDraft: removed document files not swept:", removedDocs, err);
+        }
+      }
+
+      if (current.publicationState === "published") revalidatePublicSite();
+      return { ok: true, id: existingId, savedAt: now.toISOString() };
+    }
+
+    // First autosave tick for a brand-new listing — insert once, then every
+    // later tick in this session updates the same row via existingId above.
+    const slug = await uniqueSlug(fields.title);
+    let newId = 0;
+    await db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(properties)
+        .values({ ...fields, projectId, slug })
+        .returning({ id: properties.id });
+      newId = row.id;
+      await tx
+        .update(properties)
+        .set({ refCode: buildRefCode(fields.city, now.getFullYear(), row.id) })
+        .where(eq(properties.id, row.id));
+      if (images.length) {
+        await tx.insert(propertyImages).values(
+          images.map((img, i) => ({ ...img, propertyId: row.id, sortOrder: i }))
+        );
+      }
+      // Nothing existed before this row, so every document is new — no
+      // diff needed, unlike the existing-row branch above.
+      if (documents.length) {
+        await tx.insert(propertyDocuments).values(
+          documents.map((d) => ({ ...d, propertyId: row.id }))
+        );
+      }
+      await writeChildTables(tx, row.id, { owners, charges, media, circleRate });
+    });
+    // A brand-new row is always draft (the schema default) — never public,
+    // so no revalidation is needed here.
+    return { ok: true, id: newId, savedAt: now.toISOString() };
+  } catch (err) {
+    console.error("saveDraft failed:", err);
+    return { ok: false, error: "Autosave failed. Your work is still in this tab." };
+  }
 }
 
 export type DeleteState = { error?: string };

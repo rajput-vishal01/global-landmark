@@ -1,14 +1,18 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import type { AdminProperty, PropertyImage } from "@/lib/db/schema";
 import type { PublicProject } from "@/lib/db/public-columns";
-import type { PropertyFormState } from "@/app/admin/(panel)/properties/actions";
+import {
+  saveDraft,
+  type PropertyFormState,
+} from "@/app/admin/(panel)/properties/actions";
 import { CATEGORIES } from "@/lib/categories";
 import { sectionsFor } from "@/lib/taxonomy/sections";
 import { FIELD, LABEL } from "@/components/form-classes";
 import { Select } from "@/components/ui/Select";
 import { FormSection } from "./FormSection";
+import { SaveBar, type AutosaveStatus } from "./SaveBar";
 import { BasicDetailsSection } from "./BasicDetailsSection";
 import { LocationSection } from "./LocationSection";
 import { ClassificationSection } from "./ClassificationSection";
@@ -29,6 +33,22 @@ type Action = (
   prev: PropertyFormState,
   formData: FormData
 ) => Promise<PropertyFormState>;
+
+/**
+ * Cheap change-detection for autosave, not a data serialisation format —
+ * good enough to answer "has anything changed since the last save", never
+ * read back or parsed. Excludes `id`, which autosave itself writes after
+ * the first insert; including it would make the very act of saving look
+ * like a change and trigger a needless follow-up tick.
+ */
+function snapshotFormData(fd: FormData): string {
+  const parts: string[] = [];
+  for (const [key, value] of fd.entries()) {
+    if (key === "id") continue;
+    parts.push(`${key}=${typeof value === "string" ? value : value.name}`);
+  }
+  return parts.join("&");
+}
 
 /** Child rows, shaped by the edit page's query. */
 type PropertyWithChildren = AdminProperty & {
@@ -96,12 +116,91 @@ export function PropertyForm({
   const [isUploading, setIsUploading] = useState(false);
   const [propertyType, setPropertyType] = useState(property?.propertyType ?? "");
   const [kind, setKind] = useState<string>(property?.kind ?? "unit");
+  const [autosave, setAutosave] = useState<AutosaveStatus>({ kind: "idle" });
 
   const visible = useMemo(() => new Set(sectionsFor(propertyType)), [propertyType]);
 
+  const formRef = useRef<HTMLFormElement>(null);
+  const idFieldRef = useRef<HTMLInputElement>(null);
+  // Last successfully-autosaved snapshot of the form's data, so a tick with
+  // nothing new to say is a no-op rather than an identical round trip.
+  //
+  // The plan for this task describes dirty-tracking via the form's native
+  // onInput/onChange. That works for plain <input>/<textarea> elements, but
+  // most of this form's controls (Select, ChecklistField) are custom
+  // components that update through React state, not a native DOM event —
+  // an event-based flag would silently miss every property-type, facing,
+  // amenity or configuration change. Comparing a serialised snapshot of the
+  // FormData instead catches every field uniformly, with no risk of a
+  // widget going unwatched, at the cost of one string comparison per tick.
+  const lastSavedRef = useRef<string | null>(null);
+  const savingRef = useRef(false);
+
+  useEffect(() => {
+    // ponytail: 20s fixed interval, per §4.5. No debounce-on-idle, no
+    // beforeunload flush — add either if brokers report losing the last
+    // few seconds of typing before a tab close.
+    const interval = setInterval(() => {
+      void tick();
+    }, 20_000);
+    return () => clearInterval(interval);
+
+    async function tick() {
+      const form = formRef.current;
+      if (!form || savingRef.current || isPending || isUploading) return;
+
+      const fd = new FormData(form);
+      const title = String(fd.get("title") ?? "").trim();
+      if (!title) return; // mirrors the server's own gate — nothing to save yet
+
+      const snapshot = snapshotFormData(fd);
+      if (snapshot === lastSavedRef.current) return; // nothing changed since last save
+
+      savingRef.current = true;
+      setAutosave({ kind: "saving" });
+      try {
+        const result = await saveDraft(fd);
+        if (result.ok) {
+          // Written directly to the DOM node, not through React state: the
+          // hidden id field is uncontrolled (defaultValue), so this survives
+          // re-renders and the next tick's FormData read picks it up,
+          // turning every subsequent autosave into an update of the same
+          // row instead of a new insert.
+          if (idFieldRef.current && !idFieldRef.current.value) {
+            idFieldRef.current.value = String(result.id);
+          }
+          lastSavedRef.current = snapshot;
+          setAutosave({ kind: "saved", at: new Date(result.savedAt) });
+        } else {
+          // Snapshot is deliberately NOT updated on failure — the next tick
+          // retries the same (still-unsaved) content instead of treating it
+          // as already handled.
+          setAutosave({ kind: "error", message: result.error });
+        }
+      } catch (err) {
+        console.error("autosave failed:", err);
+        setAutosave({ kind: "error", message: "Autosave failed." });
+      } finally {
+        savingRef.current = false;
+      }
+    }
+    // Refs are stable across renders and intentionally omitted; isPending
+    // and isUploading are the only reactive values the closure reads, and
+    // listing them means the interval restarts with a fresh closure the
+    // moment either changes, rather than holding a stale reference.
+  }, [isPending, isUploading]);
+
   return (
-    <form action={formAction} className="flex max-w-3xl flex-col gap-5">
-      {property && <input type="hidden" name="id" value={property.id} />}
+    <form ref={formRef} action={formAction} className="flex max-w-3xl flex-col gap-5">
+      {/* Uncontrolled (defaultValue, not value): autosave writes the id of a
+          newly-created draft straight to this DOM node via idFieldRef, and
+          a React-controlled value would overwrite that on the next render. */}
+      <input
+        ref={idFieldRef}
+        type="hidden"
+        name="id"
+        defaultValue={property?.id ?? ""}
+      />
 
       {/* Identity: never collapsed, because this is what the listing IS. */}
       <div className="flex flex-col gap-5 border border-border bg-white px-5 py-6">
@@ -301,23 +400,12 @@ export function PropertyForm({
         </p>
       )}
 
-      {/* Sticky: the form is long enough that a button at the bottom would be
-          a long scroll away from most of it. */}
-      <div className="sticky bottom-0 border-t border-border bg-cream/95 py-4 backdrop-blur-sm">
-        <button
-          type="submit"
-          disabled={isPending || isUploading}
-          className="w-full cursor-pointer bg-ink px-8 py-3.5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60 sm:w-fit"
-        >
-          {isUploading
-            ? "Uploading images..."
-            : isPending
-              ? "Saving..."
-              : property
-                ? "Save changes"
-                : "Create property"}
-        </button>
-      </div>
+      <SaveBar
+        isPending={isPending}
+        isUploading={isUploading}
+        isEditing={Boolean(property)}
+        autosave={autosave}
+      />
     </form>
   );
 }
