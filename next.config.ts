@@ -26,10 +26,11 @@ const nextConfig: NextConfig = {
     // Only hosts we actually serve property/site imagery from. A wildcard
     // here would let anyone use /_next/image as an SSRF proxy to any HTTPS
     // host. Admin-pasted images from other hosts need their host added.
-    remotePatterns: [
-      { protocol: "https", hostname: "res.cloudinary.com" },
-      { protocol: "https", hostname: "images.unsplash.com" },
-    ],
+    //
+    // Uploaded images are served same-origin from /api/images/<sha256> and
+    // need no entry at all. Unsplash is only here for the remaining stock
+    // photography and goes when the client's own images land.
+    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
   },
   async headers() {
     return [

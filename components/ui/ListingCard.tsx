@@ -3,7 +3,6 @@ import Link from "next/link";
 import type { PublicPropertyWithMedia } from "@/lib/db/public-columns";
 import { categoryLabel } from "@/lib/categories";
 import { formatArea } from "@/lib/attributes";
-import { optimizedImage } from "@/lib/images";
 
 export function propertySpecs(property: PublicPropertyWithMedia): string {
   return [
@@ -39,7 +38,7 @@ export function ListingCard({
       <div className="relative aspect-[4/5] overflow-hidden bg-ink/5">
         {cover && (
           <Image
-            src={optimizedImage(cover.url, 800)}
+            src={cover.url}
             alt={cover.alt || property.title}
             fill
             sizes="(min-width: 1024px) 30vw, (min-width: 768px) 42vw, 100vw"

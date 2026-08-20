@@ -6,12 +6,7 @@ import { db } from "@/lib/db";
 import { projects, properties, propertyImages } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
-import {
-  deleteCloudinaryImages,
-  isCloudinaryConfigured,
-  signUpload,
-  type UploadSignature,
-} from "@/lib/cloudinary";
+import { deleteBlobs, isLocalImageUrl, storageKeyFromUrl } from "@/lib/storage";
 import { isCategory } from "@/lib/categories";
 import {
   AREA_UNITS,
@@ -28,16 +23,17 @@ type ParsedImage = { url: string; storageKey: string | null; alt: string };
 
 const MAX_IMAGES = 20;
 
-// Only ids inside our upload folder may reach the Cloudinary delete path —
-// a forged storageKey must never be able to delete arbitrary account assets.
-const OWNED_STORAGE_KEY = /^global-landmark\/properties\//;
-
 // Must stay in sync with images.remotePatterns in next.config.ts — a stored
 // URL from any other host makes next/image throw at render and takes the
 // public pages down with it, so reject it here at the entry point.
-const IMAGE_HOSTS = new Set(["res.cloudinary.com", "images.unsplash.com"]);
+//
+// Uploaded images are same-origin (/api/images/<sha256>) and need no host
+// entry at all; this list only covers the remaining stock photography,
+// which goes away when the client's own images land.
+const IMAGE_HOSTS = new Set(["images.unsplash.com"]);
 
 function isAllowedImageUrl(url: string): boolean {
+  if (isLocalImageUrl(url)) return true;
   try {
     const u = new URL(url);
     return u.protocol === "https:" && IMAGE_HOSTS.has(u.hostname);
@@ -57,15 +53,14 @@ function parseImages(json: string): ParsedImage[] | null {
   const images: ParsedImage[] = [];
   for (const item of raw) {
     if (typeof item !== "object" || item === null) return null;
-    const { url, storageKey, alt } = item as Record<string, unknown>;
+    const { url, alt } = item as Record<string, unknown>;
     if (typeof url !== "string" || !isAllowedImageUrl(url)) return null;
-    const ownedId =
-      typeof storageKey === "string" && OWNED_STORAGE_KEY.test(storageKey)
-        ? storageKey.slice(0, 300)
-        : null; // treated as an external URL — never remote-deleted
     images.push({
       url: url.slice(0, 1000),
-      storageKey: ownedId,
+      // Derived from the URL, never taken from the client: a forged key
+      // would otherwise let a save delete an unrelated blob. External URLs
+      // yield null and are never deleted from storage.
+      storageKey: storageKeyFromUrl(url),
       alt: typeof alt === "string" ? alt.slice(0, 300) : "",
     });
   }
@@ -174,7 +169,7 @@ function parseProperty(formData: FormData):
     return {
       ok: false,
       error:
-        "Image list is invalid — images must be Cloudinary uploads or images.unsplash.com URLs.",
+        "Image list is invalid — upload files, or paste an images.unsplash.com URL.",
     };
   }
   if (!images.length) return { ok: false, error: "Add at least one image." };
@@ -334,13 +329,13 @@ export async function updateProperty(
     return { error: "Could not update the property. Try again." };
   }
 
-  // Replaced assets are removed only after the DB commit — a remote failure
-  // here can orphan a Cloudinary image (logged), but can never leave the
-  // live site pointing at a deleted one.
+  // Replaced blobs go only after the DB commit, so a failure here can leave
+  // an unreferenced blob (logged) but can never leave the live site pointing
+  // at deleted bytes.
   try {
-    await deleteCloudinaryImages(removed);
+    await deleteBlobs(removed);
   } catch (err) {
-    console.error("updateProperty: replaced Cloudinary images not removed:", removed, err);
+    console.error("updateProperty: replaced image blobs not removed:", removed, err);
   }
   revalidatePublicSite();
   redirect("/admin/properties");
@@ -365,21 +360,17 @@ export async function deleteProperty(
       .map((row) => row.storageKey)
       .filter((pid): pid is string => Boolean(pid));
 
-    // Cascade rule: Cloudinary assets go first; abort on failure so no
-    // orphaned remote images can exist.
-    await deleteCloudinaryImages(storageKeys);
-    await db.delete(properties).where(eq(properties.id, id));
+    // Both the rows and the bytes live in the same database, so this is
+    // one transaction rather than the old remote-first cascade: there is no
+    // longer any way for a delete to half-succeed across two systems.
+    await db.transaction(async (tx) => {
+      await tx.delete(properties).where(eq(properties.id, id));
+      if (storageKeys.length) await deleteBlobs(storageKeys);
+    });
   } catch (err) {
     console.error("deleteProperty failed:", err);
-    return { error: "Delete failed — remote images were not removed. Try again." };
+    return { error: "Delete failed. Try again." };
   }
   revalidatePublicSite();
   redirect("/admin/properties");
-}
-
-/** Signed params for direct browser upload; null = paste-URL fallback mode. */
-export async function getUploadSignature(): Promise<UploadSignature | null> {
-  await requireAdmin();
-  if (!isCloudinaryConfigured()) return null;
-  return signUpload();
 }

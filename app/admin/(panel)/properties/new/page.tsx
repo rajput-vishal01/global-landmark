@@ -1,5 +1,4 @@
 import { listProjectsForAdmin } from "@/lib/db/queries";
-import { isCloudinaryConfigured } from "@/lib/cloudinary";
 import { PropertyForm } from "@/components/admin/PropertyForm";
 import { createProperty } from "../actions";
 
@@ -14,7 +13,6 @@ export default async function NewPropertyPage() {
       <PropertyForm
         action={createProperty}
         projects={projects}
-        cloudinaryEnabled={isCloudinaryConfigured()}
       />
     </div>
   );

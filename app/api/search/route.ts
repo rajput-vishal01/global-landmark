@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { searchProperties } from "@/lib/db/queries";
 import { categoryLabel } from "@/lib/categories";
-import { optimizedImage } from "@/lib/images";
 import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
@@ -21,7 +20,7 @@ export async function GET(request: Request) {
       location: p.location,
       category: categoryLabel(p.category),
       // 64px thumbnail — don't make the optimizer pull the full original.
-      image: p.images[0] ? optimizedImage(p.images[0].url, 200) : null,
+      image: p.images[0] ? p.images[0].url : null,
     })),
   });
 }

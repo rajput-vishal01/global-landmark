@@ -3,7 +3,6 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { properties } from "@/lib/db/schema";
 import { IMAGE_ORDER, listProjectsForAdmin } from "@/lib/db/queries";
-import { isCloudinaryConfigured } from "@/lib/cloudinary";
 import { PropertyForm } from "@/components/admin/PropertyForm";
 import { updateProperty } from "../../actions";
 
@@ -38,7 +37,6 @@ export default async function EditPropertyPage({
       <PropertyForm
         action={updateProperty}
         projects={projects}
-        cloudinaryEnabled={isCloudinaryConfigured()}
         property={property}
       />
     </div>

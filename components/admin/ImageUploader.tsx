@@ -1,21 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { getUploadSignature } from "@/app/admin/(panel)/properties/actions";
 
 type UploaderImage = { url: string; storageKey: string | null; alt: string };
 
+/** Kept in step with IMAGE_MIME_TYPES / MAX_UPLOAD_BYTES in lib/storage.ts. */
+const ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
+const MAX_MB = 8;
+
 /**
- * Gallery editor: Cloudinary direct upload when configured, URL-paste
- * fallback otherwise. Emits the list as a hidden imagesJson field.
+ * Gallery editor. Files are uploaded through our own server, which stores
+ * them in the database — no third-party account, and nothing leaves the
+ * app. Pasting a URL is still supported for the remaining stock imagery,
+ * which lives on an external host until the client's photos arrive.
+ *
+ * Emits the list as a hidden imagesJson field.
  */
 export function ImageUploader({
   initial,
-  cloudinaryEnabled,
   onBusyChange,
 }: {
   initial: UploaderImage[];
-  cloudinaryEnabled: boolean;
   /** Lets the parent form block submit while uploads are in flight. */
   onBusyChange?: (busy: boolean) => void;
 }) {
@@ -44,32 +49,36 @@ export function ImageUploader({
     setBusy(true);
     setError(null);
     try {
-      const sig = await getUploadSignature();
-      if (!sig) {
-        setError("Cloudinary is not configured — paste image URLs instead.");
-        return;
-      }
       for (const file of Array.from(files)) {
+        // Checked here for a fast, specific message; the server enforces
+        // the same limits regardless of what this component sends.
+        if (file.size > MAX_MB * 1024 * 1024) {
+          setError(
+            `"${file.name}" is ${(file.size / 1024 / 1024).toFixed(1)} MB — the limit is ${MAX_MB} MB.`
+          );
+          continue;
+        }
         const body = new FormData();
         body.append("file", file);
-        body.append("api_key", sig.apiKey);
-        body.append("timestamp", String(sig.timestamp));
-        body.append("folder", sig.folder);
-        body.append("signature", sig.signature);
-        const res = await fetch(
-          `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`,
-          { method: "POST", body }
+        const res = await fetch("/api/admin/upload", { method: "POST", body });
+        const data = (await res.json()) as
+          | { url: string; storageKey: string }
+          | { error: string };
+        if (!res.ok || !("url" in data)) {
+          setError("error" in data ? data.error : `Upload failed (${res.status}).`);
+          continue;
+        }
+        // Same bytes uploaded twice yield the same key, so skip the duplicate
+        // rather than showing the image twice in one gallery.
+        setImages((prev) =>
+          prev.some((img) => img.storageKey === data.storageKey)
+            ? prev
+            : [...prev, { url: data.url, storageKey: data.storageKey, alt: "" }]
         );
-        if (!res.ok) throw new Error(`Upload failed (${res.status})`);
-        const data = (await res.json()) as { secure_url: string; public_id: string };
-        setImages((prev) => [
-          ...prev,
-          { url: data.secure_url, storageKey: data.public_id, alt: "" },
-        ]);
       }
     } catch (err) {
       console.error("Image upload failed:", err);
-      setError("Upload failed. Try again or paste an image URL.");
+      setError("Upload failed — check your connection and try again.");
     } finally {
       setBusy(false);
     }
@@ -77,16 +86,16 @@ export function ImageUploader({
 
   function addPastedUrl() {
     const url = pasteUrl.trim();
-    // Same allowlist as the server action / next.config remotePatterns — an
-    // unlisted host would make next/image throw on the public pages.
+    // Must match IMAGE_HOSTS in the property action and remotePatterns in
+    // next.config.ts — an unlisted host makes next/image throw at render.
     let hostname = "";
     try {
       hostname = new URL(url).hostname;
     } catch {
       /* handled below */
     }
-    if (!["res.cloudinary.com", "images.unsplash.com"].includes(hostname)) {
-      setError("Only res.cloudinary.com or images.unsplash.com URLs work here.");
+    if (hostname !== "images.unsplash.com") {
+      setError("Pasted URLs must be images.unsplash.com; upload a file otherwise.");
       return;
     }
     setError(null);
@@ -144,36 +153,38 @@ export function ImageUploader({
         </ul>
       )}
 
-      {cloudinaryEnabled ? (
-        <label className="flex w-fit cursor-pointer items-center gap-3 border border-border bg-white px-5 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold">
-          {busy ? "Uploading..." : "Upload images"}
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            disabled={busy}
-            onChange={(e) => uploadFiles(e.target.files)}
-            className="hidden"
-          />
-        </label>
-      ) : (
-        <div className="flex gap-2">
-          <input
-            type="url"
-            value={pasteUrl}
-            onChange={(e) => setPasteUrl(e.target.value)}
-            placeholder="https://... image URL (Cloudinary not configured)"
-            className="flex-1 border-b border-border bg-transparent py-2 font-sans text-meta text-ink focus:border-gold focus:outline-none"
-          />
-          <button
-            type="button"
-            onClick={addPastedUrl}
-            className="cursor-pointer border border-border bg-white px-4 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
-          >
-            Add
-          </button>
-        </div>
-      )}
+      <label className="flex w-fit cursor-pointer items-center gap-3 border border-border bg-white px-5 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold">
+        {busy ? "Uploading..." : "Upload images"}
+        <input
+          type="file"
+          accept={ACCEPT}
+          multiple
+          disabled={busy}
+          onChange={(e) => uploadFiles(e.target.files)}
+          className="hidden"
+        />
+      </label>
+      <p className="text-meta font-sans text-ink-muted">
+        JPEG, PNG, WebP or AVIF, up to {MAX_MB} MB each. The first image is the
+        cover.
+      </p>
+
+      <div className="flex gap-2">
+        <input
+          type="url"
+          value={pasteUrl}
+          onChange={(e) => setPasteUrl(e.target.value)}
+          placeholder="or paste an images.unsplash.com URL"
+          className="flex-1 border-b border-border bg-transparent py-2 font-sans text-meta text-ink focus:border-gold focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={addPastedUrl}
+          className="cursor-pointer border border-border bg-white px-4 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
+        >
+          Add
+        </button>
+      </div>
 
       {error && (
         <p role="alert" className="text-meta font-sans text-error">{error}</p>

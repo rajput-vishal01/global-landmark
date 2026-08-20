@@ -13,7 +13,6 @@ import { categoryLabel } from "@/lib/categories";
 import { formatArea } from "@/lib/attributes";
 import { whatsAppHref } from "@/lib/whatsapp";
 import { COMPANY, PROPERTY_DETAIL } from "@/lib/data";
-import { optimizedImage } from "@/lib/images";
 import { canonical, jsonLdHtml } from "@/lib/seo";
 
 // ISR: cached and served instantly; admin edits bust the cache on save.
@@ -33,8 +32,10 @@ export async function generateMetadata({
   const description =
     property.description.slice(0, 160) ||
     `${categoryLabel(property.category)} in ${property.location}.`;
+  // Absolute: uploaded images are same-origin paths, and a social crawler
+  // has no origin to resolve them against.
   const ogImages = property.images[0]
-    ? [{ url: optimizedImage(property.images[0].url, 1200) }]
+    ? [{ url: canonical(property.images[0].url) }]
     : undefined;
   // Both blocks set explicitly: a page that overrides openGraph but not
   // twitter would inherit the homepage's generic Twitter card.
@@ -113,7 +114,7 @@ export default async function PropertyDetailPage({
     name: property.title,
     description: property.description,
     url: canonical(`/properties/${property.slug}`),
-    image: property.images.map((img) => optimizedImage(img.url, 1200)),
+    image: property.images.map((img) => canonical(img.url)),
     provider: {
       "@type": "RealEstateAgent",
       name: COMPANY.legalName,
@@ -143,7 +144,7 @@ export default async function PropertyDetailPage({
         <section className="relative flex min-h-[88vh] flex-col justify-end overflow-hidden bg-dark-deep">
           {cover && (
             <Image
-              src={optimizedImage(cover.url, 2000)}
+              src={cover.url}
               alt={cover.alt || property.title}
               fill
               priority

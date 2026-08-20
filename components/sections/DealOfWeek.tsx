@@ -2,7 +2,6 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import type { ActiveDeal } from "@/lib/db/queries";
 import { categoryLabel } from "@/lib/categories";
-import { optimizedImage } from "@/lib/images";
 
 function formatThrough(endsAt: string): string {
   return new Date(`${endsAt}T00:00:00`).toLocaleDateString("en-US", {
@@ -49,7 +48,7 @@ export function DealOfWeek({ deal }: { deal: ActiveDeal | null }) {
         {cover && (
           <div data-reveal-img className="relative aspect-[3/2] overflow-hidden bg-ink/20 md:aspect-[4/3]">
             <Image
-              src={optimizedImage(cover.url, 1200)}
+              src={cover.url}
               alt={cover.alt || property.title}
               fill
               sizes="(min-width: 768px) 55vw, 100vw"

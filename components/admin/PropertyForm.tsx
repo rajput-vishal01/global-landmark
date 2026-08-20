@@ -32,12 +32,10 @@ type Action = (
 export function PropertyForm({
   action,
   projects,
-  cloudinaryEnabled,
   property,
 }: {
   action: Action;
   projects: PublicProject[];
-  cloudinaryEnabled: boolean;
   /**
    * The admin form is the one place that legitimately sees the full row —
    * the public types deliberately cannot express it.
@@ -190,7 +188,6 @@ export function PropertyForm({
       <div className="flex flex-col gap-2">
         <span className={LABEL}>Gallery</span>
         <ImageUploader
-          cloudinaryEnabled={cloudinaryEnabled}
           onBusyChange={setIsUploading}
           initial={
             property?.images.map((img) => ({

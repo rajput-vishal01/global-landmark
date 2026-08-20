@@ -6,7 +6,6 @@ import Image from "next/image";
 import { AnimatePresence, m } from "framer-motion";
 import type { PublicImage } from "@/lib/db/public-columns";
 import { useModalLock } from "@/lib/hooks";
-import { optimizedImage } from "@/lib/images";
 
 /**
  * Editorial two-column gallery with a fullscreen lightbox. Keyboard:
@@ -62,7 +61,7 @@ export function GalleryLightbox({
             }`}
           >
             <Image
-              src={optimizedImage(img.url, 1000)}
+              src={img.url}
               alt={img.alt || `${title} — image ${i + 1}`}
               fill
               sizes={
@@ -118,7 +117,7 @@ export function GalleryLightbox({
               onClick={(e) => e.stopPropagation()}
             >
               <Image
-                src={optimizedImage(images[openIndex].url, 1600)}
+                src={images[openIndex].url}
                 alt={images[openIndex].alt || `${title} — image ${openIndex + 1}`}
                 fill
                 sizes="100vw"

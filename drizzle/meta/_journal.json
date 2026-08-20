@@ -15,6 +15,13 @@
       "when": 1787208522383,
       "tag": "0001_cff_expansion",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787210374226,
+      "tag": "0002_local_file_storage",
+      "breakpoints": true
     }
   ]
 }
