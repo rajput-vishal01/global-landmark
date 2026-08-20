@@ -25,19 +25,32 @@ const DEFAULT_NEEDLES = [
   ["internal note", "Leakcheck internal note"],
   ["withheld demand price", "244466600"],
   ["private charge amount", "588899"],
+  // The reference code is the internal value easiest to leak by accident:
+  // it looks like a harmless label, so it slips into cards and meta tags in
+  // a way an owner's phone number never would.
+  ["reference code", "GL-PKL-26-"],
+  ["source/dealer name", "Leakcheck Dealer Firm"],
 ];
 
 const needles = process.env.LEAK_NEEDLES
   ? process.env.LEAK_NEEDLES.split(",").map((v, i) => [`custom ${i + 1}`, v.trim()])
   : DEFAULT_NEEDLES;
 
-const PAGES = [
-  "/",
-  "/properties",
-  "/properties/panchkula-corner-kothi",
-  "/api/search?q=panchkula",
-  "/sitemap.xml",
-];
+/**
+ * Pages to sweep. Override with LEAK_PAGES="/a,/b" to point at a property
+ * entered through the admin rather than the seeded one — the default list
+ * names a seeded slug, so on its own it would pass trivially against a
+ * listing a broker actually typed, which is the case that matters.
+ */
+const PAGES = process.env.LEAK_PAGES
+  ? process.env.LEAK_PAGES.split(",").map((p) => p.trim()).filter(Boolean)
+  : [
+      "/",
+      "/properties",
+      "/properties/panchkula-corner-kothi",
+      "/api/search?q=panchkula",
+      "/sitemap.xml",
+    ];
 
 async function get(url) {
   const res = await fetch(url, { headers: { "user-agent": "gl-leak-check" } });

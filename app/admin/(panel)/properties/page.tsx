@@ -1,13 +1,16 @@
 import Link from "next/link";
-import { listProperties } from "@/lib/db/queries";
+import { listPropertiesForAdmin } from "@/lib/db/queries";
 import { categoryLabel } from "@/lib/categories";
 import { DeleteButton } from "@/components/admin/DeleteButton";
+import { StatusBadge } from "@/components/admin/BasicDetailsSection";
 import { deleteProperty } from "./actions";
 
 export const metadata = { title: "Properties" };
 
 export default async function AdminPropertiesPage() {
-  const rows = await listProperties();
+  // Ungated on purpose — the admin must see drafts and sold listings that
+  // the public queries deliberately hide.
+  const rows = await listPropertiesForAdmin();
 
   return (
     <div className="flex flex-col gap-8">
@@ -30,7 +33,7 @@ export default async function AdminPropertiesPage() {
           <table className="w-full min-w-[720px] text-left">
             <thead>
               <tr className="border-b border-border">
-                {["Title", "Type", "Category", "Project", "Images", ""].map((h, i) => (
+                {["Reference", "Title", "Status", "Category", "Project", "Images", ""].map((h, i) => (
                   <th key={i} className="text-eyebrow px-4 py-3 font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
                     {h}
                   </th>
@@ -40,11 +43,26 @@ export default async function AdminPropertiesPage() {
             <tbody>
               {rows.map((p) => (
                 <tr key={p.id} className="border-b border-border last:border-b-0">
+                  <td className="px-4 py-3 text-meta font-sans tabular-nums text-ink-muted">
+                    {p.refCode ?? "—"}
+                  </td>
                   <td className="px-4 py-3">
                     <p className="font-sans text-body font-medium text-ink">{p.title}</p>
-                    <p className="text-meta font-sans text-ink-muted">{p.location}</p>
+                    <p className="text-meta font-sans text-ink-muted">
+                      {p.city ?? p.location}
+                      <span className="capitalize"> · {p.kind}</span>
+                    </p>
                   </td>
-                  <td className="px-4 py-3 text-meta font-sans capitalize text-ink">{p.kind}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-col items-start gap-1.5">
+                      <StatusBadge status={p.listingStatus} />
+                      {p.publicationState !== "published" && (
+                        <span className="text-meta font-sans capitalize text-ink-muted">
+                          {p.publicationState}
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-meta font-sans text-ink">{categoryLabel(p.category)}</td>
                   <td className="px-4 py-3 text-meta font-sans text-ink-muted">{p.project?.name ?? "—"}</td>
                   <td className="px-4 py-3 text-meta font-sans text-ink-muted">{p.images.length}</td>

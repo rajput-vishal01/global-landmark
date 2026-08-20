@@ -3,18 +3,28 @@
 import { redirect } from "next/navigation";
 import { eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { projects, properties, propertyImages } from "@/lib/db/schema";
+import {
+  projects,
+  properties,
+  propertyDocuments,
+  propertyImages,
+} from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
 import { deleteStoredFiles, isLocalImageUrl, storageKeyFromUrl } from "@/lib/storage";
 import { isCategory } from "@/lib/categories";
 import {
+  ADDED_BY,
   AREA_UNITS,
   FACINGS,
   FURNISHINGS,
+  LISTING_STATUSES,
   POSSESSION_STATUSES,
   PROPERTY_TYPES,
+  PUBLICATION_STATES,
+  refCode as buildRefCode,
 } from "@/lib/attributes";
+import { CITY_NAMES, isLocalityIn } from "@/lib/locations";
 import { slugify } from "@/lib/slugify";
 
 export type PropertyFormState = { error?: string };
@@ -126,6 +136,12 @@ function parseExtras(
 
 type ParsedProperty = {
   title: string;
+  publicationState: string;
+  listingStatus: string;
+  addedBy: string;
+  sourceName: string | null;
+  city: string | null;
+  locality: string | null;
   kind: "project" | "unit";
   category: "sale" | "purchase" | "lease" | "invest";
   projectName: string;
@@ -190,10 +206,28 @@ function parseProperty(formData: FormData):
   const extras = parseExtras(String(formData.get("extrasJson") ?? "[]"));
   if (extras === null) return { ok: false, error: "Additional details are invalid." };
 
+  const city = parseChoice(formData.get("city"), CITY_NAMES);
+  const locality = String(formData.get("locality") ?? "").trim().slice(0, 120) || null;
+
   return {
     ok: true,
     data: {
       title,
+      // CFF group 1 — internal. Unknown values fall back to the safe
+      // default rather than failing the save: a broker mid-call should not
+      // lose a listing to a malformed select.
+      publicationState:
+        parseChoice(formData.get("publicationState"), PUBLICATION_STATES) ?? "draft",
+      listingStatus:
+        parseChoice(formData.get("listingStatus"), LISTING_STATUSES) ?? "Available",
+      addedBy: parseChoice(formData.get("addedBy"), ADDED_BY) ?? "Global Landmark",
+      sourceName:
+        String(formData.get("sourceName") ?? "").trim().slice(0, 200) || null,
+      city,
+      // A locality is only meaningful under its own city — keeping one that
+      // belongs to a different city would put the listing under the wrong
+      // filter tab.
+      locality: city && locality && isLocalityIn(city, locality) ? locality : null,
       kind,
       category,
       projectName,
@@ -293,6 +327,15 @@ export async function createProperty(
         .insert(properties)
         .values({ ...fields, projectId, slug })
         .returning({ id: properties.id });
+      // Ref code is assigned from the row id, inside the same transaction:
+      // the id is already unique and monotonic, so two brokers saving at the
+      // same moment cannot collide the way a count(*)+1 sequence would. It
+      // is set once here and never rewritten, so it survives a later city
+      // change and is never reused after a delete.
+      await tx
+        .update(properties)
+        .set({ refCode: buildRefCode(fields.city, new Date().getFullYear(), row.id) })
+        .where(eq(properties.id, row.id));
       await tx.insert(propertyImages).values(
         images.map((img, i) => ({ ...img, propertyId: row.id, sortOrder: i }))
       );
@@ -371,15 +414,27 @@ export async function deleteProperty(
       .select({ storageKey: propertyImages.storageKey })
       .from(propertyImages)
       .where(eq(propertyImages.propertyId, id));
-    const storageKeys = images
+    const imageKeys = images
       .map((row) => row.storageKey)
-      .filter((pid): pid is string => Boolean(pid));
+      .filter((key): key is string => Boolean(key));
+
+    // Legal documents live under private/ and were previously left on disk
+    // forever: the cascade removed their rows, so nothing pointed at the
+    // files any more and nothing knew to sweep them. Leaving a client's
+    // registry papers on the server after their listing is gone is the one
+    // kind of orphan that actually matters.
+    const documents = await db
+      .select({ storageKey: propertyDocuments.storageKey })
+      .from(propertyDocuments)
+      .where(eq(propertyDocuments.propertyId, id));
+    const documentKeys = documents.map((row) => row.storageKey);
 
     // Rows first, then files. An unreferenced file on disk is harmless and
     // sweepable; a row pointing at a file that is already gone renders a
     // broken image on the live site.
     await db.delete(properties).where(eq(properties.id, id));
-    await deleteStoredFiles(storageKeys);
+    await deleteStoredFiles(imageKeys, "public");
+    await deleteStoredFiles(documentKeys, "private");
   } catch (err) {
     console.error("deleteProperty failed:", err);
     return { error: "Delete failed. Try again." };

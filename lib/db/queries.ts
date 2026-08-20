@@ -2,7 +2,7 @@ import { unstable_cache } from "next/cache";
 import { and, asc, desc, eq, ilike, lte, gte, or, sql, inArray } from "drizzle-orm";
 import { db } from "./index";
 import { deals, projects, properties, propertyImages, testimonialVideos } from "./schema";
-import type { Deal, TestimonialVideo } from "./schema";
+import type { AdminProperty, Deal, TestimonialVideo } from "./schema";
 import {
   PUBLIC_IMAGE_COLUMNS,
   PUBLIC_PROJECT_COLUMNS,
@@ -292,6 +292,35 @@ export const listTestimonialVideos = failSoft(
  * row including internal fields, so it must never be called from
  * `app/(site)/**`. Public project reads use PUBLIC_PROJECT_COLUMNS.
  */
+/**
+ * ADMIN ONLY — the property list at /admin/properties.
+ *
+ * Deliberately NOT gated on publication state or listing status. The public
+ * queries hide drafts and sold listings, which is right for the site and
+ * exactly wrong for the admin: a broker saving a draft must still be able to
+ * find it. This is the one property read that intentionally sees everything,
+ * which is why it lives here under an explicit name rather than being a flag
+ * on listProperties().
+ *
+ * Returns the full row — the admin is the only surface allowed to.
+ */
+export async function listPropertiesForAdmin(): Promise<
+  (AdminProperty & { images: { id: number; url: string }[]; project: { name: string } | null })[]
+> {
+  try {
+    return await db.query.properties.findMany({
+      with: {
+        images: { columns: { id: true, url: true }, orderBy: IMAGE_ORDER },
+        project: { columns: { name: true } },
+      },
+      orderBy: [desc(properties.updatedAt)],
+    });
+  } catch (err) {
+    console.error("listPropertiesForAdmin failed:", err);
+    return [];
+  }
+}
+
 export async function listProjectsForAdmin(): Promise<PublicProject[]> {
   try {
     return await db.query.projects.findMany({

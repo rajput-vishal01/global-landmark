@@ -16,7 +16,9 @@ import {
 } from "@/lib/attributes";
 import { FIELD, LABEL } from "@/components/form-classes";
 import { Select } from "@/components/ui/Select";
+import { BasicDetailsSection } from "./BasicDetailsSection";
 import { ChecklistField } from "./ChecklistField";
+import { LocationSection } from "./LocationSection";
 import { ExtrasEditor } from "./ExtrasEditor";
 import { ImageUploader } from "./ImageUploader";
 import { ProjectSuggestInput } from "./ProjectSuggestInput";
@@ -50,6 +52,22 @@ export function PropertyForm({
   return (
     <form action={formAction} className="flex max-w-3xl flex-col gap-8">
       {property && <input type="hidden" name="id" value={property.id} />}
+
+      <BasicDetailsSection
+        refCode={property?.refCode}
+        listedAt={property?.listedAt}
+        updatedAt={property?.updatedAt}
+        publicationState={property?.publicationState}
+        listingStatus={property?.listingStatus}
+        addedBy={property?.addedBy}
+        sourceName={property?.sourceName}
+      />
+
+      <LocationSection
+        location={property?.location}
+        city={property?.city}
+        locality={property?.locality}
+      />
 
       <div className="flex flex-col gap-2">
         <label htmlFor="title" className={LABEL}>Title</label>
@@ -90,13 +108,6 @@ export function PropertyForm({
             defaultValue={property?.project?.name ?? ""}
           />
         </div>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="location" className={LABEL}>Location</label>
-        <input id="location" name="location" type="text" required maxLength={300}
-          defaultValue={property?.location} placeholder="Neighbourhood, City"
-          className={FIELD} />
       </div>
 
       <div className="flex flex-col gap-2">
