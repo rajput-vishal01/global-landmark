@@ -1,9 +1,17 @@
 import { unstable_cache } from "next/cache";
-import { and, asc, desc, eq, ilike, lte, gte, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, lte, gte, or, sql, inArray } from "drizzle-orm";
 import { db } from "./index";
 import { deals, projects, properties, propertyImages, testimonialVideos } from "./schema";
-import type { Deal, Project, PropertyWithImages, TestimonialVideo } from "./schema";
+import type { Deal, TestimonialVideo } from "./schema";
+import {
+  PUBLIC_IMAGE_COLUMNS,
+  PUBLIC_PROJECT_COLUMNS,
+  PUBLIC_PROPERTY_COLUMNS,
+  type PublicProject,
+  type PublicPropertyWithMedia,
+} from "./public-columns";
 import type { CategoryValue } from "@/lib/categories";
+import { PUBLIC_STATUSES } from "@/lib/taxonomy/status";
 
 /**
  * Public read layer. Every query fails soft (logs + empty result) so the
@@ -15,6 +23,17 @@ import type { CategoryValue } from "@/lib/categories";
  * Note: cached results are JSON-serialized — Date fields come back as
  * strings. No public component reads them (verified), sitemap uses the
  * uncached listPropertySlugs.
+ *
+ * TWO RULES, both load-bearing for the public/internal boundary:
+ *
+ * 1. Every query here passes an explicit `columns:` allowlist, and so does
+ *    every nested `with:`. Drizzle returns all columns by default and
+ *    `with: { project: true }` returns every column of the joined row —
+ *    which is a leak the moment a joined table carries internal data.
+ *
+ * 2. Every query filters on `publicVisibility()`. A listing that is not
+ *    published and Available must not appear on any public surface,
+ *    including search results and the sitemap.
  */
 
 export const SITE_DATA_TAG = "site-data";
@@ -30,6 +49,41 @@ export function todayIST(): string {
 
 /** Canonical gallery order — admin edit page must match the public pages. */
 export const IMAGE_ORDER = [asc(propertyImages.sortOrder), asc(propertyImages.id)];
+
+/**
+ * The publication gate, as a SQL condition. Mirrors isPubliclyVisible() in
+ * lib/taxonomy/status.ts — that one guards a row in hand, this one keeps
+ * hidden rows from ever being selected. Both read PUBLIC_STATUSES, so the
+ * two cannot disagree about what "public" means.
+ */
+const publicVisibility = () =>
+  and(
+    eq(properties.publicationState, "published"),
+    inArray(properties.listingStatus, [...PUBLIC_STATUSES])
+  );
+
+/**
+ * Price resolution happens in SQL, not in a component.
+ *
+ * Selecting `demandPrice` and deciding whether to render it is NOT enough:
+ * the value still ships in the RSC payload for every listing, so a withheld
+ * price is readable in page source. Resolving it here means the database
+ * returns null for anything not flagged public, and there is no hidden
+ * figure in the payload to find.
+ */
+const PUBLIC_PRICE_EXTRA = {
+  publicPrice:
+    sql<number | null>`case when ${properties.showPricePublicly} then ${properties.demandPrice} else null end`.as(
+      "public_price"
+    ),
+} as const;
+
+/** The public shape of a joined project, allowlisted at the join. */
+const PUBLIC_PROJECT_JOIN = { columns: PUBLIC_PROJECT_COLUMNS } as const;
+
+/** Cards render the cover image only; the detail page asks for the gallery. */
+const coverImageJoin = { columns: PUBLIC_IMAGE_COLUMNS, orderBy: IMAGE_ORDER, limit: 1 } as const;
+const galleryJoin = { columns: PUBLIC_IMAGE_COLUMNS, orderBy: IMAGE_ORDER } as const;
 
 type PropertyFilters = {
   category?: CategoryValue;
@@ -67,8 +121,9 @@ function failSoft<A extends unknown[], R>(
 }
 
 const listPropertiesCached = unstable_cache(
-  async (filters: PropertyFilters = {}): Promise<PropertyWithImages[]> => {
+  async (filters: PropertyFilters = {}): Promise<PublicPropertyWithMedia[]> => {
     const conditions = [
+      publicVisibility(),
       filters.category ? eq(properties.category, filters.category) : undefined,
       filters.propertyType ? eq(properties.propertyType, filters.propertyType) : undefined,
       filters.possessionStatus
@@ -80,11 +135,10 @@ const listPropertiesCached = unstable_cache(
     // Cards only render the cover image — fetching whole galleries here
     // would bloat every cached list entry.
     return db.query.properties.findMany({
-      where: conditions.length ? and(...conditions) : undefined,
-      with: {
-        images: { orderBy: IMAGE_ORDER, limit: 1 },
-        project: true,
-      },
+      columns: PUBLIC_PROPERTY_COLUMNS,
+      extras: PUBLIC_PRICE_EXTRA,
+      where: and(...conditions),
+      with: { images: coverImageJoin, project: PUBLIC_PROJECT_JOIN },
       orderBy: [desc(properties.createdAt)],
     });
   },
@@ -95,12 +149,12 @@ const listPropertiesCached = unstable_cache(
 export const listProperties = failSoft(listPropertiesCached, "listProperties", []);
 
 const getFeaturedPropertiesCached = unstable_cache(
-  async (limit = 6): Promise<PropertyWithImages[]> =>
+  async (limit = 6): Promise<PublicPropertyWithMedia[]> =>
     db.query.properties.findMany({
-      with: {
-        images: { orderBy: IMAGE_ORDER, limit: 1 },
-        project: true,
-      },
+      columns: PUBLIC_PROPERTY_COLUMNS,
+      extras: PUBLIC_PRICE_EXTRA,
+      where: publicVisibility(),
+      with: { images: coverImageJoin, project: PUBLIC_PROJECT_JOIN },
       orderBy: [desc(properties.createdAt)],
       limit,
     }),
@@ -115,13 +169,16 @@ export const getFeaturedProperties = failSoft(
 );
 
 const getPropertyBySlugCached = unstable_cache(
-  async (slug: string): Promise<PropertyWithImages | null> => {
+  async (slug: string): Promise<PublicPropertyWithMedia | null> => {
     const row = await db.query.properties.findFirst({
-      where: eq(properties.slug, slug),
+      columns: PUBLIC_PROPERTY_COLUMNS,
+      extras: PUBLIC_PRICE_EXTRA,
+      // A direct-link visit to a sold or draft listing must 404, not render.
+      where: and(eq(properties.slug, slug), publicVisibility()),
       with: {
         // Full gallery — the detail page renders every image.
-        images: { orderBy: IMAGE_ORDER },
-        project: true,
+        images: galleryJoin,
+        project: PUBLIC_PROJECT_JOIN,
       },
     });
     return row ?? null;
@@ -139,7 +196,7 @@ export const getPropertyBySlug = failSoft(
 export async function searchProperties(
   q: string,
   limit = 8
-): Promise<PropertyWithImages[]> {
+): Promise<PublicPropertyWithMedia[]> {
   // Multi-word queries match token-by-token: every word must hit at least
   // one field, so "penthouse chandigarh" finds a penthouse in Chandigarh
   // even though no single column contains that exact substring.
@@ -163,11 +220,12 @@ export async function searchProperties(
     });
 
     return await db.query.properties.findMany({
-      where: and(...tokenConditions),
-      with: {
-        images: { orderBy: IMAGE_ORDER, limit: 1 },
-        project: true,
-      },
+      columns: PUBLIC_PROPERTY_COLUMNS,
+      extras: PUBLIC_PRICE_EXTRA,
+      // This feeds /api/search, a public JSON endpoint — the visibility gate
+      // matters more here than anywhere else.
+      where: and(publicVisibility(), ...tokenConditions),
+      with: { images: coverImageJoin, project: PUBLIC_PROJECT_JOIN },
       // Relevance: whole-phrase title hits first, then location hits,
       // then newest.
       orderBy: [
@@ -183,7 +241,7 @@ export async function searchProperties(
   }
 }
 
-export type ActiveDeal = Deal & { property: PropertyWithImages };
+export type ActiveDeal = Deal & { property: PublicPropertyWithMedia };
 
 const getActiveDealCached = unstable_cache(
   async (today: string): Promise<ActiveDeal | null> => {
@@ -191,13 +249,13 @@ const getActiveDealCached = unstable_cache(
       where: and(lte(deals.startsAt, today), gte(deals.endsAt, today)),
       orderBy: [asc(deals.startsAt)],
       with: {
+        // Deal of the Week renders on the homepage, so the deal's property
+        // needs the same allowlist and the same visibility gate as any
+        // other public read — a sold property must not resurface here.
         property: {
-          with: {
-            images: {
-              orderBy: IMAGE_ORDER,
-            },
-            project: true,
-          },
+          columns: PUBLIC_PROPERTY_COLUMNS,
+      extras: PUBLIC_PRICE_EXTRA,
+          with: { images: galleryJoin, project: PUBLIC_PROJECT_JOIN },
         },
       },
     });
@@ -229,24 +287,36 @@ export const listTestimonialVideos = failSoft(
   []
 );
 
-export async function listProjects(): Promise<Project[]> {
+/**
+ * ADMIN ONLY — the project picker on the property form. Returns the full
+ * row including internal fields, so it must never be called from
+ * `app/(site)/**`. Public project reads use PUBLIC_PROJECT_COLUMNS.
+ */
+export async function listProjectsForAdmin(): Promise<PublicProject[]> {
   try {
     return await db.query.projects.findMany({
+      columns: PUBLIC_PROJECT_COLUMNS,
       orderBy: [asc(projects.name)],
     });
   } catch (err) {
-    console.error("listProjects failed:", err);
+    console.error("listProjectsForAdmin failed:", err);
     return [];
   }
 }
 
+/**
+ * Sitemap source. Uncached on purpose (cached results JSON-serialize Dates)
+ * and gated: a sold, draft or archived listing must not be advertised to
+ * search engines and then 404 when crawled.
+ */
 export async function listPropertySlugs(): Promise<
   { slug: string; updatedAt: Date }[]
 > {
   try {
     return await db
       .select({ slug: properties.slug, updatedAt: properties.updatedAt })
-      .from(properties);
+      .from(properties)
+      .where(publicVisibility());
   } catch (err) {
     console.error("listPropertySlugs failed:", err);
     return [];

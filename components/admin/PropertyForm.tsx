@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import type { Project, PropertyWithImages } from "@/lib/db/schema";
+import type { AdminProperty, PropertyImage } from "@/lib/db/schema";
+import type { PublicProject } from "@/lib/db/public-columns";
 import type { PropertyFormState } from "@/app/admin/(panel)/properties/actions";
 import { CATEGORIES } from "@/lib/categories";
 import {
@@ -35,9 +36,16 @@ export function PropertyForm({
   property,
 }: {
   action: Action;
-  projects: Project[];
+  projects: PublicProject[];
   cloudinaryEnabled: boolean;
-  property?: PropertyWithImages;
+  /**
+   * The admin form is the one place that legitimately sees the full row —
+   * the public types deliberately cannot express it.
+   */
+  property?: AdminProperty & {
+    images: PropertyImage[];
+    project: { name: string } | null;
+  };
 }) {
   const [state, formAction, isPending] = useActionState(action, {});
   const [isUploading, setIsUploading] = useState(false);
@@ -187,7 +195,7 @@ export function PropertyForm({
           initial={
             property?.images.map((img) => ({
               url: img.url,
-              publicId: img.publicId,
+              storageKey: img.storageKey,
               alt: img.alt,
             })) ?? []
           }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { getUploadSignature } from "@/app/admin/(panel)/properties/actions";
 
-type UploaderImage = { url: string; publicId: string | null; alt: string };
+type UploaderImage = { url: string; storageKey: string | null; alt: string };
 
 /**
  * Gallery editor: Cloudinary direct upload when configured, URL-paste
@@ -64,7 +64,7 @@ export function ImageUploader({
         const data = (await res.json()) as { secure_url: string; public_id: string };
         setImages((prev) => [
           ...prev,
-          { url: data.secure_url, publicId: data.public_id, alt: "" },
+          { url: data.secure_url, storageKey: data.public_id, alt: "" },
         ]);
       }
     } catch (err) {
@@ -90,7 +90,7 @@ export function ImageUploader({
       return;
     }
     setError(null);
-    setImages((prev) => [...prev, { url, publicId: null, alt: "" }]);
+    setImages((prev) => [...prev, { url, storageKey: null, alt: "" }]);
     setPasteUrl("");
   }
 

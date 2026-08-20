@@ -1,11 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { PropertyWithImages } from "@/lib/db/schema";
+import type { PublicPropertyWithMedia } from "@/lib/db/public-columns";
 import { categoryLabel } from "@/lib/categories";
 import { formatArea } from "@/lib/attributes";
 import { optimizedImage } from "@/lib/images";
 
-export function propertySpecs(property: PropertyWithImages): string {
+export function propertySpecs(property: PublicPropertyWithMedia): string {
   return [
     // Configuration ("3+1 BHK") reads better than bare bed counts when set.
     property.configuration ||
@@ -25,7 +25,7 @@ export function ListingCard({
   property,
   className = "",
 }: {
-  property: PropertyWithImages;
+  property: PublicPropertyWithMedia;
   className?: string;
 }) {
   const cover = property.images[0];

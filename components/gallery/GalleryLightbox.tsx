@@ -4,7 +4,7 @@ import { EASE } from "@/lib/motion";
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, m } from "framer-motion";
-import type { PropertyImage } from "@/lib/db/schema";
+import type { PublicImage } from "@/lib/db/public-columns";
 import { useModalLock } from "@/lib/hooks";
 import { optimizedImage } from "@/lib/images";
 
@@ -16,7 +16,7 @@ export function GalleryLightbox({
   images,
   title,
 }: {
-  images: PropertyImage[];
+  images: PublicImage[];
   title: string;
 }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);

@@ -24,13 +24,13 @@ import { slugify } from "@/lib/slugify";
 
 export type PropertyFormState = { error?: string };
 
-type ParsedImage = { url: string; publicId: string | null; alt: string };
+type ParsedImage = { url: string; storageKey: string | null; alt: string };
 
 const MAX_IMAGES = 20;
 
 // Only ids inside our upload folder may reach the Cloudinary delete path —
-// a forged publicId must never be able to delete arbitrary account assets.
-const OWNED_PUBLIC_ID = /^global-landmark\/properties\//;
+// a forged storageKey must never be able to delete arbitrary account assets.
+const OWNED_STORAGE_KEY = /^global-landmark\/properties\//;
 
 // Must stay in sync with images.remotePatterns in next.config.ts — a stored
 // URL from any other host makes next/image throw at render and takes the
@@ -57,15 +57,15 @@ function parseImages(json: string): ParsedImage[] | null {
   const images: ParsedImage[] = [];
   for (const item of raw) {
     if (typeof item !== "object" || item === null) return null;
-    const { url, publicId, alt } = item as Record<string, unknown>;
+    const { url, storageKey, alt } = item as Record<string, unknown>;
     if (typeof url !== "string" || !isAllowedImageUrl(url)) return null;
     const ownedId =
-      typeof publicId === "string" && OWNED_PUBLIC_ID.test(publicId)
-        ? publicId.slice(0, 300)
+      typeof storageKey === "string" && OWNED_STORAGE_KEY.test(storageKey)
+        ? storageKey.slice(0, 300)
         : null; // treated as an external URL — never remote-deleted
     images.push({
       url: url.slice(0, 1000),
-      publicId: ownedId,
+      storageKey: ownedId,
       alt: typeof alt === "string" ? alt.slice(0, 300) : "",
     });
   }
@@ -309,12 +309,12 @@ export async function updateProperty(
   let removed: string[] = [];
   try {
     const existing = await db
-      .select({ publicId: propertyImages.publicId })
+      .select({ storageKey: propertyImages.storageKey })
       .from(propertyImages)
       .where(eq(propertyImages.propertyId, id));
-    const keep = new Set(images.map((img) => img.publicId).filter(Boolean));
+    const keep = new Set(images.map((img) => img.storageKey).filter(Boolean));
     removed = existing
-      .map((row) => row.publicId)
+      .map((row) => row.storageKey)
       .filter((pid): pid is string => Boolean(pid) && !keep.has(pid));
 
     const projectId = await resolveProjectId(projectName);
@@ -358,16 +358,16 @@ export async function deleteProperty(
 
   try {
     const images = await db
-      .select({ publicId: propertyImages.publicId })
+      .select({ storageKey: propertyImages.storageKey })
       .from(propertyImages)
       .where(eq(propertyImages.propertyId, id));
-    const publicIds = images
-      .map((row) => row.publicId)
+    const storageKeys = images
+      .map((row) => row.storageKey)
       .filter((pid): pid is string => Boolean(pid));
 
     // Cascade rule: Cloudinary assets go first; abort on failure so no
     // orphaned remote images can exist.
-    await deleteCloudinaryImages(publicIds);
+    await deleteCloudinaryImages(storageKeys);
     await db.delete(properties).where(eq(properties.id, id));
   } catch (err) {
     console.error("deleteProperty failed:", err);

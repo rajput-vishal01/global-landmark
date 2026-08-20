@@ -162,13 +162,23 @@ for (const p of PROPERTIES) {
   }
 }
 
-// Deal of the Week — one live, one queued.
-const { rows: dealCount } = await client.query(`select count(*)::int as n from deals`);
-if (dealCount[0].n === 0) {
+/**
+ * Deal of the Week — one live, one queued.
+ *
+ * Windows are relative to today and re-seeded whenever none is currently
+ * live. The old `if (count === 0)` guard meant the first run's windows
+ * expired and were never replaced, so `active_deals` sat at 0 forever and
+ * the landing page lost its Deal of the Week section on day six.
+ */
+const { rows: liveDeals } = await client.query(
+  `select count(*)::int as n from deals where current_date between starts_at and ends_at`
+);
+if (liveDeals[0].n === 0) {
   const { rows: pr } = await client.query(
     `select id, slug from properties where slug in ('imperial-residency-3bhk','grand-mega-township-plots')`
   );
   const bySlug = Object.fromEntries(pr.map((r) => [r.slug, r.id]));
+  await client.query(`delete from deals`);
   await client.query(
     `insert into deals (property_id, starts_at, ends_at) values
      ($1, current_date - 2, current_date + 5),
@@ -177,17 +187,161 @@ if (dealCount[0].n === 0) {
   );
 }
 
-// Instagram reel videos.
-const { rows: vidCount } = await client.query(`select count(*)::int as n from testimonial_videos`);
-if (vidCount[0].n === 0) {
-  for (let i = 0; i < VIDEOS.length; i++) {
+/**
+ * Instagram reel videos. Upserted per row rather than skipped wholesale:
+ * the old `if (count === 0)` guard meant adding a video to VIDEOS never
+ * landed on a database that had already been seeded, which is why the
+ * check below could never see all seven.
+ */
+for (let i = 0; i < VIDEOS.length; i++) {
+  // `on conflict` would not help here: video_id carries no unique
+  // constraint, so only a primary-key collision would trigger it and every
+  // re-run would duplicate the row instead.
+  await client.query(
+    `insert into testimonial_videos (provider, video_id, caption, sort_order)
+     select 'instagram', $1, $2, $3
+     where not exists (select 1 from testimonial_videos where video_id = $1)`,
+    [VIDEOS[i][0], VIDEOS[i][1], i]
+  );
+}
+
+// ─── CFF expansion: one fully-populated example of every new entity ────────
+// Without these, the admin screens and the leak check have nothing to
+// exercise on a fresh database.
+
+const one = async (sql, params = []) => (await client.query(sql, params)).rows[0];
+
+const { id: builderId } = await one(
+  `insert into builders (name, slug, belongs_to, about, website, contact_name, contact_phone, past_projects)
+   values ('Homeland Group','homeland-group','Mohali, Punjab',
+           'Regional developer active across Mohali and New Chandigarh.',
+           'https://example.com','Seed Builder Contact','9812300001',
+           'Homeland Heights, Homeland Residency')
+   on conflict (slug) do update set name = excluded.name
+   returning id`
+);
+
+await client.query(
+  `update projects set builder_id = $1, possession_status = 'Under Construction',
+     launch_date = current_date - 400, possession_date = current_date + 365,
+     total_towers = 4, total_units = 320, number_of_floors = 14,
+     green_area_value = 3, green_area_unit = 'acre',
+     amenities = $2, country = 'India', city = 'Mohali', locality = 'Sector Area'
+   where slug = 'homeland-urva-luxury'`,
+  [builderId, ["Club House", "Swimming Pool", "Gym", "Gated Community"]]
+);
+
+const { rows: allProps } = await client.query(`select id, slug from properties`);
+const propId = Object.fromEntries(allProps.map((r) => [r.slug, r.id]));
+
+// A tower, so the project page has real inventory to group units under.
+// Insert-then-select rather than relying on RETURNING: on a re-run the
+// insert matches nothing and returns no row, which would leave the unit
+// unlinked.
+await client.query(
+  `insert into towers (project_id, name, total_floors, units_per_floor, total_units)
+   select p.id, 'Tower A', 14, 4, 56 from projects p
+   where p.slug = 'homeland-urva-luxury'
+     and not exists (select 1 from towers t where t.project_id = p.id and t.name = 'Tower A')`
+);
+const towerRow = await one(
+  `select t.id from towers t
+   join projects p on p.id = t.project_id
+   where p.slug = 'homeland-urva-luxury' and t.name = 'Tower A'`
+);
+const towerId = towerRow?.id ?? null;
+
+if (towerId) {
+  await client.query(
+    `update properties set tower_id = $1, floor_number = 7, total_floors = 14,
+       unit_number = '704', configuration = '3 BHK', balconies = 2,
+       super_area = 1850, super_area_unit = 'sqft',
+       carpet_area = 1320, carpet_area_unit = 'sqft'
+     where slug = 'imperial-residency-3bhk'`,
+    [towerId]
+  );
+}
+
+/**
+ * Internal fixtures. These exact values are the needles in
+ * scripts/leak-check.mjs — if any of them ever appears in public HTML or a
+ * client bundle, that check fails. Keep the two files in step.
+ */
+const leakProp = propId["panchkula-corner-kothi"];
+if (leakProp) {
+  await client.query(
+    `insert into property_owners (property_id, name, seller_category, owner_type,
+       owner_count, mobile, alt_mobile, address, notes)
+     select $1,'Leakcheck Owner','Owner','Individual',2,'9876500011','9876500022',
+       'Leakcheck Address, Panchkula','Seeded fixture for the section 4.1 leak check'
+     where not exists (select 1 from property_owners where property_id = $1)`,
+    [leakProp]
+  );
+  await client.query(
+    `insert into property_internal (property_id, circle_rate, market_value_note,
+       is_mortgaged, internal_notes)
+     values ($1, 733377, 'Leakcheck circle rate note', true, 'Leakcheck internal note')
+     on conflict (property_id) do update set circle_rate = excluded.circle_rate`,
+    [leakProp]
+  );
+  await client.query(
+    `insert into property_charges (property_id, charge_type, amount, basis, is_included_in_demand)
+     select $1,'Club Charges',588899,'lump_sum',false
+     where not exists (select 1 from property_charges where property_id = $1)`,
+    [leakProp]
+  );
+  await client.query(
+    `insert into property_documents (property_id, doc_type, storage_key, file_name,
+       mime_type, size_bytes, uploaded_by)
+     select $1,'Registry Available','private/seed/registry.pdf','registry.pdf',
+       'application/pdf', 24680, 'seed'
+     where not exists (select 1 from property_documents where property_id = $1)`,
+    [leakProp]
+  );
+  await client.query(
+    `insert into property_price_history (property_id, demand_price, changed_by, reason)
+     select $1, 244466600, 'seed', 'Initial listing price'
+     where not exists (select 1 from property_price_history where property_id = $1)`,
+    [leakProp]
+  );
+  // Price captured but deliberately NOT published — the default everywhere.
+  await client.query(
+    `update properties set demand_price = 244466600, per_sqft_rate = 6790,
+       is_negotiable = true, show_price_publicly = false
+     where id = $1`,
+    [leakProp]
+  );
+}
+
+// Link media: Instagram and YouTube embeds, plus a map.
+const mediaProp = propId["imperial-residency-3bhk"];
+if (mediaProp) {
+  for (const [kind, url, label] of [
+    ["video", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ", "Walkthrough"],
+    ["drone", "https://www.instagram.com/reel/DW61A1IkycX/", "Drone reel"],
+    ["google_map", "https://www.google.com/maps?q=Zirakpur", "Location"],
+  ]) {
     await client.query(
-      `insert into testimonial_videos (provider, video_id, caption, sort_order)
-       values ('instagram', $1, $2, $3)`,
-      [VIDEOS[i][0], VIDEOS[i][1], i]
+      `insert into property_media (property_id, kind, url, label)
+       select $1,$2,$3,$4
+       where not exists (select 1 from property_media where property_id = $1 and kind = $2)`,
+      [mediaProp, kind, url, label]
     );
   }
 }
+
+await client.query(
+  `insert into leads (name, email, phone, interest, message, source, status)
+   select 'Seed Enquiry','seed@example.com','9800000000','buy',
+     'Seeded lead so the admin inbox is not empty on a fresh database.','seed','new'
+   where not exists (select 1 from leads where email = 'seed@example.com')`
+);
+
+await client.query(
+  `insert into site_settings (key, value)
+   values ('officeHours', '"Mon-Sat, 10:00-19:00 IST"'::jsonb)
+   on conflict (key) do nothing`
+);
 
 // Runnable check (ponytail).
 const { rows: check } = await client.query(
@@ -196,12 +350,42 @@ const { rows: check } = await client.query(
      (select count(*)::int from properties) as properties,
      (select count(*)::int from property_images) as images,
      (select count(*)::int from deals where current_date between starts_at and ends_at) as active_deals,
-     (select count(*)::int from testimonial_videos) as videos`
+     (select count(*)::int from testimonial_videos) as videos,
+     (select count(*)::int from builders) as builders,
+     (select count(*)::int from towers) as towers,
+     (select count(*)::int from property_owners) as owners,
+     (select count(*)::int from property_internal) as internal,
+     (select count(*)::int from property_charges) as charges,
+     (select count(*)::int from property_documents) as documents,
+     (select count(*)::int from property_media) as media,
+     (select count(*)::int from leads) as leads,
+     (select count(*)::int from properties where ref_code is null) as missing_ref_code,
+     (select count(*)::int from properties where publication_state = 'published') as published`
 );
 console.table(check);
 const c = check[0];
-if (c.projects < 4 || c.properties < 6 || c.active_deals !== 1 || c.videos < 7) {
-  console.error("Seed check FAILED");
+const failures = Object.entries({
+  "projects >= 4": c.projects >= 4,
+  "properties >= 6": c.properties >= 6,
+  "images >= 6": c.images >= 6,
+  "exactly one live deal": c.active_deals === 1,
+  [`videos >= ${VIDEOS.length}`]: c.videos >= VIDEOS.length,
+  "builders >= 1": c.builders >= 1,
+  "towers >= 1": c.towers >= 1,
+  "owners >= 1": c.owners >= 1,
+  "internal >= 1": c.internal >= 1,
+  "charges >= 1": c.charges >= 1,
+  "documents >= 1": c.documents >= 1,
+  "media >= 1": c.media >= 1,
+  "leads >= 1": c.leads >= 1,
+  "every property has a ref code": c.missing_ref_code === 0,
+  "published listings exist": c.published >= 1,
+})
+  .filter(([, ok]) => !ok)
+  .map(([label]) => label);
+
+if (failures.length) {
+  console.error("Seed check FAILED:", failures.join(", "));
   process.exit(1);
 }
 console.log("Seed check passed.");

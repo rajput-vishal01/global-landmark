@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { properties } from "@/lib/db/schema";
-import { IMAGE_ORDER, listProjects } from "@/lib/db/queries";
+import { IMAGE_ORDER, listProjectsForAdmin } from "@/lib/db/queries";
 import { isCloudinaryConfigured } from "@/lib/cloudinary";
 import { PropertyForm } from "@/components/admin/PropertyForm";
 import { updateProperty } from "../../actions";
@@ -28,7 +28,7 @@ export default async function EditPropertyPage({
         project: true,
       },
     }),
-    listProjects(),
+    listProjectsForAdmin(),
   ]);
   if (!property) notFound();
 

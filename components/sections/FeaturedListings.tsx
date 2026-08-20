@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { ListingCard } from "@/components/ui/ListingCard";
-import type { PropertyWithImages } from "@/lib/db/schema";
+import type { PublicPropertyWithMedia } from "@/lib/db/public-columns";
 import { useGSAP, gsap } from "@/lib/gsap";
 
 /**
@@ -14,7 +14,7 @@ import { useGSAP, gsap } from "@/lib/gsap";
 export function FeaturedListings({
   properties,
 }: {
-  properties: PropertyWithImages[];
+  properties: PublicPropertyWithMedia[];
 }) {
   const wrap = useRef<HTMLElement>(null);
   const track = useRef<HTMLDivElement>(null);
