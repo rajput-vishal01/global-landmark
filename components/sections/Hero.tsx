@@ -172,7 +172,7 @@ export function Hero() {
               aria-label="Browse the portfolio by intent"
               onMouseEnter={() => setIsPaused(true)}
               onMouseLeave={() => setIsPaused(false)}
-              className="hero-cats mb-5 flex flex-wrap items-center gap-x-6 gap-y-2"
+              className="hero-cats mb-5 grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:items-center sm:gap-3"
             >
               {SLIDES.map((slide, i) => (
                 <Link
@@ -180,14 +180,16 @@ export function Hero() {
                   href={`/properties?category=${slide.category}`}
                   onMouseEnter={() => setActive(i)}
                   onFocus={() => setActive(i)}
-                  className={`text-eyebrow group relative pb-1 font-sans font-medium uppercase tracking-[0.25em] transition-colors duration-500 ${
-                    i === active ? "text-cream" : "text-cream/45 hover:text-cream/80"
+                  className={`text-eyebrow group relative border px-4 py-2.5 text-center font-sans font-medium uppercase tracking-[0.2em] backdrop-blur-sm transition-colors duration-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:px-4 sm:py-2 ${
+                    i === active
+                      ? "border-gold/70 bg-dark/50 text-cream"
+                      : "border-gold/40 bg-dark/30 text-cream/70 hover:border-gold/60 hover:text-cream"
                   }`}
                 >
                   {slide.label}
                   <span
                     aria-hidden
-                    className={`absolute bottom-0 left-0 h-px w-full origin-left bg-gold transition-transform duration-700 ease-out ${
+                    className={`absolute inset-x-4 bottom-1.5 h-px origin-left bg-gold transition-transform duration-700 ease-out ${
                       i === active ? "scale-x-100" : "scale-x-0"
                     }`}
                   />
