@@ -1,5 +1,8 @@
+import { unstable_cache } from "next/cache";
 import { db } from "./db";
 import { siteSettings } from "./db/schema";
+import { COMPANY, CREDIBILITY } from "./data";
+import { SITE_DATA_TAG } from "./db/queries";
 
 /**
  * Admin-editable overrides for company details and stats (R-36) — so
@@ -43,7 +46,7 @@ export const SETTING_KEYS = {
 
 export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];
 
-/** Every row, keyed — admin reads use this directly; public reads should go through a small per-key helper once wired into lib/data.ts's consumers. */
+/** Every row, keyed — used by both the admin form (uncached, always fresh) and the cached public helpers below. */
 export async function getAllSiteSettings(): Promise<Record<string, unknown>> {
   try {
     const rows = await db.select().from(siteSettings);
@@ -62,4 +65,49 @@ export async function getContactOverride(): Promise<ContactOverride | null> {
 export async function getCredibilityOverride(): Promise<CredibilityOverride | null> {
   const all = await getAllSiteSettings();
   return (all[SETTING_KEYS.credibility] as CredibilityOverride) ?? null;
+}
+
+// ─── Public, cached reads — merged with lib/data.ts's static defaults ──────
+// Same tag as lib/db/queries.ts's public reads, so an admin save (which
+// calls revalidatePublicSite()) busts both in one pass.
+
+const getContactOverrideCached = unstable_cache(getContactOverride, ["contactOverride"], {
+  revalidate: 3600,
+  tags: [SITE_DATA_TAG],
+});
+
+const getCredibilityOverrideCached = unstable_cache(
+  getCredibilityOverride,
+  ["credibilityOverride"],
+  { revalidate: 3600, tags: [SITE_DATA_TAG] }
+);
+
+/** COMPANY merged with any saved override — undefined/missing fields fall through to the static default. */
+export async function resolveCompany(): Promise<typeof COMPANY> {
+  const override = await getContactOverrideCached();
+  if (!override) return COMPANY;
+  return {
+    ...COMPANY,
+    addressLines: override.addressLines?.length ? override.addressLines : COMPANY.addressLines,
+    phone: override.phone ?? COMPANY.phone,
+    phoneHref: override.phoneHref ?? COMPANY.phoneHref,
+    phoneAlt: override.phoneAlt ?? COMPANY.phoneAlt,
+    phoneAltHref: override.phoneAltHref ?? COMPANY.phoneAltHref,
+    email: override.email ?? COMPANY.email,
+    socials: override.socials?.length ? override.socials : COMPANY.socials,
+  };
+}
+
+/** CREDIBILITY merged with any saved override. */
+export async function resolveCredibility(): Promise<typeof CREDIBILITY> {
+  const override = await getCredibilityOverrideCached();
+  if (!override) return CREDIBILITY;
+  return {
+    ...CREDIBILITY,
+    headingPre: override.headingPre ?? CREDIBILITY.headingPre,
+    headingHighlight: override.headingHighlight ?? CREDIBILITY.headingHighlight,
+    headingPost: override.headingPost ?? CREDIBILITY.headingPost,
+    sub: override.sub ?? CREDIBILITY.sub,
+    stats: override.stats?.length ? override.stats : CREDIBILITY.stats,
+  };
 }

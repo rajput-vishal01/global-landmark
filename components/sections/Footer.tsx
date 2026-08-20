@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { COMPANY, FOOTER } from "@/lib/data";
+import { FOOTER } from "@/lib/data";
+import { resolveCompany } from "@/lib/site-settings";
 
 // Icons keyed by social label; a label without an icon falls back to text.
 const SOCIAL_ICONS: Record<string, ReactNode> = {
@@ -31,7 +32,11 @@ const SOCIAL_ICONS: Record<string, ReactNode> = {
   ),
 };
 
-export function Footer() {
+export async function Footer() {
+  // Same identifier as the static default (lib/data.ts's COMPANY) so every
+  // COMPANY.x reference below picks up an admin override automatically —
+  // R-36 without rewriting the rest of this file.
+  const COMPANY = await resolveCompany();
   return (
     <footer className="border-t border-border bg-cream text-ink">
       {/* Brand block */}

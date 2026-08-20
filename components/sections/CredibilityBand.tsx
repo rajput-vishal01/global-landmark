@@ -1,12 +1,15 @@
 import { StatCounter } from "@/components/ui/StatCounter";
-import { CREDIBILITY } from "@/lib/data";
+import { resolveCredibility } from "@/lib/site-settings";
 
 /**
  * Centered "featured" stats moment: small underlined kicker, serif caps
  * headline with the figure set in a lighter tone, supporting line, then
  * three large serif counters.
  */
-export function CredibilityBand() {
+export async function CredibilityBand() {
+  // Same identifier as the static default (lib/data.ts's CREDIBILITY) so
+  // every reference below picks up an admin override automatically (R-36).
+  const CREDIBILITY = await resolveCredibility();
   return (
     <section className="relative z-10 rounded-t-[2.5rem] bg-cream px-5 py-24 md:rounded-t-[4rem] md:py-32">
       <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 text-center">
