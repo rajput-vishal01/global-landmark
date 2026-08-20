@@ -6,31 +6,32 @@ Luxury real-estate marketing site. Read this first; it links every other doc.
 
 ## Phase discipline
 
-This repo is in **build phase** (context-building ended; landing page, subpages, and the July 2026 feature expansion — DB, admin panel at /admin, live listings, news — are shipped; see [README.md](README.md) and [TASKS.md](TASKS.md)). Rules:
+This repo is in **build phase** (context-building ended; landing page, subpages, and the July 2026 feature expansion — DB, admin panel at /admin, live listings, news — are shipped; see [README.md](README.md) and [TASKS.md](docs/TASKS.md)). Rules:
 - Every coding session starts by reading this file + the linked docs below.
-- Next.js in this repo is v16 (App Router, `proxy.ts` not `middleware.ts` — see [TECH_STACK.md](TECH_STACK.md)). Check `node_modules/next/dist/docs/` for anything that looks unfamiliar before writing code — do not assume prior Next.js training data holds.
+- Next.js in this repo is v16 (App Router, `proxy.ts` not `middleware.ts` — see [TECH_STACK.md](docs/TECH_STACK.md)). Check `node_modules/next/dist/docs/` for anything that looks unfamiliar before writing code — do not assume prior Next.js training data holds.
 
 ## Docs index
 
 | Doc | Contents |
 |---|---|
-| [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) | What we're building, audience, goals, success criteria |
-| [BRAND_GUIDELINES.md](BRAND_GUIDELINES.md) | Palette, typography direction, logo usage, voice & tone |
-| [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) | Synthesized aesthetic — principles, spacing, layout system, section patterns |
-| [DESIGN_REFERENCES.md](DESIGN_REFERENCES.md) | Per-site breakdown of the 7 reference sites — what we take, what we reject |
-| [ANIMATION_GUIDELINES.md](ANIMATION_GUIDELINES.md) | GSAP + Framer Motion patterns, scroll-animation catalogue, perf/a11y rules |
-| [TECH_STACK.md](TECH_STACK.md) | Next.js setup, styling approach, folder structure, ponytail code conventions |
-| [SITE_ARCHITECTURE.md](SITE_ARCHITECTURE.md) | Sitemap + routes |
-| [COMPONENT_INVENTORY.md](COMPONENT_INVENTORY.md) | Components implied by architecture + design language |
-| [CONTENT_MODEL.md](CONTENT_MODEL.md) | Data shape — listings, agents, communities |
-| [TASKS.md](TASKS.md) | Phased build roadmap |
+| [PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) | What we're building, audience, goals, success criteria |
+| [BRAND_GUIDELINES.md](docs/BRAND_GUIDELINES.md) | Palette, typography direction, logo usage, voice & tone |
+| [DESIGN_LANGUAGE.md](docs/DESIGN_LANGUAGE.md) | Synthesized aesthetic — principles, spacing, layout system, section patterns |
+| [DESIGN_REFERENCES.md](docs/DESIGN_REFERENCES.md) | Per-site breakdown of the 7 reference sites — what we take, what we reject |
+| [ANIMATION_GUIDELINES.md](docs/ANIMATION_GUIDELINES.md) | GSAP + Framer Motion patterns, scroll-animation catalogue, perf/a11y rules |
+| [TECH_STACK.md](docs/TECH_STACK.md) | Next.js setup, styling approach, folder structure, ponytail code conventions |
+| [SITE_ARCHITECTURE.md](docs/SITE_ARCHITECTURE.md) | Sitemap + routes |
+| [COMPONENT_INVENTORY.md](docs/COMPONENT_INVENTORY.md) | Components implied by architecture + design language |
+| [CONTENT_MODEL.md](docs/CONTENT_MODEL.md) | Data shape — listings, agents, communities |
+| [TASKS.md](docs/TASKS.md) | Phased build roadmap |
+| [REQUIREMENTS_V2.md](docs/REQUIREMENTS_V2.md) | **Current scope** — CFF field form + Aug 2026 client update round, full requirement register and build prompt |
 
 ## Skills to use going forward
 
-- **ponytail** (full) — lazy-but-correct code. Conventions locked in [TECH_STACK.md](TECH_STACK.md#ponytail-conventions).
+- **ponytail** (full) — lazy-but-correct code. Conventions locked in [TECH_STACK.md](docs/TECH_STACK.md#ponytail-conventions).
 - **caveman** — terse responses, every session.
-- **gsap-core / gsap-scrolltrigger / gsap-timeline / gsap-react / gsap-performance / gsap-plugins** — scroll timelines, pinning, parallax, SplitText reveals. See [ANIMATION_GUIDELINES.md](ANIMATION_GUIDELINES.md).
-- Framer Motion — component enter/exit, layout animation, hover/tap micro-interactions. No dedicated skill installed; follow official Framer Motion docs + patterns in [ANIMATION_GUIDELINES.md](ANIMATION_GUIDELINES.md).
+- **gsap-core / gsap-scrolltrigger / gsap-timeline / gsap-react / gsap-performance / gsap-plugins** — scroll timelines, pinning, parallax, SplitText reveals. See [ANIMATION_GUIDELINES.md](docs/ANIMATION_GUIDELINES.md).
+- Framer Motion — component enter/exit, layout animation, hover/tap micro-interactions. No dedicated skill installed; follow official Framer Motion docs + patterns in [ANIMATION_GUIDELINES.md](docs/ANIMATION_GUIDELINES.md).
 
 ## Palette (full detail in BRAND_GUIDELINES.md)
 
@@ -44,4 +45,4 @@ This repo is in **build phase** (context-building ended; landing page, subpages,
 
 Gold is an accent — dividers, hover, emphasis — never a fill. Navy carries text and dark sections. White/space carries the luxury feel.
 
-**Dark mode: undecided.** Logged as a maybe in [TASKS.md](TASKS.md). Do not build or assume it.
+**Dark mode: undecided.** Logged as a maybe in [TASKS.md](docs/TASKS.md). Do not build or assume it.

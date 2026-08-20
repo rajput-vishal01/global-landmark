@@ -7,7 +7,7 @@ feature expansion — PostgreSQL/Drizzle data layer, admin panel behind the
 cascade delete), live `/properties` + `[slug]` detail pages with category
 filter, portfolio search, hero Sale/Purchase/Lease/Invest rotator, Deal of
 the Week queue, scrolling testimonials, WhatsApp dock + inquiry pop-up,
-activity ticker, `/news` via newsdata.io. See [README.md](README.md).
+activity ticker, `/news` via newsdata.io. See [README.md](../README.md).
 
 Outstanding from that expansion (client inputs): WhatsApp number, admin
 domain + DNS, Cloudinary + newsdata.io keys, society naming

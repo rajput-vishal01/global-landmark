@@ -7,7 +7,7 @@ import { SplitText } from "gsap/SplitText";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText);
 
-// ANIMATION_GUIDELINES.md#easing--timing — one heavy ease reused site-wide
+// docs/ANIMATION_GUIDELINES.md#easing--timing — one heavy ease reused site-wide
 export const EASE_HEAVY = "power3.inOut";
 
 export { gsap, useGSAP, ScrollTrigger, SplitText };

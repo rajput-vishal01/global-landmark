@@ -1,7 +1,7 @@
 # Content Model
 
 > **Superseded for properties (July 2026):** the live schema is
-> [lib/db/schema.ts](lib/db/schema.ts) (PostgreSQL via Drizzle) — projects,
+> [lib/db/schema.ts](../lib/db/schema.ts) (PostgreSQL via Drizzle) — projects,
 > properties (kind: project|unit, category: sale|purchase|lease|invest,
 > **no price by client decision** — deals close over calls), property_images
 > (Cloudinary `publicId` or pasted URL), deals (date-windowed Deal of the

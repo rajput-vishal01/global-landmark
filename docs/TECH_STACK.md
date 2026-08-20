@@ -9,7 +9,7 @@ Breaking changes from older Next.js knowledge, confirmed in `node_modules/next/d
 - Routing files (`layout`, `page`, `loading`, `error`, `not-found`, `route`, `template`, `default`) and dynamic segments (`[slug]`, `[...slug]`, `[[...slug]]`) work as expected.
 - Route groups `(group)` for organizing without affecting URL (e.g. `(marketing)`) and private folders `_folder` for non-routable colocated code.
 - `next/font/google` and `next/font/local` for self-hosted, zero-layout-shift fonts — set on `<html className={font.className}>` in the root layout. Use this for both the display serif and body sans once selected (see [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md#typography-scale)).
-- Before writing any route/layout/data-fetching code later, check the relevant doc under `node_modules/next/dist/docs/01-app/` — do not assume App Router behavior from pre-16 training data (per [AGENTS.md](AGENTS.md)).
+- Before writing any route/layout/data-fetching code later, check the relevant doc under `node_modules/next/dist/docs/01-app/` — do not assume App Router behavior from pre-16 training data (per [AGENTS.md](../AGENTS.md)).
 
 ## Styling approach
 
@@ -71,7 +71,7 @@ proxy.ts                       (if/when needed — auth redirects etc.)
 
 ## Ponytail conventions
 
-Locked in for all future code in this repo, per [CLAUDE.md](CLAUDE.md#skills-to-use-going-forward):
+Locked in for all future code in this repo, per [CLAUDE.md](../CLAUDE.md#skills-to-use-going-forward):
 
 - **Ladder before writing anything:** does it need to exist → reuse what's already in the codebase → native platform/CSS → already-installed dependency → one line → minimum code. No new dependency when Tailwind/CSS/native HTML covers it (e.g. `<dialog>` or native `<details>` before a modal library, where suitable).
 - **No speculative abstraction.** No prop for a variant that doesn't exist yet, no config object for a value that never changes, no `Card` component generalized for 4 use cases when 2 exist.
