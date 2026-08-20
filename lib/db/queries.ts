@@ -1,17 +1,27 @@
 import { unstable_cache } from "next/cache";
-import { and, asc, desc, eq, ilike, lte, gte, or, sql, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, lte, gte, or, sql, inArray, count } from "drizzle-orm";
 import { db } from "./index";
-import { deals, projects, properties, propertyImages, testimonialVideos } from "./schema";
+import { deals, projects, properties, propertyImages, propertyMedia, testimonialVideos } from "./schema";
 import type { AdminProperty, Deal, TestimonialVideo } from "./schema";
 import {
+  PUBLIC_BUILDER_COLUMNS,
   PUBLIC_IMAGE_COLUMNS,
+  PUBLIC_MEDIA_COLUMNS,
   PUBLIC_PROJECT_COLUMNS,
   PUBLIC_PROPERTY_COLUMNS,
+  PUBLIC_TOWER_COLUMNS,
+  type PublicBuilder,
+  type PublicImage,
+  type PublicMedium,
   type PublicProject,
+  type PublicProperty,
   type PublicPropertyWithMedia,
+  type PublicTower,
 } from "./public-columns";
 import type { CategoryValue } from "@/lib/categories";
+import { COLLECTIONS, typesInCollection, type CollectionValue } from "@/lib/attributes";
 import { PUBLIC_STATUSES } from "@/lib/taxonomy/status";
+import { isLocalityIn } from "@/lib/locations";
 
 /**
  * Public read layer. Every query fails soft (logs + empty result) so the
@@ -87,9 +97,14 @@ const galleryJoin = { columns: PUBLIC_IMAGE_COLUMNS, orderBy: IMAGE_ORDER } as c
 
 type PropertyFilters = {
   category?: CategoryValue;
+  collection?: CollectionValue;
   propertyType?: string;
+  configuration?: string;
   possessionStatus?: string;
   furnishing?: string;
+  city?: string;
+  locality?: string;
+  sector?: string;
 };
 
 /**
@@ -120,16 +135,42 @@ function failSoft<A extends unknown[], R>(
   };
 }
 
+/**
+ * A collection is derived, not stored (R-04) — "projects" means `kind =
+ * 'project'`, every other collection means `propertyType IN (...)` over
+ * `typesInCollection()`'s list. Returns `undefined` (no-op filter) for an
+ * empty list so a collection with zero mapped types doesn't `IN ()`, which
+ * some drivers reject outright.
+ */
+function collectionCondition(collection: CollectionValue) {
+  if (collection === "projects") return eq(properties.kind, "project");
+  const types = typesInCollection(collection);
+  return types.length ? inArray(properties.propertyType, types) : undefined;
+}
+
 const listPropertiesCached = unstable_cache(
   async (filters: PropertyFilters = {}): Promise<PublicPropertyWithMedia[]> => {
+    // A locality is only meaningful under its own city — the same rule the
+    // admin form enforces, so a stray `?locality=` from a stale link can't
+    // silently narrow to nothing.
+    const locality =
+      filters.city && filters.locality && isLocalityIn(filters.city, filters.locality)
+        ? filters.locality
+        : undefined;
+
     const conditions = [
       publicVisibility(),
       filters.category ? eq(properties.category, filters.category) : undefined,
+      filters.collection ? collectionCondition(filters.collection) : undefined,
       filters.propertyType ? eq(properties.propertyType, filters.propertyType) : undefined,
+      filters.configuration ? eq(properties.configuration, filters.configuration) : undefined,
       filters.possessionStatus
         ? eq(properties.possessionStatus, filters.possessionStatus)
         : undefined,
       filters.furnishing ? eq(properties.furnishing, filters.furnishing) : undefined,
+      filters.city ? eq(properties.city, filters.city) : undefined,
+      locality ? eq(properties.locality, locality) : undefined,
+      filters.sector ? eq(properties.sector, filters.sector) : undefined,
     ].filter((c): c is NonNullable<typeof c> => Boolean(c));
 
     // Cards only render the cover image — fetching whole galleries here
@@ -147,6 +188,55 @@ const listPropertiesCached = unstable_cache(
 );
 
 export const listProperties = failSoft(listPropertiesCached, "listProperties", []);
+
+/**
+ * Live per-collection counts for the six-card grid (R-04). One query per
+ * collection rather than a single grouped query: "projects" filters on
+ * `kind`, every other collection filters on `propertyType IN (...)` — two
+ * different WHERE shapes a single `GROUP BY` can't express cleanly, and six
+ * collections is cheap enough that the extra round trips don't matter.
+ */
+const listCollectionCountsCached = unstable_cache(
+  async (): Promise<{ value: CollectionValue; count: number }[]> => {
+    const rows = await Promise.all(
+      COLLECTIONS.map(async ({ value }) => {
+        const condition = collectionCondition(value);
+        const [{ n }] = await db
+          .select({ n: count() })
+          .from(properties)
+          .where(condition ? and(publicVisibility(), condition) : publicVisibility());
+        return { value, count: n };
+      })
+    );
+    return rows;
+  },
+  ["listCollectionCounts"],
+  CACHE_OPTS
+);
+
+export const listCollectionCounts = failSoft(
+  listCollectionCountsCached,
+  "listCollectionCounts",
+  []
+);
+
+/** Live per-city counts for the city tab row (R-08) — cities with zero public listings are simply absent. */
+const listCityCountsCached = unstable_cache(
+  async (): Promise<{ city: string; count: number }[]> => {
+    const rows = await db
+      .select({ city: properties.city, count: count() })
+      .from(properties)
+      .where(and(publicVisibility(), sql`${properties.city} is not null`))
+      .groupBy(properties.city);
+    return rows
+      .filter((r): r is { city: string; count: number } => r.city !== null)
+      .sort((a, b) => b.count - a.count);
+  },
+  ["listCityCounts"],
+  CACHE_OPTS
+);
+
+export const listCityCounts = failSoft(listCityCountsCached, "listCityCounts", []);
 
 const getFeaturedPropertiesCached = unstable_cache(
   async (limit = 6): Promise<PublicPropertyWithMedia[]> =>
@@ -168,8 +258,11 @@ export const getFeaturedProperties = failSoft(
   []
 );
 
+/** The detail page's shape — the only public read that also carries link media (R-28). */
+export type PublicPropertyDetail = PublicPropertyWithMedia & { media: PublicMedium[] };
+
 const getPropertyBySlugCached = unstable_cache(
-  async (slug: string): Promise<PublicPropertyWithMedia | null> => {
+  async (slug: string): Promise<PublicPropertyDetail | null> => {
     const row = await db.query.properties.findFirst({
       columns: PUBLIC_PROPERTY_COLUMNS,
       extras: PUBLIC_PRICE_EXTRA,
@@ -179,6 +272,8 @@ const getPropertyBySlugCached = unstable_cache(
         // Full gallery — the detail page renders every image.
         images: galleryJoin,
         project: PUBLIC_PROJECT_JOIN,
+        // Video / drone / virtual-tour / map / brochure links (R-28).
+        media: { columns: PUBLIC_MEDIA_COLUMNS, orderBy: [asc(propertyMedia.sortOrder)] },
       },
     });
     return row ?? null;
@@ -192,6 +287,76 @@ export const getPropertyBySlug = failSoft(
   "getPropertyBySlug",
   null
 );
+
+/** A tower's public units, sorted the way a buyer reads a floor plate: top-down, then unit. */
+const towerUnitsJoin = {
+  columns: PUBLIC_PROPERTY_COLUMNS,
+  extras: PUBLIC_PRICE_EXTRA,
+  where: publicVisibility(),
+  with: { images: coverImageJoin },
+  orderBy: [desc(properties.floorNumber), asc(properties.unitNumber)],
+};
+
+/** A unit within its own project's page — `project` is the page itself, so it isn't repeated per row. */
+type PublicUnit = PublicProperty & { images: PublicImage[] };
+
+export type PublicProjectDetail = PublicProject & {
+  builder: PublicBuilder | null;
+  towers: (PublicTower & { units: PublicUnit[] })[];
+  /** Units belonging to the project directly, with no tower (R-12). */
+  units: PublicUnit[];
+};
+
+/**
+ * `/projects/[slug]` (R-27): builder line, RERA, dates, project amenities,
+ * and every available unit grouped by tower — the public half of the same
+ * pitch view the admin gets, minus everything internal.
+ */
+const getProjectBySlugCached = unstable_cache(
+  async (slug: string): Promise<PublicProjectDetail | null> => {
+    const project = await db.query.projects.findFirst({
+      columns: PUBLIC_PROJECT_COLUMNS,
+      where: eq(projects.slug, slug),
+      with: {
+        builder: { columns: PUBLIC_BUILDER_COLUMNS },
+        towers: {
+          columns: PUBLIC_TOWER_COLUMNS,
+          with: { units: towerUnitsJoin },
+        },
+      },
+    });
+    if (!project) return null;
+
+    // Units on this project with no tower — a standalone plot sold under
+    // the same society banner, for instance (R-12).
+    const units = await db.query.properties.findMany({
+      columns: PUBLIC_PROPERTY_COLUMNS,
+      extras: PUBLIC_PRICE_EXTRA,
+      where: and(eq(properties.projectId, project.id), sql`${properties.towerId} is null`, publicVisibility()),
+      with: { images: coverImageJoin },
+    });
+
+    return { ...project, units };
+  },
+  ["getProjectBySlug"],
+  CACHE_OPTS
+);
+
+export const getProjectBySlug = failSoft(getProjectBySlugCached, "getProjectBySlug", null);
+
+/**
+ * Sitemap source. Every project gets its own page regardless of whether it
+ * currently has any live units — unlike a property, "no units yet" is not
+ * a reason to hide a society's page from search.
+ */
+export async function listProjectSlugs(): Promise<{ slug: string }[]> {
+  try {
+    return await db.select({ slug: projects.slug }).from(projects);
+  } catch (err) {
+    console.error("listProjectSlugs failed:", err);
+    return [];
+  }
+}
 
 export async function searchProperties(
   q: string,
