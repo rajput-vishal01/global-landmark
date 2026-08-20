@@ -1,13 +1,13 @@
-import { readBlob } from "@/lib/storage";
+import { openStoredFile } from "@/lib/storage";
 
 /**
- * Serves an uploaded property image.
+ * Serves an uploaded property image from the public upload directory.
  *
- * Public by design, but it refuses to hand back a blob marked private —
- * legal documents share the same store and must only ever come out of the
- * admin-gated route, even for someone who has guessed a key.
+ * It can only ever resolve paths under $UPLOAD_DIR/public — legal documents
+ * live under private/ and are unreachable from here by construction, not by
+ * a flag this route has to remember to check.
  *
- * The key is the SHA-256 of the bytes, so a key can never point at
+ * The filename is the SHA-256 of the bytes, so a key can never point at
  * different content and the response is safe to cache immutably.
  */
 export async function GET(
@@ -15,32 +15,20 @@ export async function GET(
   { params }: { params: Promise<{ key: string }> }
 ) {
   const { key } = await params;
+  const file = await openStoredFile(key, "public");
 
-  // Reject anything that is not a hash before it reaches the database.
-  if (!/^[a-f0-9]{64}$/.test(key)) {
+  if (!file) {
     return new Response("Not found", { status: 404 });
   }
 
-  let blob;
-  try {
-    blob = await readBlob(key);
-  } catch (err) {
-    console.error("image route: read failed:", err);
-    return new Response("Unavailable", { status: 503 });
-  }
-
-  // Same 404 for missing and for private: a different status would confirm
-  // that a given document key exists.
-  if (!blob || blob.isPrivate) {
-    return new Response("Not found", { status: 404 });
-  }
-
-  return new Response(new Uint8Array(blob.data), {
+  return new Response(file.stream, {
     headers: {
-      "Content-Type": blob.mimeType,
-      "Content-Length": String(blob.sizeBytes),
+      "Content-Type": file.mimeType,
+      "Content-Length": String(file.sizeBytes),
       "Cache-Control": "public, max-age=31536000, immutable",
       ETag: `"${key}"`,
+      // The type comes from our own extension map, but say so anyway: this
+      // route serves admin-uploaded bytes.
       "X-Content-Type-Options": "nosniff",
     },
   });

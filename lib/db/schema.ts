@@ -1,7 +1,6 @@
 import {
   bigint,
   boolean,
-  customType,
   date,
   integer,
   jsonb,
@@ -14,12 +13,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-/** Postgres bytea — drizzle has no built-in column type for it. */
-const bytea = customType<{ data: Buffer; driverData: Buffer }>({
-  dataType() {
-    return "bytea";
-  },
-});
 
 /**
  * PUBLIC / INTERNAL BOUNDARY
@@ -441,35 +434,6 @@ export const siteSettings = pgTable("site_settings", {
   value: jsonb("value").notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
-
-/**
- * Uploaded file bytes, stored in Postgres rather than on disk.
- *
- * The site deploys to Vercel, where anything written to the filesystem at
- * runtime is gone on the next invocation — so "local storage" has to mean
- * the database, which is the one durable thing the app already owns. This
- * also removes the Cloudinary account from the critical path entirely.
- *
- * `storageKey` is the SHA-256 of the bytes, which buys three things at
- * once: uploading the same file twice stores it once, the URL is safe to
- * cache immutably because a key can never point at different bytes, and
- * nothing user-supplied ends up in a URL path.
- *
- * `isPrivate` marks legal documents. The public image route refuses to
- * serve a private blob even if someone learns its key — the access rule
- * lives on the row, not only on the route that happens to read it.
- */
-export const fileBlobs = pgTable("file_blobs", {
-  id: serial("id").primaryKey(),
-  storageKey: text("storage_key").notNull().unique(),
-  mimeType: text("mime_type").notNull(),
-  sizeBytes: integer("size_bytes").notNull(),
-  data: bytea("data").notNull(),
-  isPrivate: boolean("is_private").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type FileBlob = typeof fileBlobs.$inferSelect;
 
 export const videoProvider = pgEnum("video_provider", ["youtube", "instagram"]);
 

@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { projects, properties, propertyImages } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
-import { deleteBlobs, isLocalImageUrl, storageKeyFromUrl } from "@/lib/storage";
+import { deleteStoredFiles, isLocalImageUrl, storageKeyFromUrl } from "@/lib/storage";
 import { isCategory } from "@/lib/categories";
 import {
   AREA_UNITS,
@@ -329,13 +329,13 @@ export async function updateProperty(
     return { error: "Could not update the property. Try again." };
   }
 
-  // Replaced blobs go only after the DB commit, so a failure here can leave
-  // an unreferenced blob (logged) but can never leave the live site pointing
-  // at deleted bytes.
+  // Replaced files go only after the DB commit, so a failure here can leave
+  // an orphaned file on disk (logged) but can never leave the live site
+  // pointing at bytes that are already gone.
   try {
-    await deleteBlobs(removed);
+    await deleteStoredFiles(removed);
   } catch (err) {
-    console.error("updateProperty: replaced image blobs not removed:", removed, err);
+    console.error("updateProperty: replaced image files not removed:", removed, err);
   }
   revalidatePublicSite();
   redirect("/admin/properties");
@@ -360,13 +360,11 @@ export async function deleteProperty(
       .map((row) => row.storageKey)
       .filter((pid): pid is string => Boolean(pid));
 
-    // Both the rows and the bytes live in the same database, so this is
-    // one transaction rather than the old remote-first cascade: there is no
-    // longer any way for a delete to half-succeed across two systems.
-    await db.transaction(async (tx) => {
-      await tx.delete(properties).where(eq(properties.id, id));
-      if (storageKeys.length) await deleteBlobs(storageKeys);
-    });
+    // Rows first, then files. An unreferenced file on disk is harmless and
+    // sweepable; a row pointing at a file that is already gone renders a
+    // broken image on the live site.
+    await db.delete(properties).where(eq(properties.id, id));
+    await deleteStoredFiles(storageKeys);
   } catch (err) {
     console.error("deleteProperty failed:", err);
     return { error: "Delete failed. Try again." };

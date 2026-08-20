@@ -27,9 +27,16 @@ services:
     environment:
       # Overrides .env — inside the compose network the DB host is `db`.
       DATABASE_URL: postgresql://postgres:dev@db:5432/global_landmark
+      # Uploaded imagery lives on the mounted volume below, NOT inside the
+      # image — a rebuild replaces the container filesystem, and without
+      # this every property photo would go with it.
+      UPLOAD_DIR: /var/lib/global-landmark/uploads
+    volumes:
+      - uploads:/var/lib/global-landmark/uploads
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   pgdata:
+  uploads:

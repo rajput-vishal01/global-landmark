@@ -2,7 +2,7 @@
 
 Luxury real-estate marketing site. Next.js 16 (App Router), Tailwind v4,
 GSAP (ScrollTrigger + SplitText), Framer Motion, Lenis smooth scroll,
-PostgreSQL (Drizzle ORM), Cloudinary image hosting.
+PostgreSQL (Drizzle ORM), local filesystem image storage.
 
 ```bash
 npm install
@@ -31,12 +31,20 @@ what the containerized site serves. Admin at `http://localhost:3000/admin`.
 Served at `/admin` — `http://localhost:3000/admin` in dev. Unauthenticated
 visits redirect to `/admin/login` (`proxy.ts`). Sign in
 with `ADMIN_PASSWORD`. Manages properties (multi-image galleries via
-Cloudinary or pasted URLs), projects/societies, and the Deal of the Week
+file upload or pasted URLs), projects/societies, and the Deal of the Week
 queue (date-windowed; the active window shows on the landing page, queued
 windows go live automatically).
 
-Deleting a property deletes its Cloudinary assets first and aborts if that
-fails — no orphaned images.
+Uploaded images are written to `UPLOAD_DIR` (default `./uploads`) and served
+back through `/api/images/<sha256>.<ext>`. The filename is the hash of the
+bytes, so re-uploading the same file is a no-op and the URL is safe to cache
+forever. Legal documents go under `private/` in the same directory and are
+only reachable through an admin-gated route.
+
+**`UPLOAD_DIR` must be a persistent disk.** On a host with an ephemeral
+filesystem (Vercel and most serverless platforms) anything written at runtime
+is gone by the next request. In Docker it is a mounted volume; set it to a
+path outside the deploy directory in production so a redeploy cannot wipe it.
 
 ## Layout
 
@@ -45,12 +53,12 @@ fails — no orphaned images.
 - `app/api/search` — portfolio search endpoint (hero + menu search UI)
 - `components/sections/` — page sections (Hero, FeaturedListings, DealOfWeek, ...)
 - `components/ui/`, `components/admin/`, `components/gallery/` — primitives, admin forms, lightbox
-- `lib/db/` — Drizzle schema + fail-soft public queries; `lib/cloudinary.ts`, `lib/news.ts`, `lib/admin/`
+- `lib/db/` — Drizzle schema, fail-soft public queries, public column allowlists; `lib/storage.ts`, `lib/news.ts`, `lib/admin/`
 - `proxy.ts` — /admin session gate
 
-Env vars are documented in [.env.example](.env.example). Empty Cloudinary
-keys fall back to paste-image-URL mode in the admin; an empty
-`NEWSDATA_API_KEY` gives `/news` a graceful fallback state.
+Env vars are documented in [.env.example](.env.example). `UPLOAD_DIR` sets
+where uploaded files are written; an empty `NEWSDATA_API_KEY` gives `/news` a
+graceful fallback state.
 
 Project context and design decisions live in [CLAUDE.md](CLAUDE.md) and the
 docs it links (brand, design language, animation guidelines, tasks).

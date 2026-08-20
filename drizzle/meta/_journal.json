@@ -22,6 +22,13 @@
       "when": 1787210374226,
       "tag": "0002_local_file_storage",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787210822138,
+      "tag": "0003_drop_db_blob_storage",
+      "breakpoints": true
     }
   ]
 }

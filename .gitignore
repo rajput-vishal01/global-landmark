@@ -37,6 +37,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# uploaded property imagery and documents (see lib/storage.ts).
+# Lives on the server's disk, not in the repo — set UPLOAD_DIR to a path
+# outside the deploy directory in production so a redeploy cannot wipe it.
+/uploads/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
