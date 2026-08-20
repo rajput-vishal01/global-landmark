@@ -30,6 +30,11 @@ const DEFAULT_NEEDLES = [
   // a way an owner's phone number never would.
   ["reference code", "GL-PKL-26-"],
   ["source/dealer name", "Leakcheck Dealer Firm"],
+  // A legal document filename is the sneakiest leak of all: it reaching a
+  // sitemap, a JSON-LD block, or a client bundle looks harmless enough that
+  // a human reviewer skims past it, unlike an owner's phone number.
+  ["legal doc filename", "Leakcheck-Registry.pdf"],
+  ["legal doc storage key", "a1b2c3d4e5f6"],
 ];
 
 const needles = process.env.LEAK_NEEDLES

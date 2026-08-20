@@ -10,7 +10,7 @@ import {
   PUBLICATION_STATES,
 } from "../attributes";
 import { CITY_NAMES, isLocalityIn } from "../locations";
-import { isLocalImageUrl, storageKeyFromUrl } from "../storage";
+import { isLocalImageUrl, MAX_UPLOAD_BYTES, storageKeyFromUrl } from "../storage";
 import { requiredFieldsFor } from "../taxonomy/sections";
 import {
   DOCUMENTATION_FLAGS,
@@ -306,6 +306,58 @@ export function parseMedia(json: string): ParsedMedium[] | null {
   return media;
 }
 
+export type ParsedDocument = {
+  docType: string;
+  storageKey: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  note: string | null;
+  uploadedBy: string | null;
+};
+
+/**
+ * Legal documents (R-29). Every row must carry a storageKey that already
+ * exists under private/ — this parser never writes bytes, it only accepts
+ * or rejects rows pointing at a file the upload route already stored.
+ * `docType` is validated against DOCUMENTATION_FLAGS so the vault and the
+ * documentation checklist stay one vocabulary.
+ */
+export function parseDocuments(json: string): ParsedDocument[] | null {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(raw) || raw.length > 30) return null;
+  const documents: ParsedDocument[] = [];
+  for (const item of raw) {
+    if (typeof item !== "object" || item === null) return null;
+    const d = item as Record<string, unknown>;
+    const docType = pick(d.docType, DOCUMENTATION_FLAGS);
+    const storageKey = str(d.storageKey, 200);
+    const fileName = str(d.fileName, 200);
+    const mimeType = str(d.mimeType, 100);
+    const sizeBytes = int(d.sizeBytes, MAX_UPLOAD_BYTES);
+    // A row missing any of these does not point at a real uploaded file —
+    // drop it rather than saving a broken download link.
+    if (!docType || !storageKey || !fileName || !mimeType || sizeBytes === null) {
+      continue;
+    }
+    documents.push({
+      docType,
+      storageKey,
+      fileName,
+      mimeType,
+      sizeBytes,
+      note: str(d.note, 1000) || null,
+      uploadedBy: str(d.uploadedBy, 200) || null,
+    });
+  }
+  return documents;
+}
+
 /**
  * The one area a listing is sorted and filtered by, normalised to sq.ft.
  *
@@ -426,6 +478,7 @@ export type ParsedProperty = {
   owners: ParsedOwner[];
   charges: ParsedCharge[];
   media: ParsedMedium[];
+  documents: ParsedDocument[];
   /** property_internal — 1:1, internal always. */
   circleRate: number | null;
 };
@@ -506,6 +559,9 @@ export function parseProperty(
 
   const media = parseMedia(String(formData.get("mediaJson") ?? "[]"));
   if (media === null) return { ok: false, error: "Media links are invalid." };
+
+  const documents = parseDocuments(String(formData.get("documentsJson") ?? "[]"));
+  if (documents === null) return { ok: false, error: "Document rows are invalid." };
 
   const areaUnitValues = AREA_UNITS.map((u) => u.value);
   const num = (name: string) => {
@@ -594,6 +650,7 @@ export function parseProperty(
       owners,
       charges,
       media,
+      documents,
       circleRate: num("circleRate"),
       // A locality is only meaningful under its own city — keeping one that
       // belongs to a different city would put the listing under the wrong

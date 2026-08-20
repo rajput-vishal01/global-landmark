@@ -3,9 +3,15 @@ import { storeFile } from "@/lib/storage";
 import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
 /**
- * Admin image upload. Files come through this server — never
- * browser-direct to a third party — are validated here, and are stored in
- * Postgres by lib/storage.ts.
+ * Admin file upload — images AND legal documents share this one route.
+ * Files come through this server — never browser-direct to a third party —
+ * are validated in lib/storage.ts, and are written to $UPLOAD_DIR on disk.
+ *
+ * A `kind` field ("image" | "document", defaults to "image") decides where
+ * the file lands: storeFile() puts images under public/ and documents under
+ * private/. Privacy is the directory, not a flag a second endpoint would
+ * have to remember to check — which is also why this stays one route rather
+ * than a second upload endpoint for documents.
  *
  * Next 16 route handlers parse multipart natively via request.formData(),
  * so there is no need for multer or any other body-parser middleware:
@@ -39,7 +45,8 @@ export async function POST(request: Request) {
     return Response.json({ error: "No file received." }, { status: 400 });
   }
 
-  const result = await storeFile(file, "image");
+  const kind = form.get("kind") === "document" ? "document" : "image";
+  const result = await storeFile(file, kind);
   if (!result.ok) {
     return Response.json({ error: result.error }, { status: 400 });
   }

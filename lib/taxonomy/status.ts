@@ -67,7 +67,8 @@ export const SELLER_CATEGORIES = ["Owner", "Builder", "Investor", "NRI", "Bank"]
 export const OWNER_TYPES = ["Individual", "Builder", "Investor", "NRI"] as const;
 
 /**
- * Reference code (R-07): GL-<CITY>-<YY>-<seq>, e.g. GL-PKL-26-0142.
+ * Reference code (R-07): GL-<CITY>-<YY>-<seq>, e.g. "GL-" + a 3-letter city
+ * code + a 2-digit year + a 4-digit sequence number.
  * Generated once on insert and never reused, so a deleted listing's code
  * does not come back attached to a different property.
  */

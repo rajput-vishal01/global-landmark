@@ -153,8 +153,16 @@ export async function createProperty(
   await requireAdmin();
   const parsed = parseProperty(formData, modeFor(formData));
   if (!parsed.ok) return { error: parsed.error };
-  const { images, projectName, owners, charges, media, circleRate, ...fields } =
-    parsed.data;
+  const {
+    images,
+    projectName,
+    owners,
+    charges,
+    media,
+    documents,
+    circleRate,
+    ...fields
+  } = parsed.data;
 
   try {
     const projectId = await resolveProjectId(projectName);
@@ -178,6 +186,13 @@ export async function createProperty(
           images.map((img, i) => ({ ...img, propertyId: row.id, sortOrder: i }))
         );
       }
+      // A new property has no prior document rows, so every uploaded file
+      // is kept — nothing to diff against, unlike the update path below.
+      if (documents.length) {
+        await tx.insert(propertyDocuments).values(
+          documents.map((d) => ({ ...d, propertyId: row.id }))
+        );
+      }
       await writeChildTables(tx, row.id, { owners, charges, media, circleRate });
     });
   } catch (err) {
@@ -197,18 +212,41 @@ export async function updateProperty(
   if (!Number.isInteger(id)) return { error: "Missing property id." };
   const parsed = parseProperty(formData, modeFor(formData));
   if (!parsed.ok) return { error: parsed.error };
-  const { images, projectName, ...fields } = parsed.data;
+  const {
+    images,
+    projectName,
+    owners,
+    charges,
+    media,
+    documents,
+    circleRate,
+    ...fields
+  } = parsed.data;
 
-  let removed: string[] = [];
+  let removedImages: string[] = [];
+  let removedDocuments: string[] = [];
   try {
-    const existing = await db
+    const existingImages = await db
       .select({ storageKey: propertyImages.storageKey })
       .from(propertyImages)
       .where(eq(propertyImages.propertyId, id));
-    const keep = new Set(images.map((img) => img.storageKey).filter(Boolean));
-    removed = existing
+    const keepImages = new Set(images.map((img) => img.storageKey).filter(Boolean));
+    removedImages = existingImages
       .map((row) => row.storageKey)
-      .filter((pid): pid is string => Boolean(pid) && !keep.has(pid));
+      .filter((key): key is string => Boolean(key) && !keepImages.has(key));
+
+    // Documents own files on disk the same way images do — unlike owners,
+    // charges and media, which are DB-only and can simply be replaced in
+    // writeChildTables(). A document dropped from the form must have its
+    // private file swept, and one still present must not be touched.
+    const existingDocuments = await db
+      .select({ storageKey: propertyDocuments.storageKey })
+      .from(propertyDocuments)
+      .where(eq(propertyDocuments.propertyId, id));
+    const keepDocuments = new Set(documents.map((d) => d.storageKey));
+    removedDocuments = existingDocuments
+      .map((row) => row.storageKey)
+      .filter((key) => !keepDocuments.has(key));
 
     const projectId = await resolveProjectId(projectName);
     const slug = await uniqueSlug(fields.title, id);
@@ -217,10 +255,23 @@ export async function updateProperty(
         .update(properties)
         .set({ ...fields, projectId, slug, updatedAt: new Date() })
         .where(eq(properties.id, id));
+
       await tx.delete(propertyImages).where(eq(propertyImages.propertyId, id));
       await tx.insert(propertyImages).values(
         images.map((img, i) => ({ ...img, propertyId: id, sortOrder: i }))
       );
+
+      await tx.delete(propertyDocuments).where(eq(propertyDocuments.propertyId, id));
+      if (documents.length) {
+        await tx.insert(propertyDocuments).values(
+          documents.map((d) => ({ ...d, propertyId: id }))
+        );
+      }
+
+      // Previously missing entirely: an edit to an existing property never
+      // wrote owners, charges, media or the circle rate — every save of an
+      // existing listing silently dropped them. This is the fix.
+      await writeChildTables(tx, id, { owners, charges, media, circleRate });
     });
   } catch (err) {
     console.error("updateProperty failed:", err);
@@ -231,9 +282,18 @@ export async function updateProperty(
   // an orphaned file on disk (logged) but can never leave the live site
   // pointing at bytes that are already gone.
   try {
-    await deleteStoredFiles(removed);
+    await deleteStoredFiles(removedImages, "public");
   } catch (err) {
-    console.error("updateProperty: replaced image files not removed:", removed, err);
+    console.error("updateProperty: replaced image files not removed:", removedImages, err);
+  }
+  try {
+    await deleteStoredFiles(removedDocuments, "private");
+  } catch (err) {
+    console.error(
+      "updateProperty: replaced document files not removed:",
+      removedDocuments,
+      err
+    );
   }
   revalidatePublicSite();
   redirect("/admin/properties");

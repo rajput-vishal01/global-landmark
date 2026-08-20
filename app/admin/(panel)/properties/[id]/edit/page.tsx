@@ -32,6 +32,7 @@ export default async function EditPropertyPage({
         internal: true,
         charges: true,
         media: true,
+        documents: true,
       },
     }),
     listProjectsForAdmin(),

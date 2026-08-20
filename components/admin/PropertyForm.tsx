@@ -20,6 +20,7 @@ import { LegalLoanSection } from "./LegalLoanSection";
 import { SpecificationsSection } from "./SpecificationsSection";
 import { OwnersEditor } from "./OwnersEditor";
 import { MediaLinksSection } from "./MediaLinksSection";
+import { DocumentVault } from "./DocumentVault";
 import { ExtrasEditor } from "./ExtrasEditor";
 import { ImageUploader } from "./ImageUploader";
 import { ProjectSuggestInput } from "./ProjectSuggestInput";
@@ -50,6 +51,15 @@ type PropertyWithChildren = AdminProperty & {
     isIncludedInDemand: boolean;
   }[];
   media?: { kind: string; url: string; label: string }[];
+  documents?: {
+    docType: string;
+    storageKey: string;
+    fileName: string;
+    mimeType: string;
+    sizeBytes: number;
+    note: string | null;
+    uploadedBy: string | null;
+  }[];
   internal?: { circleRate: number | null } | null;
 };
 
@@ -247,6 +257,10 @@ export function PropertyForm({
         banksOnPanel={property?.banksOnPanel ?? []}
         documentationFlags={property?.documentationFlags ?? []}
       />
+
+      {/* CFF 17's file-carrying half — the checklist above records WHICH
+          paperwork exists, this uploads the actual PDF/scan for each. */}
+      <DocumentVault initial={property?.documents ?? []} />
 
       <SpecificationsSection
         roadWidth={property?.roadWidth}
