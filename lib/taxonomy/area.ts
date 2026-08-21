@@ -63,6 +63,16 @@ export function toSqft(value: number, unit: string): number | null {
   return Math.round(value * SQFT_PER_UNIT[unit]);
 }
 
+/**
+ * Convert an area value between any two units, round-tripping through
+ * sq.ft. Unlike `toSqft` this keeps fractional precision — it's for
+ * display (the inline unit-converter widget, R-40), not a sort key.
+ */
+export function convertArea(value: number, fromUnit: string, toUnit: string): number | null {
+  if (!isAreaUnit(fromUnit) || !isAreaUnit(toUnit)) return null;
+  return (value * SQFT_PER_UNIT[fromUnit]) / SQFT_PER_UNIT[toUnit];
+}
+
 /** The four CFF area measures, in the order the admin form asks for them. */
 export const AREA_MEASURES = [
   { key: "plotArea", label: "Plot Size" },

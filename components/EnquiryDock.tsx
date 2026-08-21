@@ -8,6 +8,7 @@ import Image from "next/image";
 import { ContactForm } from "@/components/ContactForm";
 import { useModalLock, useMounted } from "@/lib/hooks";
 import { formatIndianShort } from "@/lib/attributes";
+import { whatsAppShareHref, shortlistShareMessage } from "@/lib/whatsapp";
 import {
   useEnquiryCart,
   ENQUIRY_OPEN_EVENT,
@@ -78,6 +79,21 @@ export function EnquiryDock() {
   // Keep the portal mounted while the panel is showing a post-submit
   // confirmation, even though clear() has already emptied `items`.
   if (!mounted || (items.length === 0 && !isPanelOpen)) return null;
+
+  // R-44: the whole shortlist as one forwardable message. Absolute URLs come
+  // from window rather than lib/seo's SITE_URL — that module pulls in
+  // site-settings, which is server-only, and a relative path is dead text
+  // inside WhatsApp anyway. Safe here: past the `mounted` guard above.
+  const shareHref = whatsAppShareHref(
+    shortlistShareMessage(
+      items.map((item) => ({
+        title: item.title,
+        location: item.location,
+        publicPrice: item.publicPrice,
+        url: `${window.location.origin}/properties/${item.slug}`,
+      }))
+    )
+  );
 
   return createPortal(
     <>
@@ -200,13 +216,23 @@ export function EnquiryDock() {
                         </div>
                       )}
 
-                      <button
-                        type="button"
-                        onClick={clear}
-                        className="text-eyebrow mb-8 cursor-pointer font-sans font-medium uppercase tracking-[0.15em] text-ink-muted transition-colors hover:text-ink"
-                      >
-                        Clear all
-                      </button>
+                      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+                        <button
+                          type="button"
+                          onClick={clear}
+                          className="text-eyebrow cursor-pointer font-sans font-medium uppercase tracking-[0.15em] text-ink-muted transition-colors hover:text-ink"
+                        >
+                          Clear all
+                        </button>
+                        <a
+                          href={shareHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-gold-deep transition-colors hover:text-ink"
+                        >
+                          Share list on WhatsApp
+                        </a>
+                      </div>
                     </>
                   )}
 

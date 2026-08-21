@@ -8,14 +8,20 @@ import { CTABand } from "@/components/sections/CTABand";
 import { ContactForm } from "@/components/ContactForm";
 import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
 import { ListingCard, propertySpecs } from "@/components/ui/ListingCard";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { EnquiryToggleButton } from "@/components/EnquiryToggleButton";
+import { EmiCalculator } from "@/components/EmiCalculator";
+import { RecentlyViewed } from "@/components/RecentlyViewed";
+import { AreaConverter } from "@/components/AreaConverter";
 import { toEnquiryCartItem } from "@/lib/enquiry-cart-item";
 import { getPropertyBySlug, listProperties } from "@/lib/db/queries";
 import { categoryLabel } from "@/lib/categories";
 import { AMENITY_GROUPS, formatArea, formatIndianShort } from "@/lib/attributes";
-import { whatsAppHref } from "@/lib/whatsapp";
+import { isAreaUnit } from "@/lib/taxonomy/area";
+import { rankSimilar } from "@/lib/similar";
+import { whatsAppHref, whatsAppShareHref, propertyShareMessage } from "@/lib/whatsapp";
 import { COMPANY, PROPERTY_DETAIL } from "@/lib/data";
-import { canonical, jsonLdHtml } from "@/lib/seo";
+import { breadcrumbJsonLd, canonical, jsonLdHtml } from "@/lib/seo";
 
 // ISR: cached and served instantly; admin edits bust the cache on save.
 export const revalidate = 3600;
@@ -74,11 +80,26 @@ export default async function PropertyDetailPage({
   const cover = property.images[0];
   const gallery = property.images.slice(1);
   const specs = propertySpecs(property);
-  const similar = (await listProperties({ category: property.category }))
-    .filter((p) => p.id !== property.id)
-    .slice(0, 3);
+  // R-45: rank the whole published pool on locality → configuration →
+  // budget instead of taking the three newest listings that happen to share
+  // a category. One unfiltered listProperties() call, which is the same
+  // cache entry /properties already warms, rather than a second filtered
+  // query per detail page.
+  const similar = rankSimilar(property, await listProperties(), 3);
   const whatsApp = whatsAppHref(
     `${PROPERTY_DETAIL.whatsAppMessagePrefix} ${property.title}.`
+  );
+  // R-44: forward-to-a-friend. Deliberately a different URL shape from
+  // `whatsApp` above — that one messages us, this one opens the visitor's
+  // own contact picker.
+  const shareHref = whatsAppShareHref(
+    propertyShareMessage({
+      title: property.title,
+      location: property.location,
+      specs,
+      publicPrice: property.publicPrice,
+      url: canonical(`/properties/${property.slug}`),
+    })
   );
 
   const facts = (
@@ -206,11 +227,25 @@ export default async function PropertyDetailPage({
       : {}),
   };
 
+  // Home > Properties > [title] — matches the crawlable path a visitor
+  // actually clicks through, not an aspirational category hierarchy. Shared
+  // between the JSON-LD below and the visible <Breadcrumbs> in the hero.
+  const breadcrumbItems = [
+    { name: "Home", path: "/" },
+    { name: "Properties", path: "/properties" },
+    { name: property.title, path: `/properties/${property.slug}` },
+  ];
+  const breadcrumbLd = breadcrumbJsonLd(breadcrumbItems);
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(breadcrumbLd) }}
       />
       <Header />
       <main>
@@ -231,6 +266,9 @@ export default async function PropertyDetailPage({
             className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/75 via-black/25 to-transparent"
           />
           <div className="relative px-5 pb-16 pt-40 md:px-12 md:pb-20">
+            <div data-reveal className="mb-4">
+              <Breadcrumbs items={breadcrumbItems} tone="dark" />
+            </div>
             <span data-reveal className="mb-8 block h-px w-16 bg-gold" />
             <p data-reveal className="text-eyebrow font-sans font-medium uppercase tracking-[0.25em] text-cream/70">
               {categoryLabel(property.category)}
@@ -397,6 +435,18 @@ export default async function PropertyDetailPage({
               </div>
             )}
 
+            {/* R-41. Unconditional, unlike the Financing block above: the
+                loan flags are admin-entered and usually absent, but the
+                buyer's "what would this cost me a month" question is not. */}
+            <div>
+              <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                EMI Calculator
+              </span>
+              <div data-reveal>
+                <EmiCalculator publicPrice={property.publicPrice} />
+              </div>
+            </div>
+
             {(parkingTypes.length > 0 || property.parkingSlots != null) && (
               <div>
                 <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
@@ -514,6 +564,11 @@ export default async function PropertyDetailPage({
                   </div>
                 ))}
               </dl>
+              {/* R-40: inline area-unit converter, only when we have a real
+                  value + a recognised unit to convert from. */}
+              {property.areaValue != null && isAreaUnit(property.areaUnit) && (
+                <AreaConverter value={property.areaValue} unit={property.areaUnit} />
+              )}
               <p className="mt-6 text-pretty text-meta font-sans leading-relaxed text-ink-muted">
                 {PROPERTY_DETAIL.sidebarNote}
               </p>
@@ -536,6 +591,17 @@ export default async function PropertyDetailPage({
                   item={toEnquiryCartItem(property)}
                   className="text-eyebrow inline-flex justify-center border border-ink/25 px-7 py-4 text-center font-sans font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:border-gold"
                 />
+                {/* R-44. A plain link, not a client component: wa.me opens
+                    the contact picker on mobile and WhatsApp Web on desktop,
+                    so this needs zero JavaScript to work everywhere. */}
+                <a
+                  href={shareHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-eyebrow inline-flex justify-center py-1 text-center font-sans font-medium uppercase tracking-[0.18em] text-ink-muted transition-colors hover:text-ink"
+                >
+                  Share this property
+                </a>
               </div>
             </div>
           </aside>
@@ -579,6 +645,10 @@ export default async function PropertyDetailPage({
             </div>
           </section>
         )}
+
+        {/* R-45. Records this view and renders the visitor's own history,
+            minus the listing they are already on. */}
+        <RecentlyViewed record={toEnquiryCartItem(property)} />
 
         <CTABand />
       </main>

@@ -17,6 +17,17 @@ export type EnquiryCartItem = {
   publicPrice: number | null;
 };
 
+/**
+ * localStorage is user-editable — never trust it beyond a shape check.
+ * Shared by the enquiry cart and the recently-viewed strip (R-45), which
+ * persist the same item shape under different keys.
+ */
+export function isEnquiryCartItem(x: unknown): x is EnquiryCartItem {
+  if (!x || typeof x !== "object") return false;
+  const v = x as Record<string, unknown>;
+  return typeof v.id === "number" && typeof v.slug === "string" && typeof v.title === "string";
+}
+
 /** Minimal shape stored per item — never the whole property object. */
 export function toEnquiryCartItem(property: PublicPropertyWithMedia): EnquiryCartItem {
   return {

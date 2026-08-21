@@ -47,7 +47,7 @@ export const SEO = {
   description:
     "Landmark residences across Chandigarh, Panchkula, Mohali and Zirakpur. Considered representation, private dealing.",
   ogImage:
-    "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?q=80&w=1200&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1623668864555-4bb967176e6c?q=80&w=1200&auto=format&fit=crop",
 };
 
 // ─── Landing page ──────────────────────────────────────────────────────────
@@ -63,26 +63,26 @@ export const HERO = {
     {
       category: "sale",
       label: "Sale",
-      img: "https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?q=80&w=2400&auto=format&fit=crop",
-      alt: "A warm-toned villa with a private pool at dusk",
+      img: "https://images.unsplash.com/photo-1711114377419-09b0cd2d786b?q=80&w=2400&auto=format&fit=crop",
+      alt: "A private pool villa in Maharashtra, wrapped in landscaped gardens",
     },
     {
       category: "purchase",
       label: "Purchase",
-      img: "https://images.unsplash.com/photo-1580216643062-cf460548a66a?q=80&w=2400&auto=format&fit=crop",
+      img: "https://images.unsplash.com/photo-1632400990400-416d5460f337?q=80&w=2400&auto=format&fit=crop",
       alt: "Modern residential towers of a gated society against a clear sky",
     },
     {
       category: "lease",
       label: "Lease",
-      img: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?q=80&w=2400&auto=format&fit=crop",
-      alt: "A contemporary apartment block with balconies in evening light",
+      img: "https://images.unsplash.com/photo-1564834552305-aea63611ff08?q=80&w=2400&auto=format&fit=crop",
+      alt: "A modern apartment tower with balconies against a clear blue sky in Noida",
     },
     {
       category: "invest",
       label: "Invest",
-      img: "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?q=80&w=2400&auto=format&fit=crop",
-      alt: "An Indian township glowing at dusk, seen from above",
+      img: "https://images.unsplash.com/photo-1623668864555-4bb967176e6c?q=80&w=2400&auto=format&fit=crop",
+      alt: "The Mumbai skyline at Worli, seen from above",
     },
   ],
 };
@@ -90,25 +90,25 @@ export const HERO = {
 export const CREDIBILITY = {
   eyebrow: "Featured",
   headingPre: "Over",
-  headingHighlight: "₹850 Crore",
+  headingHighlight: "₹85 Crore",
   headingPost: "in landmark sales",
   sub: "Considered residences across the Tricity, trusted by the most private buyers and sellers.",
   stats: [
     {
-      value: 850,
+      value: 85,
       prefix: "₹",
       suffix: " Cr+",
       label: "Worth of Real Estate Sold",
     },
-    { value: 1200, prefix: "", suffix: "+", label: "Properties Transacted" },
+    { value: 120, prefix: "", suffix: "+", label: "Properties Transacted" },
     { value: 15, prefix: "", suffix: "", label: "Years in the Tricity" },
   ],
 };
 
 export const ARCH_REVEAL = {
   image:
-    "https://images.unsplash.com/photo-1587474260584-136574528ed5?q=80&w=2000&auto=format&fit=crop",
-  alt: "India Gate at dawn under a violet sky",
+    "https://images.unsplash.com/photo-1667721939391-696df4f72caf?q=80&w=2000&auto=format&fit=crop",
+  alt: "Ornate red sandstone jali facade with carved geometric lattice work",
   caption: "Architecture deserves an audience.",
 };
 
@@ -119,22 +119,22 @@ export const PILLARS = {
       title: ["Thoughtful", "Curation"],
       body: "We represent few properties by intention. Every residence is walked and studied before it carries our name.",
       image:
-        "https://images.unsplash.com/photo-1615873968403-89e068629265?q=80&w=900&auto=format&fit=crop",
-      alt: "A composed living room with considered furnishing",
+        "https://images.unsplash.com/photo-1785402231092-859d0a6c4397?q=80&w=900&auto=format&fit=crop",
+      alt: "A composed New Delhi living room with considered furnishing",
     },
     {
       title: ["Quiet", "Discretion"],
       body: "Off-market introductions, unlisted showings, and negotiations handled by one senior team, start to close.",
       image:
-        "https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=900&auto=format&fit=crop",
-      alt: "A softly lit master bedroom in a luxury residence",
+        "https://images.unsplash.com/photo-1750420556288-d0e32a6f517b?q=80&w=900&auto=format&fit=crop",
+      alt: "A softly lit master bedroom in a New Delhi residence",
     },
     {
       title: ["Enduring", "Craft"],
       body: "Photography, film, and print produced for each residence individually — never from a template.",
       image:
-        "https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?q=80&w=900&auto=format&fit=crop",
-      alt: "A marble clubhouse lobby under a gold chandelier",
+        "https://images.unsplash.com/photo-1745301558339-44eb3217d5da?q=80&w=900&auto=format&fit=crop",
+      alt: "A warmly lit residential lounge under a chandelier",
     },
   ],
 };
@@ -143,8 +143,8 @@ export const ABOUT_SPLIT = {
   heading: "Built on landmark sales",
   body: "The residences other brokerages call career-defining. Our clients stay private. Our results do not.",
   image:
-    "https://images.unsplash.com/photo-1602343168117-bb8ffe3e2e9f?q=80&w=1400&auto=format&fit=crop",
-  alt: "A modern white villa with a private pool",
+    "https://images.unsplash.com/photo-1777816268139-7c5ba8399d48?q=80&w=1400&auto=format&fit=crop",
+  alt: "A white colonial-style bungalow in Fort Kochi, Kerala",
   ctaLabel: "About the Group",
 };
 
@@ -283,6 +283,11 @@ export const CONTACT_PAGE = {
   sub: "Answered personally within one business day.",
 };
 
+export const SELL_PAGE = {
+  title: "Sell With Us",
+  sub: "A private valuation and a discreet, well-matched buyer pool across the Tricity.",
+};
+
 export const NEWS_PAGE = {
   title: "Market News",
   sub: "The coverage shaping Indian property and investment.",
@@ -296,11 +301,11 @@ export const ABOUT_PAGE = {
   facts: [
     ["Est.", "2009"],
     ["Home office", "Panchkula"],
-    ["Sold to date", "₹850 Cr+"],
+    ["Sold to date", "₹85 Cr+"],
   ] as [string, string][],
   ethosImage:
-    "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?q=80&w=1600&auto=format&fit=crop",
-  ethosImageAlt: "A Tricity township glowing at dusk, seen from above",
+    "https://images.unsplash.com/photo-1623668864555-4bb967176e6c?q=80&w=1600&auto=format&fit=crop",
+  ethosImageAlt: "The Mumbai skyline at Worli, seen from above",
   ethosHeading:
     "Most brokerages measure themselves by how much they list. We measure ourselves by what we decline.",
   ethosParagraphs: [
@@ -316,7 +321,7 @@ export const ABOUT_PAGE = {
     },
     {
       year: "2014",
-      title: "The first ₹100 Crore year",
+      title: "The first ₹10 Crore year",
       body: "A run of off-market kothi and penthouse transactions builds a reputation for quiet, record-setting sales.",
     },
     {
@@ -327,7 +332,7 @@ export const ABOUT_PAGE = {
     {
       year: "2026",
       title: "Today",
-      body: "Over ₹850 Crore in landmark sales — and the same standard as day one: few properties, chosen carefully.",
+      body: "Over ₹85 Crore in landmark sales — and the same standard as day one: few properties, chosen carefully.",
     },
   ],
   principalsHeading: "The Principals",
@@ -351,8 +356,8 @@ export const ABOUT_PAGE = {
   record: [
     { label: "Founded", value: "2009" },
     { label: "Micro-markets", value: "6" },
-    { label: "Sales volume", value: "₹850 Cr+" },
-    { label: "Properties transacted", value: "1,200+" },
+    { label: "Sales volume", value: "₹85 Cr+" },
+    { label: "Properties transacted", value: "120+" },
     { label: "Average client tenure", value: "9 years" },
   ],
   closingLine: "If your property belongs in this company, we should speak.",

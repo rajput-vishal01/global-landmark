@@ -8,6 +8,7 @@ import { PropertiesFilters } from "@/components/PropertiesFilters";
 import { CollectionGrid } from "@/components/CollectionGrid";
 import { CityTabs } from "@/components/CityTabs";
 import { ConfigTabs } from "@/components/ConfigTabs";
+import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { listProperties, listCollectionCounts, listCityCounts } from "@/lib/db/queries";
 import { CATEGORIES, isCategory, type CategoryValue } from "@/lib/categories";
 import {
@@ -201,6 +202,10 @@ export default async function PropertiesPage({
             </div>
           )}
         </section>
+
+        {/* R-45. Read-only here (no `record`) — an index page is not a view
+            of any one listing. Renders nothing until the visitor has some. */}
+        <RecentlyViewed />
 
         <CTABand />
       </main>

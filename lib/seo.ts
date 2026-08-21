@@ -21,6 +21,20 @@ export function jsonLdHtml(data: object): string {
     .replace(/&/g, "\\u0026");
 }
 
+/** BreadcrumbList JSON-LD — position in the site hierarchy for rich-result breadcrumbs. */
+export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: canonical(item.path),
+    })),
+  };
+}
+
 /** Organization / LocalBusiness JSON-LD for the whole site (R-36: contact details resolve through any admin override). */
 export async function organizationJsonLd() {
   const COMPANY = await resolveCompany();

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
-import { type EnquiryCartItem } from "@/lib/enquiry-cart-item";
+import { isEnquiryCartItem, type EnquiryCartItem } from "@/lib/enquiry-cart-item";
 
 export type { EnquiryCartItem };
 
@@ -21,18 +21,13 @@ const MAX_ITEMS = 20;
  * property opens the panel with a one-tap send". */
 export const ENQUIRY_OPEN_EVENT = "gld-enquiry-open";
 
-function isValidItem(x: unknown): x is EnquiryCartItem {
-  if (!x || typeof x !== "object") return false;
-  const v = x as Record<string, unknown>;
-  return typeof v.id === "number" && typeof v.slug === "string" && typeof v.title === "string";
-}
-
-// localStorage is user-editable — never trust it beyond a shape check.
+// localStorage is user-editable — never trust it beyond a shape check
+// (isEnquiryCartItem lives beside the type, shared with recently-viewed).
 function parseCart(raw: string | null): EnquiryCartItem[] {
   if (!raw) return [];
   try {
     const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter(isValidItem).slice(0, MAX_ITEMS) : [];
+    return Array.isArray(parsed) ? parsed.filter(isEnquiryCartItem).slice(0, MAX_ITEMS) : [];
   } catch {
     return [];
   }

@@ -12,18 +12,20 @@ try {
 const u = (id) =>
   `https://images.unsplash.com/${id}?q=80&w=1600&auto=format&fit=crop`;
 
-// Visually verified stock imagery — swap for the client's real project photos.
+// Visually verified, genuinely Indian-shot stock imagery (each confirmed via
+// its Unsplash location tag before being added — see REQUIREMENTS_V2.md).
+// Swap for the client's real project photos when available.
 const IMG = {
-  villaDusk: "photo-1599809275671-b5942cabc7a2",
-  whiteVilla: "photo-1602343168117-bb8ffe3e2e9f",
-  towers: "photo-1580216643062-cf460548a66a",
-  apartments: "photo-1545324418-cc1a3fa10c00",
-  township: "photo-1596176530529-78163a4f7af2",
-  livingRoom: "photo-1615873968403-89e068629265",
-  bedroom: "photo-1590490360182-c33d57733427",
-  lobby: "photo-1625244724120-1fd1d34d00f6",
-  glassLiving: "photo-1600607687939-ce8a6c25118c",
-  kitchenLiving: "photo-1600585154340-be6161a56a0c",
+  villaDusk: "photo-1711114377419-09b0cd2d786b", // Velgaon, Maharashtra
+  whiteVilla: "photo-1777816268139-7c5ba8399d48", // Fort Kochi, Kerala
+  towers: "photo-1632400990400-416d5460f337",
+  apartments: "photo-1564834552305-aea63611ff08", // Noida, Uttar Pradesh
+  township: "photo-1623668864555-4bb967176e6c", // Worli, Mumbai
+  livingRoom: "photo-1785402231092-859d0a6c4397", // New Delhi
+  bedroom: "photo-1750420556288-d0e32a6f517b", // New Delhi
+  lobby: "photo-1745301558339-44eb3217d5da", // New Delhi
+  glassLiving: "photo-1785402231092-859d0a6c4397", // New Delhi
+  kitchenLiving: "photo-1684222965591-1662016c2d2c", // Mumbai, Maharashtra
 };
 
 const PROJECTS = [
@@ -152,8 +154,16 @@ for (const p of PROPERTIES) {
      p.area, p.unit, p.facing, p.possession, p.furnishing,
      p.amenities, JSON.stringify(p.extras)]
   );
-  if (!res.rows.length) continue; // already seeded
-  const id = res.rows[0].id;
+  // A property that already existed still needs its id — `on conflict do
+  // nothing` returns no row, so re-select by slug rather than skip outright.
+  const id =
+    res.rows[0]?.id ??
+    (await client.query(`select id from properties where slug = $1`, [p.slug])).rows[0].id;
+  // Always re-sync the gallery to the current IMG mapping (delete + reinsert)
+  // instead of "insert once, skip forever" — otherwise swapping IMG.* here
+  // never reaches an already-seeded database, and stale stock photos survive
+  // every re-run indefinitely.
+  await client.query(`delete from property_images where property_id = $1`, [id]);
   for (let i = 0; i < p.images.length; i++) {
     await client.query(
       `insert into property_images (property_id, url, alt, sort_order) values ($1,$2,$3,$4)`,
@@ -337,11 +347,158 @@ await client.query(
    where not exists (select 1 from leads where email = 'seed@example.com')`
 );
 
+// site_settings rows must match the admin-override shape in lib/site-settings.ts
+// (SETTING_KEYS + ContactOverride/CredibilityOverride) — a bare 'officeHours'
+// key, as this used to seed, is never read by resolveCompany()/resolveCredibility().
 await client.query(
   `insert into site_settings (key, value)
-   values ('officeHours', '"Mon-Sat, 10:00-19:00 IST"'::jsonb)
-   on conflict (key) do nothing`
+   values ('company_contact', $1::jsonb)
+   on conflict (key) do nothing`,
+  [
+    JSON.stringify({
+      addressLines: ["Based in Panchkula", "Tricity, India"],
+      phone: "+91 98820-84786",
+      phoneHref: "tel:+919882084786",
+      phoneAlt: "+91 70090-00164",
+      phoneAltHref: "tel:+917009000164",
+      email: "inquiries@globallandmark.com",
+      officeHours: "Mon-Sat, 10:00-19:00 IST",
+      socials: [
+        { label: "Instagram", href: "https://www.instagram.com/globallandmarkrealtygroup/" },
+      ],
+    }),
+  ]
 );
+await client.query(
+  `insert into site_settings (key, value)
+   values ('credibility', $1::jsonb)
+   on conflict (key) do nothing`,
+  [
+    JSON.stringify({
+      headingPre: "Over",
+      headingHighlight: "₹85 Crore",
+      headingPost: "in landmark sales",
+      sub: "Considered residences across the Tricity, trusted by the most private buyers and sellers.",
+      stats: [
+        { value: 85, prefix: "₹", suffix: " Cr+", label: "Worth of Real Estate Sold" },
+        { value: 120, prefix: "", suffix: "+", label: "Properties Transacted" },
+        { value: 15, prefix: "", suffix: "", label: "Years in the Tricity" },
+      ],
+    }),
+  ]
+);
+
+// ─── CRM: clients, deals, payments, activities (R-30 / R-31) ──────────────
+// Phases 5/6 shipped crm_clients/crm_deals/crm_payments/crm_activities with
+// no seed coverage at all — the CRM screens were empty on a fresh database.
+// One client per deal stage that exercises a different part of the UI: an
+// active negotiation, a closed deal with brokerage paid in two tranches, and
+// a bare enquiry converted straight from the seed lead above.
+
+await client.query(
+  `insert into crm_clients (name, phone, email, requirement_notes, budget_min, budget_max, preferred_locations, preferred_types)
+   select 'Rohit Malhotra','9876543210','rohit.malhotra@example.com',
+     'Looking for a 3-4 BHK independent floor, ready to move, vastu-compliant.',
+     15000000, 22000000, $1, $2
+   where not exists (select 1 from crm_clients where phone = '9876543210')`,
+  [["Panchkula", "Zirakpur"], ["Independent Floor", "Kothi"]]
+);
+await client.query(
+  `insert into crm_clients (name, phone, email, requirement_notes, budget_min, budget_max, preferred_locations, preferred_types)
+   select 'Simran Kaur','9876543211','simran.kaur@example.com',
+     'Investor client — closed on a 3 BHK in Mohali, brokerage settled in two tranches.',
+     8000000, 12000000, $1, $2
+   where not exists (select 1 from crm_clients where phone = '9876543211')`,
+  [["Mohali"], ["Apartment"]]
+);
+await client.query(
+  `insert into crm_clients (name, phone, email, requirement_notes, budget_min, budget_max, preferred_locations, preferred_types, converted_from_lead_id)
+   select 'Anil Sharma','9876543212','anil.sharma@example.com',
+     'Early-stage enquiry from the website contact form — plot in Panchkula Extension.',
+     5000000, 9000000, $1, $2, l.id
+   from leads l where l.email = 'seed@example.com'
+   and not exists (select 1 from crm_clients where phone = '9876543212')`,
+  [["Panchkula"], ["Plot"]]
+);
+
+const crmClientId = Object.fromEntries(
+  (
+    await client.query(
+      `select id, phone from crm_clients where phone in ('9876543210','9876543211','9876543212')`
+    )
+  ).rows.map((r) => [r.phone, r.id])
+);
+
+if (crmClientId["9876543210"]) {
+  await client.query(
+    `insert into crm_deals (client_id, property_id, stage, deal_value, brokerage_percent_bp, assigned_to)
+     select $1, $2, 'Negotiation', 18500000, 200, 'Ashu Goyal'
+     where not exists (select 1 from crm_deals where client_id = $1 and stage = 'Negotiation')`,
+    [crmClientId["9876543210"], propId["imperial-residency-3bhk"] ?? null]
+  );
+  await client.query(
+    `insert into crm_activities (client_id, kind, note, author)
+     select $1, 'Site Visit', 'Walked Imperial Residency 3BHK, unit 704. Client liked the layout, wants to negotiate on price.', 'Ashu Goyal'
+     where not exists (select 1 from crm_activities where client_id = $1 and kind = 'Site Visit')`,
+    [crmClientId["9876543210"]]
+  );
+  await client.query(
+    `insert into crm_activities (client_id, kind, note, author)
+     select $1, 'Call', 'Follow-up call, client to confirm by end of week.', 'Ashu Goyal'
+     where not exists (select 1 from crm_activities where client_id = $1 and kind = 'Call')`,
+    [crmClientId["9876543210"]]
+  );
+}
+
+if (crmClientId["9876543211"]) {
+  const existingClosed = await client.query(
+    `select id from crm_deals where client_id = $1 and stage = 'Closed'`,
+    [crmClientId["9876543211"]]
+  );
+  const closedDealId = existingClosed.rows.length
+    ? existingClosed.rows[0].id
+    : (
+        await one(
+          `insert into crm_deals (client_id, property_id, stage, deal_value, brokerage_percent_bp, assigned_to, closed_at)
+           values ($1, $2, 'Closed', 9800000, 200, 'Divya Goyal', current_date - 30)
+           returning id`,
+          [crmClientId["9876543211"], propId["homeland-urva-luxury-mohali"] ?? null]
+        )
+      ).id;
+  await client.query(
+    `insert into crm_payments (deal_id, amount, paid_at, mode, note)
+     select $1, 100000, current_date - 45, 'UPI', 'Token amount'
+     where not exists (select 1 from crm_payments where deal_id = $1 and mode = 'UPI')`,
+    [closedDealId]
+  );
+  await client.query(
+    `insert into crm_payments (deal_id, amount, paid_at, mode, note)
+     select $1, 95000, current_date - 20, 'Bank Transfer', 'Balance brokerage'
+     where not exists (select 1 from crm_payments where deal_id = $1 and mode = 'Bank Transfer')`,
+    [closedDealId]
+  );
+  await client.query(
+    `insert into crm_activities (client_id, deal_id, kind, note, author)
+     select $1, $2, 'Note', 'Deal closed and registered. Brokerage settled in two tranches.', 'Divya Goyal'
+     where not exists (select 1 from crm_activities where client_id = $1 and kind = 'Note')`,
+    [crmClientId["9876543211"], closedDealId]
+  );
+}
+
+if (crmClientId["9876543212"]) {
+  await client.query(
+    `insert into crm_deals (client_id, property_id, stage, assigned_to)
+     select $1, null, 'Enquiry', 'Ashu Goyal'
+     where not exists (select 1 from crm_deals where client_id = $1 and stage = 'Enquiry')`,
+    [crmClientId["9876543212"]]
+  );
+  await client.query(
+    `insert into crm_activities (client_id, kind, note, author)
+     select $1, 'WhatsApp', 'Shared plot options in Panchkula Extension, awaiting response.', 'Ashu Goyal'
+     where not exists (select 1 from crm_activities where client_id = $1 and kind = 'WhatsApp')`,
+    [crmClientId["9876543212"]]
+  );
+}
 
 // Runnable check (ponytail).
 const { rows: check } = await client.query(
@@ -359,6 +516,12 @@ const { rows: check } = await client.query(
      (select count(*)::int from property_documents) as documents,
      (select count(*)::int from property_media) as media,
      (select count(*)::int from leads) as leads,
+     (select count(*)::int from crm_clients) as crm_clients,
+     (select count(*)::int from crm_deals) as crm_deals,
+     (select count(*)::int from crm_payments) as crm_payments,
+     (select count(*)::int from crm_activities) as crm_activities,
+     (select count(*)::int from site_settings where key = 'company_contact') as contact_setting,
+     (select count(*)::int from site_settings where key = 'credibility') as credibility_setting,
      (select count(*)::int from properties where ref_code is null) as missing_ref_code,
      (select count(*)::int from properties where publication_state = 'published') as published`
 );
@@ -378,6 +541,12 @@ const failures = Object.entries({
   "documents >= 1": c.documents >= 1,
   "media >= 1": c.media >= 1,
   "leads >= 1": c.leads >= 1,
+  "crm_clients >= 3": c.crm_clients >= 3,
+  "crm_deals >= 3": c.crm_deals >= 3,
+  "crm_payments >= 2": c.crm_payments >= 2,
+  "crm_activities >= 4": c.crm_activities >= 4,
+  "company_contact setting seeded": c.contact_setting >= 1,
+  "credibility setting seeded": c.credibility_setting >= 1,
   "every property has a ref code": c.missing_ref_code === 0,
   "published listings exist": c.published >= 1,
 })

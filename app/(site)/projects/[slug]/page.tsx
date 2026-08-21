@@ -8,9 +8,10 @@ import { CTABand } from "@/components/sections/CTABand";
 import { ContactForm } from "@/components/ContactForm";
 import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
 import { getProjectBySlug, type PublicProjectDetail } from "@/lib/db/queries";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { AMENITY_GROUPS, formatArea, formatIndianShort } from "@/lib/attributes";
 import { COMPANY, PROJECT_DETAIL } from "@/lib/data";
-import { canonical, jsonLdHtml } from "@/lib/seo";
+import { breadcrumbJsonLd, canonical, jsonLdHtml } from "@/lib/seo";
 
 // ISR: cached and served instantly; admin edits bust the cache on save.
 export const revalidate = 3600;
@@ -136,11 +137,25 @@ export default async function ProjectDetailPage({
     },
   };
 
+  // Home > Properties > [project name] — /properties is the only crawlable
+  // listing surface that leads here today (no standalone /projects index).
+  // Shared between the JSON-LD below and the visible <Breadcrumbs> in the hero.
+  const breadcrumbItems = [
+    { name: "Home", path: "/" },
+    { name: "Properties", path: "/properties" },
+    { name: project.name, path: `/projects/${project.slug}` },
+  ];
+  const breadcrumbLd = breadcrumbJsonLd(breadcrumbItems);
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(breadcrumbLd) }}
       />
       <Header />
       <main>
@@ -161,6 +176,9 @@ export default async function ProjectDetailPage({
             className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/75 via-black/25 to-transparent"
           />
           <div className="relative px-5 pb-16 pt-40 md:px-12 md:pb-20">
+            <div data-reveal className="mb-4">
+              <Breadcrumbs items={breadcrumbItems} tone="dark" />
+            </div>
             <span data-reveal className="mb-8 block h-px w-16 bg-gold" />
             <p data-reveal className="text-eyebrow font-sans font-medium uppercase tracking-[0.25em] text-cream/70">
               Project{project.builder ? ` · ${project.builder.name}` : ""}
@@ -202,7 +220,14 @@ export default async function ProjectDetailPage({
                 <span data-reveal className="mb-4 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Developed By
                 </span>
-                <h2 data-reveal className="font-serif text-h4 text-ink">{project.builder.name}</h2>
+                <h2 data-reveal className="font-serif text-h4 text-ink">
+                  <Link
+                    href={`/builders/${project.builder.slug}`}
+                    className="underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
+                  >
+                    {project.builder.name}
+                  </Link>
+                </h2>
                 {project.builder.belongsTo && (
                   <p data-reveal className="mt-1 text-meta font-sans text-ink-muted">
                     {project.builder.belongsTo}
