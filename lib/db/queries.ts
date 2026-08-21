@@ -153,31 +153,41 @@ function collectionCondition(collection: CollectionValue) {
   return typeMatch ? and(eq(properties.kind, "unit"), typeMatch) : undefined;
 }
 
+/** Shared by listProperties and countProperties so the two can never disagree about what matches. */
+function buildPropertyConditions(filters: PropertyFilters) {
+  // A locality is only meaningful under its own city — the same rule the
+  // admin form enforces, so a stray `?locality=` from a stale link can't
+  // silently narrow to nothing.
+  const locality =
+    filters.city && filters.locality && isLocalityIn(filters.city, filters.locality)
+      ? filters.locality
+      : undefined;
+
+  return [
+    publicVisibility(),
+    filters.category ? eq(properties.category, filters.category) : undefined,
+    filters.collection ? collectionCondition(filters.collection) : undefined,
+    filters.propertyType ? eq(properties.propertyType, filters.propertyType) : undefined,
+    filters.configuration ? eq(properties.configuration, filters.configuration) : undefined,
+    filters.possessionStatus
+      ? eq(properties.possessionStatus, filters.possessionStatus)
+      : undefined,
+    filters.furnishing ? eq(properties.furnishing, filters.furnishing) : undefined,
+    filters.city ? eq(properties.city, filters.city) : undefined,
+    locality ? eq(properties.locality, locality) : undefined,
+    filters.sector ? eq(properties.sector, filters.sector) : undefined,
+  ].filter((c): c is NonNullable<typeof c> => Boolean(c));
+}
+
+/** R-75: fixed page size for the public listing grid. */
+export const PROPERTIES_PAGE_SIZE = 24;
+
 const listPropertiesCached = unstable_cache(
-  async (filters: PropertyFilters = {}): Promise<PublicPropertyWithMedia[]> => {
-    // A locality is only meaningful under its own city — the same rule the
-    // admin form enforces, so a stray `?locality=` from a stale link can't
-    // silently narrow to nothing.
-    const locality =
-      filters.city && filters.locality && isLocalityIn(filters.city, filters.locality)
-        ? filters.locality
-        : undefined;
-
-    const conditions = [
-      publicVisibility(),
-      filters.category ? eq(properties.category, filters.category) : undefined,
-      filters.collection ? collectionCondition(filters.collection) : undefined,
-      filters.propertyType ? eq(properties.propertyType, filters.propertyType) : undefined,
-      filters.configuration ? eq(properties.configuration, filters.configuration) : undefined,
-      filters.possessionStatus
-        ? eq(properties.possessionStatus, filters.possessionStatus)
-        : undefined,
-      filters.furnishing ? eq(properties.furnishing, filters.furnishing) : undefined,
-      filters.city ? eq(properties.city, filters.city) : undefined,
-      locality ? eq(properties.locality, locality) : undefined,
-      filters.sector ? eq(properties.sector, filters.sector) : undefined,
-    ].filter((c): c is NonNullable<typeof c> => Boolean(c));
-
+  // `page` omitted (undefined) means "no pagination" — existing internal
+  // callers (similar-properties ranking, the homepage strip) rely on getting
+  // every match back, not just the first page's worth.
+  async (filters: PropertyFilters = {}, page?: number): Promise<PublicPropertyWithMedia[]> => {
+    const conditions = buildPropertyConditions(filters);
     // Cards only render the cover image — fetching whole galleries here
     // would bloat every cached list entry.
     return db.query.properties.findMany({
@@ -186,6 +196,9 @@ const listPropertiesCached = unstable_cache(
       where: and(...conditions),
       with: { images: coverImageJoin, project: PUBLIC_PROJECT_JOIN },
       orderBy: [desc(properties.createdAt)],
+      ...(page != null
+        ? { limit: PROPERTIES_PAGE_SIZE, offset: (Math.max(1, page) - 1) * PROPERTIES_PAGE_SIZE }
+        : {}),
     });
   },
   ["listProperties"],
@@ -193,6 +206,22 @@ const listPropertiesCached = unstable_cache(
 );
 
 export const listProperties = failSoft(listPropertiesCached, "listProperties", []);
+
+/** Total matching rows across every page — drives the pagination control and the "N residences" copy. */
+const countPropertiesCached = unstable_cache(
+  async (filters: PropertyFilters = {}): Promise<number> => {
+    const conditions = buildPropertyConditions(filters);
+    const [{ n }] = await db
+      .select({ n: count() })
+      .from(properties)
+      .where(and(...conditions));
+    return n;
+  },
+  ["countProperties"],
+  CACHE_OPTS
+);
+
+export const countProperties = failSoft(countPropertiesCached, "countProperties", 0);
 
 /**
  * Live per-collection counts for the six-card grid (R-04). One query per

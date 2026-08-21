@@ -20,7 +20,8 @@ export type PropertiesFilterParams = Partial<
     | "city"
     | "locality"
     | "sector"
-    | "configuration",
+    | "configuration"
+    | "page",
     string | undefined
   >
 >;

@@ -9,7 +9,14 @@ import { CollectionGrid } from "@/components/CollectionGrid";
 import { CityTabs } from "@/components/CityTabs";
 import { ConfigTabs } from "@/components/ConfigTabs";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
-import { listProperties, listCollectionCounts, listCityCounts } from "@/lib/db/queries";
+import { Pagination } from "@/components/Pagination";
+import {
+  listProperties,
+  countProperties,
+  listCollectionCounts,
+  listCityCounts,
+  PROPERTIES_PAGE_SIZE,
+} from "@/lib/db/queries";
 import { CATEGORIES, isCategory, type CategoryValue } from "@/lib/categories";
 import {
   FURNISHINGS,
@@ -63,9 +70,11 @@ export default async function PropertiesPage({
     locality?: string;
     sector?: string;
     configuration?: string;
+    page?: string;
   }>;
 }) {
   const params = await searchParams;
+  const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const category =
     params.category && isCategory(params.category) ? params.category : undefined;
   const group = params.group && isCollection(params.group) ? params.group : undefined;
@@ -77,21 +86,25 @@ export default async function PropertiesPage({
   const locality = params.locality?.trim() || undefined;
   const sector = params.sector?.trim() || undefined;
 
-  const [properties, collectionCounts, cityCounts] = await Promise.all([
-    listProperties({
-      category,
-      collection: group,
-      propertyType,
-      configuration,
-      possessionStatus,
-      furnishing,
-      city,
-      locality,
-      sector,
-    }),
+  const activeFilters = {
+    category,
+    collection: group,
+    propertyType,
+    configuration,
+    possessionStatus,
+    furnishing,
+    city,
+    locality,
+    sector,
+  };
+
+  const [properties, totalCount, collectionCounts, cityCounts] = await Promise.all([
+    listProperties(activeFilters, page),
+    countProperties(activeFilters),
     listCollectionCounts(),
     listCityCounts(),
   ]);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PROPERTIES_PAGE_SIZE));
 
   // Every server-rendered filter link (category chips, collection cards,
   // configuration tabs) merges its own override onto this — so clicking one
@@ -119,9 +132,9 @@ export default async function PropertiesPage({
             {PROPERTIES_PAGE.title}
           </h1>
           <p data-reveal className="mt-6 max-w-xl text-pretty text-body font-sans text-cream/75">
-            {properties.length === 0
+            {totalCount === 0
               ? `${PROPERTIES_PAGE.emptySub} ${PROPERTIES_PAGE.subSuffix}`
-              : `${properties.length} residence${properties.length === 1 ? "" : "s"} represented. ${PROPERTIES_PAGE.subSuffix}`}
+              : `${totalCount} residence${totalCount === 1 ? "" : "s"} represented. ${PROPERTIES_PAGE.subSuffix}`}
           </p>
         </section>
 
@@ -201,6 +214,8 @@ export default async function PropertiesPage({
               ))}
             </div>
           )}
+
+          <Pagination page={page} totalPages={totalPages} current={current} />
         </section>
 
         {/* R-45. Read-only here (no `record`) — an index page is not a view
