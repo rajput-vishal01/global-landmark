@@ -40,6 +40,14 @@ function formatDateTime(value: Date | string): string {
   }).format(new Date(value));
 }
 
+function formatDateOnly(value: Date | string): string {
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
 function StageBadge({ stage }: { stage: string }) {
   const tone = isClosedStage(stage)
     ? stage === "Closed"
@@ -199,6 +207,12 @@ export default async function ClientDetailPage({
             </label>
             <input id="author" name="author" type="text" maxLength={200} className={FIELD} />
           </div>
+          <div className="flex w-44 flex-col gap-1.5">
+            <label htmlFor="followUpAt" className={LABEL}>
+              Follow up on
+            </label>
+            <input id="followUpAt" name="followUpAt" type="date" className={FIELD} />
+          </div>
           <button
             type="submit"
             className="cursor-pointer bg-ink px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
@@ -223,6 +237,17 @@ export default async function ClientDetailPage({
                   </span>
                 </div>
                 {a.note && <p className="mt-2 text-body font-sans text-ink">{a.note}</p>}
+                {a.followUpAt && (
+                  <p
+                    className={`mt-2 inline-flex border px-2.5 py-1 text-eyebrow font-sans font-medium uppercase tracking-[0.12em] ${
+                      new Date(a.followUpAt) < new Date()
+                        ? "border-error/40 text-error"
+                        : "border-gold text-gold-deep"
+                    }`}
+                  >
+                    Follow up · {formatDateOnly(a.followUpAt)}
+                  </p>
+                )}
               </li>
             ))}
           </ul>

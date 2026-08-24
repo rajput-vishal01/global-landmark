@@ -512,8 +512,13 @@ export const crmActivities = pgTable(
     note: text("note"),
     author: text("author"),
     occurredAt: timestamp("occurred_at").defaultNow().notNull(),
+    /** Optional next-contact reminder ("call back on…") set when logging this activity. */
+    followUpAt: timestamp("follow_up_at"),
   },
-  (t) => [index("crm_activities_client_idx").on(t.clientId, t.occurredAt)]
+  (t) => [
+    index("crm_activities_client_idx").on(t.clientId, t.occurredAt),
+    index("crm_activities_followup_idx").on(t.followUpAt),
+  ]
 );
 
 export const crmClientsRelations = relations(crmClients, ({ many, one }) => ({

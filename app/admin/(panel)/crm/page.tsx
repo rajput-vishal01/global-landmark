@@ -4,6 +4,12 @@ import { db } from "@/lib/db";
 import { crmClients, crmDeals } from "@/lib/db/schema";
 import { formatIndianShort } from "@/lib/attributes";
 
+function formatShortDate(value: Date | string): string {
+  return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short" }).format(
+    new Date(value)
+  );
+}
+
 export const metadata = { title: "CRM" };
 
 const PAGE_SIZE = 25;
@@ -22,6 +28,9 @@ type ClientRow = {
   preferredLocations: string[] | null;
   preferredTypes: string[] | null;
   dealCount: number;
+  nextActionKind: string | null;
+  nextActionDate: Date | string | null;
+  nextActionIsFollowUp: boolean | null;
 };
 
 /**
@@ -48,6 +57,42 @@ async function listPage(q: string, page: number): Promise<{ rows: ClientRow[]; t
     select count(*) from ${crmDeals} where ${crmDeals.clientId} = ${crmClients.id}
   )`.as("deal_count");
 
+  // "What do I need to do next for this client?" — the row a broker actually
+  // wants without clicking in. Any logged follow-up date wins (soonest first,
+  // so an overdue one surfaces ahead of a scheduled one — the more urgent
+  // signal); with no follow-up ever set, falls back to the most recent
+  // activity so the column still reads as "last contact" instead of blank.
+  //
+  // The correlation is written as literal `crm_clients.id`, NOT
+  // `${crmClients.id}`: Drizzle renders that column reference unqualified
+  // ("id") when the same column object is already selected elsewhere in the
+  // query, which inside this subquery resolves against crm_activities' OWN
+  // "id" column instead of the outer table — always false, so the column
+  // silently always came back null. Spelling the table name out in the raw
+  // SQL sidesteps the ambiguity entirely.
+  //
+  // Three fully self-contained subqueries rather than one composite one:
+  // CRM client-list scale (tens of rows) makes the extra round trips a
+  // non-issue, and each stays simple enough to read at a glance.
+  const nextActionKind = sql<string | null>`(
+    select kind from crm_activities
+    where crm_activities.client_id = crm_clients.id
+    order by (follow_up_at is not null) desc, follow_up_at asc, occurred_at desc
+    limit 1
+  )`.as("next_action_kind");
+  const nextActionDate = sql<Date | null>`(
+    select coalesce(follow_up_at, occurred_at) from crm_activities
+    where crm_activities.client_id = crm_clients.id
+    order by (follow_up_at is not null) desc, follow_up_at asc, occurred_at desc
+    limit 1
+  )`.as("next_action_date");
+  const nextActionIsFollowUp = sql<boolean | null>`(
+    select follow_up_at is not null from crm_activities
+    where crm_activities.client_id = crm_clients.id
+    order by (follow_up_at is not null) desc, follow_up_at asc, occurred_at desc
+    limit 1
+  )`.as("next_action_is_follow_up");
+
   try {
     const [rows, [totals]] = await Promise.all([
       db
@@ -61,6 +106,9 @@ async function listPage(q: string, page: number): Promise<{ rows: ClientRow[]; t
           preferredLocations: crmClients.preferredLocations,
           preferredTypes: crmClients.preferredTypes,
           dealCount,
+          nextActionKind,
+          nextActionDate,
+          nextActionIsFollowUp,
         })
         .from(crmClients)
         .where(where)
@@ -82,6 +130,15 @@ function budgetRange(min: number | null, max: number | null): string {
   if (min == null && max == null) return "—";
   if (min != null && max != null) return `${formatIndianShort(min)} – ${formatIndianShort(max)}`;
   return formatIndianShort((min ?? max)!);
+}
+
+/** "Call · 22 Aug", "Call · 22 Aug (overdue)" for a scheduled follow-up, or "Last: Note · 21 Aug" once nothing is scheduled. */
+function nextActionLabel(row: ClientRow): string {
+  if (!row.nextActionKind || !row.nextActionDate) return "No activity yet";
+  const date = formatShortDate(row.nextActionDate);
+  if (!row.nextActionIsFollowUp) return `Last: ${row.nextActionKind} · ${date}`;
+  const overdue = new Date(row.nextActionDate) < new Date() ? " (overdue)" : "";
+  return `${row.nextActionKind} · ${date}${overdue}`;
 }
 
 function truncatedList(values: string[] | null): string {
@@ -182,7 +239,7 @@ export default async function AdminCrmPage({
             <table className="w-full min-w-[860px] text-left">
               <thead>
                 <tr className="border-b border-border">
-                  {["Name", "Contact", "Budget", "Locations", "Types", "Deals", ""].map((h) => (
+                  {["Name", "Contact", "Budget", "Locations", "Types", "Next update", ""].map((h) => (
                     <th key={h} className={TH}>
                       {h}
                     </th>
@@ -207,8 +264,8 @@ export default async function AdminCrmPage({
                     <td className="px-4 py-3 text-meta font-sans text-ink-muted">
                       {truncatedList(c.preferredTypes)}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-meta font-sans tabular-nums text-ink-muted">
-                      {c.dealCount}
+                    <td className="whitespace-nowrap px-4 py-3 text-meta font-sans text-ink-muted">
+                      {nextActionLabel(c)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link

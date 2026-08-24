@@ -36,6 +36,13 @@
       "when": 1787239638445,
       "tag": "0004_crm_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787553508737,
+      "tag": "0005_crm_followup",
+      "breakpoints": true
     }
   ]
 }

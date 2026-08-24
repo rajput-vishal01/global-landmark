@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { and, asc, count, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { projects, properties, propertyImages } from "@/lib/db/schema";
+import { projects, properties } from "@/lib/db/schema";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { StatusBadge } from "@/components/admin/BasicDetailsSection";
 import {
@@ -114,10 +114,19 @@ async function listPage(
   // Cover image as a correlated subquery rather than a join: the join would
   // multiply rows before LIMIT and break the page size. Same ordering the
   // public queries use for the cover (sortOrder, then id).
+  //
+  // The correlation is written as literal `property_images.property_id =
+  // properties.id`, NOT `${propertyImages.propertyId} = ${properties.id}`:
+  // once `properties.id` is also selected at the top level of this query,
+  // Drizzle renders that second reference unqualified ("id"), which inside
+  // this subquery resolves against property_images' OWN "id" column instead
+  // of the outer properties row — always false, so every row silently got a
+  // null cover and the admin list showed no thumbnails at all. Spelling the
+  // table names out in the raw SQL sidesteps the ambiguity entirely.
   const coverUrl = sql<string | null>`(
-    select ${propertyImages.url} from ${propertyImages}
-    where ${propertyImages.propertyId} = ${properties.id}
-    order by ${propertyImages.sortOrder} asc, ${propertyImages.id} asc
+    select url from property_images
+    where property_images.property_id = properties.id
+    order by property_images.sort_order asc, property_images.id asc
     limit 1
   )`.as("cover_url");
 

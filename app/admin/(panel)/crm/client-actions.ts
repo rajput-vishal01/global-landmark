@@ -98,6 +98,14 @@ export async function updateClient(
  * client wrapper, no error state; a bad kind is dropped rather than surfaced,
  * matching that low-stakes-inline-form precedent).
  */
+/** `<input type="date">` gives "YYYY-MM-DD" or "" — never a garbage string, but still user-editable text. */
+function dateField(formData: FormData, key: string): Date | null {
+  const raw = String(formData.get(key) ?? "").trim();
+  if (!raw) return null;
+  const d = new Date(`${raw}T00:00:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export async function addActivity(formData: FormData): Promise<void> {
   await requireAdmin();
   const clientId = Number(formData.get("clientId"));
@@ -111,6 +119,7 @@ export async function addActivity(formData: FormData): Promise<void> {
         kind,
         note: str(formData, "note", 4000),
         author: str(formData, "author", 200),
+        followUpAt: dateField(formData, "followUpAt"),
       });
     } catch (err) {
       console.error("addActivity failed:", err);
