@@ -12,6 +12,17 @@ try {
 const u = (id) =>
   `https://images.unsplash.com/${id}?q=80&w=1600&auto=format&fit=crop`;
 
+// Mirrors lib/taxonomy/status.ts's cityCode()/refCode() — duplicated rather
+// than imported since this script is plain .mjs run standalone with `node`,
+// not through the Next.js/TS toolchain.
+const CITY_CODES = {
+  Chandigarh: "CHD", Panchkula: "PKL", "Panchkula Extension": "PKX",
+  Mohali: "MOH", Zirakpur: "ZKP", "New Chandigarh": "NCH",
+  Derabassi: "DRB", Kharar: "KHR", Mullanpur: "MLP",
+};
+const refCode = (city, year, seq) =>
+  `GL-${(city && CITY_CODES[city]) || "GEN"}-${String(year % 100).padStart(2, "0")}-${String(seq).padStart(4, "0")}`;
+
 // Visually verified, genuinely Indian-shot stock imagery (each confirmed via
 // its Unsplash location tag before being added — see REQUIREMENTS_V2.md).
 // Swap for the client's real project photos when available.
@@ -40,7 +51,7 @@ const PROPERTIES = [
     slug: "grand-mega-township-plots",
     title: "Premium Plots, Grand Mega Township",
     kind: "project", category: "invest", project: "grand-mega-township",
-    location: "Panchkula Extension", propertyType: "Residential Plot", configuration: null,
+    location: "Panchkula Extension", city: "Panchkula Extension", propertyType: "Residential Plot", configuration: null,
     beds: null, baths: null, area: 500, unit: "sqyd",
     facing: "North", possession: "New Launch", furnishing: null,
     amenities: ["Gated Community", "Club House", "Swimming Pool", "Children's Play Area", "Jogging Track", "Park Facing", "Wide Roads", "24/7 Water Supply"],
@@ -53,7 +64,7 @@ const PROPERTIES = [
     slug: "homeland-urva-luxury-mohali",
     title: "Homeland Urva Luxury, Sector 62 Mohali",
     kind: "project", category: "sale", project: "homeland-urva-luxury",
-    location: "Sector 62, Mohali (Phase 8)", propertyType: "Flat/Apartment", configuration: "2–4 BHK",
+    location: "Sector 62, Mohali (Phase 8)", city: "Mohali", propertyType: "Flat/Apartment", configuration: "2–4 BHK",
     beds: null, baths: null, area: null, unit: "sqft",
     facing: null, possession: "Under Construction", furnishing: "Semi Furnished",
     amenities: ["Gated Community", "Lift", "Power Backup", "Club House", "Security / CCTV", "Covered Parking"],
@@ -66,7 +77,7 @@ const PROPERTIES = [
     slug: "imperial-residency-3bhk",
     title: "3 BHK Residence, Imperial Residency",
     kind: "unit", category: "sale", project: "imperial-residency",
-    location: "Peer Muchalla, Zirakpur", propertyType: "Flat/Apartment", configuration: "3 BHK",
+    location: "Peer Muchalla, Zirakpur", city: "Zirakpur", propertyType: "Flat/Apartment", configuration: "3 BHK",
     beds: 3, baths: 3, area: 1850, unit: "sqft",
     facing: "East", possession: "Ready to Move", furnishing: "Semi Furnished",
     amenities: ["Gated Community", "Lift", "Power Backup", "Swimming Pool", "Security / CCTV", "Covered Parking"],
@@ -79,7 +90,7 @@ const PROPERTIES = [
     slug: "trishla-forest-residences",
     title: "Trishla Forest Residences",
     kind: "project", category: "sale", project: "trishla",
-    location: "Tricity", propertyType: "Villa", configuration: "3–5 BHK",
+    location: "Tricity", city: null, propertyType: "Villa", configuration: "3–5 BHK",
     beds: null, baths: null, area: null, unit: "sqft",
     facing: null, possession: "New Launch", furnishing: "Luxury Furnished",
     amenities: ["Gated Community", "Swimming Pool", "Club House", "Security / CCTV", "Children's Play Area", "Park Facing"],
@@ -92,7 +103,7 @@ const PROPERTIES = [
     slug: "banur-plotted-project",
     title: "Premium Residential Plots, Banur",
     kind: "project", category: "invest", project: null,
-    location: "Banur–Thepla Road, Tricity", propertyType: "Residential Plot", configuration: null,
+    location: "Banur–Thepla Road, Tricity", city: null, propertyType: "Residential Plot", configuration: null,
     beds: null, baths: null, area: 27, unit: "acre",
     facing: null, possession: "New Launch", furnishing: null,
     amenities: ["Gated Community", "Wide Roads", "Park Facing"],
@@ -105,7 +116,7 @@ const PROPERTIES = [
     slug: "panchkula-corner-kothi",
     title: "Corner Kothi, Panchkula",
     kind: "unit", category: "sale", project: null,
-    location: "Panchkula", propertyType: "Independent House", configuration: "5 BHK Duplex",
+    location: "Panchkula", city: "Panchkula", propertyType: "Independent House", configuration: "5 BHK Duplex",
     beds: 5, baths: 6, area: 400, unit: "sqyd",
     facing: "North", possession: "Ready to Move", furnishing: "Semi Furnished",
     amenities: ["Corner", "Park Facing", "Modular Kitchen", "Terrace / Roof Rights", "Servant Room", "Pooja Room"],
@@ -143,22 +154,31 @@ const projectId = Object.fromEntries(projectRows.map((r) => [r.slug, r.id]));
 
 for (const p of PROPERTIES) {
   const res = await client.query(
-    `insert into properties (slug, title, kind, category, project_id, description, location,
+    `insert into properties (slug, title, kind, category, project_id, description, location, city,
        property_type, configuration, beds, baths, area_value, area_unit,
-       facing, possession_status, furnishing, amenities, extras)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+       facing, possession_status, furnishing, amenities, extras, publication_state)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,'published')
      on conflict (slug) do nothing
      returning id`,
     [p.slug, p.title, p.kind, p.category, p.project ? projectId[p.project] : null,
-     p.description, p.location, p.propertyType, p.configuration, p.beds, p.baths,
+     p.description, p.location, p.city, p.propertyType, p.configuration, p.beds, p.baths,
      p.area, p.unit, p.facing, p.possession, p.furnishing,
      p.amenities, JSON.stringify(p.extras)]
   );
   // A property that already existed still needs its id — `on conflict do
   // nothing` returns no row, so re-select by slug rather than skip outright.
+  const newId = res.rows[0]?.id;
   const id =
-    res.rows[0]?.id ??
+    newId ??
     (await client.query(`select id from properties where slug = $1`, [p.slug])).rows[0].id;
+  // Backfill by null check, not "was this row new this run" — a row can be
+  // missing its ref_code from before this fix existed too, same as
+  // createProperty() in the admin panel assigns one (buildRefCode from
+  // city/year/id) the moment a broker saves a listing.
+  await client.query(
+    `update properties set ref_code = $1 where id = $2 and ref_code is null`,
+    [refCode(p.city, new Date().getFullYear(), id), id]
+  );
   // Always re-sync the gallery to the current IMG mapping (delete + reinsert)
   // instead of "insert once, skip forever" — otherwise swapping IMG.* here
   // never reaches an already-seeded database, and stale stock photos survive
@@ -548,7 +568,7 @@ const failures = Object.entries({
   "company_contact setting seeded": c.contact_setting >= 1,
   "credibility setting seeded": c.credibility_setting >= 1,
   "every property has a ref code": c.missing_ref_code === 0,
-  "published listings exist": c.published >= 1,
+  "every seeded property is published": c.published >= c.properties,
 })
   .filter(([, ok]) => !ok)
   .map(([label]) => label);

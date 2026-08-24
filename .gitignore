@@ -45,3 +45,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# pre-wipe snapshots written by scripts/reset-production-data.mjs — real
+# production data, never committed.
+/scripts/backups/
