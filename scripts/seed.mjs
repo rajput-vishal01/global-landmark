@@ -9,6 +9,14 @@ try {
   /* rely on real env */
 }
 
+// Same guard as migrate.mjs: this now runs as part of `npm run build`, which
+// also happens with no database at all (the Docker image build) — without
+// this, `pg` would try to connect to a default local socket and throw.
+if (!process.env.DATABASE_URL) {
+  console.log("seed: DATABASE_URL not set — skipping (image build)");
+  process.exit(0);
+}
+
 const u = (id) =>
   `https://images.unsplash.com/${id}?q=80&w=1600&auto=format&fit=crop`;
 
