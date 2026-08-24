@@ -149,56 +149,93 @@ const VIDEOS = [
 const client = new Client({ connectionString: process.env.DATABASE_URL });
 await client.connect();
 
-for (const [name, slug, description, builder, rera] of PROJECTS) {
-  await client.query(
-    `insert into projects (name, slug, description, builder_name, rera_number)
-     values ($1,$2,$3,$4,$5) on conflict (slug) do nothing`,
-    [name, slug, description, builder, rera]
-  );
-}
-
-const { rows: projectRows } = await client.query(`select id, slug from projects`);
-const projectId = Object.fromEntries(projectRows.map((r) => [r.slug, r.id]));
-
-for (const p of PROPERTIES) {
-  const res = await client.query(
-    `insert into properties (slug, title, kind, category, project_id, description, location, city,
-       property_type, configuration, beds, baths, area_value, area_unit,
-       facing, possession_status, furnishing, amenities, extras, publication_state)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,'published')
-     on conflict (slug) do nothing
-     returning id`,
-    [p.slug, p.title, p.kind, p.category, p.project ? projectId[p.project] : null,
-     p.description, p.location, p.city, p.propertyType, p.configuration, p.beds, p.baths,
-     p.area, p.unit, p.facing, p.possession, p.furnishing,
-     p.amenities, JSON.stringify(p.extras)]
-  );
-  // A property that already existed still needs its id — `on conflict do
-  // nothing` returns no row, so re-select by slug rather than skip outright.
-  const newId = res.rows[0]?.id;
-  const id =
-    newId ??
-    (await client.query(`select id from properties where slug = $1`, [p.slug])).rows[0].id;
-  // Backfill by null check, not "was this row new this run" — a row can be
-  // missing its ref_code from before this fix existed too, same as
-  // createProperty() in the admin panel assigns one (buildRefCode from
-  // city/year/id) the moment a broker saves a listing.
-  await client.query(
-    `update properties set ref_code = $1 where id = $2 and ref_code is null`,
-    [refCode(p.city, new Date().getFullYear(), id), id]
-  );
-  // Always re-sync the gallery to the current IMG mapping (delete + reinsert)
-  // instead of "insert once, skip forever" — otherwise swapping IMG.* here
-  // never reaches an already-seeded database, and stale stock photos survive
-  // every re-run indefinitely.
-  await client.query(`delete from property_images where property_id = $1`, [id]);
-  for (let i = 0; i < p.images.length; i++) {
-    await client.query(
-      `insert into property_images (property_id, url, alt, sort_order) values ($1,$2,$3,$4)`,
-      [id, u(p.images[i]), p.title, i]
-    );
+/**
+ * Every block below runs through this wrapper — a real production database
+ * (months of a broker adding real listings through the admin panel) can have
+ * data this script never anticipated, and one section hitting an edge case
+ * must not stop every section after it from running. Before this existed,
+ * an unhandled rejection anywhere (e.g. the projects insert, which only
+ * guards `on conflict (slug)` — a broker-created project with a colliding
+ * NAME but different slug throws a bare unique-violation) silently killed
+ * the rest of the script, including the videos loop far below. `npm run
+ * build`'s `(node scripts/seed.mjs || true)` swallows the exit code, so this
+ * failed with no visible symptom beyond "some seed rows just never showed
+ * up in production."
+ */
+async function section(name, fn) {
+  try {
+    return await fn();
+  } catch (err) {
+    console.error(`seed: "${name}" section failed — continuing with the rest:`, err.message);
+    return undefined;
   }
 }
+
+const projectId =
+  (await section("projects", async () => {
+    for (const [name, slug, description, builder, rera] of PROJECTS) {
+      // Real production projects come from resolveProjectId() in the admin
+      // panel, keyed only by name (see app/admin/(panel)/properties/actions.ts)
+      // — a broker-typed project can land with the exact seed name but a
+      // different slug, which `on conflict (slug)` alone won't catch, since
+      // `name` carries its own unique constraint too. Caught and skipped per
+      // row rather than per section, so one real collision doesn't also skip
+      // the other three seed projects.
+      try {
+        await client.query(
+          `insert into projects (name, slug, description, builder_name, rera_number)
+           values ($1,$2,$3,$4,$5) on conflict (slug) do nothing`,
+          [name, slug, description, builder, rera]
+        );
+      } catch (err) {
+        console.error(`seed: project "${name}" insert failed — skipping:`, err.message);
+      }
+    }
+    const { rows } = await client.query(`select id, slug from projects`);
+    return Object.fromEntries(rows.map((r) => [r.slug, r.id]));
+  })) ?? {};
+
+await section("properties", async () => {
+  for (const p of PROPERTIES) {
+    const res = await client.query(
+      `insert into properties (slug, title, kind, category, project_id, description, location, city,
+         property_type, configuration, beds, baths, area_value, area_unit,
+         facing, possession_status, furnishing, amenities, extras, publication_state)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,'published')
+       on conflict (slug) do nothing
+       returning id`,
+      [p.slug, p.title, p.kind, p.category, p.project ? projectId[p.project] : null,
+       p.description, p.location, p.city, p.propertyType, p.configuration, p.beds, p.baths,
+       p.area, p.unit, p.facing, p.possession, p.furnishing,
+       p.amenities, JSON.stringify(p.extras)]
+    );
+    // A property that already existed still needs its id — `on conflict do
+    // nothing` returns no row, so re-select by slug rather than skip outright.
+    const newId = res.rows[0]?.id;
+    const id =
+      newId ??
+      (await client.query(`select id from properties where slug = $1`, [p.slug])).rows[0].id;
+    // Backfill by null check, not "was this row new this run" — a row can be
+    // missing its ref_code from before this fix existed too, same as
+    // createProperty() in the admin panel assigns one (buildRefCode from
+    // city/year/id) the moment a broker saves a listing.
+    await client.query(
+      `update properties set ref_code = $1 where id = $2 and ref_code is null`,
+      [refCode(p.city, new Date().getFullYear(), id), id]
+    );
+    // Always re-sync the gallery to the current IMG mapping (delete + reinsert)
+    // instead of "insert once, skip forever" — otherwise swapping IMG.* here
+    // never reaches an already-seeded database, and stale stock photos survive
+    // every re-run indefinitely.
+    await client.query(`delete from property_images where property_id = $1`, [id]);
+    for (let i = 0; i < p.images.length; i++) {
+      await client.query(
+        `insert into property_images (property_id, url, alt, sort_order) values ($1,$2,$3,$4)`,
+        [id, u(p.images[i]), p.title, i]
+      );
+    }
+  }
+});
 
 /**
  * Deal of the Week — one live, one queued.
@@ -208,22 +245,24 @@ for (const p of PROPERTIES) {
  * expired and were never replaced, so `active_deals` sat at 0 forever and
  * the landing page lost its Deal of the Week section on day six.
  */
-const { rows: liveDeals } = await client.query(
-  `select count(*)::int as n from deals where current_date between starts_at and ends_at`
-);
-if (liveDeals[0].n === 0) {
-  const { rows: pr } = await client.query(
-    `select id, slug from properties where slug in ('imperial-residency-3bhk','grand-mega-township-plots')`
+await section("deal of the week", async () => {
+  const { rows: liveDeals } = await client.query(
+    `select count(*)::int as n from deals where current_date between starts_at and ends_at`
   );
-  const bySlug = Object.fromEntries(pr.map((r) => [r.slug, r.id]));
-  await client.query(`delete from deals`);
-  await client.query(
-    `insert into deals (property_id, starts_at, ends_at) values
-     ($1, current_date - 2, current_date + 5),
-     ($2, current_date + 6, current_date + 13)`,
-    [bySlug["imperial-residency-3bhk"], bySlug["grand-mega-township-plots"]]
-  );
-}
+  if (liveDeals[0].n === 0) {
+    const { rows: pr } = await client.query(
+      `select id, slug from properties where slug in ('imperial-residency-3bhk','grand-mega-township-plots')`
+    );
+    const bySlug = Object.fromEntries(pr.map((r) => [r.slug, r.id]));
+    await client.query(`delete from deals`);
+    await client.query(
+      `insert into deals (property_id, starts_at, ends_at) values
+       ($1, current_date - 2, current_date + 5),
+       ($2, current_date + 6, current_date + 13)`,
+      [bySlug["imperial-residency-3bhk"], bySlug["grand-mega-township-plots"]]
+    );
+  }
+});
 
 /**
  * Instagram reel videos. Upserted per row rather than skipped wholesale:
@@ -231,17 +270,19 @@ if (liveDeals[0].n === 0) {
  * landed on a database that had already been seeded, which is why the
  * check below could never see all seven.
  */
-for (let i = 0; i < VIDEOS.length; i++) {
-  // `on conflict` would not help here: video_id carries no unique
-  // constraint, so only a primary-key collision would trigger it and every
-  // re-run would duplicate the row instead.
-  await client.query(
-    `insert into testimonial_videos (provider, video_id, caption, sort_order)
-     select 'instagram', $1, $2, $3
-     where not exists (select 1 from testimonial_videos where video_id = $1)`,
-    [VIDEOS[i][0], VIDEOS[i][1], i]
-  );
-}
+await section("videos", async () => {
+  for (let i = 0; i < VIDEOS.length; i++) {
+    // `on conflict` would not help here: video_id carries no unique
+    // constraint, so only a primary-key collision would trigger it and every
+    // re-run would duplicate the row instead.
+    await client.query(
+      `insert into testimonial_videos (provider, video_id, caption, sort_order)
+       select 'instagram', $1, $2, $3
+       where not exists (select 1 from testimonial_videos where video_id = $1)`,
+      [VIDEOS[i][0], VIDEOS[i][1], i]
+    );
+  }
+});
 
 // ─── CFF expansion: one fully-populated example of every new entity ────────
 // Without these, the admin screens and the leak check have nothing to
@@ -249,172 +290,182 @@ for (let i = 0; i < VIDEOS.length; i++) {
 
 const one = async (sql, params = []) => (await client.query(sql, params)).rows[0];
 
-const { id: builderId } = await one(
-  `insert into builders (name, slug, belongs_to, about, website, contact_name, contact_phone, past_projects)
-   values ('Homeland Group','homeland-group','Mohali, Punjab',
-           'Regional developer active across Mohali and New Chandigarh.',
-           'https://example.com','Seed Builder Contact','9812300001',
-           'Homeland Heights, Homeland Residency')
-   on conflict (slug) do update set name = excluded.name
-   returning id`
-);
-
-await client.query(
-  `update projects set builder_id = $1, possession_status = 'Under Construction',
-     launch_date = current_date - 400, possession_date = current_date + 365,
-     total_towers = 4, total_units = 320, number_of_floors = 14,
-     green_area_value = 3, green_area_unit = 'acre',
-     amenities = $2, country = 'India', city = 'Mohali', locality = 'Sector Area'
-   where slug = 'homeland-urva-luxury'`,
-  [builderId, ["Club House", "Swimming Pool", "Gym", "Gated Community"]]
-);
-
-const { rows: allProps } = await client.query(`select id, slug from properties`);
-const propId = Object.fromEntries(allProps.map((r) => [r.slug, r.id]));
-
-// A tower, so the project page has real inventory to group units under.
-// Insert-then-select rather than relying on RETURNING: on a re-run the
-// insert matches nothing and returns no row, which would leave the unit
-// unlinked.
-await client.query(
-  `insert into towers (project_id, name, total_floors, units_per_floor, total_units)
-   select p.id, 'Tower A', 14, 4, 56 from projects p
-   where p.slug = 'homeland-urva-luxury'
-     and not exists (select 1 from towers t where t.project_id = p.id and t.name = 'Tower A')`
-);
-const towerRow = await one(
-  `select t.id from towers t
-   join projects p on p.id = t.project_id
-   where p.slug = 'homeland-urva-luxury' and t.name = 'Tower A'`
-);
-const towerId = towerRow?.id ?? null;
-
-if (towerId) {
-  await client.query(
-    `update properties set tower_id = $1, floor_number = 7, total_floors = 14,
-       unit_number = '704', configuration = '3 BHK', balconies = 2,
-       super_area = 1850, super_area_unit = 'sqft',
-       carpet_area = 1320, carpet_area_unit = 'sqft'
-     where slug = 'imperial-residency-3bhk'`,
-    [towerId]
-  );
-}
-
-/**
- * Internal fixtures. These exact values are the needles in
- * scripts/leak-check.mjs — if any of them ever appears in public HTML or a
- * client bundle, that check fails. Keep the two files in step.
- */
-const leakProp = propId["panchkula-corner-kothi"];
-if (leakProp) {
-  await client.query(
-    `insert into property_owners (property_id, name, seller_category, owner_type,
-       owner_count, mobile, alt_mobile, address, notes)
-     select $1,'Leakcheck Owner','Owner','Individual',2,'9876500011','9876500022',
-       'Leakcheck Address, Panchkula','Seeded fixture for the section 4.1 leak check'
-     where not exists (select 1 from property_owners where property_id = $1)`,
-    [leakProp]
-  );
-  await client.query(
-    `insert into property_internal (property_id, circle_rate, market_value_note,
-       is_mortgaged, internal_notes)
-     values ($1, 733377, 'Leakcheck circle rate note', true, 'Leakcheck internal note')
-     on conflict (property_id) do update set circle_rate = excluded.circle_rate`,
-    [leakProp]
-  );
-  await client.query(
-    `insert into property_charges (property_id, charge_type, amount, basis, is_included_in_demand)
-     select $1,'Club Charges',588899,'lump_sum',false
-     where not exists (select 1 from property_charges where property_id = $1)`,
-    [leakProp]
-  );
-  await client.query(
-    `insert into property_documents (property_id, doc_type, storage_key, file_name,
-       mime_type, size_bytes, uploaded_by)
-     select $1,'Registry Available','private/seed/registry.pdf','registry.pdf',
-       'application/pdf', 24680, 'seed'
-     where not exists (select 1 from property_documents where property_id = $1)`,
-    [leakProp]
-  );
-  await client.query(
-    `insert into property_price_history (property_id, demand_price, changed_by, reason)
-     select $1, 244466600, 'seed', 'Initial listing price'
-     where not exists (select 1 from property_price_history where property_id = $1)`,
-    [leakProp]
-  );
-  // Price captured but deliberately NOT published — the default everywhere.
-  await client.query(
-    `update properties set demand_price = 244466600, per_sqft_rate = 6790,
-       is_negotiable = true, show_price_publicly = false
-     where id = $1`,
-    [leakProp]
-  );
-}
-
-// Link media: Instagram and YouTube embeds, plus a map.
-const mediaProp = propId["imperial-residency-3bhk"];
-if (mediaProp) {
-  for (const [kind, url, label] of [
-    ["video", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ", "Walkthrough"],
-    ["drone", "https://www.instagram.com/reel/DW61A1IkycX/", "Drone reel"],
-    ["google_map", "https://www.google.com/maps?q=Zirakpur", "Location"],
-  ]) {
-    await client.query(
-      `insert into property_media (property_id, kind, url, label)
-       select $1,$2,$3,$4
-       where not exists (select 1 from property_media where property_id = $1 and kind = $2)`,
-      [mediaProp, kind, url, label]
+const propId =
+  (await section("CFF fixtures", async () => {
+    const { id: builderId } = await one(
+      `insert into builders (name, slug, belongs_to, about, website, contact_name, contact_phone, past_projects)
+       values ('Homeland Group','homeland-group','Mohali, Punjab',
+               'Regional developer active across Mohali and New Chandigarh.',
+               'https://example.com','Seed Builder Contact','9812300001',
+               'Homeland Heights, Homeland Residency')
+       on conflict (slug) do update set name = excluded.name
+       returning id`
     );
-  }
-}
 
-await client.query(
-  `insert into leads (name, email, phone, interest, message, source, status)
-   select 'Seed Enquiry','seed@example.com','9800000000','buy',
-     'Seeded lead so the admin inbox is not empty on a fresh database.','seed','new'
-   where not exists (select 1 from leads where email = 'seed@example.com')`
-);
+    await client.query(
+      `update projects set builder_id = $1, possession_status = 'Under Construction',
+         launch_date = current_date - 400, possession_date = current_date + 365,
+         total_towers = 4, total_units = 320, number_of_floors = 14,
+         green_area_value = 3, green_area_unit = 'acre',
+         amenities = $2, country = 'India', city = 'Mohali', locality = 'Sector Area'
+       where slug = 'homeland-urva-luxury'`,
+      [builderId, ["Club House", "Swimming Pool", "Gym", "Gated Community"]]
+    );
 
-// site_settings rows must match the admin-override shape in lib/site-settings.ts
-// (SETTING_KEYS + ContactOverride/CredibilityOverride) — a bare 'officeHours'
-// key, as this used to seed, is never read by resolveCompany()/resolveCredibility().
-await client.query(
-  `insert into site_settings (key, value)
-   values ('company_contact', $1::jsonb)
-   on conflict (key) do nothing`,
-  [
-    JSON.stringify({
-      addressLines: ["Based in Panchkula", "Tricity, India"],
-      phone: "+91 98820-84786",
-      phoneHref: "tel:+919882084786",
-      phoneAlt: "+91 70090-00164",
-      phoneAltHref: "tel:+917009000164",
-      email: "inquiries@globallandmark.com",
-      officeHours: "Mon-Sat, 10:00-19:00 IST",
-      socials: [
-        { label: "Instagram", href: "https://www.instagram.com/globallandmarkrealtygroup/" },
-      ],
-    }),
-  ]
-);
-await client.query(
-  `insert into site_settings (key, value)
-   values ('credibility', $1::jsonb)
-   on conflict (key) do nothing`,
-  [
-    JSON.stringify({
-      headingPre: "Over",
-      headingHighlight: "₹85 Crore",
-      headingPost: "in landmark sales",
-      sub: "Considered residences across the Tricity, trusted by the most private buyers and sellers.",
-      stats: [
-        { value: 85, prefix: "₹", suffix: " Cr+", label: "Worth of Real Estate Sold" },
-        { value: 120, prefix: "", suffix: "+", label: "Properties Transacted" },
-        { value: 15, prefix: "", suffix: "", label: "Years in the Tricity" },
-      ],
-    }),
-  ]
-);
+    const { rows: allProps } = await client.query(`select id, slug from properties`);
+    const ids = Object.fromEntries(allProps.map((r) => [r.slug, r.id]));
+
+    // A tower, so the project page has real inventory to group units under.
+    // Insert-then-select rather than relying on RETURNING: on a re-run the
+    // insert matches nothing and returns no row, which would leave the unit
+    // unlinked.
+    await client.query(
+      `insert into towers (project_id, name, total_floors, units_per_floor, total_units)
+       select p.id, 'Tower A', 14, 4, 56 from projects p
+       where p.slug = 'homeland-urva-luxury'
+         and not exists (select 1 from towers t where t.project_id = p.id and t.name = 'Tower A')`
+    );
+    const towerRow = await one(
+      `select t.id from towers t
+       join projects p on p.id = t.project_id
+       where p.slug = 'homeland-urva-luxury' and t.name = 'Tower A'`
+    );
+    const towerId = towerRow?.id ?? null;
+
+    if (towerId) {
+      await client.query(
+        `update properties set tower_id = $1, floor_number = 7, total_floors = 14,
+           unit_number = '704', configuration = '3 BHK', balconies = 2,
+           super_area = 1850, super_area_unit = 'sqft',
+           carpet_area = 1320, carpet_area_unit = 'sqft'
+         where slug = 'imperial-residency-3bhk'`,
+        [towerId]
+      );
+    }
+
+    /**
+     * Internal fixtures. These exact values are the needles in
+     * scripts/leak-check.mjs — if any of them ever appears in public HTML or
+     * a client bundle, that check fails. Keep the two files in step.
+     */
+    const leakProp = ids["panchkula-corner-kothi"];
+    if (leakProp) {
+      await client.query(
+        `insert into property_owners (property_id, name, seller_category, owner_type,
+           owner_count, mobile, alt_mobile, address, notes)
+         select $1,'Leakcheck Owner','Owner','Individual',2,'9876500011','9876500022',
+           'Leakcheck Address, Panchkula','Seeded fixture for the section 4.1 leak check'
+         where not exists (select 1 from property_owners where property_id = $1)`,
+        [leakProp]
+      );
+      await client.query(
+        `insert into property_internal (property_id, circle_rate, market_value_note,
+           is_mortgaged, internal_notes)
+         values ($1, 733377, 'Leakcheck circle rate note', true, 'Leakcheck internal note')
+         on conflict (property_id) do update set circle_rate = excluded.circle_rate`,
+        [leakProp]
+      );
+      await client.query(
+        `insert into property_charges (property_id, charge_type, amount, basis, is_included_in_demand)
+         select $1,'Club Charges',588899,'lump_sum',false
+         where not exists (select 1 from property_charges where property_id = $1)`,
+        [leakProp]
+      );
+      await client.query(
+        `insert into property_documents (property_id, doc_type, storage_key, file_name,
+           mime_type, size_bytes, uploaded_by)
+         select $1,'Registry Available','private/seed/registry.pdf','registry.pdf',
+           'application/pdf', 24680, 'seed'
+         where not exists (select 1 from property_documents where property_id = $1)`,
+        [leakProp]
+      );
+      await client.query(
+        `insert into property_price_history (property_id, demand_price, changed_by, reason)
+         select $1, 244466600, 'seed', 'Initial listing price'
+         where not exists (select 1 from property_price_history where property_id = $1)`,
+        [leakProp]
+      );
+      // Price captured but deliberately NOT published — the default everywhere.
+      await client.query(
+        `update properties set demand_price = 244466600, per_sqft_rate = 6790,
+           is_negotiable = true, show_price_publicly = false
+         where id = $1`,
+        [leakProp]
+      );
+    }
+
+    // Link media: Instagram and YouTube embeds, plus a map.
+    const mediaProp = ids["imperial-residency-3bhk"];
+    if (mediaProp) {
+      for (const [kind, url, label] of [
+        ["video", "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ", "Walkthrough"],
+        ["drone", "https://www.instagram.com/reel/DW61A1IkycX/", "Drone reel"],
+        ["google_map", "https://www.google.com/maps?q=Zirakpur", "Location"],
+      ]) {
+        await client.query(
+          `insert into property_media (property_id, kind, url, label)
+           select $1,$2,$3,$4
+           where not exists (select 1 from property_media where property_id = $1 and kind = $2)`,
+          [mediaProp, kind, url, label]
+        );
+      }
+    }
+
+    return ids;
+  })) ?? (await client.query(`select id, slug from properties`)).rows.reduce(
+    (acc, r) => ((acc[r.slug] = r.id), acc),
+    {}
+  );
+
+await section("leads and settings", async () => {
+  await client.query(
+    `insert into leads (name, email, phone, interest, message, source, status)
+     select 'Seed Enquiry','seed@example.com','9800000000','buy',
+       'Seeded lead so the admin inbox is not empty on a fresh database.','seed','new'
+     where not exists (select 1 from leads where email = 'seed@example.com')`
+  );
+
+  // site_settings rows must match the admin-override shape in lib/site-settings.ts
+  // (SETTING_KEYS + ContactOverride/CredibilityOverride) — a bare 'officeHours'
+  // key, as this used to seed, is never read by resolveCompany()/resolveCredibility().
+  await client.query(
+    `insert into site_settings (key, value)
+     values ('company_contact', $1::jsonb)
+     on conflict (key) do nothing`,
+    [
+      JSON.stringify({
+        addressLines: ["Based in Panchkula", "Tricity, India"],
+        phone: "+91 98820-84786",
+        phoneHref: "tel:+919882084786",
+        phoneAlt: "+91 70090-00164",
+        phoneAltHref: "tel:+917009000164",
+        email: "inquiries@globallandmark.com",
+        officeHours: "Mon-Sat, 10:00-19:00 IST",
+        socials: [
+          { label: "Instagram", href: "https://www.instagram.com/globallandmarkrealtygroup/" },
+        ],
+      }),
+    ]
+  );
+  await client.query(
+    `insert into site_settings (key, value)
+     values ('credibility', $1::jsonb)
+     on conflict (key) do nothing`,
+    [
+      JSON.stringify({
+        headingPre: "Over",
+        headingHighlight: "₹85 Crore",
+        headingPost: "in landmark sales",
+        sub: "Considered residences across the Tricity, trusted by the most private buyers and sellers.",
+        stats: [
+          { value: 85, prefix: "₹", suffix: " Cr+", label: "Worth of Real Estate Sold" },
+          { value: 120, prefix: "", suffix: "+", label: "Properties Transacted" },
+          { value: 15, prefix: "", suffix: "", label: "Years in the Tricity" },
+        ],
+      }),
+    ]
+  );
+});
 
 // ─── CRM: clients, deals, payments, activities (R-30 / R-31) ──────────────
 // Phases 5/6 shipped crm_clients/crm_deals/crm_payments/crm_activities with
@@ -422,111 +473,112 @@ await client.query(
 // One client per deal stage that exercises a different part of the UI: an
 // active negotiation, a closed deal with brokerage paid in two tranches, and
 // a bare enquiry converted straight from the seed lead above.
+await section("CRM demo data", async () => {
+  await client.query(
+    `insert into crm_clients (name, phone, email, requirement_notes, budget_min, budget_max, preferred_locations, preferred_types)
+     select 'Rohit Malhotra','9876543210','rohit.malhotra@example.com',
+       'Looking for a 3-4 BHK independent floor, ready to move, vastu-compliant.',
+       15000000, 22000000, $1, $2
+     where not exists (select 1 from crm_clients where phone = '9876543210')`,
+    [["Panchkula", "Zirakpur"], ["Independent Floor", "Kothi"]]
+  );
+  await client.query(
+    `insert into crm_clients (name, phone, email, requirement_notes, budget_min, budget_max, preferred_locations, preferred_types)
+     select 'Simran Kaur','9876543211','simran.kaur@example.com',
+       'Investor client — closed on a 3 BHK in Mohali, brokerage settled in two tranches.',
+       8000000, 12000000, $1, $2
+     where not exists (select 1 from crm_clients where phone = '9876543211')`,
+    [["Mohali"], ["Apartment"]]
+  );
+  await client.query(
+    `insert into crm_clients (name, phone, email, requirement_notes, budget_min, budget_max, preferred_locations, preferred_types, converted_from_lead_id)
+     select 'Anil Sharma','9876543212','anil.sharma@example.com',
+       'Early-stage enquiry from the website contact form — plot in Panchkula Extension.',
+       5000000, 9000000, $1, $2, l.id
+     from leads l where l.email = 'seed@example.com'
+     and not exists (select 1 from crm_clients where phone = '9876543212')`,
+    [["Panchkula"], ["Plot"]]
+  );
 
-await client.query(
-  `insert into crm_clients (name, phone, email, requirement_notes, budget_min, budget_max, preferred_locations, preferred_types)
-   select 'Rohit Malhotra','9876543210','rohit.malhotra@example.com',
-     'Looking for a 3-4 BHK independent floor, ready to move, vastu-compliant.',
-     15000000, 22000000, $1, $2
-   where not exists (select 1 from crm_clients where phone = '9876543210')`,
-  [["Panchkula", "Zirakpur"], ["Independent Floor", "Kothi"]]
-);
-await client.query(
-  `insert into crm_clients (name, phone, email, requirement_notes, budget_min, budget_max, preferred_locations, preferred_types)
-   select 'Simran Kaur','9876543211','simran.kaur@example.com',
-     'Investor client — closed on a 3 BHK in Mohali, brokerage settled in two tranches.',
-     8000000, 12000000, $1, $2
-   where not exists (select 1 from crm_clients where phone = '9876543211')`,
-  [["Mohali"], ["Apartment"]]
-);
-await client.query(
-  `insert into crm_clients (name, phone, email, requirement_notes, budget_min, budget_max, preferred_locations, preferred_types, converted_from_lead_id)
-   select 'Anil Sharma','9876543212','anil.sharma@example.com',
-     'Early-stage enquiry from the website contact form — plot in Panchkula Extension.',
-     5000000, 9000000, $1, $2, l.id
-   from leads l where l.email = 'seed@example.com'
-   and not exists (select 1 from crm_clients where phone = '9876543212')`,
-  [["Panchkula"], ["Plot"]]
-);
+  const crmClientId = Object.fromEntries(
+    (
+      await client.query(
+        `select id, phone from crm_clients where phone in ('9876543210','9876543211','9876543212')`
+      )
+    ).rows.map((r) => [r.phone, r.id])
+  );
 
-const crmClientId = Object.fromEntries(
-  (
+  if (crmClientId["9876543210"]) {
     await client.query(
-      `select id, phone from crm_clients where phone in ('9876543210','9876543211','9876543212')`
-    )
-  ).rows.map((r) => [r.phone, r.id])
-);
+      `insert into crm_deals (client_id, property_id, stage, deal_value, brokerage_percent_bp, assigned_to)
+       select $1, $2, 'Negotiation', 18500000, 200, 'Ashu Goyal'
+       where not exists (select 1 from crm_deals where client_id = $1 and stage = 'Negotiation')`,
+      [crmClientId["9876543210"], propId["imperial-residency-3bhk"] ?? null]
+    );
+    await client.query(
+      `insert into crm_activities (client_id, kind, note, author)
+       select $1, 'Site Visit', 'Walked Imperial Residency 3BHK, unit 704. Client liked the layout, wants to negotiate on price.', 'Ashu Goyal'
+       where not exists (select 1 from crm_activities where client_id = $1 and kind = 'Site Visit')`,
+      [crmClientId["9876543210"]]
+    );
+    await client.query(
+      `insert into crm_activities (client_id, kind, note, author)
+       select $1, 'Call', 'Follow-up call, client to confirm by end of week.', 'Ashu Goyal'
+       where not exists (select 1 from crm_activities where client_id = $1 and kind = 'Call')`,
+      [crmClientId["9876543210"]]
+    );
+  }
 
-if (crmClientId["9876543210"]) {
-  await client.query(
-    `insert into crm_deals (client_id, property_id, stage, deal_value, brokerage_percent_bp, assigned_to)
-     select $1, $2, 'Negotiation', 18500000, 200, 'Ashu Goyal'
-     where not exists (select 1 from crm_deals where client_id = $1 and stage = 'Negotiation')`,
-    [crmClientId["9876543210"], propId["imperial-residency-3bhk"] ?? null]
-  );
-  await client.query(
-    `insert into crm_activities (client_id, kind, note, author)
-     select $1, 'Site Visit', 'Walked Imperial Residency 3BHK, unit 704. Client liked the layout, wants to negotiate on price.', 'Ashu Goyal'
-     where not exists (select 1 from crm_activities where client_id = $1 and kind = 'Site Visit')`,
-    [crmClientId["9876543210"]]
-  );
-  await client.query(
-    `insert into crm_activities (client_id, kind, note, author)
-     select $1, 'Call', 'Follow-up call, client to confirm by end of week.', 'Ashu Goyal'
-     where not exists (select 1 from crm_activities where client_id = $1 and kind = 'Call')`,
-    [crmClientId["9876543210"]]
-  );
-}
+  if (crmClientId["9876543211"]) {
+    const existingClosed = await client.query(
+      `select id from crm_deals where client_id = $1 and stage = 'Closed'`,
+      [crmClientId["9876543211"]]
+    );
+    const closedDealId = existingClosed.rows.length
+      ? existingClosed.rows[0].id
+      : (
+          await one(
+            `insert into crm_deals (client_id, property_id, stage, deal_value, brokerage_percent_bp, assigned_to, closed_at)
+             values ($1, $2, 'Closed', 9800000, 200, 'Divya Goyal', current_date - 30)
+             returning id`,
+            [crmClientId["9876543211"], propId["homeland-urva-luxury-mohali"] ?? null]
+          )
+        ).id;
+    await client.query(
+      `insert into crm_payments (deal_id, amount, paid_at, mode, note)
+       select $1, 100000, current_date - 45, 'UPI', 'Token amount'
+       where not exists (select 1 from crm_payments where deal_id = $1 and mode = 'UPI')`,
+      [closedDealId]
+    );
+    await client.query(
+      `insert into crm_payments (deal_id, amount, paid_at, mode, note)
+       select $1, 95000, current_date - 20, 'Bank Transfer', 'Balance brokerage'
+       where not exists (select 1 from crm_payments where deal_id = $1 and mode = 'Bank Transfer')`,
+      [closedDealId]
+    );
+    await client.query(
+      `insert into crm_activities (client_id, deal_id, kind, note, author)
+       select $1, $2, 'Note', 'Deal closed and registered. Brokerage settled in two tranches.', 'Divya Goyal'
+       where not exists (select 1 from crm_activities where client_id = $1 and kind = 'Note')`,
+      [crmClientId["9876543211"], closedDealId]
+    );
+  }
 
-if (crmClientId["9876543211"]) {
-  const existingClosed = await client.query(
-    `select id from crm_deals where client_id = $1 and stage = 'Closed'`,
-    [crmClientId["9876543211"]]
-  );
-  const closedDealId = existingClosed.rows.length
-    ? existingClosed.rows[0].id
-    : (
-        await one(
-          `insert into crm_deals (client_id, property_id, stage, deal_value, brokerage_percent_bp, assigned_to, closed_at)
-           values ($1, $2, 'Closed', 9800000, 200, 'Divya Goyal', current_date - 30)
-           returning id`,
-          [crmClientId["9876543211"], propId["homeland-urva-luxury-mohali"] ?? null]
-        )
-      ).id;
-  await client.query(
-    `insert into crm_payments (deal_id, amount, paid_at, mode, note)
-     select $1, 100000, current_date - 45, 'UPI', 'Token amount'
-     where not exists (select 1 from crm_payments where deal_id = $1 and mode = 'UPI')`,
-    [closedDealId]
-  );
-  await client.query(
-    `insert into crm_payments (deal_id, amount, paid_at, mode, note)
-     select $1, 95000, current_date - 20, 'Bank Transfer', 'Balance brokerage'
-     where not exists (select 1 from crm_payments where deal_id = $1 and mode = 'Bank Transfer')`,
-    [closedDealId]
-  );
-  await client.query(
-    `insert into crm_activities (client_id, deal_id, kind, note, author)
-     select $1, $2, 'Note', 'Deal closed and registered. Brokerage settled in two tranches.', 'Divya Goyal'
-     where not exists (select 1 from crm_activities where client_id = $1 and kind = 'Note')`,
-    [crmClientId["9876543211"], closedDealId]
-  );
-}
-
-if (crmClientId["9876543212"]) {
-  await client.query(
-    `insert into crm_deals (client_id, property_id, stage, assigned_to)
-     select $1, null, 'Enquiry', 'Ashu Goyal'
-     where not exists (select 1 from crm_deals where client_id = $1 and stage = 'Enquiry')`,
-    [crmClientId["9876543212"]]
-  );
-  await client.query(
-    `insert into crm_activities (client_id, kind, note, author)
-     select $1, 'WhatsApp', 'Shared plot options in Panchkula Extension, awaiting response.', 'Ashu Goyal'
-     where not exists (select 1 from crm_activities where client_id = $1 and kind = 'WhatsApp')`,
-    [crmClientId["9876543212"]]
-  );
-}
+  if (crmClientId["9876543212"]) {
+    await client.query(
+      `insert into crm_deals (client_id, property_id, stage, assigned_to)
+       select $1, null, 'Enquiry', 'Ashu Goyal'
+       where not exists (select 1 from crm_deals where client_id = $1 and stage = 'Enquiry')`,
+      [crmClientId["9876543212"]]
+    );
+    await client.query(
+      `insert into crm_activities (client_id, kind, note, author)
+       select $1, 'WhatsApp', 'Shared plot options in Panchkula Extension, awaiting response.', 'Ashu Goyal'
+       where not exists (select 1 from crm_activities where client_id = $1 and kind = 'WhatsApp')`,
+      [crmClientId["9876543212"]]
+    );
+  }
+});
 
 // Runnable check (ponytail).
 const { rows: check } = await client.query(
