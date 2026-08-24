@@ -2,21 +2,15 @@ import Link from "next/link";
 import { and, asc, count, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { projects, properties } from "@/lib/db/schema";
-import { DeleteButton } from "@/components/admin/DeleteButton";
-import { StatusBadge } from "@/components/admin/BasicDetailsSection";
+import { PropertiesTable } from "@/components/admin/PropertiesTable";
 import {
   PropertyFilters,
   type PropertyFilterValues,
 } from "@/components/admin/PropertyFilters";
-import {
-  LISTING_STATUSES,
-  PUBLICATION_STATES,
-  STATUS_BADGE,
-  daysOnMarket,
-} from "@/lib/taxonomy/status";
+import { LISTING_STATUSES, PUBLICATION_STATES, STATUS_BADGE } from "@/lib/taxonomy/status";
 import { PROPERTY_TYPES } from "@/lib/attributes";
 import { CITY_NAMES } from "@/lib/locations";
-import { deleteProperty, duplicateProperty } from "./actions";
+import { bulkDeleteProperties, deleteProperty, duplicateProperty } from "./actions";
 
 export const metadata = { title: "Properties" };
 
@@ -168,15 +162,6 @@ async function listPage(
   }
 }
 
-function formatDate(value: Date | null | undefined): string {
-  if (!value) return "—";
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
-}
-
 /** Preserves the whole filter state across a page step. */
 function pageHref(values: PropertyFilterValues, page: number): string {
   const params = new URLSearchParams();
@@ -186,9 +171,6 @@ function pageHref(values: PropertyFilterValues, page: number): string {
   if (page > 1) params.set("page", String(page));
   return `/admin/properties${params.size ? `?${params}` : ""}`;
 }
-
-const TH =
-  "text-eyebrow whitespace-nowrap px-4 py-3 text-left font-sans font-medium uppercase tracking-[0.15em] text-ink-muted";
 
 export default async function AdminPropertiesPage({
   searchParams,
@@ -292,104 +274,12 @@ export default async function AdminPropertiesPage({
             {isFiltered ? " matching" : ""} propert{total === 1 ? "y" : "ies"}
           </p>
 
-          {/* Horizontal scroll lives inside this box, so the page itself never
-              scrolls sideways on a phone. */}
-          <div className="overflow-x-auto border border-border bg-white">
-            <table className="w-full min-w-[860px] text-left">
-              <thead>
-                <tr className="border-b border-border">
-                  {["Reference", "Property", "Status", "City", "Updated", "Days", ""].map(
-                    (h, i) => (
-                      <th key={i} className={TH}>
-                        {h}
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((p) => {
-                  const days = daysOnMarket(new Date(p.listedAt), p.listingStatus);
-                  return (
-                    <tr key={p.id} className="border-b border-border last:border-b-0">
-                      <td className="whitespace-nowrap px-4 py-3 text-meta font-sans tabular-nums text-ink-muted">
-                        {p.refCode ?? "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="h-12 w-16 shrink-0 overflow-hidden bg-ink/5">
-                            {p.coverUrl && (
-                              // eslint-disable-next-line @next/next/no-img-element -- arbitrary admin-entered hosts
-                              <img
-                                src={p.coverUrl}
-                                alt=""
-                                className="h-full w-full object-cover"
-                              />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-sans text-body font-medium text-ink">
-                              {p.title}
-                            </p>
-                            <p className="text-meta font-sans text-ink-muted">
-                              {[p.locality, p.projectName, p.addedBy]
-                                .filter(Boolean)
-                                .join(" · ")}
-                            </p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col items-start gap-1.5">
-                          <StatusBadge status={p.listingStatus} />
-                          {p.publicationState !== "published" && (
-                            <span className="text-meta font-sans capitalize text-ink-muted">
-                              {p.publicationState}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-meta font-sans text-ink">
-                        {p.city ?? "—"}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-meta font-sans text-ink-muted">
-                        {formatDate(p.updatedAt)}
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-meta font-sans tabular-nums text-ink-muted">
-                        {days === null ? "—" : days}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-5">
-                          <Link
-                            href={`/admin/properties/${p.id}/edit`}
-                            className="text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                          >
-                            Edit
-                          </Link>
-                          {/* R-12: the 2nd-10th flat in a tower starts from
-                              a clone, not a blank form. */}
-                          <form action={duplicateProperty}>
-                            <input type="hidden" name="id" value={p.id} />
-                            <button
-                              type="submit"
-                              className="cursor-pointer text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                            >
-                              Duplicate
-                            </button>
-                          </form>
-                          <DeleteButton
-                            action={deleteProperty}
-                            id={p.id}
-                            confirmText={`Delete "${p.title}" and all of its images? This cannot be undone.`}
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <PropertiesTable
+            rows={rows}
+            duplicateAction={duplicateProperty}
+            deleteAction={deleteProperty}
+            bulkDeleteAction={bulkDeleteProperties}
+          />
 
           {lastPage > 1 && (
             <nav

@@ -704,3 +704,55 @@ export async function deleteProperty(
   revalidatePublicSite();
   redirect("/admin/properties");
 }
+
+/**
+ * Multi-select delete for the properties list — the in-panel answer to
+ * "I have a screen full of accidental duplicates and no terminal." Same
+ * row-then-files order as the single deleteProperty() above, just looped;
+ * one property failing to delete does not abort the rest, so a broker
+ * clearing ten duplicates isn't blocked by one stubborn row.
+ */
+export async function bulkDeleteProperties(
+  _prev: DeleteState,
+  formData: FormData
+): Promise<DeleteState> {
+  await requireAdmin();
+  const ids = formData
+    .getAll("ids")
+    .map((v) => Number(v))
+    .filter((n) => Number.isInteger(n) && n > 0);
+  if (!ids.length) return { error: "Nothing selected." };
+
+  let failed = 0;
+  for (const id of ids) {
+    try {
+      const images = await db
+        .select({ storageKey: propertyImages.storageKey })
+        .from(propertyImages)
+        .where(eq(propertyImages.propertyId, id));
+      const documents = await db
+        .select({ storageKey: propertyDocuments.storageKey })
+        .from(propertyDocuments)
+        .where(eq(propertyDocuments.propertyId, id));
+
+      await db.delete(properties).where(eq(properties.id, id));
+      await deleteStoredFiles(
+        images.map((r) => r.storageKey).filter((k): k is string => Boolean(k)),
+        "public"
+      );
+      await deleteStoredFiles(
+        documents.map((r) => r.storageKey),
+        "private"
+      );
+    } catch (err) {
+      console.error(`bulkDeleteProperties failed for id ${id}:`, err);
+      failed++;
+    }
+  }
+
+  revalidatePublicSite();
+  if (failed) {
+    return { error: `Deleted ${ids.length - failed} of ${ids.length}. ${failed} could not be removed — try again.` };
+  }
+  redirect("/admin/properties");
+}
