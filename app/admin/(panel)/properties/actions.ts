@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { eq, ilike, or, sql } from "drizzle-orm";
+import { and, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   projects,
@@ -241,6 +241,32 @@ export async function createProperty(
     circleRate,
     ...fields
   } = parsed.data;
+
+  // The autosave guard above catches the same-tab race; this catches its
+  // sibling — a broker who clicked "Create property," saw nothing obviously
+  // happen (slow connection, no toast), and clicked again from a second
+  // click or a second tab. A title that exact-matches (case-insensitive) a
+  // property created in the last 2 minutes is almost certainly that same
+  // submission landing twice, not a genuinely new listing — real reuse of a
+  // title (identical flats in the same tower, added days apart) is
+  // unaffected since the window is short on purpose.
+  const recentDuplicate = await db
+    .select({ refCode: properties.refCode })
+    .from(properties)
+    .where(
+      and(
+        ilike(properties.title, fields.title),
+        sql`${properties.createdAt} > now() - interval '2 minutes'`
+      )
+    )
+    .limit(1);
+  if (recentDuplicate.length) {
+    return {
+      error: `A property titled "${fields.title}" was just created${
+        recentDuplicate[0].refCode ? ` (${recentDuplicate[0].refCode})` : ""
+      }. Check the properties list before adding another — this usually means an earlier submission already went through.`,
+    };
+  }
 
   try {
     const projectId = await resolveProjectId(projectName);
