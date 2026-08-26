@@ -10,41 +10,34 @@ import {
   FACINGS,
   POSSESSION_STATUSES,
   PROPERTY_AGES,
-  PROPERTY_TYPES,
   withEmptyOption,
 } from "@/lib/attributes";
 
 /**
- * CFF groups 2, 10, 11 and 12 — what kind of property this is, which way it
- * points, when it can be handed over and how old it is. All public.
+ * CFF groups 10, 11 and 12 — which way the property points, when it can be
+ * handed over and how old it is, plus the deal attributes. All public.
  *
- * The four live together because they are the questions a buyer asks in one
- * breath, and because they are cheap: four dropdowns and a two-box checklist
+ * These live together because they are the questions a buyer asks in one
+ * breath, and because they are cheap: three dropdowns and a two-box checklist
  * is a section a broker can finish at a gate without sitting down.
  *
- * Property type is the consequential one — lib/taxonomy/sections.ts maps it
- * to a shape, and the shape decides which of the other nineteen sections the
- * form even renders. Hence `onTypeChange`: the parent re-derives the visible
- * sections from it while the broker is still standing there, instead of after
- * a save round-trip.
+ * Property type used to live here and no longer does — it is the one field
+ * that decides which of the other nineteen sections the form even renders
+ * (lib/taxonomy/sections.ts maps it to a shape), so burying the only real
+ * type picker in a collapsible section left brokers hunting for it. It is
+ * now answered up in the identity block beside "Unit or project".
  */
 export function ClassificationSection({
-  propertyType: initialPropertyType,
   dealAttributes,
   facing: initialFacing,
   possessionStatus: initialPossessionStatus,
   propertyAge: initialPropertyAge,
-  onTypeChange,
 }: {
-  propertyType?: string | null;
   dealAttributes?: string[] | null;
   facing?: string | null;
   possessionStatus?: string | null;
   propertyAge?: string | null;
-  /** Lets the parent show/hide the other sections as the type changes. */
-  onTypeChange?: (type: string) => void;
 }) {
-  const [propertyType, setPropertyType] = useState(initialPropertyType ?? "");
   const [facing, setFacing] = useState(initialFacing ?? "");
   const [possessionStatus, setPossessionStatus] = useState(
     initialPossessionStatus ?? ""
@@ -56,13 +49,7 @@ export function ClassificationSection({
   // a validation gate, and re-lifting that state here would buy nothing.
   const initialDealAttributes = dealAttributes ?? [];
 
-  function chooseType(next: string) {
-    setPropertyType(next);
-    onTypeChange?.(next);
-  }
-
   const filled = countFilled([
-    propertyType,
     initialDealAttributes,
     facing,
     possessionStatus,
@@ -72,28 +59,11 @@ export function ClassificationSection({
   return (
     <FormSection
       title="Classification"
-      hint="Type drives which of the other sections this form asks for"
+      hint="Facing, possession and age — what a buyer asks in one breath"
       filled={filled}
-      total={5}
+      total={4}
       defaultOpen
     >
-      <div className="flex flex-col gap-2">
-        <label htmlFor="propertyType" className={LABEL}>
-          Property type
-        </label>
-        <Select
-          id="propertyType"
-          name="propertyType"
-          defaultValue={propertyType}
-          onValueChange={chooseType}
-          options={withEmptyOption("— Select a type —", PROPERTY_TYPES)}
-        />
-        <p className="font-sans text-meta text-ink-muted">
-          A plot is not asked for rooms or furnishing; a warehouse is not asked
-          for amenities. Choosing the type here changes the rest of the form.
-        </p>
-      </div>
-
       <div className="flex flex-col gap-2">
         <span className={LABEL}>Deal attributes</span>
         {/* Pre-Leased and Investment describe the DEAL, not the building — a

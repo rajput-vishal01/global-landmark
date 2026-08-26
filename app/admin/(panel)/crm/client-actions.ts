@@ -106,6 +106,14 @@ function dateField(formData: FormData, key: string): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/** `<input type="datetime-local">` gives "YYYY-MM-DDTHH:mm" or "". */
+function dateTimeField(formData: FormData, key: string): Date | null {
+  const raw = String(formData.get(key) ?? "").trim();
+  if (!raw) return null;
+  const d = new Date(raw);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export async function addActivity(formData: FormData): Promise<void> {
   await requireAdmin();
   const clientId = Number(formData.get("clientId"));
@@ -113,6 +121,13 @@ export async function addActivity(formData: FormData): Promise<void> {
 
   const kind = String(formData.get("kind") ?? "");
   if ((ACTIVITY_KINDS as readonly string[]).includes(kind)) {
+    // A call log is written after the call, not during it — often hours or
+    // days later ("I called them on Tuesday"). Left blank this keeps the
+    // schema default (now), so the common same-moment case costs nothing;
+    // filled in, it records when the call actually happened. The list is
+    // ordered by occurredAt, so a backdated entry sorts into its real place
+    // rather than jumping to the top.
+    const occurredAt = dateTimeField(formData, "occurredAt");
     try {
       await db.insert(crmActivities).values({
         clientId,
@@ -120,6 +135,7 @@ export async function addActivity(formData: FormData): Promise<void> {
         note: str(formData, "note", 4000),
         author: str(formData, "author", 200),
         followUpAt: dateField(formData, "followUpAt"),
+        ...(occurredAt ? { occurredAt } : {}),
       });
     } catch (err) {
       console.error("addActivity failed:", err);

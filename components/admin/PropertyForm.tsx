@@ -8,6 +8,7 @@ import {
   type PropertyFormState,
 } from "@/app/admin/(panel)/properties/actions";
 import { CATEGORIES } from "@/lib/categories";
+import { PROPERTY_TYPES, withEmptyOption } from "@/lib/attributes";
 import { sectionsFor } from "@/lib/taxonomy/sections";
 import { FIELD, LABEL } from "@/components/form-classes";
 import { Select } from "@/components/ui/Select";
@@ -220,10 +221,17 @@ export function PropertyForm({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        {/* The two "what is this" questions sit together, both spelled out.
+            "Listing type" used to live here alone with only Unit/Project in
+            it, while the actual 23-option type list was a collapsed section
+            further down called Classification — so a broker opening the only
+            field that reads like a type picker saw two options and concluded
+            the rest were missing. Kind is now named for the question it
+            actually asks, and Property type is answered in the same breath. */}
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <label htmlFor="kind" className={LABEL}>
-              Listing type
+              Unit or project
             </label>
             <Select
               id="kind"
@@ -231,11 +239,31 @@ export function PropertyForm({
               defaultValue={kind}
               onValueChange={setKind}
               options={[
-                { value: "unit", label: "Unit (flat / villa / room)" },
-                { value: "project", label: "Project (whole society)" },
+                { value: "unit", label: "One unit (flat / villa / kothi)" },
+                { value: "project", label: "Whole project (society / township)" },
               ]}
             />
           </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="propertyType" className={LABEL}>
+              Property type
+            </label>
+            <Select
+              id="propertyType"
+              name="propertyType"
+              defaultValue={propertyType}
+              onValueChange={setPropertyType}
+              options={withEmptyOption("— Select a type —", PROPERTY_TYPES)}
+            />
+            <p className="font-sans text-meta text-ink-muted">
+              A plot is not asked for rooms or furnishing; a warehouse is not
+              asked for amenities. Choosing the type here changes the rest of
+              the form.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <label htmlFor="category" className={LABEL}>
               Category
@@ -284,13 +312,12 @@ export function PropertyForm({
         sourceName={property?.sourceName}
       />
 
+      {/* Property type moved up into the identity block — see the comment there. */}
       <ClassificationSection
-        propertyType={property?.propertyType}
         dealAttributes={property?.dealAttributes ?? []}
         facing={property?.facing}
         possessionStatus={property?.possessionStatus}
         propertyAge={property?.propertyAge}
-        onTypeChange={setPropertyType}
       />
 
       <LocationSection

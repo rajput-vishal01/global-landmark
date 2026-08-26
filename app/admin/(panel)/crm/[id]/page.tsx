@@ -207,6 +207,19 @@ export default async function ClientDetailPage({
             </label>
             <input id="author" name="author" type="text" maxLength={200} className={FIELD} />
           </div>
+          {/* Blank = right now, so logging a call as it ends stays one click.
+              Set it to record a call that already happened on an earlier day. */}
+          <div className="flex w-52 flex-col gap-1.5">
+            <label htmlFor="occurredAt" className={LABEL}>
+              Happened on
+            </label>
+            <input
+              id="occurredAt"
+              name="occurredAt"
+              type="datetime-local"
+              className={FIELD}
+            />
+          </div>
           <div className="flex w-44 flex-col gap-1.5">
             <label htmlFor="followUpAt" className={LABEL}>
               Follow up on
