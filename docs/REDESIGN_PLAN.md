@@ -1,6 +1,6 @@
 # Redesign & Revamp Plan — "Calm & Complete" (v3)
 
-**Status:** proposed, not started. **Branch:** to be cut from `feat/requirements-v2`.
+**Status:** in progress — Phases A, B, C, D, F shipped; E in flight; G/H pending. **Branch:** to be cut from `feat/requirements-v2`.
 **Written:** 2026-08-29. **Reference:** client-supplied screen recording + live https://yhataw.com
 
 ---
@@ -91,28 +91,28 @@ area. No navy chrome — we keep our own identity.
 
 Each phase is independently shippable and ends green (typecheck, lint, build, leak-check).
 
-### Phase A — Design system: light & calm
+### Phase A — Design system: light & calm  ✅ shipped
 Tokens, motion cull, typography pass on functional surfaces.
 **Admin sync:** none functionally — but the admin shares these tokens, so every admin screen
 gets a visual regression pass before merge.
 **Risk:** highest blast radius of any phase; touches every page. Ship it alone.
 
-### Phase B — Search & discovery
+### Phase B — Search & discovery  ✅ shipped
 Hero search (City / Type / Status), richer filter bar, sort control, list-grid toggle.
 **Admin sync:** none — taxonomy already lives in the DB.
 
-### Phase C — Areas / locations (R-46) — the "location feats"
+### Phase C — Areas / locations (R-46) — the "location feats"  ✅ shipped
 `/areas` index and `/areas/[slug]` landing pages; homepage "Explore the Tricity" grid with
 live property counts.
 **Schema:** new `areas` table (name, slug, city, cover image, blurb, sort order, published).
 Counts derived from `properties`, never stored.
 **Admin sync:** new **Areas** section — full CRUD, image upload, ordering, publish toggle.
 
-### Phase D — Cards & listing parity
+### Phase D — Cards & listing parity  ✅ shipped
 Status badges, spec row, category tags, "Starts from", wishlist, compare (R-39).
 **Admin sync:** none — all fields exist.
 
-### Phase E — Property detail depth
+### Phase E — Property detail depth  🔄 in progress
 Sticky tabs, gallery/map toggle, unit-sizes table, highlights, amenities icon grid, public
 brochure, Schedule a Tour, sticky enquiry rail with Call and WhatsApp.
 **Schema:** `latitude`/`longitude` + `showMapPublicly`; `property_unit_sizes` rows; `isPublic`
@@ -120,7 +120,7 @@ on `property_documents`; new `tour_requests` table.
 **Admin sync:** map picker, unit-size editor, per-document public toggle, tour-request inbox.
 **Risk:** this phase touches the public/internal boundary — see section 6.
 
-### Phase F — Homepage content blocks
+### Phase F — Homepage content blocks  ✅ shipped
 3-step process, Our Services, text testimonials, newsletter subscribe.
 **Schema:** `services`, `text_testimonials`, `newsletter_subscribers`.
 **Admin sync:** CRUD for each; CSV export for subscribers.

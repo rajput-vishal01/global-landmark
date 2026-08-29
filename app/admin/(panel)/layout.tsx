@@ -19,10 +19,18 @@ const NAV: NavItem[] = [
   { label: "Properties", href: "/admin/properties" },
   { label: "Projects", href: "/admin/projects" },
   { label: "Builders", href: "/admin/builders" },
+  { label: "Areas", href: "/admin/areas" },
   { label: "Leads", href: "/admin/leads" },
+  { label: "Tour Requests", href: "/admin/tours" },
   { label: "CRM", href: "/admin/crm" },
   { label: "Deal of the Week", href: "/admin/deals" },
+  // Two testimonial surfaces on purpose: reels and written quotes are
+  // different content with different forms, so they get different screens
+  // rather than one tab-switching page that is half-disabled either way.
   { label: "Testimonials", href: "/admin/testimonials" },
+  { label: "Written Quotes", href: "/admin/text-testimonials" },
+  { label: "Services", href: "/admin/services" },
+  { label: "Subscribers", href: "/admin/subscribers" },
   { label: "Settings", href: "/admin/settings" },
 ];
 
