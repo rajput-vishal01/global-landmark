@@ -22,6 +22,7 @@ import type { CategoryValue } from "@/lib/categories";
 import { COLLECTIONS, typesInCollection, type CollectionValue } from "@/lib/attributes";
 import { PUBLIC_STATUSES } from "@/lib/taxonomy/status";
 import { isLocalityIn } from "@/lib/locations";
+import { DEFAULT_SORT, type PropertySort } from "@/lib/properties-url";
 
 /**
  * Public read layer. Every query fails soft (logs + empty result) so the
@@ -81,12 +82,29 @@ const publicVisibility = () =>
  * returns null for anything not flagged public, and there is no hidden
  * figure in the payload to find.
  */
-const PUBLIC_PRICE_EXTRA = {
-  publicPrice:
-    sql<number | null>`case when ${properties.showPricePublicly} then ${properties.demandPrice} else null end`.as(
-      "public_price"
-    ),
-} as const;
+const publicPrice = sql<number | null>`case when ${properties.showPricePublicly} then ${properties.demandPrice} else null end`;
+
+const PUBLIC_PRICE_EXTRA = { publicPrice: publicPrice.as("public_price") } as const;
+
+/**
+ * Sort order for /properties (Phase D). Price sorts run on the *public*
+ * price expression, not `demandPrice` — sorting by a figure the visitor is
+ * not allowed to see would let the ordering of the grid reveal it.
+ *
+ * NULLS LAST on both directions is deliberate: "Price on request" is an
+ * unknown, not a cheap one, so it belongs at the bottom either way. The
+ * createdAt tiebreak keeps paging stable when prices collide.
+ */
+function propertyOrder(sort: PropertySort = DEFAULT_SORT) {
+  switch (sort) {
+    case "price-asc":
+      return [sql`${publicPrice} asc nulls last`, desc(properties.createdAt)];
+    case "price-desc":
+      return [sql`${publicPrice} desc nulls last`, desc(properties.createdAt)];
+    default:
+      return [desc(properties.createdAt)];
+  }
+}
 
 /** The public shape of a joined project, allowlisted at the join. */
 const PUBLIC_PROJECT_JOIN = { columns: PUBLIC_PROJECT_COLUMNS } as const;
@@ -105,6 +123,8 @@ type PropertyFilters = {
   city?: string;
   locality?: string;
   sector?: string;
+  /** Free-text search across the public-facing text columns — see `keywordCondition`. */
+  q?: string;
 };
 
 /**
@@ -154,6 +174,34 @@ function collectionCondition(collection: CollectionValue) {
 }
 
 /** Shared by listProperties and countProperties so the two can never disagree about what matches. */
+/**
+ * Free-text search for the listing grid.
+ *
+ * Only the columns a visitor can already see are searched — title,
+ * location, locality, project name, type, configuration. Description is
+ * deliberately excluded: it is long, it makes every stray word a match, and
+ * the results stop feeling related to what was typed. Nothing internal is
+ * searchable, so a keyword can never be used to probe for a hidden field.
+ *
+ * `%`/`_`/`\` are escaped so a literal "100%" searches for 100%, not for
+ * everything. Drizzle parameterises the value, so this is about matching
+ * what the visitor typed, not about injection.
+ *
+ * ponytail: ILIKE '%…%' sequential-scans. At this portfolio size it is
+ * milliseconds; R-75 is the upgrade trigger (trigram index or tsvector).
+ */
+function keywordCondition(raw: string) {
+  const term = `%${raw.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
+  return or(
+    ilike(properties.title, term),
+    ilike(properties.location, term),
+    ilike(properties.locality, term),
+    ilike(properties.propertyType, term),
+    ilike(properties.configuration, term),
+    sql`${properties.projectId} in (select p.id from projects p where p.name ilike ${term})`
+  );
+}
+
 function buildPropertyConditions(filters: PropertyFilters) {
   // A locality is only meaningful under its own city — the same rule the
   // admin form enforces, so a stray `?locality=` from a stale link can't
@@ -176,6 +224,7 @@ function buildPropertyConditions(filters: PropertyFilters) {
     filters.city ? eq(properties.city, filters.city) : undefined,
     locality ? eq(properties.locality, locality) : undefined,
     filters.sector ? eq(properties.sector, filters.sector) : undefined,
+    filters.q?.trim() ? keywordCondition(filters.q.trim()) : undefined,
   ].filter((c): c is NonNullable<typeof c> => Boolean(c));
 }
 
@@ -186,7 +235,11 @@ const listPropertiesCached = unstable_cache(
   // `page` omitted (undefined) means "no pagination" — existing internal
   // callers (similar-properties ranking, the homepage strip) rely on getting
   // every match back, not just the first page's worth.
-  async (filters: PropertyFilters = {}, page?: number): Promise<PublicPropertyWithMedia[]> => {
+  async (
+    filters: PropertyFilters = {},
+    page?: number,
+    sort?: PropertySort
+  ): Promise<PublicPropertyWithMedia[]> => {
     const conditions = buildPropertyConditions(filters);
     // Cards only render the cover image — fetching whole galleries here
     // would bloat every cached list entry.
@@ -195,7 +248,7 @@ const listPropertiesCached = unstable_cache(
       extras: PUBLIC_PRICE_EXTRA,
       where: and(...conditions),
       with: { images: coverImageJoin, project: PUBLIC_PROJECT_JOIN },
-      orderBy: [desc(properties.createdAt)],
+      orderBy: propertyOrder(sort),
       ...(page != null
         ? { limit: PROPERTIES_PAGE_SIZE, offset: (Math.max(1, page) - 1) * PROPERTIES_PAGE_SIZE }
         : {}),

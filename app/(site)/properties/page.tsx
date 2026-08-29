@@ -10,6 +10,7 @@ import { CityTabs } from "@/components/CityTabs";
 import { ConfigTabs } from "@/components/ConfigTabs";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { Pagination } from "@/components/Pagination";
+import { ListingsToolbar } from "@/components/ListingsToolbar";
 import {
   listProperties,
   countProperties,
@@ -26,7 +27,16 @@ import {
   isCollection,
 } from "@/lib/attributes";
 import { isCity } from "@/lib/locations";
-import { propertiesHref, type PropertiesFilterParams } from "@/lib/properties-url";
+import {
+  DEFAULT_SORT,
+  DEFAULT_VIEW,
+  isPropertySort,
+  isPropertyView,
+  propertiesHref,
+  sortParam,
+  viewParam,
+  type PropertiesFilterParams,
+} from "@/lib/properties-url";
 import { COMPANY, PROPERTIES_PAGE } from "@/lib/data";
 import { canonical } from "@/lib/seo";
 
@@ -70,6 +80,9 @@ export default async function PropertiesPage({
     locality?: string;
     sector?: string;
     configuration?: string;
+    q?: string;
+    sort?: string;
+    view?: string;
     page?: string;
   }>;
 }) {
@@ -85,6 +98,12 @@ export default async function PropertiesPage({
   const city = params.city && isCity(params.city) ? params.city : undefined;
   const locality = params.locality?.trim() || undefined;
   const sector = params.sector?.trim() || undefined;
+  // Trimmed and length-capped: this reaches an ILIKE, and an unbounded
+  // string from a URL is not something to hand the database verbatim.
+  const q = params.q?.trim().slice(0, 100) || undefined;
+  // Presentation, not filtering — these two never reach buildPropertyConditions.
+  const sort = params.sort && isPropertySort(params.sort) ? params.sort : DEFAULT_SORT;
+  const view = params.view && isPropertyView(params.view) ? params.view : DEFAULT_VIEW;
 
   const activeFilters = {
     category,
@@ -96,10 +115,11 @@ export default async function PropertiesPage({
     city,
     locality,
     sector,
+    q,
   };
 
   const [properties, totalCount, collectionCounts, cityCounts] = await Promise.all([
-    listProperties(activeFilters, page),
+    listProperties(activeFilters, page, sort),
     countProperties(activeFilters),
     listCollectionCounts(),
     listCityCounts(),
@@ -120,6 +140,9 @@ export default async function PropertiesPage({
     locality,
     sector,
     configuration,
+    q,
+    sort: sortParam(sort),
+    view: viewParam(view),
   };
 
   return (
@@ -203,13 +226,21 @@ export default async function PropertiesPage({
             />
           </div>
 
+          <ListingsToolbar sort={sort} view={view} current={current} />
+
           {properties.length === 0 ? (
             <p className="text-body font-sans text-ink-muted">{PROPERTIES_PAGE.emptyBody}</p>
           ) : (
-            <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+            <div
+              className={
+                view === "list"
+                  ? "flex flex-col gap-10"
+                  : "grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3"
+              }
+            >
               {properties.map((property) => (
                 <div key={property.id}>
-                  <ListingCard property={property} />
+                  <ListingCard property={property} variant={view} />
                 </div>
               ))}
             </div>

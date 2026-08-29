@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { PublicPropertyWithMedia } from "@/lib/db/public-columns";
 import { categoryLabel } from "@/lib/categories";
 import {
+  POSSESSION_STATUSES,
   collectionOf,
   collectionLabel,
   formatArea,
@@ -36,15 +37,138 @@ function locationLine(property: PublicPropertyWithMedia): string {
   );
 }
 
+/**
+ * Inline SVG rather than an icon package: three glyphs do not justify a
+ * dependency, and these ship inside the RSC payload with no extra request.
+ * All three are drawn on the same 24 grid at the same stroke weight so they
+ * sit on one optical line with the label beside them.
+ */
+const SPEC_ICONS = {
+  bed: (
+    <>
+      <path d="M2 18v-6h20v6" />
+      <path d="M2 12V6" />
+      <path d="M6 12v-2h5v2" />
+      <path d="M2 18v2M22 18v2" />
+    </>
+  ),
+  bath: (
+    <>
+      <path d="M3 12h18v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3z" />
+      <path d="M6 12V6a2 2 0 0 1 4 0" />
+      <path d="M6 19l-1 2M18 19l1 2" />
+    </>
+  ),
+  area: (
+    <>
+      <path d="M3 3h18v18H3z" />
+      <path d="M9 15l6-6M15 9h-4M15 9v4" />
+    </>
+  ),
+} as const;
+
+type SpecIcon = keyof typeof SPEC_ICONS;
+type Spec = { icon: SpecIcon; label: string };
+
+/**
+ * The card's own spec list. `propertySpecs()` above stays the flat text
+ * summary the detail page uses; this is the scannable version, which is
+ * what makes a portal card readable at a glance.
+ */
+function cardSpecs(property: PublicPropertyWithMedia): Spec[] {
+  const specs: Spec[] = [];
+  // Same preference propertySpecs() makes: "3+1 BHK" beats "3 Beds".
+  const bedLabel =
+    property.configuration ||
+    (property.beds != null
+      ? `${property.beds} Bed${property.beds === 1 ? "" : "s"}`
+      : "");
+  if (bedLabel) specs.push({ icon: "bed", label: bedLabel });
+  if (property.baths != null) {
+    specs.push({
+      icon: "bath",
+      label: `${property.baths} Bath${property.baths === 1 ? "" : "s"}`,
+    });
+  }
+  if (property.areaValue != null) {
+    specs.push({ icon: "area", label: formatArea(property.areaValue, property.areaUnit) });
+  }
+  return specs;
+}
+
+function SpecRow({ specs }: { specs: Spec[] }) {
+  if (specs.length === 0) return null;
+  return (
+    <ul className="text-meta flex flex-wrap items-center gap-x-4 gap-y-1.5 font-sans text-ink-muted">
+      {specs.map((spec) => (
+        <li key={spec.icon} className="flex items-center gap-1.5">
+          <svg
+            aria-hidden
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-3.5 w-3.5 shrink-0 text-gold-deep"
+          >
+            {SPEC_ICONS[spec.icon]}
+          </svg>
+          {spec.label}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * The public face of `possessionStatus`. Deliberately NOT the admin's
+ * StatusBadge: that one renders the internal listing status (Available /
+ * Reserved / Sold), which by R-07 never reaches a visitor. This renders
+ * build stage, which is the thing a buyer actually scans a portal for.
+ *
+ * A launch is the one stage worth accenting, and gold stays a rule here —
+ * a border and a text colour, never a fill.
+ */
+const POSSESSION_ACCENT: Record<string, string> = {
+  "New Launch": "border-gold text-gold-deep",
+  "Soft Launch": "border-gold text-gold-deep",
+};
+
+function PossessionBadge({ status }: { status: string }) {
+  return (
+    <span
+      className={`text-eyebrow border bg-surface/95 px-2.5 py-1 font-sans font-medium uppercase tracking-[0.14em] ${
+        POSSESSION_ACCENT[status] ?? "border-border text-ink"
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
+
+/** Shared chip for the type / category / PLC tag row. */
+function Tag({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-meta border border-border px-2 py-0.5 font-sans text-ink-muted">
+      {children}
+    </span>
+  );
+}
+
 export function ListingCard({
   property,
+  variant = "grid",
   className = "",
 }: {
   property: PublicPropertyWithMedia;
+  /** `list` lays the card out horizontally for the listing page's list view. */
+  variant?: "grid" | "list";
   className?: string;
 }) {
+  const isList = variant === "list";
   const cover = property.images[0];
-  const specs = propertySpecs(property);
+  const specs = cardSpecs(property);
   const collection = collectionOf(property.propertyType, property.kind);
   const badge = collection
     ? collectionLabel(collection)
@@ -55,59 +179,81 @@ export function ListingCard({
   // it — a buyer scans for "where" first, "which building" second.
   const projectName = property.project?.name || property.society;
   const plc = property.plcAttributes ?? [];
+  // A stale or hand-edited value must not render as a badge, so the status
+  // shows only while it is still one of the taxonomy's own.
+  const possession =
+    property.possessionStatus &&
+    (POSSESSION_STATUSES as readonly string[]).includes(property.possessionStatus)
+      ? property.possessionStatus
+      : null;
   // R-05/R-07: no reference code on the card — refCode is internal only.
   const priceLabel =
     property.publicPrice != null
       ? formatIndianShort(property.publicPrice)
       : "Price on request";
+  // "Starts from" is only honest for a listing that covers several units —
+  // a whole project, or a unit offered in more than one configuration. On a
+  // single resale flat it would understate a price that is already fixed.
+  const startsFrom =
+    property.publicPrice != null &&
+    (property.kind === "project" || (property.configurations?.length ?? 0) > 1);
 
   return (
     <Link
       href={`/properties/${property.slug}`}
-      className={`group flex flex-col gap-4 ${className}`}
+      className={`group flex gap-4 ${isList ? "flex-col sm:flex-row sm:gap-6" : "flex-col"} ${className}`}
     >
-      <div className="relative aspect-[4/5] overflow-hidden bg-ink/5">
+      <div
+        className={`relative overflow-hidden bg-ink/5 ${
+          isList ? "aspect-[4/3] sm:w-72 sm:shrink-0" : "aspect-[4/5]"
+        }`}
+      >
         {cover && (
           <Image
             src={cover.url}
             alt={cover.alt || property.title}
             fill
-            sizes="(min-width: 1024px) 30vw, (min-width: 768px) 42vw, 100vw"
+            sizes={
+              isList
+                ? "(min-width: 640px) 18rem, 100vw"
+                : "(min-width: 1024px) 30vw, (min-width: 768px) 42vw, 100vw"
+            }
             className="img-zoom"
           />
         )}
-        <span className="text-eyebrow absolute left-4 top-4 bg-dark-deep/70 px-3 py-1.5 font-sans font-medium uppercase tracking-[0.2em] text-cream backdrop-blur-sm">
-          {badge}
-        </span>
+        <div className="absolute left-4 top-4 flex flex-wrap items-center gap-2">
+          <span className="text-eyebrow bg-dark-deep/70 px-3 py-1.5 font-sans font-medium uppercase tracking-[0.2em] text-cream backdrop-blur-sm">
+            {badge}
+          </span>
+          {possession && <PossessionBadge status={possession} />}
+        </div>
         <EnquiryToggleButton
           item={toEnquiryCartItem(property)}
           className="text-eyebrow absolute right-4 top-4 z-10 bg-dark-deep/70 px-3 py-1.5 font-sans font-medium uppercase tracking-[0.2em] text-cream backdrop-blur-sm transition-colors hover:bg-dark-deep/90"
         />
       </div>
-      <div className="flex flex-col gap-1.5">
+      <div className={`flex flex-col gap-1.5 ${isList ? "sm:flex-1 sm:justify-center" : ""}`}>
         <h3 className="font-serif text-h4 text-ink">{property.title}</h3>
         <p className="text-meta font-sans text-ink-muted">
           {locationLine(property)}
           {projectName ? ` · ${projectName}` : ""}
         </p>
-        {specs && <p className="text-meta font-sans text-ink-muted">{specs}</p>}
 
-        {plc.length > 0 && (
-          <div className="mt-0.5 flex flex-wrap gap-1.5">
-            {plc.map((tag) => (
-              <span
-                key={tag}
-                className="text-meta border border-border px-2 py-0.5 font-sans text-ink-muted"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
+        <SpecRow specs={specs} />
+
+        <div className="mt-0.5 flex flex-wrap gap-1.5">
+          {property.propertyType && <Tag>{property.propertyType}</Tag>}
+          <Tag>{categoryLabel(property.category)}</Tag>
+          {plc.map((tag) => (
+            <Tag key={tag}>{tag}</Tag>
+          ))}
+        </div>
 
         <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2 border-t border-border pt-2">
-          <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-gold-deep">
-            {categoryLabel(property.category)}
+          {/* Empty when the price is exact — the row keeps price-right
+              alignment either way, so nothing shifts between cards. */}
+          <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+            {startsFrom ? "Starts from" : ""}
           </span>
           <span className="font-sans text-body font-medium text-ink">
             {priceLabel}

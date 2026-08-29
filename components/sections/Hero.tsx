@@ -191,9 +191,9 @@ export function Hero() {
               {HERO.sub}
             </p>
             <PropertySearch
-              tone="dark"
+              withFilters
               placeholder={HERO.searchPlaceholder}
-              className="hero-search mt-6 max-w-md"
+              className="hero-search mt-8"
               openUpward
             />
           </div>

@@ -284,6 +284,90 @@ await section("videos", async () => {
   }
 });
 
+/**
+ * Areas, services and written testimonials (redesign Phase C / F).
+ *
+ * The area rows matter more than they look: `match_city` / `match_locality`
+ * are what let an area claim listings, so these are seeded to match the
+ * cities the six seed properties actually use. Seed an area that matches
+ * nothing and its landing page renders "0 properties", which reads as a bug
+ * rather than as empty data.
+ *
+ * Published by default — unlike a property, an area with a cover image and
+ * a blurb is complete the moment it is created, and leaving the whole
+ * discovery section invisible on a fresh database helps nobody.
+ */
+const AREAS = [
+  ["Panchkula", "panchkula", "Panchkula", "Panchkula", null, IMG.whiteVilla,
+   "Wide sector roads, mature trees and the Tricity's most settled family addresses."],
+  ["Panchkula Extension", "panchkula-extension", "Panchkula Extension", "Panchkula Extension", null, IMG.township,
+   "The region's fastest-growing edge — plotted townships and new launches."],
+  ["Zirakpur", "zirakpur", "Zirakpur", "Zirakpur", null, IMG.apartments,
+   "The airport-side corridor: ready-to-move apartments and strong rental demand."],
+  ["Mohali", "mohali", "Mohali", "Mohali", null, IMG.towers,
+   "Planned sectors, the IT corridor and the Tricity's deepest apartment inventory."],
+  ["New Chandigarh", "new-chandigarh", "New Chandigarh", "New Chandigarh", null, IMG.villaDusk,
+   "Low-density living against the Shivaliks, built around the education belt."],
+  ["Kharar", "kharar", "Kharar", "Kharar", null, IMG.kitchenLiving,
+   "Entry pricing on the Chandigarh-Ludhiana highway, with steady appreciation."],
+];
+
+await section("areas", async () => {
+  for (let i = 0; i < AREAS.length; i++) {
+    const [name, slug, city, matchCity, matchLocality, img, blurb] = AREAS[i];
+    await client.query(
+      `insert into areas (name, slug, city, match_city, match_locality, cover_image, blurb, sort_order, is_published)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,true)
+       on conflict (slug) do nothing`,
+      [name, slug, city, matchCity, matchLocality, u(img), blurb, i]
+    );
+  }
+});
+
+const SERVICES = [
+  ["Buying or Selling", "End-to-end representation on both sides of a transaction, from search to registry.", "home"],
+  ["Legal Advice", "Title checks, chain-of-ownership review and registry paperwork handled in-house.", "shield"],
+  ["Real Estate Investment", "Yield and appreciation modelling on plots, pre-launch inventory and rentals.", "chart"],
+  ["Home Loan", "Sanction support across lenders, with realistic eligibility read before you commit.", "bank"],
+  ["Home Vastu", "Orientation, entry and layout reviewed before you sign, not after you move in.", "compass"],
+  ["Home Interior", "Fit-out and furnishing through vetted contractors once possession is handed over.", "brush"],
+];
+
+await section("services", async () => {
+  for (let i = 0; i < SERVICES.length; i++) {
+    const [title, description, icon] = SERVICES[i];
+    await client.query(
+      `insert into services (title, description, icon, sort_order, is_published)
+       select $1,$2,$3,$4,true
+       where not exists (select 1 from services where title = $1)`,
+      [title, description, icon, i]
+    );
+  }
+});
+
+const TEXT_TESTIMONIALS = [
+  ["They walked every floor with us and told us plainly which two were worth the money. We closed on the second.",
+   "Nishchal Nagpal", "Bought a 3 BHK in Zirakpur"],
+  ["Paperwork was the part I dreaded. The registry was done in one sitting and nothing came back later.",
+   "Parul Harjai", "Sold a plot in Panchkula Extension"],
+  ["I was calling from Dubai and never once felt out of the loop. Video walkthroughs the same day I asked.",
+   "Sandeep Dalal", "NRI purchase, Mohali"],
+  ["We were shown four properties, not forty. That restraint is the whole reason we trusted the recommendation.",
+   "Nakul Grover", "Bought a kothi in Panchkula"],
+];
+
+await section("text testimonials", async () => {
+  for (let i = 0; i < TEXT_TESTIMONIALS.length; i++) {
+    const [quote, author, context] = TEXT_TESTIMONIALS[i];
+    await client.query(
+      `insert into text_testimonials (quote, author, context, sort_order, is_published)
+       select $1,$2,$3,$4,true
+       where not exists (select 1 from text_testimonials where author = $2)`,
+      [quote, author, context, i]
+    );
+  }
+});
+
 // ─── CFF expansion: one fully-populated example of every new entity ────────
 // Without these, the admin screens and the leak check have nothing to
 // exercise on a fresh database.
@@ -416,6 +500,78 @@ const propId =
     (acc, r) => ((acc[r.slug] = r.id), acc),
     {}
   );
+
+/**
+ * Unit sizes for the two project listings — the "2 BHK / 1750 sq.ft /
+ * ₹3.2 Cr" table. Seeded against projects rather than the resale kothi,
+ * because a single resale unit has one size and one price and would render
+ * a one-row table that looks broken.
+ */
+await section("unit sizes", async () => {
+  const rows = [
+    ["imperial-residency-3bhk", "2 BHK", 1750, "sqft", 32000000],
+    ["imperial-residency-3bhk", "3 BHK", 2366, "sqft", 54000000],
+    ["imperial-residency-3bhk", "3 + S BHK", 2420, "sqft", 53000000],
+    ["homeland-urva-luxury-mohali", "2 BHK", 1290, "sqft", 9800000],
+    ["homeland-urva-luxury-mohali", "3 BHK", 1685, "sqft", 14500000],
+    ["homeland-urva-luxury-mohali", "4 BHK", 2240, "sqft", 21000000],
+  ];
+  for (let i = 0; i < rows.length; i++) {
+    const [slug, label, area, unit, price] = rows[i];
+    const id = propId[slug];
+    if (!id) continue;
+    await client.query(
+      `insert into property_unit_sizes (property_id, unit_label, area_value, area_unit, price, sort_order)
+       select $1,$2,$3,$4,$5,$6
+       where not exists (
+         select 1 from property_unit_sizes where property_id = $1 and unit_label = $2
+       )`,
+      [id, label, area, unit, price, i]
+    );
+  }
+});
+
+/**
+ * Two project listings advertise their starting price publicly.
+ *
+ * Every other seed row leaves show_price_publicly at its default false,
+ * which is right for a resale kothi — the owner's number is nobody's
+ * business until they enquire. But with ALL six hidden, the public site
+ * rendered 'Price on request' six times and the 'Starts from' treatment
+ * never appeared at all, which reads as broken pricing rather than as
+ * deliberate discretion. Projects are exactly the listings whose entry
+ * price is already public everywhere else, so they carry it here.
+ *
+ * The leak-check needle (the kothi's 244466600) is untouched and stays
+ * internal — see scripts/leak-check.mjs.
+ */
+/**
+ * Two project listings advertise their starting price publicly.
+ *
+ * Every other seed row leaves show_price_publicly at its default false,
+ * which is right for a resale kothi — the owner's number is nobody's
+ * business until they enquire. But with all six hidden the public site
+ * rendered "Price on request" six times and the "Starts from" treatment
+ * never appeared at all, which reads as broken pricing rather than as
+ * deliberate discretion. Projects are exactly the listings whose entry
+ * price is already public everywhere else, so they carry it here.
+ *
+ * The leak-check needle (the kothi's 244466600) is untouched and stays
+ * internal — see scripts/leak-check.mjs.
+ */
+await section("public project pricing", async () => {
+  for (const [slug, price, rate] of [
+    ["homeland-urva-luxury-mohali", 9800000, 7600],
+    ["grand-mega-township-plots", 4100000, 8200],
+  ]) {
+    await client.query(
+      `update properties
+         set demand_price = $2, per_sqft_rate = $3, show_price_publicly = true
+       where slug = $1 and demand_price is null`,
+      [slug, price, rate]
+    );
+  }
+});
 
 await section("leads and settings", async () => {
   await client.query(
@@ -603,7 +759,11 @@ const { rows: check } = await client.query(
      (select count(*)::int from site_settings where key = 'company_contact') as contact_setting,
      (select count(*)::int from site_settings where key = 'credibility') as credibility_setting,
      (select count(*)::int from properties where ref_code is null) as missing_ref_code,
-     (select count(*)::int from properties where publication_state = 'published') as published`
+     (select count(*)::int from properties where publication_state = 'published') as published,
+     (select count(*)::int from areas) as areas,
+     (select count(*)::int from services) as services,
+     (select count(*)::int from text_testimonials) as text_testimonials,
+     (select count(*)::int from property_unit_sizes) as unit_sizes`
 );
 console.table(check);
 const c = check[0];
@@ -629,6 +789,10 @@ const failures = Object.entries({
   "credibility setting seeded": c.credibility_setting >= 1,
   "every property has a ref code": c.missing_ref_code === 0,
   "every seeded property is published": c.published >= c.properties,
+  "areas >= 6": c.areas >= 6,
+  "services >= 6": c.services >= 6,
+  "text testimonials >= 4": c.text_testimonials >= 4,
+  "unit sizes >= 6": c.unit_sizes >= 6,
 })
   .filter(([, ok]) => !ok)
   .map(([label]) => label);

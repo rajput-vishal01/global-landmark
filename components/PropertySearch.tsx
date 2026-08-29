@@ -6,6 +6,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, m } from "framer-motion";
 import { useOutsideClick } from "@/lib/hooks";
+import { Select } from "@/components/ui/Select";
+import { POSSESSION_STATUSES, PROPERTY_TYPES, withEmptyOption } from "@/lib/attributes";
+import { CITY_NAMES } from "@/lib/locations";
 
 type Result = {
   type?: "property" | "project";
@@ -16,21 +19,37 @@ type Result = {
   image: string | null;
 };
 
+// The dropdowns reuse the shared taxonomies rather than copying them, so a
+// new city or property type shows up here the moment it lands in
+// lib/taxonomy. "Status" is possession (Ready to Move / Under Construction
+// / ...) — the listing-lifecycle statuses are internal and never public.
+const CITY_OPTIONS = withEmptyOption("Any city", CITY_NAMES);
+const TYPE_OPTIONS = withEmptyOption("Any type", PROPERTY_TYPES);
+const STATUS_OPTIONS = withEmptyOption("Any status", POSSESSION_STATUSES);
+
 /**
  * Debounced portfolio search against /api/search. Combobox keyboard
  * pattern: arrows move, Enter opens, Escape closes.
+ *
+ * With `withFilters` it also renders the hero search bar the client asked
+ * for — City / Property Type / Status beside the keyword box — submitting
+ * to /properties as a plain GET form, so it degrades to a working search
+ * with JS disabled instead of relying on router navigation.
  */
 export function PropertySearch({
   tone = "light",
   placeholder = "Search the portfolio",
   className = "",
   openUpward = false,
+  withFilters = false,
 }: {
   tone?: "light" | "dark";
   placeholder?: string;
   className?: string;
   /** Open results above the input — needed inside overflow-clipped heroes. */
   openUpward?: boolean;
+  /** Wrap the input in the City/Type/Status filter bar with a submit button. */
+  withFilters?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Result[]>([]);
@@ -102,13 +121,29 @@ export function PropertySearch({
     router.push(result.type === "project" ? `/projects/${result.slug}` : `/properties/${result.slug}`);
   }
 
-  const isDark = tone === "dark";
+  // A GET form posts every field, empty ones included, which would leave
+  // "?city=&type=&possession=" on a page that rebuilds its own filter links
+  // from the parsed values. Drop the empties when JS is around; without it
+  // the native submit still lands on the right listing, just a uglier URL.
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const params = new URLSearchParams();
+    new FormData(e.currentTarget).forEach((value, key) => {
+      if (typeof value === "string" && value) params.set(key, value);
+    });
+    setIsOpen(false);
+    router.push(`/properties${params.size ? `?${params}` : ""}`);
+  }
+
+  // The filter bar is a white panel, so its input keeps the light tone even
+  // when the hero behind it is dark.
+  const isDark = tone === "dark" && !withFilters;
   const inputTone = isDark
     ? "border-cream/30 text-cream placeholder:text-cream/50 focus:border-gold"
     : "border-border text-ink placeholder:text-ink-muted/60 focus:border-gold";
 
-  return (
-    <div ref={rootRef} className={`relative ${className}`}>
+  const keywordField = (
+    <div ref={rootRef} className={`relative ${withFilters ? "" : className}`}>
       <div className="relative">
         <svg
           aria-hidden
@@ -125,7 +160,13 @@ export function PropertySearch({
           <circle cx="11" cy="11" r="7" />
           <path d="M21 21l-4.35-4.35" />
         </svg>
+        {/* `name` is set only in the filter-bar form, so the keyword joins
+            city/type/status in the submitted query and actually filters the
+            grid. The menu variant is a jump-straight-to-the-property
+            dropdown with no form around it, where a name would do nothing. */}
         <input
+          id={`${listId}-keyword`}
+          name={withFilters ? "q" : undefined}
           type="search"
           role="combobox"
           aria-expanded={isOpen}
@@ -151,7 +192,7 @@ export function PropertySearch({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: openUpward ? -8 : 8 }}
             transition={{ duration: 0.35, ease: EASE }}
-           
+
             className={`absolute left-0 right-0 z-40 max-h-96 overflow-y-auto border border-border bg-white shadow-[0_24px_60px_-24px_rgba(20,20,20,0.35)] ${
               openUpward ? "bottom-full mb-2" : "top-full mt-2"
             }`}
@@ -200,6 +241,68 @@ export function PropertySearch({
           </m.ul>
         )}
       </AnimatePresence>
+    </div>
+  );
+
+  if (!withFilters) return keywordField;
+
+  return (
+    <form
+      action="/properties"
+      method="get"
+      aria-label="Search the portfolio"
+      onSubmit={onSubmit}
+      className={`bg-surface p-5 shadow-[0_24px_60px_-28px_rgba(20,20,20,0.45)] md:p-6 ${className}`}
+    >
+      {/* Stacks on phones, pairs at sm, one row of four at lg — the panel
+          lives inside the hero's own max-width, so five columns would leave
+          every dropdown too narrow to read its own options. */}
+      <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
+        {/* The keyword box carries no `name`: /properties filters on the
+            taxonomies only, so the keyword is answered by the live dropdown
+            above rather than a query param the listing page never reads. */}
+        <Field label="Keyword" htmlFor={`${listId}-keyword`}>
+          {keywordField}
+        </Field>
+        <Field label="City" htmlFor={`${listId}-city`}>
+          <Select id={`${listId}-city`} name="city" options={CITY_OPTIONS} />
+        </Field>
+        <Field label="Property Type" htmlFor={`${listId}-type`}>
+          <Select id={`${listId}-type`} name="type" options={TYPE_OPTIONS} />
+        </Field>
+        <Field label="Status" htmlFor={`${listId}-status`}>
+          <Select id={`${listId}-status`} name="possession" options={STATUS_OPTIONS} />
+        </Field>
+        <button
+          type="submit"
+          className="text-eyebrow w-full cursor-pointer bg-ink px-10 py-3.5 font-sans font-medium uppercase tracking-[0.2em] text-cream transition-colors duration-300 hover:bg-gold-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:col-span-2 lg:col-span-4 lg:w-fit"
+        >
+          Search
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/** Label + control column, matching the listings page filter bar. */
+function Field({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label
+        htmlFor={htmlFor}
+        className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted"
+      >
+        {label}
+      </label>
+      {children}
     </div>
   );
 }
