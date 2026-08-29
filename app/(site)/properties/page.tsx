@@ -127,11 +127,11 @@ export default async function PropertiesPage({
       <Header />
       <main>
         <section className="bg-dark-deep px-5 pb-12 pt-36 md:px-12 md:pb-14 md:pt-44">
-          <span data-reveal className="mb-8 block h-px w-16 bg-gold" />
-          <h1 data-reveal className="max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
+          <span className="mb-8 block h-px w-16 bg-gold" />
+          <h1 className="max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
             {PROPERTIES_PAGE.title}
           </h1>
-          <p data-reveal className="mt-6 max-w-xl text-pretty text-body font-sans text-cream/75">
+          <p className="mt-6 max-w-xl text-pretty text-body font-sans text-cream/75">
             {totalCount === 0
               ? `${PROPERTIES_PAGE.emptySub} ${PROPERTIES_PAGE.subSuffix}`
               : `${totalCount} residence${totalCount === 1 ? "" : "s"} represented. ${PROPERTIES_PAGE.subSuffix}`}
@@ -139,8 +139,8 @@ export default async function PropertiesPage({
         </section>
 
         <section className="px-5 py-16 md:px-12 md:py-20">
-          <span data-reveal className="mb-8 block h-px w-16 bg-gold" />
-          <h2 data-reveal className="mb-8 font-serif text-h3 text-ink">
+          <span className="mb-8 block h-px w-16 bg-gold" />
+          <h2 className="mb-8 font-serif text-h3 text-ink">
             Browse by Collection
           </h2>
           <CollectionGrid counts={collectionCounts} current={current} />
@@ -149,7 +149,7 @@ export default async function PropertiesPage({
         <section id="listings" className="px-5 py-20 md:px-12 md:py-28">
           <nav
             aria-label="Filter by category"
-            data-reveal
+           
             className="mb-8 flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-border pb-5"
           >
             {/* h2, not a span — the page would otherwise jump h1 → h3 (cards) */}
@@ -182,7 +182,7 @@ export default async function PropertiesPage({
             })}
           </nav>
 
-          <div data-reveal className="mb-10 border-b border-border pb-10">
+          <div className="mb-10 border-b border-border pb-10">
             <CityTabs
               cities={cityCounts}
               city={city ?? ""}
@@ -191,11 +191,11 @@ export default async function PropertiesPage({
             />
           </div>
 
-          <div data-reveal className="mb-10 border-b border-border pb-10">
+          <div className="mb-10 border-b border-border pb-10">
             <ConfigTabs configuration={configuration} current={current} />
           </div>
 
-          <div data-reveal className="mb-14">
+          <div className="mb-14">
             <PropertiesFilters
               propertyType={propertyType ?? ""}
               possession={possessionStatus ?? ""}
@@ -208,7 +208,7 @@ export default async function PropertiesPage({
           ) : (
             <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
               {properties.map((property) => (
-                <div key={property.id} data-reveal>
+                <div key={property.id}>
                   <ListingCard property={property} />
                 </div>
               ))}

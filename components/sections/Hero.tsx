@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { PropertySearch } from "@/components/PropertySearch";
-import { useGSAP, gsap, ScrollTrigger, SplitText, EASE_HEAVY } from "@/lib/gsap";
+import { useGSAP, gsap, SplitText, EASE_HEAVY } from "@/lib/gsap";
 import { HERO } from "@/lib/data";
 
 const SLIDES = HERO.slides;
@@ -53,11 +53,9 @@ export function Hero() {
       const mm = gsap.matchMedia();
 
       mm.add("(prefers-reduced-motion: no-preference)", () => {
-        // Intro must never touch .hero-frame — the exit scrub below owns its
-        // scale/alpha, and two tweens on one prop desync on scroll-back.
-        // fromTo (not .from): CSS pre-hides .hero-img under html.js, so the
-        // start values must be explicit — .from would read opacity 0 and
-        // animate 0 → 0.
+        // fromTo (not .from) so the start values are explicit and the
+        // intro is self-contained — it no longer depends on a CSS rule
+        // pre-hiding .hero-img, which went with the scroll engine.
         gsap
           .timeline({ defaults: { ease: EASE_HEAVY } })
           .fromTo(
@@ -87,27 +85,11 @@ export function Hero() {
             }),
         });
 
-        // Pin the hero while the next section slides over it; the frame
-        // recedes (scales down, dims) as it is covered.
-        ScrollTrigger.create({
-          trigger: scope.current,
-          start: "top top",
-          end: "+=90%",
-          pin: true,
-          pinSpacing: false,
-        });
-        gsap.to(".hero-frame", {
-          scale: 0.94,
-          autoAlpha: 0.45,
-          ease: "none",
-          transformOrigin: "center top",
-          scrollTrigger: {
-            trigger: scope.current,
-            start: "top top",
-            end: "+=90%",
-            scrub: true,
-          },
-        });
+        // Phase A: the hero used to pin while the next section slid over
+        // it, with the frame scaling down and dimming on scrub. Both were
+        // scroll-driven, and pinning the first screen is the single most
+        // disorienting thing on the page — the reason the client read the
+        // site as busy. The hero now scrolls away like any other section.
       });
     },
     { scope }

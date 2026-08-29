@@ -176,18 +176,18 @@ export default async function ProjectDetailPage({
             className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/75 via-black/25 to-transparent"
           />
           <div className="relative px-5 pb-16 pt-40 md:px-12 md:pb-20">
-            <div data-reveal className="mb-4">
+            <div className="mb-4">
               <Breadcrumbs items={breadcrumbItems} tone="dark" />
             </div>
-            <span data-reveal className="mb-8 block h-px w-16 bg-gold" />
-            <p data-reveal className="text-eyebrow font-sans font-medium uppercase tracking-[0.25em] text-cream/70">
+            <span className="mb-8 block h-px w-16 bg-gold" />
+            <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.25em] text-cream/70">
               Project{project.builder ? ` · ${project.builder.name}` : ""}
             </p>
-            <h1 data-reveal className="mt-4 max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
+            <h1 className="mt-4 max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
               {project.name}
             </h1>
             {location && (
-              <p data-reveal className="mt-5 max-w-xl text-pretty text-body font-sans text-cream/80">
+              <p className="mt-5 max-w-xl text-pretty text-body font-sans text-cream/80">
                 {location}
               </p>
             )}
@@ -199,10 +199,10 @@ export default async function ProjectDetailPage({
           <div className="flex flex-col gap-16">
             {project.description && (
               <div>
-                <span data-reveal className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Overview
                 </span>
-                <div data-reveal className="mt-6 flex max-w-2xl flex-col gap-5">
+                <div className="mt-6 flex max-w-2xl flex-col gap-5">
                   {project.description
                     .split(/\n+/)
                     .filter(Boolean)
@@ -217,10 +217,10 @@ export default async function ProjectDetailPage({
 
             {project.builder?.about && (
               <div>
-                <span data-reveal className="mb-4 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-4 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Developed By
                 </span>
-                <h2 data-reveal className="font-serif text-h4 text-ink">
+                <h2 className="font-serif text-h4 text-ink">
                   <Link
                     href={`/builders/${project.builder.slug}`}
                     className="underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
@@ -229,11 +229,11 @@ export default async function ProjectDetailPage({
                   </Link>
                 </h2>
                 {project.builder.belongsTo && (
-                  <p data-reveal className="mt-1 text-meta font-sans text-ink-muted">
+                  <p className="mt-1 text-meta font-sans text-ink-muted">
                     {project.builder.belongsTo}
                   </p>
                 )}
-                <p data-reveal className="mt-4 max-w-2xl text-pretty text-body font-sans text-ink">
+                <p className="mt-4 max-w-2xl text-pretty text-body font-sans text-ink">
                   {project.builder.about}
                 </p>
               </div>
@@ -241,10 +241,10 @@ export default async function ProjectDetailPage({
 
             {amenityGroups.length > 0 && (
               <div>
-                <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Amenities
                 </span>
-                <div data-reveal className="flex max-w-2xl flex-col gap-5">
+                <div className="flex max-w-2xl flex-col gap-5">
                   {amenityGroups.map((group) => (
                     <div key={group.label}>
                       <p className="mb-2 text-eyebrow font-sans font-medium uppercase tracking-[0.14em] text-gold-deep">
@@ -269,18 +269,18 @@ export default async function ProjectDetailPage({
             {/* Tower / unit availability (R-12) */}
             <div>
               <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
-                <span data-reveal className="block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Availability
                 </span>
                 {totalAvailable > 0 && (
-                  <span data-reveal className="text-meta font-sans text-ink-muted">
+                  <span className="text-meta font-sans text-ink-muted">
                     {totalAvailable} unit{totalAvailable === 1 ? "" : "s"} available
                   </span>
                 )}
               </div>
 
               {project.towers.length === 0 && project.units.length === 0 ? (
-                <p data-reveal className="text-pretty text-body font-sans text-ink-muted">
+                <p className="text-pretty text-body font-sans text-ink-muted">
                   {PROJECT_DETAIL.emptyUnitsNote}
                 </p>
               ) : (
@@ -289,7 +289,7 @@ export default async function ProjectDetailPage({
                     <TowerBlock key={tower.id} tower={tower} />
                   ))}
                   {project.units.length > 0 && (
-                    <div data-reveal>
+                    <div>
                       <div className="mb-4 border-b border-border pb-3">
                         <h3 className="font-serif text-h4 text-ink">Additional Units</h3>
                         <p className="text-meta font-sans text-ink-muted">
@@ -305,7 +305,7 @@ export default async function ProjectDetailPage({
 
             {galleryImages.length > 0 && (
               <div>
-                <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Gallery
                 </span>
                 <GalleryLightbox images={galleryImages} title={project.name} />
@@ -314,14 +314,14 @@ export default async function ProjectDetailPage({
 
             {location && (
               <div>
-                <span data-reveal className="mb-4 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-4 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Location
                 </span>
-                <p data-reveal className="max-w-xl text-pretty text-body font-sans text-ink">
+                <p className="max-w-xl text-pretty text-body font-sans text-ink">
                   {location}
                 </p>
                 <a
-                  data-reveal
+                 
                   href={mapsHref}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -334,7 +334,7 @@ export default async function ProjectDetailPage({
           </div>
 
           <aside className="md:sticky md:top-28 md:self-start">
-            <div data-reveal className="border border-border bg-white p-8 md:p-10">
+            <div className="border border-border bg-white p-8 md:p-10">
               <span aria-hidden className="mb-6 block h-px w-12 bg-gold" />
               {facts.length > 0 && (
                 <dl className="flex flex-col">
@@ -369,10 +369,10 @@ export default async function ProjectDetailPage({
         <section id="inquire" className="border-t border-border bg-white px-5 py-20 md:px-12 md:py-28">
           <div className="grid grid-cols-1 gap-14 md:grid-cols-[1fr_1.4fr] md:gap-24">
             <div className="md:sticky md:top-32 md:self-start">
-              <h2 data-reveal className="max-w-sm text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
+              <h2 className="max-w-sm text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
                 {PROJECT_DETAIL.inquiryHeading}
               </h2>
-              <p data-reveal className="mt-5 max-w-sm text-pretty text-body font-sans text-ink-muted">
+              <p className="mt-5 max-w-sm text-pretty text-body font-sans text-ink-muted">
                 Reference {project.name}. {PROJECT_DETAIL.inquirySub}
               </p>
             </div>
@@ -396,7 +396,7 @@ function TowerBlock({ tower }: { tower: Tower }) {
     .join(" · ");
 
   return (
-    <div data-reveal>
+    <div>
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3 border-b border-border pb-3">
         <h3 className="font-serif text-h4 text-ink">{tower.name}</h3>
         <p className="text-meta font-sans text-ink-muted">

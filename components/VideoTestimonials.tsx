@@ -27,7 +27,7 @@ export function VideoTestimonials({ videos }: { videos: TestimonialVideo[] }) {
     <>
       <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2">
         {videos.map((video) => (
-          <figure key={video.id} data-reveal className="group flex flex-col gap-4">
+          <figure key={video.id} className="group flex flex-col gap-4">
             <button
               type="button"
               onClick={() => setOpenVideo(video)}

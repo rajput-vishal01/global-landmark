@@ -20,25 +20,25 @@ export function DealOfWeek({ deal }: { deal: ActiveDeal | null }) {
     <section className="overflow-hidden bg-dark px-5 py-20 md:px-12 md:py-28">
       <div className="grid grid-cols-1 items-center gap-12 md:grid-cols-[1fr_1.1fr] md:gap-20">
         <div className="flex flex-col items-start gap-6">
-          <span data-reveal className="flex items-center gap-4">
+          <span className="flex items-center gap-4">
             <span aria-hidden className="block h-px w-10 bg-gold" />
             <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.3em] text-gold-highlight">
               Deal of the Week
             </span>
           </span>
-          <h2 data-reveal className="text-balance font-serif text-h2 uppercase tracking-[0.04em] text-cream">
+          <h2 className="text-balance font-serif text-h2 uppercase tracking-[0.04em] text-cream">
             {property.title}
           </h2>
-          <p data-reveal className="text-meta font-sans uppercase tracking-[0.15em] text-cream/60">
+          <p className="text-meta font-sans uppercase tracking-[0.15em] text-cream/60">
             {categoryLabel(property.category)} · {property.location}
           </p>
-          <p data-reveal className="max-w-md text-pretty text-body font-sans text-cream/75">
+          <p className="max-w-md text-pretty text-body font-sans text-cream/75">
             {property.description.split(/\n+/)[0]}
           </p>
-          <p data-reveal className="text-meta font-sans text-cream/50">
+          <p className="text-meta font-sans text-cream/50">
             Held for private discussion through {formatThrough(deal.endsAt)}.
           </p>
-          <div data-reveal className="mt-2">
+          <div className="mt-2">
             <Button href={`/properties/${property.slug}`} variant="corner" tone="dark">
               View the Residence
             </Button>
@@ -46,7 +46,7 @@ export function DealOfWeek({ deal }: { deal: ActiveDeal | null }) {
         </div>
 
         {cover && (
-          <div data-reveal-img className="relative aspect-[3/2] overflow-hidden bg-ink/20 md:aspect-[4/3]">
+          <div className="relative aspect-[3/2] overflow-hidden bg-ink/20 md:aspect-[4/3]">
             <Image
               src={cover.url}
               alt={cover.alt || property.title}

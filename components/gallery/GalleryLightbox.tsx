@@ -94,7 +94,7 @@ export function GalleryLightbox({
           <button
             key={img.id}
             type="button"
-            data-reveal
+           
             onClick={() => setOpenIndex(i)}
             aria-label={`Open image ${i + 1} of ${visible.length}`}
             className={`group relative cursor-zoom-in overflow-hidden bg-ink/5 ${

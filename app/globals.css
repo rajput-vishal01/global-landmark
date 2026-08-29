@@ -8,8 +8,17 @@
 }
 
 @theme {
-  /* Palette — aaronkirman-style near-black/white/gold. Navy lives only in
-     the logo asset, not the UI. */
+  /* Palette — near-black ink on white, gold as a reserved accent. Navy
+     lives only in the logo asset, not the UI.
+
+     `surface` (pure white) is the page ground; `cream` is now a *banding*
+     colour for alternating sections, not the default background. That one
+     swap is most of the "less golden tint" the client asked for: cream is
+     a warm off-white, so using it as the page background tinted every
+     screen gold before a single accent was drawn. Gold itself is kept, but
+     restricted to rules, hover, focus and active states — never a fill and
+     never large text. `gold-highlight` is legitimate on dark surfaces
+     (menu, deal band, ticker), where pale gold is the readable choice. */
   --color-ink: #141414;
   --color-ink-muted: #646464;
   --color-dark: #141414;
@@ -17,8 +26,9 @@
   --color-gold: #c9992e;
   --color-gold-highlight: #f5d98b;
   --color-gold-deep: #8a5a22;
+  --color-surface: #ffffff;
   --color-cream: #faf9f6;
-  --color-border: #e2e0db;
+  --color-border: #e6e6e3;
   --color-error: #9a2b2b;
 
   /* Fluid type scale */
@@ -39,20 +49,11 @@
 }
 
 body {
-  background: var(--color-cream);
+  background: var(--color-surface);
   color: var(--color-ink);
-  /* Pinned/transformed sections must never cause sideways jiggle on
-     mobile; clip (not hidden) keeps position: sticky working. */
+  /* Transformed sections must never cause sideways jiggle on mobile;
+     clip (not hidden) keeps position: sticky working. */
   overflow-x: clip;
-}
-
-/* Lenis smooth scroll */
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
 }
 
 /* Shared hover-zoom for imagery inside a `group` link/button. */
@@ -64,19 +65,10 @@ html.lenis body {
   transform: scale(1.05);
 }
 
-/* Pre-hide scroll-reveal targets before GSAP takes over — only once JS has
-   stamped .js on <html> (inline script in the root layout), so content
-   stays visible without JS and for reduced-motion users. Prevents the
-   paint → hide → fade-back flash on slow devices. */
-@media (prefers-reduced-motion: no-preference) {
-  .js [data-reveal] {
-    opacity: 0;
-    transform: translateY(32px);
-  }
-  .js .hero-img {
-    opacity: 0;
-  }
-}
+/* Scroll-reveal pre-hide removed with the scroll engine itself (Phase A).
+   Nothing may hide content pending a scroll listener any more: content is
+   painted as it arrives. The `.hero-img` pre-hide stays retired too — the
+   hero fades its own slides in on load. */
 
 /* Loading rule sweep */
 @keyframes rule-sweep {

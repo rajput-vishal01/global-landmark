@@ -51,7 +51,7 @@ export function CityTabs({
   return (
     <nav aria-label="Filter by city" className="flex flex-col gap-5">
       <div className="relative">
-        <div data-lenis-prevent className="flex gap-x-6 overflow-x-auto pb-1">
+        <div className="flex gap-x-6 overflow-x-auto pb-1">
           <CityTab label="All cities" isActive={!city} onClick={() => chooseCity("")} />
           {cities.map((c) => (
             <CityTab

@@ -102,18 +102,18 @@ export default async function BuilderDetailPage({
             className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/75 via-black/25 to-transparent"
           />
           <div className="relative px-5 pb-16 pt-40 md:px-12 md:pb-20">
-            <div data-reveal className="mb-4">
+            <div className="mb-4">
               <Breadcrumbs items={breadcrumbItems} tone="dark" />
             </div>
-            <span data-reveal className="mb-8 block h-px w-16 bg-gold" />
-            <p data-reveal className="text-eyebrow font-sans font-medium uppercase tracking-[0.25em] text-cream/70">
+            <span className="mb-8 block h-px w-16 bg-gold" />
+            <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.25em] text-cream/70">
               Developer
             </p>
-            <h1 data-reveal className="mt-4 max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
+            <h1 className="mt-4 max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
               {builder.name}
             </h1>
             {builder.belongsTo && (
-              <p data-reveal className="mt-5 max-w-xl text-pretty text-body font-sans text-cream/80">
+              <p className="mt-5 max-w-xl text-pretty text-body font-sans text-cream/80">
                 {builder.belongsTo}
               </p>
             )}
@@ -124,10 +124,10 @@ export default async function BuilderDetailPage({
           <div className="flex flex-col gap-16">
             {builder.about && (
               <div>
-                <span data-reveal className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   About
                 </span>
-                <div data-reveal className="mt-6 flex max-w-2xl flex-col gap-5">
+                <div className="mt-6 flex max-w-2xl flex-col gap-5">
                   {builder.about
                     .split(/\n+/)
                     .filter(Boolean)
@@ -142,22 +142,22 @@ export default async function BuilderDetailPage({
 
             <div>
               <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
-                <span data-reveal className="block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Projects
                 </span>
                 {builder.projects.length > 0 && (
-                  <span data-reveal className="text-meta font-sans text-ink-muted">
+                  <span className="text-meta font-sans text-ink-muted">
                     {builder.projects.length} project{builder.projects.length === 1 ? "" : "s"}
                   </span>
                 )}
               </div>
 
               {builder.projects.length === 0 ? (
-                <p data-reveal className="text-pretty text-body font-sans text-ink-muted">
+                <p className="text-pretty text-body font-sans text-ink-muted">
                   No projects listed for this developer yet.
                 </p>
               ) : (
-                <div data-reveal className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
                   {builder.projects.map((project) => (
                     <ProjectCard key={project.id} project={project} />
                   ))}
@@ -167,7 +167,7 @@ export default async function BuilderDetailPage({
           </div>
 
           <aside className="md:sticky md:top-28 md:self-start">
-            <div data-reveal className="border border-border bg-white p-8 md:p-10">
+            <div className="border border-border bg-white p-8 md:p-10">
               <span aria-hidden className="mb-6 block h-px w-12 bg-gold" />
               {builder.logoUrl && (
                 <div className="relative mb-6 h-14 w-full">

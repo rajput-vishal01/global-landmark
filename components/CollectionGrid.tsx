@@ -24,7 +24,7 @@ export function CollectionGrid({
       {COLLECTIONS.map((collection) => {
         const count = countFor(collection.value);
         return (
-          <div key={collection.value} data-reveal>
+          <div key={collection.value}>
             <Link
               href={propertiesHref(current, { group: collection.value }, "listings")}
               className="group relative flex aspect-[4/5] flex-col justify-end overflow-hidden bg-dark-deep p-4 transition-transform duration-500 ease-out hover:-translate-y-1"

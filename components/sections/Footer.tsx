@@ -40,7 +40,7 @@ export async function Footer() {
   return (
     <footer className="border-t border-border bg-cream text-ink">
       {/* Brand block */}
-      <div data-reveal className="flex flex-col items-center gap-2 px-5 pb-12 pt-16 text-center md:pt-20">
+      <div className="flex flex-col items-center gap-2 px-5 pb-12 pt-16 text-center md:pt-20">
         <p className="font-serif text-3xl uppercase tracking-[0.18em] md:text-4xl">
           {COMPANY.name}
         </p>

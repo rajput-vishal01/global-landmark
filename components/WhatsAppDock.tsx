@@ -110,7 +110,7 @@ export function WhatsAppDock() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4, ease: EASE }}
-            data-lenis-prevent
+           
             className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-dark-deep/70 backdrop-blur-xl p-0 sm:items-center sm:p-6"
             onClick={() => setIsModalOpen(false)}
           >
@@ -120,7 +120,7 @@ export function WhatsAppDock() {
               exit={{ opacity: 0, y: 24 }}
               transition={{ duration: 0.5, ease: EASE }}
               onClick={(e) => e.stopPropagation()}
-              data-lenis-prevent
+             
               className="relative max-h-[92dvh] w-full max-w-2xl overflow-y-auto border border-border bg-cream p-6 md:p-10"
             >
               <button

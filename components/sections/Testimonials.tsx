@@ -15,10 +15,10 @@ export async function Testimonials() {
   return (
     <section className="grid grid-cols-1 gap-14 bg-cream px-5 py-20 md:grid-cols-[1fr_1.6fr] md:gap-20 md:px-12 md:py-28">
       <div className="md:sticky md:top-32 md:self-start">
-        <h2 data-reveal className="max-w-sm text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
+        <h2 className="max-w-sm text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
           {TESTIMONIALS.heading}
         </h2>
-        <p data-reveal className="mt-5 max-w-sm text-pretty text-body font-sans text-ink-muted">
+        <p className="mt-5 max-w-sm text-pretty text-body font-sans text-ink-muted">
           {TESTIMONIALS.sub}
         </p>
       </div>
@@ -27,7 +27,7 @@ export async function Testimonials() {
         <VideoTestimonials videos={videos} />
       ) : (
       <div
-        data-reveal
+       
         className="group/scroll relative max-h-[34rem] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)]"
       >
         <div className="animate-marquee-y flex flex-col group-hover/scroll:[animation-play-state:paused]">

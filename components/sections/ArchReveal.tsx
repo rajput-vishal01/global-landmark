@@ -1,47 +1,20 @@
-"use client";
-
-import { useRef } from "react";
 import Image from "next/image";
-import { useGSAP, gsap } from "@/lib/gsap";
 import { ARCH_REVEAL } from "@/lib/data";
 
 /**
- * Signature scroll moment (sobharealty-style): a full-width image begins
- * scaled down under an arch mask and is scrubbed to full-bleed as the
- * user scrolls through it.
+ * Full-bleed statement image with a caption over its lower edge.
+ *
+ * This was the site's "signature scroll moment": the image began scaled to
+ * 62% under an arch-shaped mask and was scrubbed to full-bleed as you
+ * scrolled through it. Phase A retired it — it was the most expensive
+ * effect on the page (a scrubbed clip-path over a near-fullscreen layer)
+ * and the clearest example of the thing the client was reacting to. With
+ * no hooks left this is a server component, so it ships no JS at all.
  */
 export function ArchReveal() {
-  const scope = useRef<HTMLElement>(null);
-
-  useGSAP(
-    () => {
-      const mm = gsap.matchMedia();
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
-        // clip-path, not border-radius: radius is a paint property and
-        // scrubbing it rasterizes a near-fullscreen layer every frame.
-        gsap.fromTo(
-          ".arch-img",
-          { scale: 0.62, clipPath: "inset(0% 0% 0% 0% round 50vw 50vw 0 0)" },
-          {
-            scale: 1,
-            clipPath: "inset(0% 0% 0% 0% round 0vw 0vw 0 0)",
-            ease: "none",
-            scrollTrigger: {
-              trigger: scope.current,
-              start: "top 70%",
-              end: "top 5%",
-              scrub: 1,
-            },
-          }
-        );
-      });
-    },
-    { scope }
-  );
-
   return (
-    <section ref={scope} className="overflow-hidden bg-cream pt-20 md:pt-28">
-      <div className="arch-img relative h-[70vh] w-full overflow-hidden md:h-[90vh]">
+    <section className="overflow-hidden bg-cream pt-20 md:pt-28">
+      <div className="relative h-[70vh] w-full overflow-hidden md:h-[90vh]">
         <Image
           src={ARCH_REVEAL.image}
           alt={ARCH_REVEAL.alt}

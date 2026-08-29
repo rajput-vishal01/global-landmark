@@ -1,22 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { HEADER_LINKS } from "./nav-links";
 import { FullscreenMenu } from "./FullscreenMenu";
 import { COMPANY } from "@/lib/data";
-import { useGSAP, gsap, ScrollTrigger, EASE_HEAVY } from "@/lib/gsap";
 
 /**
  * Three-zone header: plain links left, serif wordmark center, CONTACT +
- * hamburger right. Transparent over the hero, solid cream after. Hides on
- * scroll-down, returns on scroll-up.
+ * hamburger right. Transparent over the hero, solid after.
+ *
+ * The bar used to slide out of view on scroll-down and return on scroll-up.
+ * Phase A dropped that: it is motion the user did not ask for, and a nav
+ * that comes and goes is exactly the kind of restlessness the client was
+ * reacting to. The bar is now simply always there.
+ *
+ * What stays is the transparent → solid switch, which is a colour change
+ * rather than movement, and it earns its keep — the header sits over a dark
+ * hero image and would be unreadable against the page below it otherwise.
  */
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > window.innerHeight * 0.75);
@@ -25,36 +31,13 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useGSAP(() => {
-    const mm = gsap.matchMedia();
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
-      const hide = gsap.quickTo(headerRef.current, "yPercent", {
-        duration: 0.6,
-        ease: EASE_HEAVY,
-      });
-      ScrollTrigger.create({
-        start: 200,
-        end: "max",
-        onUpdate: (self) => hide(self.direction === 1 ? -100 : 0),
-      });
-    });
-  }, []);
-
-  // Keep the bar visible while the fullscreen menu is open.
-  useEffect(() => {
-    if (menuOpen && headerRef.current) {
-      gsap.to(headerRef.current, { yPercent: 0, duration: 0.3 });
-    }
-  }, [menuOpen]);
-
   const tone = scrolled ? "text-ink" : "text-cream";
   const toneMuted = scrolled ? "text-ink-muted hover:text-ink" : "text-cream/80 hover:text-cream";
 
   return (
     <header
-      ref={headerRef}
       className={`fixed inset-x-0 top-0 z-40 transition-colors duration-500 ${
-        scrolled ? "border-b border-border bg-cream/95 backdrop-blur-sm" : "bg-transparent"
+        scrolled ? "border-b border-border bg-surface/95 backdrop-blur-sm" : "bg-transparent"
       }`}
     >
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-4 sm:px-5 sm:py-5 md:px-12">

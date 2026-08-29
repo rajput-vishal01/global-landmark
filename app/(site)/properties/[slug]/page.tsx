@@ -266,23 +266,23 @@ export default async function PropertyDetailPage({
             className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/75 via-black/25 to-transparent"
           />
           <div className="relative px-5 pb-16 pt-40 md:px-12 md:pb-20">
-            <div data-reveal className="mb-4">
+            <div className="mb-4">
               <Breadcrumbs items={breadcrumbItems} tone="dark" />
             </div>
-            <span data-reveal className="mb-8 block h-px w-16 bg-gold" />
-            <p data-reveal className="text-eyebrow font-sans font-medium uppercase tracking-[0.25em] text-cream/70">
+            <span className="mb-8 block h-px w-16 bg-gold" />
+            <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.25em] text-cream/70">
               {categoryLabel(property.category)}
               {property.project ? ` · ${property.project.name}` : ""}
             </p>
-            <h1 data-reveal className="mt-4 max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
+            <h1 className="mt-4 max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
               {property.title}
             </h1>
-            <p data-reveal className="mt-5 max-w-xl text-pretty text-body font-sans text-cream/80">
+            <p className="mt-5 max-w-xl text-pretty text-body font-sans text-cream/80">
               {property.location}
               {specs ? ` — ${specs}` : ""}
             </p>
             {plcAttributes.length > 0 && (
-              <div data-reveal className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-5 flex flex-wrap gap-2">
                 {plcAttributes.map((attr) => (
                   <span
                     key={attr}
@@ -300,10 +300,10 @@ export default async function PropertyDetailPage({
         <section className="grid grid-cols-1 gap-14 px-5 py-20 md:grid-cols-[1.7fr_1fr] md:gap-20 md:px-12 md:py-28">
           <div className="flex flex-col gap-16">
             <div>
-              <span data-reveal className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+              <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                 The Residence
               </span>
-              <div data-reveal className="mt-6 flex max-w-2xl flex-col gap-5">
+              <div className="mt-6 flex max-w-2xl flex-col gap-5">
                 {property.description
                   .split(/\n+/)
                   .filter(Boolean)
@@ -317,10 +317,10 @@ export default async function PropertyDetailPage({
 
             {specRows.length > 0 && (
               <div>
-                <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Specifications
                 </span>
-                <dl data-reveal className="grid max-w-2xl grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2">
+                <dl className="grid max-w-2xl grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2">
                   {specRows.map(([label, value]) => (
                     <div key={label} className="flex flex-col gap-1.5 border-t border-border pt-4">
                       <dt className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
@@ -335,10 +335,10 @@ export default async function PropertyDetailPage({
 
             {(legalFlags.length > 0 || property.reraNumber) && (
               <div>
-                <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Legal Status
                 </span>
-                <div data-reveal className="flex max-w-2xl flex-wrap items-center gap-3 border border-border bg-white px-6 py-5">
+                <div className="flex max-w-2xl flex-wrap items-center gap-3 border border-border bg-white px-6 py-5">
                   {legalFlags.map((flag) => (
                     <span
                       key={flag}
@@ -358,10 +358,10 @@ export default async function PropertyDetailPage({
 
             {amenityGroups.length > 0 && (
               <div>
-                <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Amenities
                 </span>
-                <div data-reveal className="flex max-w-2xl flex-col gap-6">
+                <div className="flex max-w-2xl flex-col gap-6">
                   {amenityGroups.map((group) => (
                     <div key={group.label}>
                       <span className="mb-3 block font-sans text-meta font-medium uppercase tracking-[0.15em] text-ink-muted">
@@ -385,10 +385,10 @@ export default async function PropertyDetailPage({
 
             {(property.furnishing || furnishingInventory.length > 0) && (
               <div>
-                <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Furnishing
                 </span>
-                <div data-reveal className="max-w-2xl">
+                <div className="max-w-2xl">
                   {property.furnishing && (
                     <p className="font-serif text-h4 text-ink">{property.furnishing}</p>
                   )}
@@ -410,10 +410,10 @@ export default async function PropertyDetailPage({
 
             {(loanFlags.length > 0 || banksOnPanel.length > 0) && (
               <div>
-                <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Financing
                 </span>
-                <div data-reveal className="max-w-2xl">
+                <div className="max-w-2xl">
                   {loanFlags.length > 0 && (
                     <ul className="flex flex-wrap gap-2.5">
                       {loanFlags.map((flag) => (
@@ -439,20 +439,20 @@ export default async function PropertyDetailPage({
                 loan flags are admin-entered and usually absent, but the
                 buyer's "what would this cost me a month" question is not. */}
             <div>
-              <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+              <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                 EMI Calculator
               </span>
-              <div data-reveal>
+              <div>
                 <EmiCalculator publicPrice={property.publicPrice} />
               </div>
             </div>
 
             {(parkingTypes.length > 0 || property.parkingSlots != null) && (
               <div>
-                <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Parking
                 </span>
-                <p data-reveal className="max-w-2xl font-sans text-body text-ink">
+                <p className="max-w-2xl font-sans text-body text-ink">
                   {parkingTypes.join(" · ")}
                   {property.parkingSlots != null
                     ? `${parkingTypes.length > 0 ? " — " : ""}${property.parkingSlots} slot${property.parkingSlots === 1 ? "" : "s"}`
@@ -463,10 +463,10 @@ export default async function PropertyDetailPage({
 
             {extras.length > 0 && (
               <div>
-                <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Particulars
                 </span>
-                <dl data-reveal className="max-w-2xl">
+                <dl className="max-w-2xl">
                   {extras.map((extra) => (
                     <div
                       key={extra.title}
@@ -486,7 +486,7 @@ export default async function PropertyDetailPage({
 
             {gallery.length > 0 && (
               <div>
-                <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Gallery
                 </span>
                 <GalleryLightbox images={gallery} title={property.title} />
@@ -495,14 +495,14 @@ export default async function PropertyDetailPage({
 
             {tourMedia.length > 0 && (
               <div>
-                <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Video &amp; Virtual Tour
                 </span>
                 {/* Outbound links, not iframes: next.config.ts's CSP frame-src
                     only allowlists youtube-nocookie.com and instagram.com, so
                     an admin-pasted link to any other host would embed as a
                     blank box rather than fail loudly. */}
-                <div data-reveal className="flex max-w-2xl flex-wrap gap-3">
+                <div className="flex max-w-2xl flex-wrap gap-3">
                   {tourMedia.map((m) => (
                     <a
                       key={m.id}
@@ -520,10 +520,10 @@ export default async function PropertyDetailPage({
 
             {linkMedia.length > 0 && (
               <div>
-                <span data-reveal className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Location &amp; Documents
                 </span>
-                <div data-reveal className="flex max-w-2xl flex-wrap gap-3">
+                <div className="flex max-w-2xl flex-wrap gap-3">
                   {linkMedia.map((m) => (
                     <a
                       key={m.id}
@@ -541,7 +541,7 @@ export default async function PropertyDetailPage({
           </div>
 
           <aside className="md:sticky md:top-28 md:self-start">
-            <div data-reveal className="border border-border bg-white p-8 md:p-10">
+            <div className="border border-border bg-white p-8 md:p-10">
               <span aria-hidden className="mb-6 block h-px w-12 bg-gold" />
               <div className="mb-7 border-b border-border pb-7">
                 <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
@@ -611,10 +611,10 @@ export default async function PropertyDetailPage({
         <section id="inquire" className="border-t border-border bg-white px-5 py-20 md:px-12 md:py-28">
           <div className="grid grid-cols-1 gap-14 md:grid-cols-[1fr_1.4fr] md:gap-24">
             <div className="md:sticky md:top-32 md:self-start">
-              <h2 data-reveal className="max-w-sm text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
+              <h2 className="max-w-sm text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
                 {PROPERTY_DETAIL.inquiryHeading}
               </h2>
-              <p data-reveal className="mt-5 max-w-sm text-pretty text-body font-sans text-ink-muted">
+              <p className="mt-5 max-w-sm text-pretty text-body font-sans text-ink-muted">
                 Reference {property.title}. {PROPERTY_DETAIL.inquirySub}
               </p>
             </div>
@@ -625,11 +625,11 @@ export default async function PropertyDetailPage({
         {similar.length > 0 && (
           <section className="px-5 py-20 md:px-12 md:py-28">
             <div className="mb-12 flex flex-wrap items-end justify-between gap-6">
-              <h2 data-reveal className="text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
+              <h2 className="text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
                 Also Represented
               </h2>
               <Link
-                data-reveal
+               
                 href={`/properties?category=${property.category}`}
                 className="text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-ink-muted transition-colors hover:text-ink"
               >
@@ -638,7 +638,7 @@ export default async function PropertyDetailPage({
             </div>
             <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
               {similar.map((p) => (
-                <div key={p.id} data-reveal>
+                <div key={p.id}>
                   <ListingCard property={p} />
                 </div>
               ))}

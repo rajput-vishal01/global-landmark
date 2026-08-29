@@ -15,7 +15,7 @@ const PILLARS = PILLARS_DATA.items.map((item, i) => ({
 export function Pillars() {
   return (
     <section className="bg-cream px-5 py-20 md:px-12 md:py-28">
-      <div data-reveal className="mb-14 flex items-center gap-6 md:mb-20">
+      <div className="mb-14 flex items-center gap-6 md:mb-20">
         <span aria-hidden className="hidden h-px flex-1 bg-border md:block" />
         <h2 className="text-center font-sans text-h4 font-light uppercase tracking-[0.18em] text-ink">
           {PILLARS_DATA.heading}
@@ -27,11 +27,9 @@ export function Pillars() {
         {PILLARS.map((pillar, i) => (
           <div
             key={pillar.title.join(" ")}
-            data-reveal
-            data-drift={[4, -6, 8][i]}
             className={`flex flex-col gap-8 md:px-10 ${i > 0 ? "md:border-l md:border-border" : ""} ${pillar.offset}`}
           >
-            <div data-reveal-img className="relative aspect-[4/5] overflow-hidden">
+            <div className="relative aspect-[4/5] overflow-hidden">
               <Image
                 src={pillar.image}
                 alt={pillar.alt}

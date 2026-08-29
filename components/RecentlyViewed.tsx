@@ -13,10 +13,12 @@ import type { EnquiryCartItem } from "@/lib/enquiry-cart-item";
  * listing both registers itself and is excluded from its own strip; omit it
  * on index pages, which only read.
  *
- * No `data-reveal` anywhere below, deliberately: globals.css pre-hides
- * `.js [data-reveal]` at opacity 0 and ScrollReveals only registers nodes
- * present when its GSAP context runs. This subtree mounts after that, so a
- * reveal attribute here would leave the strip permanently invisible.
+ * This strip mounts after hydration rather than with the server HTML, which
+ * used to make it incompatible with the scroll-reveal engine (that engine
+ * only registered nodes present when its GSAP context ran, so anything
+ * mounting later stayed hidden). Phase A removed the engine outright, so
+ * the hazard is gone — noted only because it explains why this component
+ * never carried a reveal attribute.
  */
 export function RecentlyViewed({ record }: { record?: EnquiryCartItem }) {
   // useMounted flips false -> true right after hydration (same trick

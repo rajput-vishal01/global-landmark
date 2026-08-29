@@ -46,7 +46,7 @@ export function DealCreateForm({ items }: { items: DealPickerItem[] }) {
           aria-label="Search properties and projects"
           className="w-full appearance-none rounded-none border-b border-border bg-transparent py-2.5 font-sans text-body text-ink placeholder:text-ink-muted/60 focus:border-gold focus:outline-none [&::-webkit-search-cancel-button]:hidden"
         />
-        <ul data-lenis-prevent className="max-h-56 overflow-y-auto border border-border">
+        <ul className="max-h-56 overflow-y-auto border border-border">
           {matches.length === 0 ? (
             <li className="px-4 py-3 font-sans text-meta text-ink-muted">
               Nothing matches. Add it under Properties first.

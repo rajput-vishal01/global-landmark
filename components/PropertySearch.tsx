@@ -151,7 +151,7 @@ export function PropertySearch({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: openUpward ? -8 : 8 }}
             transition={{ duration: 0.35, ease: EASE }}
-            data-lenis-prevent
+           
             className={`absolute left-0 right-0 z-40 max-h-96 overflow-y-auto border border-border bg-white shadow-[0_24px_60px_-24px_rgba(20,20,20,0.35)] ${
               openUpward ? "bottom-full mb-2" : "top-full mt-2"
             }`}

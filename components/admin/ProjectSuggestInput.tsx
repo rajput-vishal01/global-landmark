@@ -58,7 +58,7 @@ export function ProjectSuggestInput({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 6 }}
             transition={{ duration: 0.25, ease: EASE }}
-            data-lenis-prevent
+           
             className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto border border-border bg-white shadow-[0_18px_44px_-18px_rgba(20,20,20,0.3)]"
           >
             {matches.map((name) => (
