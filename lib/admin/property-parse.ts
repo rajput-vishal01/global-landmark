@@ -306,6 +306,64 @@ export function parseMedia(json: string): ParsedMedium[] | null {
   return media;
 }
 
+export type ParsedUnitSize = {
+  unitLabel: string;
+  areaValue: number | null;
+  areaUnit: string | null;
+  price: number | null;
+};
+
+/**
+ * The "2 BHK / 1750 sq.ft / ₹3.2 Cr" rows a project page publishes.
+ *
+ * A row with no label names nothing, so it is dropped the same way a
+ * nameless owner and an amountless charge are. Unlike the demand price
+ * these figures are public by nature — they are the advertised starting
+ * price for a unit type, not the negotiated one — so there is no
+ * per-row publish flag to parse.
+ */
+export function parseUnitSizes(json: string): ParsedUnitSize[] | null {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(raw) || raw.length > 30) return null;
+  const areaUnitValues = AREA_UNITS.map((u) => u.value);
+  const rows: ParsedUnitSize[] = [];
+  for (const item of raw) {
+    if (typeof item !== "object" || item === null) return null;
+    const u = item as Record<string, unknown>;
+    const unitLabel = str(u.unitLabel, 60);
+    if (!unitLabel) continue;
+    rows.push({
+      unitLabel,
+      areaValue: int(u.areaValue, 100_000_000),
+      areaUnit: pick(u.areaUnit, areaUnitValues),
+      price: int(u.price, 100_000_000_000),
+    });
+  }
+  return rows;
+}
+
+/**
+ * A map coordinate, kept as the text the operator pasted rather than parsed
+ * into a float — see the note on `properties.latitude` in the schema. What
+ * is checked here is only that it IS a coordinate: a stray address or a
+ * half-typed number must not reach the public map builder, which would
+ * otherwise render a pin in the sea off Africa.
+ */
+export function parseCoordinate(
+  value: FormDataEntryValue | null,
+  limit: 90 | 180
+): string | null {
+  const s = String(value ?? "").trim().slice(0, 40);
+  if (!s) return null;
+  const n = Number(s);
+  return Number.isFinite(n) && Math.abs(n) <= limit ? s : null;
+}
+
 export type ParsedDocument = {
   docType: string;
   storageKey: string;
@@ -314,6 +372,7 @@ export type ParsedDocument = {
   sizeBytes: number;
   note: string | null;
   uploadedBy: string | null;
+  isPublic: boolean;
 };
 
 /**
@@ -353,6 +412,12 @@ export function parseDocuments(json: string): ParsedDocument[] | null {
       sizeBytes,
       note: str(d.note, 1000) || null,
       uploadedBy: str(d.uploadedBy, 200) || null,
+      // `=== true` and nothing else. NEVER derived from docType: a document
+      // type is a label an admin typed, and a mistyped one must not be able
+      // to publish a sale deed. Anything that is not a literal true — a
+      // missing field, "true" as a string, a truthy object — is false, so
+      // the private default is what a malformed payload gets.
+      isPublic: d.isPublic === true,
     });
   }
   return documents;
@@ -423,6 +488,10 @@ export type ParsedProperty = {
   floorNumber: number | null;
   totalFloors: number | null;
   unitNumber: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  /** Off unless deliberately ticked — the only thing that publishes a pin. */
+  showMapPublicly: boolean;
   dealAttributes: string[];
   configurations: string[];
   balconies: number | null;
@@ -481,6 +550,7 @@ export type ParsedProperty = {
   charges: ParsedCharge[];
   media: ParsedMedium[];
   documents: ParsedDocument[];
+  unitSizes: ParsedUnitSize[];
   /** property_internal — 1:1, internal always. */
   circleRate: number | null;
 };
@@ -569,6 +639,9 @@ export function parseProperty(
   const documents = parseDocuments(String(formData.get("documentsJson") ?? "[]"));
   if (documents === null) return { ok: false, error: "Document rows are invalid." };
 
+  const unitSizes = parseUnitSizes(String(formData.get("unitSizesJson") ?? "[]"));
+  if (unitSizes === null) return { ok: false, error: "Unit size rows are invalid." };
+
   const areaUnitValues = AREA_UNITS.map((u) => u.value);
   const num = (name: string) => {
     const v = parseOptionalInt(formData.get(name));
@@ -609,6 +682,13 @@ export function parseProperty(
       floorNumber: num("floorNumber"),
       totalFloors: num("totalFloors"),
       unitNumber: String(formData.get("unitNumber") ?? "").trim().slice(0, 60) || null,
+      latitude: parseCoordinate(formData.get("latitude"), 90),
+      longitude: parseCoordinate(formData.get("longitude"), 180),
+      // Defaults to OFF, exactly like showPricePublicly, and for a sharper
+      // reason: publishing exact coordinates is fine for a launched project
+      // and not fine for a private resale kothi whose owner details are
+      // internal. The safe answer is the one you get by doing nothing.
+      showMapPublicly: parseBool(formData, "showMapPublicly"),
       dealAttributes: parseList(String(formData.get("dealAttributesJson") ?? "[]"), DEAL_ATTRIBUTES) ?? [],
       configurations: parseList(String(formData.get("configurationsJson") ?? "[]"), CONFIGURATIONS) ?? [],
       balconies: num("balconies"),
@@ -657,6 +737,7 @@ export function parseProperty(
       charges,
       media,
       documents,
+      unitSizes,
       circleRate: num("circleRate"),
       // A locality is only meaningful under its own city — keeping one that
       // belongs to a different city would put the listing under the wrong

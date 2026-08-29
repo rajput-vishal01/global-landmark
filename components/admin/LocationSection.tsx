@@ -20,7 +20,15 @@ import { withEmptyOption } from "@/lib/attributes";
  * The free-text `location` line stays: it is what renders on the card and on
  * the detail page, and it carries the detail a taxonomy cannot ("Sector 62,
  * Phase 8"). City and locality are for filtering.
+ *
+ * The map pin lives here too, behind its own publish toggle — see the
+ * comment on that field group below.
  */
+
+/** The checkbox shape ChecklistField already uses across the admin. */
+const CHECKBOX =
+  "h-4 w-4 shrink-0 cursor-pointer appearance-none border border-border bg-white transition-colors checked:border-gold checked:bg-gold";
+
 export function LocationSection({
   location: initialLocation,
   city: initialCity,
@@ -32,6 +40,9 @@ export function LocationSection({
   floorNumber: initialFloorNumber,
   totalFloors: initialTotalFloors,
   unitNumber: initialUnitNumber,
+  latitude: initialLatitude,
+  longitude: initialLongitude,
+  showMapPublicly: initialShowMapPublicly,
 }: {
   location?: string | null;
   city?: string | null;
@@ -44,10 +55,26 @@ export function LocationSection({
   floorNumber?: number | null;
   totalFloors?: number | null;
   unitNumber?: string | null;
+  latitude?: string | null;
+  longitude?: string | null;
+  showMapPublicly?: boolean | null;
 }) {
   const [city, setCity] = useState(initialCity ?? "");
   const [locality, setLocality] = useState(initialLocality ?? "");
   const [location, setLocation] = useState(initialLocation ?? "");
+  const [latitude, setLatitude] = useState(initialLatitude ?? "");
+  const [longitude, setLongitude] = useState(initialLongitude ?? "");
+  /**
+   * Default OFF, and deliberately not `?? true` — the same rule as
+   * showPricePublicly, for a sharper reason. A launched project wants to be
+   * findable; a private resale kothi whose owner details are internal does
+   * not want its front door on a public map, and a pin published by
+   * accident cannot be unpublished from whoever already screenshotted it.
+   */
+  const [showMapPublicly, setShowMapPublicly] = useState(
+    initialShowMapPublicly ?? false
+  );
+  const hasPin = latitude.trim() !== "" && longitude.trim() !== "";
 
   const localities = localitiesIn(city);
 
@@ -246,6 +273,78 @@ export function LocationSection({
             className={FIELD}
           />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="latitude" className={LABEL}>
+            Latitude
+          </label>
+          <input
+            id="latitude"
+            name="latitude"
+            type="text"
+            inputMode="decimal"
+            maxLength={40}
+            value={latitude}
+            onChange={(e) => setLatitude(e.target.value)}
+            placeholder="30.6942"
+            className={FIELD}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="longitude" className={LABEL}>
+            Longitude
+          </label>
+          <input
+            id="longitude"
+            name="longitude"
+            type="text"
+            inputMode="decimal"
+            maxLength={40}
+            value={longitude}
+            onChange={(e) => setLongitude(e.target.value)}
+            placeholder="76.8606"
+            className={FIELD}
+          />
+        </div>
+      </div>
+      <p className="font-sans text-meta text-ink-muted">
+        Right-click the spot in Google Maps and copy the two numbers it shows.
+        Storing them does nothing on its own — the box below is what puts a
+        pin on the public page.
+      </p>
+
+      {/* Hidden "false" first, then the checkbox carrying "true": an
+          unchecked checkbox submits nothing at all, and parseBool() on the
+          server reads every value for this name rather than the first. Same
+          pairing as showPricePublicly, and it matters for the same reason —
+          a stuck true here keeps publishing a location the client asked to
+          keep off the map. */}
+      <div className="flex flex-col gap-2 border border-border bg-white p-4">
+        <input type="hidden" name="showMapPublicly" value="false" />
+        <label className="flex cursor-pointer items-start gap-2.5 font-sans text-body text-ink">
+          <input
+            type="checkbox"
+            name="showMapPublicly"
+            value="true"
+            checked={showMapPublicly}
+            onChange={(e) => setShowMapPublicly(e.target.checked)}
+            className={`${CHECKBOX} mt-1`}
+          />
+          Show this property on a map on the public site
+        </label>
+        <p
+          className={`font-sans text-meta ${
+            showMapPublicly && hasPin ? "text-gold-deep" : "text-ink-muted"
+          }`}
+        >
+          {showMapPublicly
+            ? hasPin
+              ? "On — the property page shows a map pin, rounded to roughly a 100 m area rather than the exact doorstep."
+              : "On, but there are no coordinates yet — nothing will render until latitude and longitude are filled in."
+            : "Off — the coordinates stay in the admin. They are not sent to the browser at all, so there is nothing on the public page to read out of devtools."}
+        </p>
       </div>
     </FormSection>
   );

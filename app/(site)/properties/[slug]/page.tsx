@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,8 +14,13 @@ import { EnquiryToggleButton } from "@/components/EnquiryToggleButton";
 import { EmiCalculator } from "@/components/EmiCalculator";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { AreaConverter } from "@/components/AreaConverter";
+import { GalleryMapToggle } from "@/components/property/GalleryMapToggle";
+import { PropertyTabs, type PropertyTab } from "@/components/property/PropertyTabs";
+import { TourRequestForm } from "@/components/property/TourRequestForm";
+import { amenityIcon } from "@/components/amenity-icons";
 import { toEnquiryCartItem } from "@/lib/enquiry-cart-item";
 import { getPropertyBySlug, listProperties } from "@/lib/db/queries";
+import { getPropertyDetailExtras } from "@/lib/db/property-detail";
 import { categoryLabel } from "@/lib/categories";
 import { AMENITY_GROUPS, formatArea, formatIndianShort } from "@/lib/attributes";
 import { isAreaUnit } from "@/lib/taxonomy/area";
@@ -68,6 +74,23 @@ export async function generateMetadata({
   };
 }
 
+const EYEBROW =
+  "text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted";
+
+/** One titled block inside a tab panel — the repeated eyebrow + body pair. */
+function Block({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div>
+      <span className={`mb-6 block ${EYEBROW}`}>{title}</span>
+      {children}
+    </div>
+  );
+}
+
+/** The pill used for every "this listing has X" tag row. */
+const TAG =
+  "border border-border bg-white px-3.5 py-2 font-sans text-meta text-ink";
+
 export default async function PropertyDetailPage({
   params,
 }: {
@@ -79,7 +102,13 @@ export default async function PropertyDetailPage({
 
   const cover = property.images[0];
   const gallery = property.images.slice(1);
+  const floorPlans = property.images.filter((img) => img.mediaKind === "floor_plan");
   const specs = propertySpecs(property);
+  // Phase E. Three reads gated in SQL rather than at render time: the map
+  // pin exists here only when `showMapPublicly` is true, and a document only
+  // when its own `isPublic` is true. See lib/db/property-detail.ts — this
+  // page has no way to obtain either without the broker having said so.
+  const { unitSizes, documents, mapPin } = await getPropertyDetailExtras(property.id);
   // R-45: rank the whole published pool on locality → configuration →
   // budget instead of taking the three newest listings that happen to share
   // a category. One unfiltered listProperties() call, which is the same
@@ -155,6 +184,12 @@ export default async function PropertyDetailPage({
     label: group.label,
     items: group.items.filter((item) => amenities.includes(item)),
   })).filter((group) => group.items.length > 0);
+  // Free-typed amenities belong to no group. Previously they were simply
+  // dropped from the page — the grid renders them under "Other" instead,
+  // with the fallback glyph.
+  const ungrouped = amenities.filter(
+    (item) => !AMENITY_GROUPS.some((group) => group.items.includes(item))
+  );
 
   // R-16: inventory only means something once a furnishing level is set.
   const furnishingInventory = property.furnishingInventory ?? [];
@@ -170,14 +205,16 @@ export default async function PropertyDetailPage({
   // R-05 / PLC highlights — small tag row near the hero.
   const plcAttributes = property.plcAttributes ?? [];
 
+  // `extras` is the {title, description}[] the admin fills in freely; on the
+  // reference portal this is the "Highlights" block (RERA ID, tower count,
+  // club size). Same data, a name a buyer understands.
   const extras = property.extras ?? [];
 
-  // R-28: file gallery stays tabbed-by-category inside GalleryLightbox;
-  // link media splits into a video/drone/tour strip and separate
-  // map/brochure buttons. No iframe: next.config.ts's CSP frame-src only
-  // allowlists youtube-nocookie.com and instagram.com today, so an embed
-  // of an arbitrary pasted link would silently render nothing. Outbound
-  // links work regardless of host and need no CSP change.
+  // R-28: link media splits into a video/tour strip and a separate
+  // map/brochure link row. No iframe for these: next.config.ts's CSP
+  // frame-src allowlists only youtube-nocookie, instagram and
+  // openstreetmap, so an embed of an arbitrary pasted link would silently
+  // render nothing. Outbound links work regardless of host.
   const media = property.media ?? [];
   const tourMedia = media.filter((m) => m.kind === "video" || m.kind === "drone" || m.kind === "virtual_tour");
   const linkMedia = media.filter((m) => m.kind === "google_map" || m.kind === "brochure");
@@ -188,6 +225,271 @@ export default async function PropertyDetailPage({
     google_map: "View on Google Maps",
     brochure: "Download Brochure",
   };
+
+  const LINK_BUTTON =
+    "text-eyebrow inline-flex items-center gap-2 border border-ink/25 px-5 py-3 font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold";
+
+  // The tab panels. Built as values rather than inline JSX so the tab list
+  // below can simply drop any panel with nothing in it — a listing with no
+  // amenities should not offer an empty Amenities tab.
+  const descriptionPanel = (
+    <div className="flex flex-col gap-16">
+      <div className="flex max-w-2xl flex-col gap-5">
+        {property.description
+          .split(/\n+/)
+          .filter(Boolean)
+          .map((paragraph, i) => (
+            <p key={i} className="text-pretty text-body font-sans leading-relaxed text-ink">
+              {paragraph}
+            </p>
+          ))}
+      </div>
+
+      {extras.length > 0 && (
+        <Block title="Highlights">
+          <dl className="max-w-2xl">
+            {extras.map((extra) => (
+              <div
+                key={extra.title}
+                className="flex flex-col gap-1 border-t border-border py-4 first:border-t-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8"
+              >
+                <dt className="text-eyebrow shrink-0 font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
+                  {extra.title}
+                </dt>
+                <dd className="font-sans text-body text-ink sm:text-right">
+                  {extra.description}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </Block>
+      )}
+
+      {specRows.length > 0 && (
+        <Block title="Specifications">
+          <dl className="grid max-w-2xl grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2">
+            {specRows.map(([label, value]) => (
+              <div key={label} className="flex flex-col gap-1.5 border-t border-border pt-4">
+                <dt className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
+                  {label}
+                </dt>
+                <dd className="font-sans text-body text-ink">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </Block>
+      )}
+
+      {(legalFlags.length > 0 || property.reraNumber) && (
+        <Block title="Legal Status">
+          <div className="flex max-w-2xl flex-wrap items-center gap-3 border border-border bg-white px-6 py-5">
+            {legalFlags.map((flag) => (
+              <span
+                key={flag}
+                className="text-eyebrow border border-gold/40 px-3 py-1.5 font-sans font-medium tracking-[0.12em] text-gold-deep"
+              >
+                {flag}
+              </span>
+            ))}
+            {property.reraNumber && (
+              <span className="font-sans text-meta text-ink-muted">
+                RERA No. {property.reraNumber}
+              </span>
+            )}
+          </div>
+        </Block>
+      )}
+
+      {(property.furnishing || furnishingInventory.length > 0) && (
+        <Block title="Furnishing">
+          <div className="max-w-2xl">
+            {property.furnishing && (
+              <p className="font-serif text-h4 text-ink">{property.furnishing}</p>
+            )}
+            {furnishingInventory.length > 0 && (
+              <ul className="mt-4 flex flex-wrap gap-2.5">
+                {furnishingInventory.map((item) => (
+                  <li key={item} className={TAG}>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Block>
+      )}
+
+      {(parkingTypes.length > 0 || property.parkingSlots != null) && (
+        <Block title="Parking">
+          <p className="max-w-2xl font-sans text-body text-ink">
+            {parkingTypes.join(" · ")}
+            {property.parkingSlots != null
+              ? `${parkingTypes.length > 0 ? " — " : ""}${property.parkingSlots} slot${property.parkingSlots === 1 ? "" : "s"}`
+              : ""}
+          </p>
+        </Block>
+      )}
+
+      {(loanFlags.length > 0 || banksOnPanel.length > 0) && (
+        <Block title="Financing">
+          <div className="max-w-2xl">
+            {loanFlags.length > 0 && (
+              <ul className="flex flex-wrap gap-2.5">
+                {loanFlags.map((flag) => (
+                  <li key={flag} className={TAG}>
+                    {flag}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {banksOnPanel.length > 0 && (
+              <p className="mt-4 font-sans text-body text-ink-muted">
+                Panel: {banksOnPanel.join(", ")}
+              </p>
+            )}
+          </div>
+        </Block>
+      )}
+
+      {/* R-41. Unconditional, unlike the Financing block above: the loan
+          flags are admin-entered and usually absent, but the buyer's "what
+          would this cost me a month" question is not. */}
+      <Block title="EMI Calculator">
+        <EmiCalculator publicPrice={property.publicPrice} />
+      </Block>
+
+      {linkMedia.length > 0 && (
+        <Block title="Location & Documents">
+          <div className="flex max-w-2xl flex-wrap gap-3">
+            {linkMedia.map((m) => (
+              <a
+                key={m.id}
+                href={m.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={LINK_BUTTON}
+              >
+                {m.label || MEDIA_LABELS[m.kind] || "View Link"} ↗
+              </a>
+            ))}
+          </div>
+        </Block>
+      )}
+    </div>
+  );
+
+  const layoutPanel = (
+    <div className="flex flex-col gap-16">
+      {unitSizes.length > 0 && (
+        <Block title="Unit Sizes">
+          {/* Its own scroll container — a three-column table must never be
+              what makes the page scroll sideways on a phone. */}
+          <div className="max-w-2xl overflow-x-auto border border-border bg-white">
+            <table className="w-full min-w-[26rem] text-left">
+              <thead>
+                <tr className="border-b border-border">
+                  {["Unit", "Area", "Price"].map((h) => (
+                    <th
+                      key={h}
+                      className="text-eyebrow px-5 py-3.5 font-sans font-medium uppercase tracking-[0.15em] text-ink-muted"
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {unitSizes.map((row) => (
+                  <tr key={row.id} className="border-b border-border last:border-b-0">
+                    <td className="px-5 py-3.5 font-sans text-body text-ink">
+                      {row.unitLabel}
+                    </td>
+                    <td className="px-5 py-3.5 font-sans text-meta tabular-nums text-ink">
+                      {row.areaValue != null
+                        ? formatArea(row.areaValue, row.areaUnit ?? "sqft")
+                        : "—"}
+                    </td>
+                    <td className="px-5 py-3.5 font-sans text-meta tabular-nums text-ink">
+                      {/* Unlike the demand price, a unit-size figure is the
+                          advertised starting price and is public by nature —
+                          there is no per-row flag to consult. */}
+                      {row.price != null ? formatIndianShort(row.price) : "On request"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Block>
+      )}
+
+      {floorPlans.length > 0 && (
+        <Block title="Layout Plans">
+          <GalleryLightbox images={floorPlans} title={`${property.title} layout plans`} />
+        </Block>
+      )}
+    </div>
+  );
+
+  const amenitiesPanel = (
+    <div className="flex flex-col gap-12">
+      {[...amenityGroups, ...(ungrouped.length ? [{ label: "Other", items: ungrouped }] : [])].map(
+        (group) => (
+          <div key={group.label}>
+            <span className="mb-6 block font-sans text-meta font-medium uppercase tracking-[0.15em] text-ink-muted">
+              {group.label}
+            </span>
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3 lg:grid-cols-4">
+              {group.items.map((amenity) => (
+                <li key={amenity} className="flex flex-col gap-3">
+                  <span className="text-gold-deep">{amenityIcon(amenity)}</span>
+                  <span className="font-sans text-meta text-ink">{amenity}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
+      )}
+    </div>
+  );
+
+  const videoPanel = (
+    <div className="flex max-w-2xl flex-wrap gap-3">
+      {tourMedia.map((m) => (
+        <a
+          key={m.id}
+          href={m.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={LINK_BUTTON}
+        >
+          {m.label || MEDIA_LABELS[m.kind] || "View Link"} ↗
+        </a>
+      ))}
+    </div>
+  );
+
+  const tourPanel = (
+    <div className="flex flex-col gap-8">
+      <p className="max-w-xl text-pretty text-body font-sans text-ink-muted">
+        Pick a slot and we will confirm it by phone. In-person visits are
+        accompanied; a video call works when you are out of the Tricity.
+      </p>
+      <TourRequestForm propertyId={property.id} propertyTitle={property.title} />
+    </div>
+  );
+
+  const tabs: PropertyTab[] = [
+    { id: "description", label: "Description", panel: descriptionPanel },
+    ...(unitSizes.length > 0 || floorPlans.length > 0
+      ? [{ id: "layout", label: "Layout Plans", panel: layoutPanel }]
+      : []),
+    ...(amenityGroups.length > 0 || ungrouped.length > 0
+      ? [{ id: "amenities", label: "Amenities", panel: amenitiesPanel }]
+      : []),
+    ...(tourMedia.length > 0 ? [{ id: "video", label: "Video", panel: videoPanel }] : []),
+    { id: "tour", label: "Schedule a Tour", panel: tourPanel },
+  ];
 
   // RealEstateListing wrapping the Residence — `broker` is not valid on a
   // Place type, and the listing type is what property search features read.
@@ -212,6 +514,18 @@ export default async function PropertyDetailPage({
         addressCountry: "IN",
       },
       ...(property.beds != null ? { numberOfRooms: property.beds } : {}),
+      // Coordinates go into structured data only when the broker published
+      // the pin — the same gate as the visible map, because JSON-LD is just
+      // as public as a rendered element and is read by more crawlers.
+      ...(mapPin
+        ? {
+            geo: {
+              "@type": "GeoCoordinates",
+              latitude: mapPin.latitude,
+              longitude: mapPin.longitude,
+            },
+          }
+        : {}),
     },
     // Only when the listing is flagged for public pricing — the withheld
     // figure must never leave the database, structured data included.
@@ -296,257 +610,29 @@ export default async function PropertyDetailPage({
           </div>
         </section>
 
-        {/* Spec sheet beside content — big.dk metadata-sidebar pattern */}
-        <section className="grid grid-cols-1 gap-14 px-5 py-20 md:grid-cols-[1.7fr_1fr] md:gap-20 md:px-12 md:py-28">
-          <div className="flex flex-col gap-16">
-            <div>
-              <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-                The Residence
-              </span>
-              <div className="mt-6 flex max-w-2xl flex-col gap-5">
-                {property.description
-                  .split(/\n+/)
-                  .filter(Boolean)
-                  .map((paragraph, i) => (
-                    <p key={i} className="text-pretty text-body font-sans leading-relaxed text-ink">
-                      {paragraph}
-                    </p>
-                  ))}
-              </div>
-            </div>
+        {/* Gallery / Map, above the tabs — the reference portal's first
+            decision after the hero is "show me the photos or show me where
+            this is", and it should not be buried under the copy. */}
+        {(gallery.length > 0 || mapPin) && (
+          <section className="px-5 pt-16 md:px-12 md:pt-20">
+            <GalleryMapToggle
+              images={gallery}
+              title={property.title}
+              location={property.location}
+              pin={mapPin}
+            />
+          </section>
+        )}
 
-            {specRows.length > 0 && (
-              <div>
-                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-                  Specifications
-                </span>
-                <dl className="grid max-w-2xl grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2">
-                  {specRows.map(([label, value]) => (
-                    <div key={label} className="flex flex-col gap-1.5 border-t border-border pt-4">
-                      <dt className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
-                        {label}
-                      </dt>
-                      <dd className="font-sans text-body text-ink">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            )}
-
-            {(legalFlags.length > 0 || property.reraNumber) && (
-              <div>
-                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-                  Legal Status
-                </span>
-                <div className="flex max-w-2xl flex-wrap items-center gap-3 border border-border bg-white px-6 py-5">
-                  {legalFlags.map((flag) => (
-                    <span
-                      key={flag}
-                      className="text-eyebrow border border-gold/40 px-3 py-1.5 font-sans font-medium tracking-[0.12em] text-gold-deep"
-                    >
-                      {flag}
-                    </span>
-                  ))}
-                  {property.reraNumber && (
-                    <span className="font-sans text-meta text-ink-muted">
-                      RERA No. {property.reraNumber}
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {amenityGroups.length > 0 && (
-              <div>
-                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-                  Amenities
-                </span>
-                <div className="flex max-w-2xl flex-col gap-6">
-                  {amenityGroups.map((group) => (
-                    <div key={group.label}>
-                      <span className="mb-3 block font-sans text-meta font-medium uppercase tracking-[0.15em] text-ink-muted">
-                        {group.label}
-                      </span>
-                      <ul className="flex flex-wrap gap-2.5">
-                        {group.items.map((amenity) => (
-                          <li
-                            key={amenity}
-                            className="border border-border bg-white px-3.5 py-2 font-sans text-meta text-ink"
-                          >
-                            {amenity}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {(property.furnishing || furnishingInventory.length > 0) && (
-              <div>
-                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-                  Furnishing
-                </span>
-                <div className="max-w-2xl">
-                  {property.furnishing && (
-                    <p className="font-serif text-h4 text-ink">{property.furnishing}</p>
-                  )}
-                  {furnishingInventory.length > 0 && (
-                    <ul className="mt-4 flex flex-wrap gap-2.5">
-                      {furnishingInventory.map((item) => (
-                        <li
-                          key={item}
-                          className="border border-border bg-white px-3.5 py-2 font-sans text-meta text-ink"
-                        >
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {(loanFlags.length > 0 || banksOnPanel.length > 0) && (
-              <div>
-                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-                  Financing
-                </span>
-                <div className="max-w-2xl">
-                  {loanFlags.length > 0 && (
-                    <ul className="flex flex-wrap gap-2.5">
-                      {loanFlags.map((flag) => (
-                        <li
-                          key={flag}
-                          className="border border-border bg-white px-3.5 py-2 font-sans text-meta text-ink"
-                        >
-                          {flag}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {banksOnPanel.length > 0 && (
-                    <p className="mt-4 font-sans text-body text-ink-muted">
-                      Panel: {banksOnPanel.join(", ")}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* R-41. Unconditional, unlike the Financing block above: the
-                loan flags are admin-entered and usually absent, but the
-                buyer's "what would this cost me a month" question is not. */}
-            <div>
-              <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-                EMI Calculator
-              </span>
-              <div>
-                <EmiCalculator publicPrice={property.publicPrice} />
-              </div>
-            </div>
-
-            {(parkingTypes.length > 0 || property.parkingSlots != null) && (
-              <div>
-                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-                  Parking
-                </span>
-                <p className="max-w-2xl font-sans text-body text-ink">
-                  {parkingTypes.join(" · ")}
-                  {property.parkingSlots != null
-                    ? `${parkingTypes.length > 0 ? " — " : ""}${property.parkingSlots} slot${property.parkingSlots === 1 ? "" : "s"}`
-                    : ""}
-                </p>
-              </div>
-            )}
-
-            {extras.length > 0 && (
-              <div>
-                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-                  Particulars
-                </span>
-                <dl className="max-w-2xl">
-                  {extras.map((extra) => (
-                    <div
-                      key={extra.title}
-                      className="flex flex-col gap-1 border-t border-border py-4 first:border-t-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8"
-                    >
-                      <dt className="text-eyebrow shrink-0 font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
-                        {extra.title}
-                      </dt>
-                      <dd className="font-sans text-body text-ink sm:text-right">
-                        {extra.description}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
-            )}
-
-            {gallery.length > 0 && (
-              <div>
-                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-                  Gallery
-                </span>
-                <GalleryLightbox images={gallery} title={property.title} />
-              </div>
-            )}
-
-            {tourMedia.length > 0 && (
-              <div>
-                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-                  Video &amp; Virtual Tour
-                </span>
-                {/* Outbound links, not iframes: next.config.ts's CSP frame-src
-                    only allowlists youtube-nocookie.com and instagram.com, so
-                    an admin-pasted link to any other host would embed as a
-                    blank box rather than fail loudly. */}
-                <div className="flex max-w-2xl flex-wrap gap-3">
-                  {tourMedia.map((m) => (
-                    <a
-                      key={m.id}
-                      href={m.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-eyebrow inline-flex items-center gap-2 border border-ink/25 px-5 py-3 font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
-                    >
-                      {m.label || MEDIA_LABELS[m.kind] || "View Link"} ↗
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {linkMedia.length > 0 && (
-              <div>
-                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-                  Location &amp; Documents
-                </span>
-                <div className="flex max-w-2xl flex-wrap gap-3">
-                  {linkMedia.map((m) => (
-                    <a
-                      key={m.id}
-                      href={m.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-eyebrow inline-flex items-center gap-2 border border-ink/25 px-5 py-3 font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
-                    >
-                      {m.label || MEDIA_LABELS[m.kind] || "View Link"} ↗
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+        {/* Tabs beside the enquiry rail — big.dk metadata-sidebar pattern */}
+        <section className="grid grid-cols-1 gap-14 px-5 py-16 md:grid-cols-[1.7fr_1fr] md:gap-20 md:px-12 md:py-20">
+          <PropertyTabs tabs={tabs} />
 
           <aside className="md:sticky md:top-28 md:self-start">
             <div className="border border-border bg-white p-8 md:p-10">
               <span aria-hidden className="mb-6 block h-px w-12 bg-gold" />
               <div className="mb-7 border-b border-border pb-7">
-                <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-                  Price
-                </span>
+                <span className={EYEBROW}>Price</span>
                 <p className="mt-2 font-serif text-h3 text-ink">{priceLabel}</p>
               </div>
               <dl className="flex flex-col">
@@ -580,6 +666,12 @@ export default async function PropertyDetailPage({
                   Request Details
                 </a>
                 <a
+                  href={COMPANY.phoneHref}
+                  className="text-eyebrow inline-flex justify-center border border-ink/25 px-7 py-4 text-center font-sans font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:border-gold"
+                >
+                  Call {COMPANY.phone}
+                </a>
+                <a
                   href={whatsApp}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -603,6 +695,31 @@ export default async function PropertyDetailPage({
                   Share this property
                 </a>
               </div>
+
+              {/* Published documents only. `documents` comes back from a
+                  query with `isPublic = true` in its WHERE clause, so a
+                  registry paper or a sale deed is not in this array to
+                  render — the block simply does not appear. */}
+              {documents.length > 0 && (
+                <div className="mt-7 border-t border-border pt-7">
+                  <span className={EYEBROW}>Downloads</span>
+                  <ul className="mt-4 flex flex-col gap-3">
+                    {documents.map((doc) => (
+                      <li key={doc.id}>
+                        <a
+                          href={doc.url}
+                          className="flex items-baseline justify-between gap-4 font-sans text-meta text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
+                        >
+                          <span className="min-w-0 break-words">{doc.docType}</span>
+                          <span className="shrink-0 tabular-nums text-ink-muted">
+                            {Math.max(1, Math.round(doc.sizeBytes / 1024))} KB
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </aside>
         </section>
@@ -629,7 +746,6 @@ export default async function PropertyDetailPage({
                 Also Represented
               </h2>
               <Link
-               
                 href={`/properties?category=${property.category}`}
                 className="text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-ink-muted transition-colors hover:text-ink"
               >

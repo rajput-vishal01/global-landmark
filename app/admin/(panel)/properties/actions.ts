@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { and, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, eq, ilike, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   projects,
@@ -12,11 +12,12 @@ import {
   propertyInternal,
   propertyMedia,
   propertyOwners,
+  propertyUnitSizes,
   towers,
 } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
-import { deleteStoredFiles } from "@/lib/storage";
+import { deleteStoredFiles, syncPublicDocumentFile } from "@/lib/storage";
 import { refCode as buildRefCode } from "@/lib/attributes";
 import { parseProperty, type ParseMode } from "@/lib/admin/property-parse";
 import { slugify } from "@/lib/slugify";
@@ -59,6 +60,7 @@ async function writeChildTables(
     owners: { name: string; [k: string]: unknown }[];
     charges: { chargeType: string; [k: string]: unknown }[];
     media: { kind: string; url: string; label: string }[];
+    unitSizes: { unitLabel: string; [k: string]: unknown }[];
     circleRate: number | null;
   }
 ) {
@@ -83,6 +85,18 @@ async function writeChildTables(
     );
   }
 
+  // Unit sizes own nothing outside the database, so they replace wholesale
+  // like owners, charges and media. Row order is the admin's order — a
+  // price list reads smallest-first or in the builder's own sequence, and
+  // re-sorting it here would fight whatever they arranged.
+  await tx.delete(propertyUnitSizes).where(eq(propertyUnitSizes.propertyId, propertyId));
+  if (data.unitSizes.length) {
+    await tx.insert(propertyUnitSizes).values(
+      data.unitSizes.map((u, i) => ({ ...u, propertyId, sortOrder: i })) as
+        typeof propertyUnitSizes.$inferInsert[]
+    );
+  }
+
   // property_internal is 1:1 and internal always — circle rate lives here
   // and on no public table, so no public query can reach it.
   await tx
@@ -92,6 +106,30 @@ async function writeChildTables(
       target: propertyInternal.propertyId,
       set: { circleRate: data.circleRate },
     });
+}
+
+/**
+ * Brings the document files on disk in line with what was just saved.
+ *
+ * Uploads always land under private/, and the public document route only
+ * ever reads public/ — so ticking "visible publicly" has to actually move
+ * bytes, and unticking has to take them back. Runs AFTER the transaction
+ * commits, so a rolled-back save never publishes a file, and never fails
+ * the save: a file that could not be copied is logged and the row stays,
+ * which the public route then answers with a 404.
+ *
+ * `removedKeys` are documents dropped from the vault entirely. Their row is
+ * gone so /api/documents already refuses them, but /api/images serves
+ * anything left in the public bucket — so the copy goes too.
+ */
+async function syncDocumentFiles(
+  documents: { storageKey: string; isPublic: boolean }[],
+  removedKeys: readonly string[] = []
+): Promise<void> {
+  await Promise.all([
+    ...documents.map((d) => syncPublicDocumentFile(d.storageKey, d.isPublic)),
+    ...removedKeys.map((key) => syncPublicDocumentFile(key, false)),
+  ]);
 }
 
 /** Find a project by name (case-insensitive) or create it. Empty = none. */
@@ -238,6 +276,7 @@ export async function createProperty(
     charges,
     media,
     documents,
+    unitSizes,
     circleRate,
     ...fields
   } = parsed.data;
@@ -298,12 +337,13 @@ export async function createProperty(
           documents.map((d) => ({ ...d, propertyId: row.id }))
         );
       }
-      await writeChildTables(tx, row.id, { owners, charges, media, circleRate });
+      await writeChildTables(tx, row.id, { owners, charges, media, unitSizes, circleRate });
     });
   } catch (err) {
     console.error("createProperty failed:", err);
     return { error: "Could not save the property. Check the fields and try again." };
   }
+  await syncDocumentFiles(documents);
   revalidatePublicSite();
   redirect("/admin/properties");
 }
@@ -325,6 +365,7 @@ export async function updateProperty(
     charges,
     media,
     documents,
+    unitSizes,
     circleRate,
     ...fields
   } = parsed.data;
@@ -378,7 +419,7 @@ export async function updateProperty(
       // Previously missing entirely: an edit to an existing property never
       // wrote owners, charges, media or the circle rate — every save of an
       // existing listing silently dropped them. This is the fix.
-      await writeChildTables(tx, id, { owners, charges, media, circleRate });
+      await writeChildTables(tx, id, { owners, charges, media, unitSizes, circleRate });
     });
   } catch (err) {
     console.error("updateProperty failed:", err);
@@ -402,6 +443,7 @@ export async function updateProperty(
       err
     );
   }
+  await syncDocumentFiles(documents, removedDocuments);
   revalidatePublicSite();
   redirect("/admin/properties");
 }
@@ -456,6 +498,7 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
     charges,
     media,
     documents,
+    unitSizes,
     circleRate,
     ...fields
   } = parsed.data;
@@ -513,7 +556,13 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
             documents.map((d) => ({ ...d, propertyId: existingId }))
           );
         }
-        await writeChildTables(tx, existingId, { owners, charges, media, circleRate });
+        await writeChildTables(tx, existingId, {
+          owners,
+          charges,
+          media,
+          unitSizes,
+          circleRate,
+        });
       });
 
       if (removedDocs.length) {
@@ -523,6 +572,7 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
           console.error("saveDraft: removed document files not swept:", removedDocs, err);
         }
       }
+      await syncDocumentFiles(documents, removedDocs);
 
       if (current.publicationState === "published") revalidatePublicSite();
       return { ok: true, id: existingId, savedAt: now.toISOString() };
@@ -554,8 +604,9 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
           documents.map((d) => ({ ...d, propertyId: row.id }))
         );
       }
-      await writeChildTables(tx, row.id, { owners, charges, media, circleRate });
+      await writeChildTables(tx, row.id, { owners, charges, media, unitSizes, circleRate });
     });
+    await syncDocumentFiles(documents);
     // A brand-new row is always draft (the schema default) — never public,
     // so no revalidation is needed here.
     return { ok: true, id: newId, savedAt: now.toISOString() };
@@ -597,11 +648,16 @@ export async function duplicateProperty(formData: FormData): Promise<void> {
 
   let newId: number;
   try {
-    const [sourceOwners, sourceCharges, sourceMedia, sourceInternalRows] =
+    const [sourceOwners, sourceCharges, sourceMedia, sourceUnitSizes, sourceInternalRows] =
       await Promise.all([
         db.select().from(propertyOwners).where(eq(propertyOwners.propertyId, sourceId)),
         db.select().from(propertyCharges).where(eq(propertyCharges.propertyId, sourceId)),
         db.select().from(propertyMedia).where(eq(propertyMedia.propertyId, sourceId)),
+        db
+          .select()
+          .from(propertyUnitSizes)
+          .where(eq(propertyUnitSizes.propertyId, sourceId))
+          .orderBy(asc(propertyUnitSizes.sortOrder), asc(propertyUnitSizes.id)),
         db.select().from(propertyInternal).where(eq(propertyInternal.propertyId, sourceId)),
       ]);
 
@@ -622,6 +678,11 @@ export async function duplicateProperty(formData: FormData): Promise<void> {
       "perSqftRate",
       "publicationState",
       "listingStatus",
+      // Dropped for the same reason publicationState is: a copy is a new
+      // listing nobody has yet decided to publish a pin for. The
+      // coordinates themselves ARE copied (same building), so ticking the
+      // box on the copy is one click, not a re-entry.
+      "showMapPublicly",
       "createdAt",
       "updatedAt",
     ]);
@@ -649,6 +710,7 @@ export async function duplicateProperty(formData: FormData): Promise<void> {
         owners: sourceOwners.map((o) => omit(o, ["id", "propertyId", "createdAt"])),
         charges: sourceCharges.map((c) => omit(c, ["id", "propertyId"])),
         media: sourceMedia.map((m) => omit(m, ["id", "propertyId", "sortOrder"])),
+        unitSizes: sourceUnitSizes.map((u) => omit(u, ["id", "propertyId", "sortOrder"])),
         circleRate: sourceInternalRows[0]?.circleRate ?? null,
       });
 

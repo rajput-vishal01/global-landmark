@@ -24,6 +24,7 @@ import { FeaturesSection } from "./FeaturesSection";
 import { LegalLoanSection } from "./LegalLoanSection";
 import { SpecificationsSection } from "./SpecificationsSection";
 import { OwnersEditor } from "./OwnersEditor";
+import { UnitSizesEditor } from "./UnitSizesEditor";
 import { MediaLinksSection } from "./MediaLinksSection";
 import { DocumentVault } from "./DocumentVault";
 import { ExtrasEditor } from "./ExtrasEditor";
@@ -81,6 +82,13 @@ type PropertyWithChildren = AdminProperty & {
     sizeBytes: number;
     note: string | null;
     uploadedBy: string | null;
+    isPublic: boolean;
+  }[];
+  unitSizes?: {
+    unitLabel: string;
+    areaValue: number | null;
+    areaUnit: string | null;
+    price: number | null;
   }[];
   internal?: { circleRate: number | null } | null;
 };
@@ -331,6 +339,9 @@ export function PropertyForm({
         floorNumber={property?.floorNumber}
         totalFloors={property?.totalFloors}
         unitNumber={property?.unitNumber}
+        latitude={property?.latitude}
+        longitude={property?.longitude}
+        showMapPublicly={property?.showMapPublicly ?? false}
       />
 
       {visible.has("area") && (
@@ -360,6 +371,11 @@ export function PropertyForm({
           roomFlags={property?.roomFlags ?? []}
         />
       )}
+
+      {/* Sits between configuration and price because it is both: the
+          public Unit / Area / Price table that a project advertises, as
+          opposed to the single negotiated demand price below. */}
+      <UnitSizesEditor initial={property?.unitSizes ?? []} />
 
       <PriceSection
         demandPrice={property?.demandPrice}

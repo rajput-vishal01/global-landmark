@@ -7,10 +7,16 @@ import { FormSection, countFilled } from "./FormSection";
 import { DOCUMENTATION_FLAGS } from "@/lib/taxonomy/features";
 
 /**
- * CFF group 17 — the legal document vault (R-29). Unlike the property
- * gallery, nothing here is ever meant for a public page: every row points at
- * a file under private/ storage, readable only through the admin-gated
+ * CFF group 17 — the legal document vault (R-29). Every row points at a file
+ * under private/ storage, readable only through the admin-gated
  * /api/admin/documents/<key> route built alongside this component.
+ *
+ * ONE exception, added in Phase E: a document can be marked "visible
+ * publicly" so a brochure can be downloaded from the property page. That
+ * flag is per file, defaults to false, and is the only thing that publishes
+ * anything here. It is deliberately NOT derived from the document type —
+ * "Brochure" as a type is a label someone typed from a dropdown, and a
+ * mistyped one must not be able to publish a sale deed.
  */
 
 type DocumentInput = {
@@ -21,7 +27,12 @@ type DocumentInput = {
   sizeBytes: number;
   note: string | null;
   uploadedBy: string | null;
+  isPublic?: boolean | null;
 };
+
+/** The checkbox shape ChecklistField already uses across the admin. */
+const CHECKBOX =
+  "h-4 w-4 shrink-0 cursor-pointer appearance-none border border-border bg-white transition-colors checked:border-gold checked:bg-gold";
 
 /**
  * Must match DOCUMENT_TYPES in lib/storage.ts — the upload route rejects
@@ -46,6 +57,7 @@ type DocRow = {
   sizeBytes: number;
   note: string;
   uploadedBy: string;
+  isPublic: boolean;
 };
 
 function toRow(input: DocumentInput, id: number): DocRow {
@@ -58,6 +70,9 @@ function toRow(input: DocumentInput, id: number): DocRow {
     sizeBytes: input.sizeBytes,
     note: input.note ?? "",
     uploadedBy: input.uploadedBy ?? "",
+    // `?? false`, never `?? true`, and never inferred from docType: a file
+    // whose visibility nobody considered stays private.
+    isPublic: input.isPublic ?? false,
   };
 }
 
@@ -121,6 +136,7 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
           sizeBytes: data.sizeBytes,
           note: "",
           uploadedBy: "",
+          isPublic: false,
         },
       ]);
     } catch (err) {
@@ -139,7 +155,7 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
   return (
     <FormSection
       title="Documents"
-      hint="Internal only — never shown publicly"
+      hint="Private unless a file is explicitly published"
       filled={filled}
       total={rows.length}
     >
@@ -160,14 +176,15 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
             sizeBytes: row.sizeBytes,
             note: row.note,
             uploadedBy: row.uploadedBy,
+            isPublic: row.isPublic,
           }))
         )}
       />
 
       <p className="border border-gold-deep/30 bg-cream px-4 py-3 font-sans text-meta text-ink">
-        Internal only. These files can be downloaded solely by a logged-in
-        admin — they never appear on the public site and are never indexed by
-        search engines.
+        Private by default. A file here can be downloaded solely by a
+        logged-in admin, and is never indexed by search engines, unless you
+        tick “Visible publicly” on that specific file.
       </p>
 
       {rows.length > 0 && (
@@ -255,6 +272,35 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
                   placeholder="Name of the admin who uploaded this"
                   className={FIELD}
                 />
+              </div>
+
+              {/* Per file, never per document type. The value travels inside
+                  documentsJson above (not as its own form field), and the
+                  server accepts it only as a literal `true` — see
+                  parseDocuments() in lib/admin/property-parse.ts. */}
+              <div
+                className={`flex flex-col gap-2 border p-3 ${
+                  row.isPublic ? "border-error bg-error/5" : "border-border"
+                }`}
+              >
+                <label className="flex cursor-pointer items-start gap-2.5 font-sans text-meta text-ink">
+                  <input
+                    type="checkbox"
+                    checked={row.isPublic}
+                    onChange={(e) => update(row.id, { isPublic: e.target.checked })}
+                    className={`${CHECKBOX} mt-0.5`}
+                  />
+                  Visible publicly — anyone can download this file
+                </label>
+                <p
+                  className={`font-sans text-meta ${
+                    row.isPublic ? "text-error" : "text-ink-muted"
+                  }`}
+                >
+                  {row.isPublic
+                    ? "ON. This file is listed on the public property page and downloadable without logging in. Only ever tick this for a brochure or a price list — never for registry papers, a sale deed, or anything carrying an owner's details."
+                    : "Off — admin download only. Tick this only for a brochure or price list you want buyers to have."}
+                </p>
               </div>
             </li>
           ))}

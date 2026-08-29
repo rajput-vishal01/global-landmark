@@ -573,6 +573,23 @@ await section("public project pricing", async () => {
   }
 });
 
+/**
+ * One project carries a public map pin so the gallery/map toggle has
+ * something to show. Deliberately a launched project and not the resale
+ * kothi: show_map_publicly defaults false precisely because publishing a
+ * private seller doorstep is not the same decision as publishing a
+ * builder site, and the seed should demonstrate that difference rather
+ * than paper over it.
+ */
+await section("map pin", async () => {
+  await client.query(
+    `update properties
+       set latitude = $1, longitude = $2, show_map_publicly = true
+     where slug = $3 and latitude is null`,
+    ["30.70461", "76.71791", "homeland-urva-luxury-mohali"]
+  );
+});
+
 await section("leads and settings", async () => {
   await client.query(
     `insert into leads (name, email, phone, interest, message, source, status)

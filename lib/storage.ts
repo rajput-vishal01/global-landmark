@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { mkdir, stat, unlink, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 /**
@@ -89,6 +89,67 @@ export function imageUrl(storageKey: string): string {
 /** Admin-gated URL for a document. Never rendered on a public page. */
 export function documentUrl(storageKey: string): string {
   return `/api/admin/documents/${storageKey}`;
+}
+
+/**
+ * URL for a document an admin has explicitly published (a brochure).
+ *
+ * Only ever built for a row whose `isPublic` column is true — the route it
+ * points at re-checks that column and reads the PUBLIC bucket, so this
+ * function producing a string is not what makes a file downloadable.
+ */
+export function publicDocumentUrl(storageKey: string): string {
+  return `/api/documents/${storageKey}`;
+}
+
+/**
+ * Brings the stored bytes in line with a document's `isPublic` flag.
+ *
+ * Uploaded documents always land under private/ (storeFile routes them
+ * there by kind), and the public document route only ever resolves paths
+ * under public/. So ticking the box has to actually MOVE bytes — flipping
+ * the column alone would leave the download 404ing, and serving a
+ * private-bucket file from a public route would defeat the whole split.
+ *
+ * Copy, not move: the admin vault still serves the file through the
+ * authenticated route, which reads private/. Unticking removes only the
+ * public copy, so the file stops being reachable without a login again —
+ * the DB check in the route already refuses it, and this removes the
+ * second path in (/api/images/<key> serves anything sitting in public/).
+ *
+ * ponytail: a JPEG uploaded BOTH as a document and as a gallery image
+ * shares one content-hash key, so unpublishing the document would delete
+ * the image's file too. Deliberately not guarded: the failure is a visibly
+ * broken image, and the alternative — leaving the public copy in place —
+ * is a silent one that keeps a withdrawn file downloadable.
+ */
+export async function syncPublicDocumentFile(
+  storageKey: string,
+  isPublic: boolean
+): Promise<void> {
+  const publicPath = resolveStoragePath(storageKey, "public");
+  if (!publicPath) return;
+
+  if (!isPublic) {
+    try {
+      await unlink(publicPath);
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code !== "ENOENT") {
+        console.error(`syncPublicDocumentFile: could not unpublish ${storageKey}:`, err);
+      }
+    }
+    return;
+  }
+
+  const privatePath = resolveStoragePath(storageKey, "private");
+  if (!privatePath) return;
+  try {
+    await mkdir(path.dirname(publicPath), { recursive: true });
+    await copyFile(privatePath, publicPath);
+  } catch (err) {
+    console.error(`syncPublicDocumentFile: could not publish ${storageKey}:`, err);
+  }
 }
 
 export function isLocalImageUrl(url: string): boolean {

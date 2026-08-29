@@ -1,12 +1,15 @@
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { properties } from "@/lib/db/schema";
+import { properties, propertyUnitSizes } from "@/lib/db/schema";
 import { IMAGE_ORDER, listProjectsForAdmin } from "@/lib/db/queries";
 import { PropertyForm } from "@/components/admin/PropertyForm";
 import { updateProperty } from "../../actions";
 
 export const metadata = { title: "Edit property" };
+
+/** Matches the public table's order — sortOrder is the admin's own order. */
+const UNIT_SIZE_ORDER = [asc(propertyUnitSizes.sortOrder), asc(propertyUnitSizes.id)];
 
 export default async function EditPropertyPage({
   params,
@@ -34,6 +37,9 @@ export default async function EditPropertyPage({
         charges: true,
         media: true,
         documents: true,
+        // Same order the public table renders in, so the editor and the
+        // property page agree about which unit comes first.
+        unitSizes: { orderBy: UNIT_SIZE_ORDER },
       },
     }),
     listProjectsForAdmin(),

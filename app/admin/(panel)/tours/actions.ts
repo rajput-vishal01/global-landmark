@@ -1,0 +1,47 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { tourRequests } from "@/lib/db/schema";
+import { requireAdmin } from "@/lib/admin/session";
+import { revalidatePublicSite } from "@/lib/admin/revalidate";
+import { isTourStatus } from "@/lib/taxonomy/tours";
+
+export type TourFormState = { error?: string };
+
+/**
+ * Inline row edit for the tour inbox — status only, one round trip.
+ *
+ * No `redirect()`: the admin stays on whatever page of the inbox they were
+ * on, and `revalidatePath` is what makes the action's response carry a fresh
+ * render (Next 16: without it the action returns only its state, not
+ * updated UI — see node_modules/next/dist/docs/.../server-actions.md).
+ */
+export async function updateTourRequest(
+  _prev: TourFormState,
+  formData: FormData
+): Promise<TourFormState> {
+  await requireAdmin();
+
+  const id = Number(formData.get("id"));
+  if (!Number.isInteger(id)) return { error: "Missing request id." };
+
+  const status = String(formData.get("status") ?? "");
+  if (!isTourStatus(status)) return { error: "Invalid status." };
+
+  try {
+    await db.update(tourRequests).set({ status }).where(eq(tourRequests.id, id));
+  } catch (err) {
+    console.error("updateTourRequest failed:", err);
+    return { error: "Could not save. Try again." };
+  }
+
+  revalidatePath("/admin/tours");
+  // House rule: every mutating admin action busts the public caches. A tour
+  // status changes nothing a visitor sees, so this is belt-and-braces — but
+  // "which mutations are safe to skip" is exactly the judgment that goes
+  // wrong quietly, so the rule stays unconditional.
+  revalidatePublicSite();
+  return {};
+}
