@@ -44,8 +44,6 @@ export const SETTING_KEYS = {
   credibility: "credibility",
 } as const;
 
-export type SettingKey = (typeof SETTING_KEYS)[keyof typeof SETTING_KEYS];
-
 /** Every row, keyed — used by both the admin form (uncached, always fresh) and the cached public helpers below. */
 export async function getAllSiteSettings(): Promise<Record<string, unknown>> {
   try {

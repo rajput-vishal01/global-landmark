@@ -108,8 +108,6 @@ export const COUNTRIES: Country[] = [
   { name: "Australia", cities: [] },
 ];
 
-export const COUNTRY_NAMES = COUNTRIES.map((c) => c.name);
-
 /** Flat city list for the tab row and for validation. */
 export const CITIES: City[] = COUNTRIES.flatMap((c) => c.cities);
 
@@ -127,8 +125,4 @@ export function localitiesIn(city: string | null | undefined): Locality[] {
 
 export function isLocalityIn(city: string | null | undefined, locality: string): boolean {
   return localitiesIn(city).some((l) => l.name === locality);
-}
-
-export function citySlug(name: string): string | null {
-  return CITIES.find((c) => c.name === name)?.slug ?? null;
 }

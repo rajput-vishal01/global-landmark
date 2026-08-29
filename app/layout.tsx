@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     title: SEO.title,
     description: SEO.description,
     url: SITE_URL,
-    images: [{ url: SEO.ogImage, width: 1200, height: 800 }],
+    images: [{ url: SEO.ogImage, width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",

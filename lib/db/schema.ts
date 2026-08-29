@@ -904,19 +904,3 @@ export type CrmClient = typeof crmClients.$inferSelect;
  * so that handing one of these to a public component is a type error.
  */
 export type AdminProperty = typeof properties.$inferSelect;
-
-export type PropertyOwner = typeof propertyOwners.$inferSelect;
-export type PropertyCharge = typeof propertyCharges.$inferSelect;
-export type PropertyDocument = typeof propertyDocuments.$inferSelect;
-export type PropertyInternal = typeof propertyInternal.$inferSelect;
-
-/**
- * Legacy alias. Public code should move to PublicProperty; kept so the
- * existing components keep compiling until phase 4 reworks them.
- */
-export type Property = AdminProperty;
-
-export type PropertyWithImages = AdminProperty & {
-  images: PropertyImage[];
-  project: Project | null;
-};

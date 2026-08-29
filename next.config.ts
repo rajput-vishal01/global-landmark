@@ -10,7 +10,7 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' https://api.cloudinary.com${isDev ? " ws:" : ""}`,
+  `connect-src 'self'${isDev ? " ws:" : ""}`,
   // openstreetmap.org is the property-page map embed (Phase E) — a plain
   // iframe, no map library. Without this entry the frame renders blank.
   "frame-src https://www.youtube-nocookie.com https://www.instagram.com https://www.openstreetmap.org",

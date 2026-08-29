@@ -154,10 +154,6 @@ export function requiredFieldsFor(
   return [...SHAPE_RULES[shape].required];
 }
 
-export function sectionLabel(key: SectionKey): string {
-  return SECTIONS.find((s) => s.key === key)?.label ?? key;
-}
-
 /** Every type maps to a shape — asserted in scripts/check-taxonomy.mjs. */
 export function unmappedPropertyTypes(): string[] {
   return PROPERTY_TYPES.filter((t) => !(t in PROPERTY_SHAPE));
