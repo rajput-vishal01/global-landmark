@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { FOOTER } from "@/lib/data";
 import { resolveCompany } from "@/lib/site-settings";
+import { NewsletterForm } from "@/components/NewsletterForm";
 
 // Icons keyed by social label; a label without an icon falls back to text.
 const SOCIAL_ICONS: Record<string, ReactNode> = {
@@ -118,6 +119,13 @@ export async function Footer() {
               </li>
             ))}
           </ul>
+        </div>
+      </div>
+
+      {/* Newsletter */}
+      <div className="border-t border-border px-5 py-10 md:px-12">
+        <div className="mx-auto w-full max-w-xl">
+          <NewsletterForm />
         </div>
       </div>
 

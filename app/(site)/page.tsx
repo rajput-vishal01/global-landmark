@@ -9,17 +9,22 @@ import { AboutSplit } from "@/components/sections/AboutSplit";
 import { PressMarquee } from "@/components/sections/PressMarquee";
 import { CTABand } from "@/components/sections/CTABand";
 import { Testimonials } from "@/components/sections/Testimonials";
+import { Services } from "@/components/sections/Services";
+import { TextTestimonials } from "@/components/sections/TextTestimonials";
 import { Footer } from "@/components/sections/Footer";
 import { DealOfWeek } from "@/components/sections/DealOfWeek";
+import { AreaGrid } from "@/components/sections/AreaGrid";
 import { getActiveDeal, getFeaturedProperties } from "@/lib/db/queries";
+import { listPublishedAreas } from "@/lib/db/areas";
 
 export default async function Home() {
   // Render per request (Docker builds have no DB to prerender against);
   // the queries themselves are cached and busted by admin mutations.
   await connection();
-  const [featured, activeDeal] = await Promise.all([
+  const [featured, activeDeal, areas] = await Promise.all([
     getFeaturedProperties(),
     getActiveDeal(),
+    listPublishedAreas(),
   ]);
 
   return (
@@ -34,13 +39,16 @@ export default async function Home() {
         <div className="relative z-10">
           <CredibilityBand />
           <FeaturedListings properties={featured} />
+          <AreaGrid areas={areas} />
           <DealOfWeek deal={activeDeal} />
           <ArchReveal />
           <Pillars />
+          <Services />
           <AboutSplit />
           <PressMarquee />
           <CTABand />
           <Testimonials />
+          <TextTestimonials />
         </div>
       </main>
       <Footer />
