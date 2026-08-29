@@ -581,13 +581,27 @@ await section("public project pricing", async () => {
  * builder site, and the seed should demonstrate that difference rather
  * than paper over it.
  */
-await section("map pin", async () => {
-  await client.query(
-    `update properties
-       set latitude = $1, longitude = $2, show_map_publicly = true
-     where slug = $3 and latitude is null`,
-    ["30.70461", "76.71791", "homeland-urva-luxury-mohali"]
-  );
+await section("map pins", async () => {
+  // [slug, lat, lng, public?]
+  for (const [slug, lat, lng, isPublic] of [
+    ["grand-mega-township-plots", "30.66502", "76.85013", true],
+    ["homeland-urva-luxury-mohali", "30.70461", "76.71791", true],
+    ["imperial-residency-3bhk", "30.66012", "76.83004", true],
+    ["trishla-forest-residences", "30.71005", "76.73008", true],
+    ["banur-plotted-project", "30.55607", "76.72003", true],
+    // The resale kothi carries a pin but is NOT published. It is the one
+    // listing whose owner details are internal, and it exists here
+    // precisely so the gate has something to hold shut — the public page
+    // must show no MAP button and leak no coordinate for this row.
+    ["panchkula-corner-kothi", "30.69421", "76.86061", false],
+  ]) {
+    await client.query(
+      `update properties
+         set latitude = $1, longitude = $2, show_map_publicly = $3
+       where slug = $4 and latitude is null`,
+      [lat, lng, isPublic, slug]
+    );
+  }
 });
 
 await section("leads and settings", async () => {

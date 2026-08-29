@@ -19,6 +19,7 @@ export function Select({
   id,
   className = "",
   onValueChange,
+  "aria-label": ariaLabel,
 }: {
   name: string;
   options: SelectOption[];
@@ -26,6 +27,12 @@ export function Select({
   id?: string;
   className?: string;
   onValueChange?: (value: string) => void;
+  /**
+   * Accessible name for a select with no visible <label> — the hero's
+   * search bar drops its labels for a flush single-row look, so without
+   * this its three dropdowns would announce only their current value.
+   */
+  "aria-label"?: string;
 }) {
   const [value, setValue] = useState(defaultValue ?? options[0]?.value ?? "");
   const [isOpen, setIsOpen] = useState(false);
@@ -79,6 +86,7 @@ export function Select({
         type="button"
         id={id}
         role="combobox"
+        aria-label={ariaLabel}
         aria-expanded={isOpen}
         aria-controls={listId}
         aria-haspopup="listbox"

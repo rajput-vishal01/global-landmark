@@ -31,6 +31,21 @@
   --color-border: #e6e6e3;
   --color-error: #9a2b2b;
 
+  /* Portal chrome (redesign round 2).
+     The client compared us against a conventional Tricity/NCR property
+     portal and asked for that read: a solid navy bar, a bright yellow
+     primary action, white content between them. Navy and yellow are
+     deliberately separate tokens from ink/gold rather than a redefinition
+     of them — gold stays the fine editorial accent on content surfaces,
+     while these two carry the chrome and the one action per screen we
+     actually want clicked. Yellow is a FILL colour and needs dark text on
+     it; `cta-ink` exists so nobody has to guess the contrast. */
+  --color-navy: #16264d;
+  --color-navy-deep: #101c39;
+  --color-cta: #ffd400;
+  --color-cta-hover: #f0c700;
+  --color-cta-ink: #14213d;
+
   /* Fluid type scale */
   --text-eyebrow: clamp(0.6875rem, 0.6vw + 0.55rem, 0.875rem);
   --text-eyebrow--line-height: 1.2;

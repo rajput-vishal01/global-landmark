@@ -252,57 +252,52 @@ export function PropertySearch({
       method="get"
       aria-label="Search the portfolio"
       onSubmit={onSubmit}
-      className={`bg-surface p-5 shadow-[0_24px_60px_-28px_rgba(20,20,20,0.45)] md:p-6 ${className}`}
+      className={`overflow-hidden bg-surface shadow-[0_24px_60px_-28px_rgba(20,20,20,0.55)] ${className}`}
     >
-      {/* Stacks on phones, pairs at sm, one row of four at lg — the panel
-          lives inside the hero's own max-width, so five columns would leave
-          every dropdown too narrow to read its own options. */}
-      <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-4">
-        {/* The keyword box carries no `name`: /properties filters on the
-            taxonomies only, so the keyword is answered by the live dropdown
-            above rather than a query param the listing page never reads. */}
-        <Field label="Keyword" htmlFor={`${listId}-keyword`}>
+      {/* One flush horizontal bar, not a card of labelled fields.
+          Deliberate: on a property portal this bar is the primary action of
+          the whole page, and stacking labels above four boxes made it read
+          as a form to fill in rather than a thing to use. Each control keeps
+          an accessible label via aria-label instead, and the dividers do the
+          visual separating that the labels used to.
+
+          Stacks on phones (four full-width rows plus the button), becomes
+          the single row at lg. */}
+      <div className="flex flex-col md:flex-row md:items-stretch">
+        <div className="flex-1 border-b border-border px-4 py-1 md:border-b-0 md:border-r">
           {keywordField}
-        </Field>
-        <Field label="City" htmlFor={`${listId}-city`}>
-          <Select id={`${listId}-city`} name="city" options={CITY_OPTIONS} />
-        </Field>
-        <Field label="Property Type" htmlFor={`${listId}-type`}>
-          <Select id={`${listId}-type`} name="type" options={TYPE_OPTIONS} />
-        </Field>
-        <Field label="Status" htmlFor={`${listId}-status`}>
-          <Select id={`${listId}-status`} name="possession" options={STATUS_OPTIONS} />
-        </Field>
+        </div>
+        <div className="border-b border-border px-4 py-2.5 md:w-36 md:border-b-0 md:border-r lg:w-44">
+          <Select
+            id={`${listId}-city`}
+            name="city"
+            aria-label="City"
+            options={CITY_OPTIONS}
+          />
+        </div>
+        <div className="border-b border-border px-4 py-2.5 md:w-40 md:border-b-0 md:border-r lg:w-52">
+          <Select
+            id={`${listId}-type`}
+            name="type"
+            aria-label="Property type"
+            options={TYPE_OPTIONS}
+          />
+        </div>
+        <div className="border-b border-border px-4 py-2.5 md:w-40 md:border-b-0 md:border-r lg:w-48">
+          <Select
+            id={`${listId}-status`}
+            name="possession"
+            aria-label="Property status"
+            options={STATUS_OPTIONS}
+          />
+        </div>
         <button
           type="submit"
-          className="text-eyebrow w-full cursor-pointer bg-ink px-10 py-3.5 font-sans font-medium uppercase tracking-[0.2em] text-cream transition-colors duration-300 hover:bg-gold-deep focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:col-span-2 lg:col-span-4 lg:w-fit"
+          className="text-eyebrow cursor-pointer bg-cta px-10 py-4 font-sans font-semibold uppercase tracking-[0.2em] text-cta-ink transition-colors duration-200 hover:bg-cta-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy md:py-0"
         >
           Search
         </button>
       </div>
     </form>
-  );
-}
-
-/** Label + control column, matching the listings page filter bar. */
-function Field({
-  label,
-  htmlFor,
-  children,
-}: {
-  label: string;
-  htmlFor: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label
-        htmlFor={htmlFor}
-        className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted"
-      >
-        {label}
-      </label>
-      {children}
-    </div>
   );
 }

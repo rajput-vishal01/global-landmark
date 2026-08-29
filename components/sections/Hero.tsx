@@ -2,10 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { Magnetic } from "@/components/ui/Magnetic";
 import { PropertySearch } from "@/components/PropertySearch";
-import { useGSAP, gsap, SplitText, EASE_HEAVY } from "@/lib/gsap";
+import { useGSAP, gsap, EASE_HEAVY } from "@/lib/gsap";
 import { HERO } from "@/lib/data";
 
 const SLIDES = HERO.slides;
@@ -20,16 +18,24 @@ const CROSSFADE =
   "object-cover transition-opacity duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)]";
 
 /**
- * Inset cinematic hero: blurred darkened copy of the image at the edges,
- * sharp image inset within. Load-in: frame settles, gold rule draws,
- * headline rises character-by-character behind a mask, then sub + CTA.
- * The imagery rotates through the four engagement categories; the strip
- * above the headline switches it directly and links into the portfolio.
+ * Portal-style hero: one full-bleed image, everything centred over it, and
+ * the search bar as the single obvious thing to do.
+ *
+ * This replaced an inset "cinematic" frame that put the headline bottom-left
+ * with the search tucked underneath. The client compared us against a
+ * conventional property portal and asked for that read instead, and they
+ * were right about the substance: on a portal the search bar IS the hero,
+ * and putting it in a corner under a wordmark makes people scroll looking
+ * for the thing they arrived to do.
+ *
+ * The four intent categories survive the redesign as the eyebrow row under
+ * the headline. The reference puts a static label in that slot; ours earns
+ * the space by both switching the backdrop and linking into the portfolio,
+ * so the feature is kept rather than dropped for symmetry.
  */
 export function Hero() {
   const scope = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const [warm, setWarm] = useState(false);
 
   useEffect(() => {
@@ -37,59 +43,36 @@ export function Hero() {
     return () => clearTimeout(id);
   }, []);
 
-  // Auto-advance; manual selection resets by re-running the effect.
+  // Auto-advance only. The intent categories that used to sit under the
+  // headline (and switched the backdrop on hover) were removed at the
+  // client's request, so nothing competes with the timer any more and the
+  // pause-on-hover it needed went with them.
   useEffect(() => {
-    if (isPaused) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = setInterval(
       () => setActive((prev) => (prev + 1) % SLIDES.length),
       ROTATE_MS
     );
     return () => clearInterval(id);
-  }, [isPaused, active]);
+  }, []);
 
+  // Load-in only. Nothing here is scroll-driven — the scroll engine went in
+  // the Phase A motion cull and must not creep back.
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
-
       mm.add("(prefers-reduced-motion: no-preference)", () => {
-        // fromTo (not .from) so the start values are explicit and the
-        // intro is self-contained — it no longer depends on a CSS rule
-        // pre-hiding .hero-img, which went with the scroll engine.
         gsap
           .timeline({ defaults: { ease: EASE_HEAVY } })
           .fromTo(
             ".hero-img",
-            { scale: 1.12, autoAlpha: 0 },
+            { scale: 1.08, autoAlpha: 0 },
             { scale: 1, autoAlpha: 1, duration: 1.2 },
             0
           )
-          .from(".hero-rule", { scaleX: 0, duration: 1, transformOrigin: "left" }, 0.45)
-          .from(".hero-cats", { autoAlpha: 0, y: 14, duration: 0.8 }, 0.9)
-          .from(".hero-sub", { autoAlpha: 0, y: 14, duration: 0.8 }, 1.1)
-          .from(".hero-search", { autoAlpha: 0, y: 14, duration: 0.8 }, 1.25)
-          .from(".hero-explore", { autoAlpha: 0, duration: 0.8 }, 1.4);
-
-        // Masked char rise; autoSplit re-splits when the display font loads.
-        SplitText.create(".hero-heading", {
-          type: "chars",
-          mask: "chars",
-          autoSplit: true,
-          onSplit: (self) =>
-            gsap.from(self.chars, {
-              yPercent: 110,
-              duration: 1.1,
-              ease: EASE_HEAVY,
-              stagger: 0.035,
-              delay: 0.55,
-            }),
-        });
-
-        // Phase A: the hero used to pin while the next section slid over
-        // it, with the frame scaling down and dimming on scrub. Both were
-        // scroll-driven, and pinning the first screen is the single most
-        // disorienting thing on the page — the reason the client read the
-        // site as busy. The hero now scrolls away like any other section.
+          .from(".hero-heading", { autoAlpha: 0, y: 18, duration: 0.9 }, 0.35)
+          .from(".hero-cats", { autoAlpha: 0, y: 12, duration: 0.7 }, 0.6)
+          .from(".hero-search", { autoAlpha: 0, y: 16, duration: 0.8 }, 0.75);
       });
     },
     { scope }
@@ -98,128 +81,50 @@ export function Hero() {
   return (
     <section
       ref={scope}
-      className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden bg-dark-deep"
+      className="relative flex min-h-[92dvh] w-full items-center justify-center overflow-hidden bg-dark-deep"
     >
-      {/* Blurred backdrop tracks the active slide. sizes="10vw" fetches a
-          tiny variant — full resolution is invisible under blur-2xl. */}
-      {SLIDES.map(
-        (slide, i) =>
-          (i === active || warm) && (
-            <Image
-              key={`bg-${slide.category}`}
-              aria-hidden
-              src={slide.img}
-              alt=""
-              fill
-              sizes="10vw"
-              className={`scale-110 blur-2xl brightness-[0.4] ${CROSSFADE} ${
-                i === active ? "opacity-100" : "opacity-0"
-              }`}
-            />
-          )
-      )}
+      <div className="hero-img absolute inset-0">
+        {SLIDES.map(
+          (slide, i) =>
+            (i === 0 || warm) && (
+              <Image
+                key={slide.category}
+                src={slide.img}
+                alt={i === active ? slide.alt : ""}
+                fill
+                priority={i === 0}
+                sizes="100vw"
+                className={`${CROSSFADE} ${i === active ? "opacity-100" : "opacity-0"}`}
+              />
+            )
+        )}
+      </div>
 
-      <div className="hero-frame relative mx-4 mb-6 mt-20 flex-1 overflow-hidden md:mx-14 md:mb-9 md:mt-24">
-        <div className="hero-img absolute inset-0">
-          {SLIDES.map(
-            (slide, i) =>
-              (i === 0 || warm) && (
-                <Image
-                  key={slide.category}
-                  src={slide.img}
-                  alt={i === active ? slide.alt : ""}
-                  fill
-                  priority={i === 0}
-                  sizes="100vw"
-                  className={`scale-105 ${CROSSFADE} ${
-                    i === active ? "opacity-100" : "opacity-0"
-                  }`}
-                />
-              )
-          )}
-        </div>
+      {/* One even scrim rather than a bottom gradient: the content is centred
+          now, so the darkening has to be centred too, or the headline lands
+          in the brightest part of the photograph. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/45" />
 
-        {/* Legibility scrim: soft global darken + stronger lift at the base */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/30" />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/65 via-black/20 to-transparent"
+      <div className="relative z-10 flex w-full max-w-5xl flex-col items-center px-5 pt-20 text-center md:px-8">
+        <h1 className="hero-heading text-balance font-serif text-h1 text-cream">
+          {HERO.headline.map((line, i) => (
+            <span key={line}>
+              {i > 0 && <br />}
+              {line}
+            </span>
+          ))}
+        </h1>
+
+        <p className="hero-cats text-eyebrow mt-5 font-sans font-semibold uppercase tracking-[0.24em] text-cta">
+          {HERO.sub}
+        </p>
+
+        <PropertySearch
+          withFilters
+          placeholder={HERO.searchPlaceholder}
+          className="hero-search mt-9 w-full"
+          openUpward
         />
-
-        <span className="hero-rule absolute left-6 top-8 block h-px w-44 bg-gold md:left-14 md:top-12 md:w-60" />
-
-        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-5 px-5 pb-8 md:flex-row md:items-end md:justify-between md:gap-8 md:px-14 md:pb-14">
-          <div className="max-w-3xl">
-            <nav
-              aria-label="Browse the portfolio by intent"
-              onMouseEnter={() => setIsPaused(true)}
-              onMouseLeave={() => setIsPaused(false)}
-              className="hero-cats mb-5 grid grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:items-center sm:gap-3"
-            >
-              {SLIDES.map((slide, i) => (
-                <Link
-                  key={slide.category}
-                  href={`/properties?category=${slide.category}`}
-                  onMouseEnter={() => setActive(i)}
-                  onFocus={() => setActive(i)}
-                  className={`text-eyebrow group relative border px-4 py-2.5 text-center font-sans font-medium uppercase tracking-[0.2em] backdrop-blur-sm transition-colors duration-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold sm:px-4 sm:py-2 ${
-                    i === active
-                      ? "border-gold/70 bg-dark/50 text-cream"
-                      : "border-gold/40 bg-dark/30 text-cream/70 hover:border-gold/60 hover:text-cream"
-                  }`}
-                >
-                  {slide.label}
-                  <span
-                    aria-hidden
-                    className={`absolute inset-x-4 bottom-1.5 h-px origin-left bg-gold transition-transform duration-700 ease-out ${
-                      i === active ? "scale-x-100" : "scale-x-0"
-                    }`}
-                  />
-                </Link>
-              ))}
-            </nav>
-
-            <h1 className="hero-heading text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
-              {HERO.headline.map((line, i) => (
-                <span key={line}>
-                  {i > 0 && <br />}
-                  {line}
-                </span>
-              ))}
-            </h1>
-            <p className="hero-sub text-pretty mt-4 max-w-md text-body font-sans font-light text-cream/85">
-              {HERO.sub}
-            </p>
-            <PropertySearch
-              withFilters
-              placeholder={HERO.searchPlaceholder}
-              className="hero-search mt-8"
-              openUpward
-            />
-          </div>
-
-          <Magnetic className="hero-explore">
-            <Link
-              href="/properties"
-              className="group flex w-fit items-center gap-4 bg-white/10 px-8 py-4 backdrop-blur-sm transition-colors duration-500 hover:bg-white/20"
-            >
-              <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.25em] text-cream">
-                {HERO.exploreLabel}
-              </span>
-              <svg
-                width="32"
-                height="10"
-                viewBox="0 0 36 10"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1"
-                className="text-cream transition-transform duration-500 group-hover:translate-x-1.5"
-              >
-                <path d="M0 5h34M30 1l4 4-4 4" />
-              </svg>
-            </Link>
-          </Magnetic>
-        </div>
       </div>
     </section>
   );
