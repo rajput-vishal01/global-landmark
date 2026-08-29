@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import type { ActiveDeal } from "@/lib/db/queries";
 import { categoryLabel } from "@/lib/categories";
 
@@ -10,25 +11,28 @@ function formatThrough(endsAt: string): string {
   });
 }
 
-/** Landing-page band for the currently live Deal of the Week. */
+/**
+ * Landing-page band for the currently live Deal of the Week.
+ *
+ * One of the page's two navy bands, and one of its two yellow actions —
+ * the dark ground is what makes a single promoted listing read as an offer
+ * rather than as one more card in the grid above it.
+ */
 export function DealOfWeek({ deal }: { deal: ActiveDeal | null }) {
   if (!deal) return null;
   const { property } = deal;
   const cover = property.images[0];
 
   return (
-    <section className="overflow-hidden bg-dark px-5 py-20 md:px-12 md:py-28">
-      <div className="grid grid-cols-1 items-center gap-12 md:grid-cols-[1fr_1.1fr] md:gap-20">
-        <div className="flex flex-col items-start gap-6">
-          <span className="flex items-center gap-4">
-            <span aria-hidden className="block h-px w-10 bg-gold" />
-            <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.3em] text-gold-highlight">
-              Deal of the Week
-            </span>
-          </span>
-          <h2 className="text-balance font-serif text-h2 uppercase tracking-[0.04em] text-cream">
-            {property.title}
-          </h2>
+    <section className="overflow-hidden bg-navy px-5 py-16 md:px-12 md:py-24">
+      <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-[1fr_1.1fr] md:gap-16">
+        <div className="flex flex-col items-start gap-5">
+          <SectionHeading
+            flush
+            tone="dark"
+            eyebrow="Deal of the Week"
+            title={property.title}
+          />
           <p className="text-meta font-sans uppercase tracking-[0.15em] text-cream/60">
             {categoryLabel(property.category)} · {property.location}
           </p>
@@ -39,7 +43,7 @@ export function DealOfWeek({ deal }: { deal: ActiveDeal | null }) {
             Held for private discussion through {formatThrough(deal.endsAt)}.
           </p>
           <div className="mt-2">
-            <Button href={`/properties/${property.slug}`} variant="corner" tone="dark">
+            <Button href={`/properties/${property.slug}`} variant="primary">
               View the Residence
             </Button>
           </div>

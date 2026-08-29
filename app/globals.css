@@ -40,11 +40,17 @@
      while these two carry the chrome and the one action per screen we
      actually want clicked. Yellow is a FILL colour and needs dark text on
      it; `cta-ink` exists so nobody has to guess the contrast. */
-  --color-navy: #16264d;
-  --color-navy-deep: #101c39;
-  --color-cta: #ffd400;
-  --color-cta-hover: #f0c700;
-  --color-cta-ink: #14213d;
+  --color-navy: #252839;
+  --color-navy-deep: #1b1e2c;
+  --color-cta: #ffdf00;
+  --color-cta-hover: #eccd00;
+  /* Black, not navy: the reference sets black on yellow, and it measures
+     better too — #000 on #ffdf00 is ~16:1, comfortably past AA at the
+     small bold sizes these buttons use. */
+  --color-cta-ink: #000000;
+  /* Headings sit slightly warm-navy rather than the near-black body ink,
+     which is what stops a white page of serif headings reading as harsh. */
+  --color-heading: #262838;
 
   /* Fluid type scale */
   --text-eyebrow: clamp(0.6875rem, 0.6vw + 0.55rem, 0.875rem);

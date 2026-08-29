@@ -4,14 +4,21 @@ import { type ReactNode } from "react";
 type ButtonProps = {
   href: string;
   children: ReactNode;
-  variant?: "underline" | "outline" | "corner";
+  variant?: "underline" | "outline" | "primary";
   tone?: "light" | "dark";
 };
 
 /**
- * Quiet CTAs. `underline` is the default text link. `outline` is a thin
- * bordered box. `corner` draws gold L-corners that expand to a full frame
- * on hover (sobharealty-style signature).
+ * One loud action per screen: `primary` is the yellow fill, and yellow is
+ * always carried on dark text (`cta-ink`) rather than white. `outline` and
+ * `underline` are the quiet ones — `underline` stays the default so the
+ * text links scattered through the site keep their existing weight.
+ *
+ * The old `corner` variant — gold L-brackets growing into a full frame on
+ * hover — went with the portal redesign. It was the most decorative
+ * affordance on the site and it competed with the yellow fill for "this is
+ * the thing to click"; both of its callers (the deal band and the closing
+ * CTA) are exactly where the primary action now lives.
  */
 export function Button({
   href,
@@ -19,21 +26,12 @@ export function Button({
   variant = "underline",
   tone = "light",
 }: ButtonProps) {
-  if (variant === "corner") {
-    const text = tone === "dark" ? "text-cream" : "text-ink";
+  if (variant === "primary") {
     return (
       <Link
         href={href}
-        className={`group relative inline-flex items-center px-10 py-5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] ${text}`}
+        className="text-eyebrow inline-flex items-center justify-center bg-cta px-8 py-4 font-sans font-semibold uppercase tracking-[0.18em] text-cta-ink transition-colors duration-300 hover:bg-cta-hover"
       >
-        <span
-          aria-hidden
-          className="absolute left-0 top-0 h-3 w-3 border-l border-t border-gold transition-all duration-500 ease-out group-hover:h-full group-hover:w-full"
-        />
-        <span
-          aria-hidden
-          className="absolute bottom-0 right-0 h-3 w-3 border-b border-r border-gold transition-all duration-500 ease-out group-hover:h-full group-hover:w-full"
-        />
         {children}
       </Link>
     );
@@ -42,7 +40,7 @@ export function Button({
   if (variant === "outline") {
     const toneClasses =
       tone === "dark"
-        ? "border-cream/30 text-cream hover:border-gold"
+        ? "border-cream/30 text-cream hover:border-cta"
         : "border-ink/25 text-ink hover:border-gold";
     return (
       <Link

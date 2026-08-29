@@ -93,13 +93,13 @@ export const CREDIBILITY = {
   headingHighlight: "₹85 Crore",
   headingPost: "in landmark sales",
   sub: "Considered residences across the Tricity, trusted by the most private buyers and sellers.",
+  // The ₹85 Cr figure is deliberately NOT repeated as a stat: the heading
+  // directly above already says "Over ₹85 Crore in landmark sales", and
+  // showing the same number twice within one band read as a duplicate
+  // rather than as emphasis. It remains editable in the admin (Settings →
+  // credibility), so a client who wants it back can add it there without a
+  // code change.
   stats: [
-    {
-      value: 85,
-      prefix: "₹",
-      suffix: " Cr+",
-      label: "Worth of Real Estate Sold",
-    },
     { value: 120, prefix: "", suffix: "+", label: "Properties Transacted" },
     { value: 15, prefix: "", suffix: "", label: "Years in the Tricity" },
   ],

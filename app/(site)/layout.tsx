@@ -1,9 +1,11 @@
 import { WhatsAppDock } from "@/components/WhatsAppDock";
 import { EnquiryDock } from "@/components/EnquiryDock";
 import { SocialProofTicker } from "@/components/SocialProofTicker";
+import { BackToTop } from "@/components/BackToTop";
 
 // Public site shell. The engagement layer (WhatsApp dock, enquiry pop-up,
-// activity ticker) mounts here so the admin panel never pays for it.
+// activity ticker, back-to-top) mounts here so the admin panel never pays
+// for it.
 //
 // Phase A removed two things that used to live here: Lenis smooth scroll
 // and the global ScrollReveals engine. Between them they owned every
@@ -21,6 +23,7 @@ export default function SiteLayout({
       <WhatsAppDock />
       <EnquiryDock />
       <SocialProofTicker />
+      <BackToTop />
     </>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { listServices } from "@/lib/db/content";
 import {
   SERVICE_ICONS,
@@ -18,14 +19,12 @@ export async function Services() {
   if (items.length === 0) return null;
 
   return (
-    <section className="bg-surface px-5 py-20 md:px-12 md:py-28">
-      <div className="mb-14 flex items-center gap-6 md:mb-16">
-        <span aria-hidden className="hidden h-px flex-1 bg-border md:block" />
-        <h2 className="text-center font-sans text-h4 font-light uppercase tracking-[0.18em] text-ink">
-          Our Services
-        </h2>
-        <span aria-hidden className="hidden h-px flex-1 bg-border md:block" />
-      </div>
+    <section className="bg-surface px-5 py-16 md:px-12 md:py-24">
+      <SectionHeading
+        align="center"
+        eyebrow="What We Do"
+        title="Our Services"
+      />
 
       {/* Hairline grid: the container draws top+left, each cell right+bottom,
           so the rules meet cleanly however many rows the admin creates. */}
@@ -33,10 +32,10 @@ export async function Services() {
         {items.map((service) => {
           const body = (
             <>
-              <span className="text-ink transition-colors duration-300 group-hover:text-gold-deep">
+              <span className="text-gold-deep transition-colors duration-300 group-hover:text-ink">
                 {SERVICE_ICONS[service.icon ?? ""] ?? SERVICE_ICON_FALLBACK}
               </span>
-              <h3 className="font-serif text-h4 text-ink">{service.title}</h3>
+              <h3 className="font-serif text-h4 text-heading">{service.title}</h3>
               {service.description && (
                 <p className="text-pretty text-body font-sans text-ink-muted">
                   {service.description}
@@ -46,19 +45,16 @@ export async function Services() {
           );
 
           return (
-            <li
-              key={service.id}
-              className="border-b border-r border-border"
-            >
+            <li key={service.id} className="border-b border-r border-border">
               {service.href ? (
                 <Link
                   href={service.href}
-                  className="group flex h-full flex-col gap-5 p-8 transition-colors duration-300 hover:bg-cream md:p-10"
+                  className="group flex h-full flex-col gap-4 p-7 transition-colors duration-300 hover:bg-cream md:p-9"
                 >
                   {body}
                 </Link>
               ) : (
-                <div className="group flex h-full flex-col gap-5 p-8 md:p-10">
+                <div className="group flex h-full flex-col gap-4 p-7 md:p-9">
                   {body}
                 </div>
               )}

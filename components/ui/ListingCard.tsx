@@ -156,6 +156,19 @@ function Tag({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * Portal card: framed, tight, and with one obvious way in.
+ *
+ * The redesign traded the tall editorial 4:5 crop for a 4:3 one and pulled
+ * the copy in under a hairline frame. That is worth roughly a third of a
+ * card's height, which is the whole point — the client's complaint was that
+ * three listings filled a screen where the reference fits nine. Nothing was
+ * dropped to buy the space: badge, specs, tags and price all still render.
+ *
+ * The "Details" chip is the portal affordance the card was missing. The
+ * whole card is already the link, so the chip is a span that fills yellow
+ * on card hover rather than a second, nested anchor.
+ */
 export function ListingCard({
   property,
   variant = "grid",
@@ -201,11 +214,13 @@ export function ListingCard({
   return (
     <Link
       href={`/properties/${property.slug}`}
-      className={`group flex gap-4 ${isList ? "flex-col sm:flex-row sm:gap-6" : "flex-col"} ${className}`}
+      className={`group flex border border-border bg-surface transition-colors duration-300 hover:border-gold ${
+        isList ? "flex-col sm:flex-row" : "flex-col"
+      } ${className}`}
     >
       <div
-        className={`relative overflow-hidden bg-ink/5 ${
-          isList ? "aspect-[4/3] sm:w-72 sm:shrink-0" : "aspect-[4/5]"
+        className={`relative shrink-0 overflow-hidden bg-ink/5 ${
+          isList ? "aspect-[4/3] sm:w-64" : "aspect-[4/3]"
         }`}
       >
         {cover && (
@@ -215,48 +230,69 @@ export function ListingCard({
             fill
             sizes={
               isList
-                ? "(min-width: 640px) 18rem, 100vw"
+                ? "(min-width: 640px) 16rem, 100vw"
                 : "(min-width: 1024px) 30vw, (min-width: 768px) 42vw, 100vw"
             }
             className="img-zoom"
           />
         )}
-        <div className="absolute left-4 top-4 flex flex-wrap items-center gap-2">
-          <span className="text-eyebrow bg-dark-deep/70 px-3 py-1.5 font-sans font-medium uppercase tracking-[0.2em] text-cream backdrop-blur-sm">
-            {badge}
-          </span>
-          {possession && <PossessionBadge status={possession} />}
+        {/* One positioned row, not two independently-positioned corners.
+            The badges and the enquiry toggle were each absolutely placed
+            (left-3 / right-3) with no shared layout, so on a card whose
+            badges ran long — "Kothi" plus "Ready to Move" — the pair slid
+            under the toggle and the text collided. Laying them out as a
+            single justify-between row means the two groups can never
+            occupy the same space: the badges wrap or truncate, and the
+            toggle keeps its width via shrink-0. */}
+        <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex items-start justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <span className="text-eyebrow max-w-full truncate bg-navy/85 px-2.5 py-1 font-sans font-medium uppercase tracking-[0.16em] text-cream backdrop-blur-sm">
+              {badge}
+            </span>
+            {possession && <PossessionBadge status={possession} />}
+          </div>
+          <EnquiryToggleButton
+            item={toEnquiryCartItem(property)}
+            className="text-eyebrow pointer-events-auto shrink-0 bg-navy/85 px-2.5 py-1 font-sans font-medium uppercase tracking-[0.16em] text-cream backdrop-blur-sm transition-colors hover:bg-navy-deep"
+          />
         </div>
-        <EnquiryToggleButton
-          item={toEnquiryCartItem(property)}
-          className="text-eyebrow absolute right-4 top-4 z-10 bg-dark-deep/70 px-3 py-1.5 font-sans font-medium uppercase tracking-[0.2em] text-cream backdrop-blur-sm transition-colors hover:bg-dark-deep/90"
-        />
       </div>
-      <div className={`flex flex-col gap-1.5 ${isList ? "sm:flex-1 sm:justify-center" : ""}`}>
-        <h3 className="font-serif text-h4 text-ink">{property.title}</h3>
-        <p className="text-meta font-sans text-ink-muted">
-          {locationLine(property)}
-          {projectName ? ` · ${projectName}` : ""}
-        </p>
 
-        <SpecRow specs={specs} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex flex-1 flex-col gap-1.5 p-4 pb-3">
+          <h3 className="font-serif text-h4 leading-snug text-heading">{property.title}</h3>
+          <p className="text-meta font-sans text-ink-muted">
+            {locationLine(property)}
+            {projectName ? ` · ${projectName}` : ""}
+          </p>
 
-        <div className="mt-0.5 flex flex-wrap gap-1.5">
-          {property.propertyType && <Tag>{property.propertyType}</Tag>}
-          <Tag>{categoryLabel(property.category)}</Tag>
-          {plc.map((tag) => (
-            <Tag key={tag}>{tag}</Tag>
-          ))}
+          <SpecRow specs={specs} />
+
+          <div className="flex flex-wrap gap-1.5">
+            {property.propertyType && <Tag>{property.propertyType}</Tag>}
+            <Tag>{categoryLabel(property.category)}</Tag>
+            {plc.map((tag) => (
+              <Tag key={tag}>{tag}</Tag>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2 border-t border-border pt-2">
-          {/* Empty when the price is exact — the row keeps price-right
-              alignment either way, so nothing shifts between cards. */}
-          <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-            {startsFrom ? "Starts from" : ""}
+        {/* Price and the way in share one footer rule, so every card in a
+            grid lands its price on the same line however tall the copy
+            above it runs. */}
+        <div className="flex items-end justify-between gap-3 border-t border-border px-4 py-3">
+          <span className="flex flex-col leading-tight">
+            {startsFrom && (
+              <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-ink-muted">
+                Starts from
+              </span>
+            )}
+            <span className="font-sans text-body font-semibold text-ink">
+              {priceLabel}
+            </span>
           </span>
-          <span className="font-sans text-body font-medium text-ink">
-            {priceLabel}
+          <span className="text-eyebrow border border-ink/20 px-3 py-1.5 font-sans font-semibold uppercase tracking-[0.16em] text-ink transition-colors duration-300 group-hover:border-cta group-hover:bg-cta group-hover:text-cta-ink">
+            Details
           </span>
         </div>
       </div>

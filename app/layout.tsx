@@ -1,20 +1,26 @@
 import type { Metadata } from "next";
-import { Prata, Manrope } from "next/font/google";
+import { Playfair_Display, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 import { MotionProvider } from "@/components/MotionProvider";
 import { COMPANY, SEO } from "@/lib/data";
 import { jsonLdHtml, organizationJsonLd, SITE_URL } from "@/lib/seo";
 
-const prata = Prata({
+// Typeface pairing for the portal restyle. Prata (display serif, single
+// weight) and Manrope (geometric sans) gave the old editorial look; the
+// client asked for the read of a mainstream property portal, which in this
+// market means a humanist serif for headings over a rounded humanist sans
+// for everything else. Playfair carries real weights, so headings can sit
+// at 400 instead of relying on size alone.
+const playfair = Playfair_Display({
   variable: "--font-serif",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "500", "600", "700"],
 });
 
-const manrope = Manrope({
+const nunitoSans = Nunito_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  weight: ["300", "400", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -54,7 +60,7 @@ export default async function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${prata.variable} ${manrope.variable}`}
+      className={`${playfair.variable} ${nunitoSans.variable}`}
     >
       <head>
         {/* Before first paint: lets CSS pre-hide reveal targets only when

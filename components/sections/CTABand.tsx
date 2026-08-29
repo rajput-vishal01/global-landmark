@@ -1,23 +1,29 @@
 import { Button } from "@/components/ui/Button";
-import { Magnetic } from "@/components/ui/Magnetic";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { CTA_BAND } from "@/lib/data";
 
+/**
+ * The closing conversion band. The button used to be a magnetic gold-corner
+ * frame; a primary action that drifts away from the pointer is a flourish a
+ * portal cannot afford, so it is now the same yellow fill as every other
+ * primary on the site.
+ */
 export function CTABand() {
   return (
-    <section className="overflow-hidden bg-dark px-5 py-24 text-center md:px-12 md:py-36">
-      <div className="mx-auto flex max-w-2xl flex-col items-center gap-7">
-        <h2 className="text-balance font-serif text-h2 uppercase tracking-[0.05em] text-cream">
-          {CTA_BAND.heading}
-        </h2>
-        <p className="max-w-md text-pretty text-body font-sans text-cream/70">
-          {CTA_BAND.sub}
-        </p>
-        <div className="mt-3">
-          <Magnetic strength={0.25}>
-            <Button href="/contact" variant="corner" tone="dark">
-              {CTA_BAND.ctaLabel}
-            </Button>
-          </Magnetic>
+    <section className="overflow-hidden bg-navy-deep px-5 py-20 md:px-12 md:py-28">
+      <div className="mx-auto flex max-w-2xl flex-col items-center">
+        <SectionHeading
+          flush
+          align="center"
+          tone="dark"
+          eyebrow="Sell With Us"
+          title={CTA_BAND.heading}
+          sub={CTA_BAND.sub}
+        />
+        <div className="mt-9">
+          <Button href="/contact" variant="primary">
+            {CTA_BAND.ctaLabel}
+          </Button>
         </div>
       </div>
     </section>

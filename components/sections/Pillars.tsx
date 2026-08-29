@@ -1,45 +1,45 @@
 import Image from "next/image";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import { PILLARS as PILLARS_DATA } from "@/lib/data";
 
-// Layout-only stagger per column; content comes from lib/data.
-const OFFSETS = ["", "md:mt-24", "md:mt-12"];
-const PILLARS = PILLARS_DATA.items.map((item, i) => ({
-  ...item,
-  offset: OFFSETS[i] ?? "",
-}));
-
 /**
- * Three-pillar editorial section: staggered grayscale imagery over serif
- * titles and short body copy, separated by hairline columns.
+ * Three-pillar section: image, serif title, short body, separated by
+ * hairline columns.
+ *
+ * The columns used to be staggered (each one dropped by a different top
+ * margin) and the photography was forced to grayscale. Both were editorial
+ * signatures pulling against the redesign: the stagger cost a screen of
+ * height for no information, and desaturated property photography is the
+ * one thing a buyer will not accept from a brokerage.
  */
 export function Pillars() {
   return (
-    <section className="bg-cream px-5 py-20 md:px-12 md:py-28">
-      <div className="mb-14 flex items-center gap-6 md:mb-20">
-        <span aria-hidden className="hidden h-px flex-1 bg-border md:block" />
-        <h2 className="text-center font-sans text-h4 font-light uppercase tracking-[0.18em] text-ink">
-          {PILLARS_DATA.heading}
-        </h2>
-        <span aria-hidden className="hidden h-px flex-1 bg-border md:block" />
-      </div>
+    <section className="bg-cream px-5 py-16 md:px-12 md:py-24">
+      <SectionHeading
+        align="center"
+        eyebrow="Our Approach"
+        title={PILLARS_DATA.heading}
+      />
 
-      <div className="grid grid-cols-1 gap-14 md:grid-cols-3 md:gap-0">
-        {PILLARS.map((pillar, i) => (
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-3 md:gap-0">
+        {PILLARS_DATA.items.map((pillar, i) => (
           <div
             key={pillar.title.join(" ")}
-            className={`flex flex-col gap-8 md:px-10 ${i > 0 ? "md:border-l md:border-border" : ""} ${pillar.offset}`}
+            className={`flex flex-col gap-6 md:px-10 ${
+              i > 0 ? "md:border-l md:border-border" : ""
+            }`}
           >
-            <div className="relative aspect-[4/5] overflow-hidden">
+            <div className="relative aspect-[4/3] overflow-hidden">
               <Image
                 src={pillar.image}
                 alt={pillar.alt}
                 fill
                 sizes="(min-width: 768px) 33vw, 100vw"
-                className="object-cover grayscale"
+                className="object-cover"
               />
             </div>
-            <div className="flex flex-col gap-4">
-              <h3 className="font-serif text-h3 leading-tight text-ink">
+            <div className="flex flex-col gap-3">
+              <h3 className="font-serif text-h3 leading-tight text-heading">
                 {pillar.title[0]}
                 <br />
                 {pillar.title[1]}

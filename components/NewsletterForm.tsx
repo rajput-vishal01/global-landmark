@@ -1,13 +1,23 @@
 "use client";
 
 import { useActionState } from "react";
-import { LABEL, FIELD } from "@/components/form-classes";
 import {
   subscribeToNewsletter,
   type SubscribeState,
 } from "@/app/(site)/newsletter/actions";
 
 const initialState: SubscribeState = { status: "idle" };
+
+/**
+ * Dark-surface copies of the shared LABEL/FIELD in components/form-classes:
+ * this form now lives on the navy footer, and those constants are tuned for
+ * ink-on-white (they are shared with every admin form, so they must stay
+ * that way).
+ */
+const LABEL_ON_NAVY =
+  "text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-cta";
+const FIELD_ON_NAVY =
+  "w-full appearance-none rounded-none border-b border-cream/25 bg-transparent py-2 font-sans text-body text-cream placeholder:text-cream/40 focus:border-cta focus:outline-none";
 
 /**
  * Footer newsletter signup. Success and "already subscribed" both come back
@@ -33,7 +43,7 @@ export function NewsletterForm() {
         className="hidden"
       />
 
-      <label htmlFor="newsletter-email" className={LABEL}>
+      <label htmlFor="newsletter-email" className={LABEL_ON_NAVY}>
         Subscribe for monthly updates
       </label>
 
@@ -46,21 +56,24 @@ export function NewsletterForm() {
           maxLength={200}
           autoComplete="email"
           placeholder="you@example.com"
-          className={FIELD}
+          className={FIELD_ON_NAVY}
         />
         <button
           type="submit"
           disabled={isPending}
-          className="shrink-0 cursor-pointer border border-ink/25 px-6 py-2.5 text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-ink transition-colors duration-300 hover:border-gold disabled:cursor-wait disabled:opacity-60"
+          className="text-eyebrow shrink-0 cursor-pointer bg-cta px-6 py-2.5 font-sans font-semibold uppercase tracking-[0.18em] text-cta-ink transition-colors duration-200 hover:bg-cta-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta disabled:cursor-wait disabled:opacity-60"
         >
           {isPending ? "Sending..." : "Submit"}
         </button>
       </div>
 
+      {/* `text-error` is a deep red tuned for white; on navy it reads as
+          near-black. A pale rose is the only value here that is not a token
+          because it exists solely for this one dark surface. */}
       <p
         aria-live="polite"
         className={`min-h-[1.25rem] text-meta font-sans ${
-          state.status === "error" ? "text-error" : "text-ink-muted"
+          state.status === "error" ? "text-[#ffb3b3]" : "text-cream/70"
         }`}
       >
         {state.message}

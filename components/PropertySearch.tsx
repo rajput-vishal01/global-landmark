@@ -252,52 +252,71 @@ export function PropertySearch({
       method="get"
       aria-label="Search the portfolio"
       onSubmit={onSubmit}
-      className={`overflow-hidden bg-surface shadow-[0_24px_60px_-28px_rgba(20,20,20,0.55)] ${className}`}
+      className={className}
     >
-      {/* One flush horizontal bar, not a card of labelled fields.
-          Deliberate: on a property portal this bar is the primary action of
-          the whole page, and stacking labels above four boxes made it read
-          as a form to fill in rather than a thing to use. Each control keeps
-          an accessible label via aria-label instead, and the dividers do the
-          visual separating that the labels used to.
+      {/* Two rows, matching how a property portal actually lays this out:
+          the keyword box and its action read as one white bar, and the
+          refinements sit under it as labelled dropdowns.
 
-          Stacks on phones (four full-width rows plus the button), becomes
-          the single row at lg. */}
-      <div className="flex flex-col md:flex-row md:items-stretch">
-        <div className="flex-1 border-b border-border px-4 py-1 md:border-b-0 md:border-r">
-          {keywordField}
-        </div>
-        <div className="border-b border-border px-4 py-2.5 md:w-36 md:border-b-0 md:border-r lg:w-44">
-          <Select
-            id={`${listId}-city`}
-            name="city"
-            aria-label="City"
-            options={CITY_OPTIONS}
-          />
-        </div>
-        <div className="border-b border-border px-4 py-2.5 md:w-40 md:border-b-0 md:border-r lg:w-52">
-          <Select
-            id={`${listId}-type`}
-            name="type"
-            aria-label="Property type"
-            options={TYPE_OPTIONS}
-          />
-        </div>
-        <div className="border-b border-border px-4 py-2.5 md:w-40 md:border-b-0 md:border-r lg:w-48">
-          <Select
-            id={`${listId}-status`}
-            name="possession"
-            aria-label="Property status"
-            options={STATUS_OPTIONS}
-          />
-        </div>
+          The refinements are deliberately NOT inside the white bar. Four
+          controls plus a button in one strip made every dropdown too narrow
+          to read its own longest option ("Panchkula Extension", "Mixed Use
+          Property"), and it hid the fact that they are optional — the
+          keyword alone is a valid search. */}
+      <div className="flex flex-col bg-surface shadow-[0_24px_60px_-28px_rgba(20,20,20,0.55)] sm:flex-row sm:items-stretch">
+        <div className="flex-1 px-4 py-1">{keywordField}</div>
         <button
           type="submit"
-          className="text-eyebrow cursor-pointer bg-cta px-10 py-4 font-sans font-semibold uppercase tracking-[0.2em] text-cta-ink transition-colors duration-200 hover:bg-cta-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy md:py-0"
+          className="text-eyebrow cursor-pointer bg-cta px-10 py-4 font-sans font-bold uppercase tracking-[0.16em] text-cta-ink transition-colors duration-200 hover:bg-cta-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cta sm:py-0"
         >
           Search
         </button>
       </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+        <FilterField label="Cities" htmlFor={`${listId}-city`}>
+          <Select id={`${listId}-city`} name="city" options={CITY_OPTIONS} />
+        </FilterField>
+        <FilterField label="Property Type" htmlFor={`${listId}-type`}>
+          <Select id={`${listId}-type`} name="type" options={TYPE_OPTIONS} />
+        </FilterField>
+        <FilterField label="Property Status" htmlFor={`${listId}-status`}>
+          <Select
+            id={`${listId}-status`}
+            name="possession"
+            options={STATUS_OPTIONS}
+          />
+        </FilterField>
+      </div>
     </form>
+  );
+}
+
+/**
+ * Label + dropdown for the hero's refinement row.
+ *
+ * The label is light because this row sits directly on the hero photograph
+ * rather than inside the white bar above it. `withFilters` is only ever
+ * rendered by the hero, so there is no light-background caller to break.
+ */
+function FilterField({
+  label,
+  htmlFor,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5 text-left">
+      <label
+        htmlFor={htmlFor}
+        className="text-eyebrow font-sans font-semibold uppercase tracking-[0.16em] text-cream/85"
+      >
+        {label}
+      </label>
+      <div className="bg-surface px-3 py-1.5">{children}</div>
+    </div>
   );
 }
