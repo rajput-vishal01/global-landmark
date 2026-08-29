@@ -158,6 +158,20 @@ export const properties = pgTable(
     totalFloors: integer("total_floors"),
     /** CONFIRM whether this may be shown publicly; treated as internal. */
     unitNumber: text("unit_number"),
+    /**
+     * Map pin, stored as text rather than a numeric/PostGIS type: these are
+     * copied out of Google Maps by hand and never arithmetic'd, so parsing
+     * them into floats would buy nothing and lose the operator's precision.
+     *
+     * `showMapPublicly` defaults to FALSE and is the only thing that puts a
+     * pin on a public page. That default is deliberate: publishing exact
+     * coordinates is fine for a launched project and not fine for a private
+     * resale kothi whose owner details are internal — so the safe answer is
+     * the one you get by doing nothing.
+     */
+    latitude: text("latitude"),
+    longitude: text("longitude"),
+    showMapPublicly: boolean("show_map_publicly").notNull().default(false),
 
     // --- Classification (CFF 2, 7, 10, 11, 12) -----------------------------
     propertyType: text("property_type"),
@@ -396,6 +410,29 @@ export const propertyDocuments = pgTable(
     note: text("note"),
     uploadedBy: text("uploaded_by"),
     uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+    /**
+     * The ONLY thing that makes a document downloadable without logging in.
+     *
+     * Read this before you touch it. Every row in this table has been
+     * private since the table existed — registry papers, sale deeds, owner
+     * KYC — and the public site has no route that can reach them. Brochures
+     * are the one legitimate exception: buyers expect to download them, and
+     * the client's reference portal offers exactly that.
+     *
+     * Three rules, all deliberate:
+     *   1. Defaults to false. A document is private unless a human ticked
+     *      this box for that specific file.
+     *   2. NEVER infer it from `docType`. "Brochure" as a type is a label an
+     *      admin typed; it is not consent to publish, and a mistyped type
+     *      must not be able to publish a sale deed.
+     *   3. A public document must be stored in the public bucket, not the
+     *      private one — see lib/storage.ts. Flipping this flag alone does
+     *      not move bytes, and serving a private-bucket file from a public
+     *      route would defeat the split.
+     * scripts/leak-check.mjs asserts the seeded registry document never
+     * appears in public HTML; keep it that way.
+     */
+    isPublic: boolean("is_public").notNull().default(false),
   },
   (t) => [index("property_documents_property_idx").on(t.propertyId)]
 );
@@ -584,6 +621,155 @@ export const deals = pgTable("deals", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+/**
+ * Areas — the "explore by location" landing pages (R-46).
+ *
+ * An area is editorial, not derived: the set of localities worth a landing
+ * page is a judgement call the broker makes, and it needs a photograph and
+ * a paragraph that no query can produce. What is NOT stored here is the
+ * property count — that is always counted live off `properties`, because a
+ * cached count is a number that goes stale silently and then lies on a
+ * public page.
+ *
+ * `matchCity` / `matchLocality` are how an area claims its listings. Kept as
+ * plain text matched case-insensitively against the same columns on
+ * `properties` rather than a join table: a listing belongs to its locality
+ * by virtue of where it is, and making the broker maintain that link by
+ * hand on every save is work the address already did.
+ */
+export const areas = pgTable(
+  "areas",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull().unique(),
+    /** Which city this area sits in — drives the "6 Areas of X" grouping. */
+    city: text("city"),
+    /** Value matched against properties.city (case-insensitive). */
+    matchCity: text("match_city"),
+    /** Value matched against properties.locality (case-insensitive). */
+    matchLocality: text("match_locality"),
+    coverImage: text("cover_image"),
+    coverImageKey: text("cover_image_key"),
+    blurb: text("blurb"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    isPublished: boolean("is_published").notNull().default(false),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => [index("areas_published_idx").on(t.isPublished, t.sortOrder)]
+);
+
+export type Area = typeof areas.$inferSelect;
+
+/**
+ * Unit sizes — the "2 BHK / 1750 sq.ft / ₹3.2 Cr" table a project page
+ * shows. `properties.configurations` already holds the range as strings
+ * ("2-4 BHK") for filtering; it cannot hold an area and a price per
+ * configuration, which is what a buyer actually compares.
+ *
+ * Public. Price here is the advertised starting figure for that unit type,
+ * not the negotiated one — the internal demand price stays on `properties`
+ * behind `showPricePublicly`.
+ */
+export const propertyUnitSizes = pgTable(
+  "property_unit_sizes",
+  {
+    id: serial("id").primaryKey(),
+    propertyId: integer("property_id")
+      .notNull()
+      .references(() => properties.id, { onDelete: "cascade" }),
+    /** "2 BHK", "3 + S BHK" — free text, the client's own vocabulary. */
+    unitLabel: text("unit_label").notNull(),
+    areaValue: integer("area_value"),
+    areaUnit: text("area_unit"),
+    /** Whole rupees, same convention as every other money column here. */
+    price: bigint("price", { mode: "number" }),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (t) => [index("property_unit_sizes_property_idx").on(t.propertyId, t.sortOrder)]
+);
+
+/**
+ * "Schedule a tour" requests. A sibling of `leads`, not a variant of it:
+ * a tour has a date, a time and a tour type, and mixing those nullable
+ * columns into the enquiry inbox would blur two things the broker works
+ * through differently. Internal — never read by a public query.
+ */
+export const tourRequests = pgTable(
+  "tour_requests",
+  {
+    id: serial("id").primaryKey(),
+    propertyId: integer("property_id").references(() => properties.id, {
+      onDelete: "set null",
+    }),
+    name: text("name").notNull(),
+    phone: text("phone"),
+    email: text("email"),
+    /** In person / video call — the reference portal offers both. */
+    tourType: text("tour_type"),
+    preferredDate: date("preferred_date"),
+    preferredTime: text("preferred_time"),
+    message: text("message"),
+    status: text("status").notNull().default("new"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [index("tour_requests_status_idx").on(t.status, t.createdAt)]
+);
+
+/** Advisory services shown on the landing page ("Buying or Selling", "Home Loan"). */
+export const services = pgTable(
+  "services",
+  {
+    id: serial("id").primaryKey(),
+    title: text("title").notNull(),
+    description: text("description"),
+    /** Key into a fixed inline-SVG set in the UI — not a URL, not user HTML. */
+    icon: text("icon"),
+    href: text("href"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    isPublished: boolean("is_published").notNull().default(true),
+  },
+  (t) => [index("services_published_idx").on(t.isPublished, t.sortOrder)]
+);
+
+/**
+ * Written testimonials. Separate table from `testimonial_videos` rather
+ * than a nullable-everything merge: a quote and a reel share only a sort
+ * order, and the admin screens for them look nothing alike.
+ */
+export const textTestimonials = pgTable(
+  "text_testimonials",
+  {
+    id: serial("id").primaryKey(),
+    quote: text("quote").notNull(),
+    author: text("author").notNull(),
+    /** "Bought in Sector 71" — context that makes the quote credible. */
+    context: text("context"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    isPublished: boolean("is_published").notNull().default(true),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [index("text_testimonials_published_idx").on(t.isPublished, t.sortOrder)]
+);
+
+/**
+ * Newsletter list. Internal — an email address given for one purpose.
+ * `unsubscribedAt` rather than a delete so an unsubscribe is durable: a
+ * deleted row would be re-added silently by the next form submission.
+ */
+export const newsletterSubscribers = pgTable(
+  "newsletter_subscribers",
+  {
+    id: serial("id").primaryKey(),
+    email: text("email").notNull().unique(),
+    source: text("source"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    unsubscribedAt: timestamp("unsubscribed_at"),
+  },
+  (t) => [index("newsletter_subscribers_created_idx").on(t.createdAt)]
+);
+
 // ─── Relations ─────────────────────────────────────────────────────────────
 
 export const buildersRelations = relations(builders, ({ many }) => ({
@@ -632,6 +818,14 @@ export const propertiesRelations = relations(properties, ({ one, many }) => ({
   charges: many(propertyCharges),
   documents: many(propertyDocuments),
   priceHistory: many(propertyPriceHistory),
+  unitSizes: many(propertyUnitSizes),
+}));
+
+export const propertyUnitSizesRelations = relations(propertyUnitSizes, ({ one }) => ({
+  property: one(properties, {
+    fields: [propertyUnitSizes.propertyId],
+    references: [properties.id],
+  }),
 }));
 
 export const propertyImagesRelations = relations(propertyImages, ({ one }) => ({
