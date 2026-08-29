@@ -45,10 +45,13 @@ export default async function AdminPanelLayout({
   }
 
   return (
-    <div className="min-h-screen md:flex">
+    // `admin-panel` scopes the dense type scale in globals.css. Without it
+    // every screen here inherits the public site's editorial sizing, which
+    // is what made the panel read as oversized.
+    <div className="admin-panel min-h-screen md:flex">
       <AdminSidebar companyName={COMPANY.name} nav={NAV} />
-      <main className="min-w-0 flex-1 px-5 py-8 md:px-10 md:py-10">
-        <div className="mx-auto max-w-5xl">{children}</div>
+      <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
+        <div className="mx-auto max-w-6xl">{children}</div>
       </main>
     </div>
   );

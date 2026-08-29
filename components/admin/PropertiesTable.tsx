@@ -132,17 +132,27 @@ export function PropertiesTable({
                   <td className="whitespace-nowrap px-4 py-3 text-meta font-sans tabular-nums text-ink-muted">
                     {p.refCode ?? "—"}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-12 w-16 shrink-0 overflow-hidden bg-ink/5">
+                  {/* Fixed-width, single-line. A title that wraps turns a
+                      scannable list into three-line blocks and the row
+                      height stops being uniform, which is the thing that
+                      makes a table readable at a glance. Full text stays
+                      available on hover via the title attribute. */}
+                  <td className="max-w-[24rem] px-4 py-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-10 w-14 shrink-0 overflow-hidden bg-ink/5">
                         {p.coverUrl && (
                           // eslint-disable-next-line @next/next/no-img-element -- arbitrary admin-entered hosts
                           <img src={p.coverUrl} alt="" className="h-full w-full object-cover" />
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-sans text-body font-medium text-ink">{p.title}</p>
-                        <p className="text-meta font-sans text-ink-muted">
+                        <p
+                          title={p.title}
+                          className="truncate font-sans text-body font-medium text-ink"
+                        >
+                          {p.title}
+                        </p>
+                        <p className="truncate text-meta font-sans text-ink-muted">
                           {[p.locality, p.projectName, p.addedBy].filter(Boolean).join(" · ")}
                         </p>
                       </div>

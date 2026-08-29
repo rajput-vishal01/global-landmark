@@ -69,6 +69,60 @@
   --text-h1--line-height: 1.08;
 }
 
+/* ───────────────────────────────────────────────────────────────────────
+   Admin panel: a working tool, not the marketing site.
+
+   The public site's type scale is editorial on purpose — a 57px Playfair
+   headline is right for a hero and absurd for the title of a CRUD screen.
+   The admin was inheriting that wholesale, which is what made it read as
+   oversized and unserious: display serif at hero size, 18px body, and
+   0.18em-tracked uppercase nav.
+
+   These are the SAME utilities the public site uses (`text-h2`, `text-body`
+   …); Tailwind compiles them to `font-size: var(--text-h2)`, so rescoping
+   the variables here retunes all 32 admin screens at once without touching
+   a single page file — and without moving the public site a pixel.
+
+   Sizes are a conventional dense-dashboard scale: 14px body, 13px meta,
+   22px page title. Headings also drop to the sans face: a serif is a
+   voice, and a data tool should not have one. */
+.admin-panel {
+  --text-h1: 1.75rem;
+  --text-h1--line-height: 1.25;
+  --text-h2: 1.5rem;
+  --text-h2--line-height: 1.3;
+  --text-h3: 1.25rem;
+  --text-h3--line-height: 1.35;
+  --text-h4: 1.0625rem;
+  --text-h4--line-height: 1.4;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.55;
+  --text-meta: 0.875rem;
+  --text-meta--line-height: 1.45;
+  --text-eyebrow: 0.75rem;
+  --text-eyebrow--line-height: 1.35;
+}
+
+/* Beats the `font-serif` utility on specificity (0,1,1 vs 0,1,0), so the
+   32 pages that ask for a serif title get the sans one without edits. */
+.admin-panel h1,
+.admin-panel h2,
+.admin-panel h3,
+.admin-panel h4 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.006em;
+  text-transform: none;
+}
+
+/* Table density. Admin tables are for scanning many rows, so cells get the
+   tighter padding a dashboard expects and long cell text stops wrapping
+   into three-line rows. */
+.admin-panel table :is(th, td) {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
 body {
   background: var(--color-surface);
   color: var(--color-ink);

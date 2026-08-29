@@ -7,8 +7,16 @@ import { LogoutButton } from "@/app/admin/LogoutButton";
 
 export type NavItem = { label: string; href: string | null };
 
+/**
+ * Sentence case, normal tracking, tight rows.
+ *
+ * These were uppercase at 0.16em tracking with 2.5-unit padding, which is
+ * a fashion-site nav: wide, airy, and slow to scan. A tool's sidebar is a
+ * list you read fourteen times an hour, so it wants ordinary word shapes
+ * and enough density to see every section without scrolling.
+ */
 const NAV_ITEM =
-  "text-eyebrow font-sans font-medium uppercase tracking-[0.16em] transition-colors block px-3 py-2.5";
+  "text-body font-sans font-medium transition-colors block rounded-sm px-3 py-2";
 
 /**
  * A route is "current" if it's an exact match, or the sidebar's target is a
@@ -75,11 +83,13 @@ export function AdminSidebar({
   const [open, setOpen] = useState(false);
 
   const brand = (
-    <Link href="/admin" className="flex items-baseline gap-2.5 px-3 py-1">
-      <span className="font-serif text-lg uppercase tracking-[0.16em] text-ink">
+    // One line, not two: the wordmark was a 24px serif that wrapped in a
+    // 224px rail and cost more vertical space than three nav items.
+    <Link href="/admin" className="flex items-baseline gap-2 px-3 py-1">
+      <span className="truncate font-sans text-meta font-semibold tracking-tight text-ink">
         {companyName}
       </span>
-      <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.3em] text-gold-deep">
+      <span className="text-eyebrow shrink-0 font-sans font-medium uppercase tracking-[0.14em] text-gold-deep">
         Admin
       </span>
     </Link>

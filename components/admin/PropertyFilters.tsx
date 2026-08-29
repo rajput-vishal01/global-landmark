@@ -37,7 +37,7 @@ const LABEL_CLS =
  * `min-h-11` is 44px — the tap target the panel is held to, because it is
  * used one-handed on a phone at a site visit.
  */
-const CONTROL = `${FIELD} min-h-11`;
+const CONTROL = `${FIELD} min-h-11 sm:min-h-0 sm:py-1.5`;
 
 /**
  * Native `<select>` — one option list, "any" first.
@@ -64,7 +64,7 @@ function FilterSelect({
     typeof o === "string" ? { value: o, label: o } : o
   );
   return (
-    <label className="flex flex-col gap-1.5">
+    <label className="flex flex-col gap-1">
       <span className={LABEL_CLS}>{label}</span>
       <span className="relative block">
         <select name={name} defaultValue={value} className={`${CONTROL} pr-6`}>
@@ -105,9 +105,9 @@ export function PropertyFilters({
     <form
       method="get"
       action="/admin/properties"
-      className="flex flex-col gap-5 border border-border bg-white p-4 sm:p-5"
+      className="flex flex-col gap-3 border border-border bg-white p-3 sm:p-4"
     >
-      <label className="flex flex-col gap-1.5">
+      <label className="flex flex-col gap-1">
         <span className={LABEL_CLS}>Search</span>
         <input
           type="search"
@@ -119,7 +119,7 @@ export function PropertyFilters({
       </label>
 
       {/* One column at 360px, two from 640px, three from 1024px. */}
-      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
         <FilterSelect
           name="status"
           label="Listing status"
