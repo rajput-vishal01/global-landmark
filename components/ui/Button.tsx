@@ -6,6 +6,22 @@ type ButtonProps = {
   children: ReactNode;
   variant?: "underline" | "outline" | "primary";
   tone?: "light" | "dark";
+  /**
+   * Stretch to the container. The property-detail enquiry rail is five
+   * stacked full-width controls; without this it had to hand-roll the
+   * yellow fill, which is how a second, slightly-different primary button
+   * ends up in the codebase.
+   */
+  fullWidth?: boolean;
+  /**
+   * Set for destinations that leave the site (WhatsApp, tel:). `next/link`
+   * is skipped for these — it prefetches and client-navigates, neither of
+   * which means anything for an external scheme — and `rel` is forced
+   * alongside `target="_blank"` so the opened page can never reach back
+   * through `window.opener`.
+   */
+  external?: boolean;
+  newTab?: boolean;
 };
 
 /**
@@ -25,15 +41,40 @@ export function Button({
   children,
   variant = "underline",
   tone = "light",
+  fullWidth = false,
+  external = false,
+  newTab = false,
 }: ButtonProps) {
-  if (variant === "primary") {
-    return (
-      <Link
+  const width = fullWidth ? "w-full" : "";
+
+  /**
+   * One wrapper so every variant gets external handling identically — a
+   * plain <a> for off-site destinations, `next/link` otherwise. `rel` is
+   * derived from `newTab` rather than accepted as a prop, so a caller
+   * cannot open a new tab and forget `noopener`.
+   *
+   * A plain function returning elements, NOT a component: declaring a
+   * component inside render gives it a new identity every pass, which
+   * remounts it and throws away any state below it.
+   */
+  const shell = (className: string) =>
+    external ? (
+      <a
         href={href}
-        className="text-eyebrow inline-flex items-center justify-center bg-cta px-8 py-4 font-sans font-semibold uppercase tracking-[0.18em] text-cta-ink transition-colors duration-300 hover:bg-cta-hover"
+        className={className}
+        {...(newTab ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       >
         {children}
+      </a>
+    ) : (
+      <Link href={href} className={className}>
+        {children}
       </Link>
+    );
+
+  if (variant === "primary") {
+    return shell(
+      `text-eyebrow inline-flex items-center justify-center bg-cta px-8 py-4 font-sans font-semibold uppercase tracking-[0.18em] text-cta-ink transition-colors duration-300 hover:bg-cta-hover ${width}`
     );
   }
 
@@ -42,13 +83,8 @@ export function Button({
       tone === "dark"
         ? "border-cream/30 text-cream hover:border-cta"
         : "border-ink/25 text-ink hover:border-gold";
-    return (
-      <Link
-        href={href}
-        className={`text-eyebrow inline-flex items-center border px-7 py-3.5 font-sans font-medium uppercase tracking-[0.18em] transition-colors duration-300 ${toneClasses}`}
-      >
-        {children}
-      </Link>
+    return shell(
+      `text-eyebrow inline-flex items-center justify-center border px-7 py-3.5 font-sans font-medium uppercase tracking-[0.18em] transition-colors duration-300 ${toneClasses} ${width}`
     );
   }
 

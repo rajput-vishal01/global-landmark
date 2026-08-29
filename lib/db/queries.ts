@@ -283,16 +283,43 @@ export const countProperties = failSoft(countPropertiesCached, "countProperties"
  * different WHERE shapes a single `GROUP BY` can't express cleanly, and six
  * collections is cheap enough that the extra round trips don't matter.
  */
+/**
+ * Counts and a representative cover per collection tile.
+ *
+ * The cover comes back from an inner join rather than a correlated
+ * subquery on purpose: this file has been bitten before by interpolating
+ * `${properties.id}` inside a `sql` subquery while the same column is
+ * selected at the top level, which Drizzle renders unqualified so it
+ * resolves against the subquery's own `id` and silently returns null. A
+ * join has no such ambiguity.
+ *
+ * A collection with no public listings simply has no cover, and the tile
+ * falls back to its solid ground — which is the honest rendering, since
+ * there is nothing behind it to show.
+ */
 const listCollectionCountsCached = unstable_cache(
-  async (): Promise<{ value: CollectionValue; count: number }[]> => {
+  async (): Promise<
+    { value: CollectionValue; count: number; coverUrl: string | null }[]
+  > => {
     const rows = await Promise.all(
       COLLECTIONS.map(async ({ value }) => {
         const condition = collectionCondition(value);
-        const [{ n }] = await db
-          .select({ n: count() })
-          .from(properties)
-          .where(condition ? and(publicVisibility(), condition) : publicVisibility());
-        return { value, count: n };
+        const where = condition
+          ? and(publicVisibility(), condition)
+          : publicVisibility();
+
+        const [[{ n }], cover] = await Promise.all([
+          db.select({ n: count() }).from(properties).where(where),
+          db
+            .select({ url: propertyImages.url })
+            .from(propertyImages)
+            .innerJoin(properties, eq(propertyImages.propertyId, properties.id))
+            .where(where)
+            .orderBy(...IMAGE_ORDER)
+            .limit(1),
+        ]);
+
+        return { value, count: n, coverUrl: cover[0]?.url ?? null };
       })
     );
     return rows;

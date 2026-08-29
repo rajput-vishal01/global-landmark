@@ -77,7 +77,7 @@ export function CityTabs({
       {city && (
         <div className="grid max-w-md grid-cols-1 gap-6 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+            <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-gold-deep">
               Locality
             </span>
             {localities.length > 0 ? (
@@ -100,7 +100,7 @@ export function CityTabs({
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="sector-filter"
-              className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted"
+              className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-gold-deep"
             >
               Sector
             </label>

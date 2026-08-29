@@ -3,6 +3,12 @@ import Image from "next/image";
 import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { Button } from "@/components/ui/Button";
+import {
+  PageHeader,
+  SectionHeading,
+  SECTION,
+  SECTION_BAND,
+} from "../_components/page-chrome";
 import { ABOUT_PAGE, COMPANY } from "@/lib/data";
 import { canonical } from "@/lib/seo";
 
@@ -22,6 +28,11 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: PAGE_TITLE, description: PAGE_DESCRIPTION },
 };
 
+const BREADCRUMBS = [
+  { name: "Home", path: "/" },
+  { name: "About", path: "/about" },
+];
+
 const MILESTONES = ABOUT_PAGE.milestones;
 const PRINCIPALS = ABOUT_PAGE.principals;
 const RECORD = ABOUT_PAGE.record;
@@ -31,16 +42,12 @@ export default function AboutPage() {
     <>
       <Header />
       <main>
-        {/* Intro: statement left, meta column right */}
-        <section className="bg-dark-deep px-5 pb-12 pt-36 md:px-12 md:pb-14 md:pt-44">
-          <div className="flex flex-col gap-10 md:flex-row md:items-end md:justify-between">
-            <div className="max-w-3xl">
-              <span className="mb-8 block h-px w-16 bg-gold" />
-              <h1 className="text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
-                {ABOUT_PAGE.title}
-              </h1>
-            </div>
-            <dl className="flex shrink-0 gap-10 md:flex-col md:gap-5 md:pb-2 md:text-right">
+        <PageHeader
+          breadcrumbs={BREADCRUMBS}
+          eyebrow="Who we are"
+          title={ABOUT_PAGE.title}
+          aside={
+            <dl className="flex gap-10 md:flex-col md:gap-5 md:text-right">
               {ABOUT_PAGE.facts.map(([label, value]) => (
                 <div key={label}>
                   <dt className="text-eyebrow font-sans uppercase tracking-[0.2em] text-cream/50">
@@ -50,12 +57,12 @@ export default function AboutPage() {
                 </div>
               ))}
             </dl>
-          </div>
-        </section>
+          }
+        />
 
         {/* Ethos: full-bleed image, then two-column editorial prose */}
-        <section className="px-5 py-20 md:px-12 md:py-28">
-          <div className="relative h-[45vh] overflow-hidden md:h-[65vh]">
+        <section className={SECTION}>
+          <div className="relative h-[45vh] overflow-hidden md:h-[60vh]">
             <Image
               src={ABOUT_PAGE.ethosImage}
               alt={ABOUT_PAGE.ethosImageAlt}
@@ -65,14 +72,9 @@ export default function AboutPage() {
             />
           </div>
 
-          <div className="mx-auto mt-16 max-w-5xl md:mt-24">
-            <h2 className="max-w-2xl text-balance font-serif text-h2 leading-tight text-ink">
-              {ABOUT_PAGE.ethosHeading}
-            </h2>
-            <div
-             
-              className="mt-10 gap-12 text-pretty text-body font-sans text-ink-muted md:columns-2"
-            >
+          <div className="mx-auto mt-14 max-w-5xl md:mt-20">
+            <SectionHeading eyebrow="Our ethos" title={ABOUT_PAGE.ethosHeading} />
+            <div className="gap-12 text-pretty text-body font-sans text-ink-muted md:columns-2">
               {ABOUT_PAGE.ethosParagraphs.map((paragraph, i) => (
                 <p key={i} className={i > 0 ? "mt-6" : undefined}>
                   {paragraph}
@@ -83,21 +85,18 @@ export default function AboutPage() {
         </section>
 
         {/* History: chronology with a hairline spine */}
-        <section className="border-y border-border bg-cream px-5 py-20 md:px-12 md:py-28">
-          <h2 className="font-serif text-h2 uppercase tracking-[0.04em] text-ink">
-            {ABOUT_PAGE.historyHeading}
-          </h2>
-          <ol className="mt-14 flex flex-col">
+        <section className={SECTION_BAND}>
+          <SectionHeading eyebrow="Track record" title={ABOUT_PAGE.historyHeading} />
+          <ol className="flex flex-col">
             {MILESTONES.map((m) => (
               <li
                 key={m.year}
-               
-                className="grid grid-cols-1 gap-4 border-t border-border py-10 md:grid-cols-[180px_1fr_2fr] md:gap-10"
+                className="grid grid-cols-1 gap-4 border-b border-border py-8 last:border-b-0 md:grid-cols-[160px_1fr_2fr] md:gap-10"
               >
-                <span className="font-serif text-h3 leading-none text-gold-deep">
+                <span className="font-serif text-h4 leading-none text-gold-deep">
                   {m.year}
                 </span>
-                <h3 className="font-serif text-h4 text-ink">{m.title}</h3>
+                <h3 className="font-serif text-h4 text-heading">{m.title}</h3>
                 <p className="max-w-xl text-pretty text-body font-sans text-ink-muted">
                   {m.body}
                 </p>
@@ -107,16 +106,13 @@ export default function AboutPage() {
         </section>
 
         {/* Principals */}
-        <section className="px-5 py-20 md:px-12 md:py-28">
-          <div className="mb-14 flex flex-wrap items-baseline justify-between gap-4">
-            <h2 className="font-serif text-h2 uppercase tracking-[0.04em] text-ink">
-              {ABOUT_PAGE.principalsHeading}
-            </h2>
-            <span className="text-meta font-sans text-ink-muted">
-              {ABOUT_PAGE.principalsNote}
-            </span>
-          </div>
-          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:gap-8 md:max-w-2xl">
+        <section className={SECTION}>
+          <SectionHeading
+            eyebrow="The principals"
+            title={ABOUT_PAGE.principalsHeading}
+            aside={ABOUT_PAGE.principalsNote}
+          />
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:max-w-2xl md:gap-8">
             {PRINCIPALS.map((person) => (
               <figure key={person.name} className="flex flex-col gap-5">
                 <div className="relative aspect-[3/4] overflow-hidden">
@@ -129,7 +125,7 @@ export default function AboutPage() {
                   />
                 </div>
                 <figcaption>
-                  <p className="font-serif text-h4 text-ink">{person.name}</p>
+                  <p className="font-serif text-h4 text-heading">{person.name}</p>
                   <p className="mt-1 text-meta font-sans text-ink-muted">
                     {person.title}
                   </p>
@@ -139,18 +135,19 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* The record: quiet definition list on dark */}
-        <section className="bg-dark px-5 py-20 md:px-12 md:py-28">
+        {/* The record: quiet definition list on the chrome navy */}
+        <section className="bg-navy px-5 py-16 md:px-12 md:py-24">
           <div className="mx-auto max-w-3xl">
-            <h2 className="font-serif text-h2 uppercase tracking-[0.04em] text-cream">
-              {ABOUT_PAGE.recordHeading}
-            </h2>
-            <dl className="mt-12 flex flex-col">
+            <SectionHeading
+              tone="dark"
+              eyebrow="By the numbers"
+              title={ABOUT_PAGE.recordHeading}
+            />
+            <dl className="flex flex-col">
               {RECORD.map((row) => (
                 <div
                   key={row.label}
-                 
-                  className="flex items-baseline justify-between gap-6 border-t border-cream/15 py-6"
+                  className="flex items-baseline justify-between gap-6 border-b border-cream/15 py-5 last:border-b-0"
                 >
                   <dt className="text-body font-sans text-cream/60">{row.label}</dt>
                   <dd className="font-serif text-h3 text-cream">{row.value}</dd>
@@ -161,12 +158,14 @@ export default function AboutPage() {
         </section>
 
         {/* Quiet closing line */}
-        <section className="px-5 py-24 text-center md:py-32">
-          <p className="mx-auto max-w-2xl text-balance font-serif text-h3 leading-snug text-ink">
+        <section className={`text-center ${SECTION}`}>
+          <p className="mx-auto max-w-2xl text-balance font-serif text-h3 leading-snug text-heading">
             {ABOUT_PAGE.closingLine}
           </p>
           <div className="mt-8 flex justify-center">
-            <Button href="/contact">{ABOUT_PAGE.closingCta}</Button>
+            <Button href="/contact" variant="primary">
+              {ABOUT_PAGE.closingCta}
+            </Button>
           </div>
         </section>
       </main>

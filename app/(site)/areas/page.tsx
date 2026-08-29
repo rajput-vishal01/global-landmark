@@ -4,7 +4,7 @@ import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { CTABand } from "@/components/sections/CTABand";
 import { AreaCard } from "@/components/sections/AreaGrid";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { PageHeader, SectionHeading, SECTION } from "../_components/page-chrome";
 import { listPublishedAreas } from "@/lib/db/areas";
 import { breadcrumbJsonLd, canonical, jsonLdHtml } from "@/lib/seo";
 
@@ -45,24 +45,28 @@ export default async function AreasPage() {
       />
       <Header />
       <main>
-        <section className="bg-dark-deep px-5 pb-12 pt-36 md:px-12 md:pb-14 md:pt-44">
-          <div className="mb-6">
-            <Breadcrumbs items={BREADCRUMBS} tone="dark" />
-          </div>
-          <span aria-hidden className="mb-8 block h-px w-16 bg-gold" />
-          <h1 className="max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
-            Explore by Location
-          </h1>
-          <p className="mt-6 max-w-xl text-pretty text-body font-sans text-cream/75">
-            {PAGE_DESCRIPTION}
-          </p>
-        </section>
+        <PageHeader
+          breadcrumbs={BREADCRUMBS}
+          eyebrow="Where we work"
+          title="Explore by Location"
+          sub={PAGE_DESCRIPTION}
+        />
 
-        <section className="px-5 py-20 md:px-12 md:py-28">
+        <section className={SECTION}>
+          <SectionHeading
+            eyebrow="Locality guides"
+            title="Areas we cover"
+            aside={
+              areas.length > 0
+                ? `${areas.length} area${areas.length === 1 ? "" : "s"}`
+                : undefined
+            }
+          />
+
           {areas.length === 0 ? (
             <div className="max-w-xl">
               <span aria-hidden className="mb-6 block h-px w-12 bg-gold" />
-              <p className="font-serif text-h3 text-ink">No areas published yet.</p>
+              <p className="font-serif text-h4 text-heading">No areas published yet.</p>
               <p className="mt-4 text-pretty text-body font-sans text-ink-muted">
                 Locality guides are on their way. In the meantime, every listing
                 is on the properties page.

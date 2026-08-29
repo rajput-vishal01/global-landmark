@@ -35,7 +35,7 @@ export function PropertiesFilters({
   return (
     <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-3 md:max-w-3xl">
       <div className="flex flex-col gap-1.5">
-        <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+        <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-gold-deep">
           Type
         </span>
         <Select
@@ -47,7 +47,7 @@ export function PropertiesFilters({
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+        <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-gold-deep">
           Possession
         </span>
         <Select
@@ -59,7 +59,7 @@ export function PropertiesFilters({
         />
       </div>
       <div className="flex flex-col gap-1.5">
-        <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+        <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-gold-deep">
           Furnishing
         </span>
         <Select

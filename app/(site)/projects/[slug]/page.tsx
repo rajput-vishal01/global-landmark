@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/sections/Header";
@@ -8,7 +7,7 @@ import { CTABand } from "@/components/sections/CTABand";
 import { ContactForm } from "@/components/ContactForm";
 import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
 import { getProjectBySlug, type PublicProjectDetail } from "@/lib/db/queries";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { PageHeader, SECTION, SECTION_BAND } from "../../_components/page-chrome";
 import { AMENITY_GROUPS, formatArea, formatIndianShort } from "@/lib/attributes";
 import { COMPANY, PROJECT_DETAIL } from "@/lib/data";
 import { breadcrumbJsonLd, canonical, jsonLdHtml } from "@/lib/seo";
@@ -159,43 +158,16 @@ export default async function ProjectDetailPage({
       />
       <Header />
       <main>
-        {/* Hero — cover photo when the admin has set one, quiet dark ground otherwise */}
-        <section className="relative flex min-h-[88vh] flex-col justify-end overflow-hidden bg-dark-deep">
-          {project.coverImage && (
-            <Image
-              src={project.coverImage}
-              alt={project.name}
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
-            />
-          )}
-          <div
-            aria-hidden
-            className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/75 via-black/25 to-transparent"
-          />
-          <div className="relative px-5 pb-16 pt-40 md:px-12 md:pb-20">
-            <div className="mb-4">
-              <Breadcrumbs items={breadcrumbItems} tone="dark" />
-            </div>
-            <span className="mb-8 block h-px w-16 bg-gold" />
-            <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.25em] text-cream/70">
-              Project{project.builder ? ` · ${project.builder.name}` : ""}
-            </p>
-            <h1 className="mt-4 max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
-              {project.name}
-            </h1>
-            {location && (
-              <p className="mt-5 max-w-xl text-pretty text-body font-sans text-cream/80">
-                {location}
-              </p>
-            )}
-          </div>
-        </section>
+        <PageHeader
+          breadcrumbs={breadcrumbItems}
+          image={project.coverImage ? { src: project.coverImage, alt: project.name } : null}
+          eyebrow={`Project${project.builder ? ` · ${project.builder.name}` : ""}`}
+          title={project.name}
+          sub={location || undefined}
+        />
 
         {/* Spec sheet beside content — same metadata-sidebar pattern as the property page */}
-        <section className="grid grid-cols-1 gap-14 px-5 py-20 md:grid-cols-[1.7fr_1fr] md:gap-20 md:px-12 md:py-28">
+        <section className={`grid grid-cols-1 gap-14 md:grid-cols-[1.7fr_1fr] md:gap-20 ${SECTION}`}>
           <div className="flex flex-col gap-16">
             {project.description && (
               <div>
@@ -220,7 +192,7 @@ export default async function ProjectDetailPage({
                 <span className="mb-4 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Developed By
                 </span>
-                <h2 className="font-serif text-h4 text-ink">
+                <h2 className="font-serif text-h4 text-heading">
                   <Link
                     href={`/builders/${project.builder.slug}`}
                     className="underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
@@ -291,7 +263,7 @@ export default async function ProjectDetailPage({
                   {project.units.length > 0 && (
                     <div>
                       <div className="mb-4 border-b border-border pb-3">
-                        <h3 className="font-serif text-h4 text-ink">Additional Units</h3>
+                        <h3 className="font-serif text-h4 text-heading">Additional Units</h3>
                         <p className="text-meta font-sans text-ink-muted">
                           Not assigned to a tower
                         </p>
@@ -356,7 +328,7 @@ export default async function ProjectDetailPage({
               <div className="mt-7 flex flex-col gap-3">
                 <a
                   href="#inquire"
-                  className="text-eyebrow inline-flex justify-center bg-ink px-7 py-4 text-center font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
+                  className="text-eyebrow inline-flex justify-center bg-cta px-7 py-4 text-center font-sans font-semibold uppercase tracking-[0.2em] text-cta-ink transition-colors duration-200 hover:bg-cta-hover"
                 >
                   Request Details
                 </a>
@@ -366,10 +338,13 @@ export default async function ProjectDetailPage({
         </section>
 
         {/* Inquiry */}
-        <section id="inquire" className="border-t border-border bg-white px-5 py-20 md:px-12 md:py-28">
+        <section id="inquire" className={SECTION_BAND}>
           <div className="grid grid-cols-1 gap-14 md:grid-cols-[1fr_1.4fr] md:gap-24">
             <div className="md:sticky md:top-32 md:self-start">
-              <h2 className="max-w-sm text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
+              <p className="text-eyebrow mb-3 font-sans font-medium uppercase tracking-[0.2em] text-gold-deep">
+                Enquire
+              </p>
+              <h2 className="max-w-sm text-balance font-serif text-h3 text-heading">
                 {PROJECT_DETAIL.inquiryHeading}
               </h2>
               <p className="mt-5 max-w-sm text-pretty text-body font-sans text-ink-muted">
@@ -398,7 +373,7 @@ function TowerBlock({ tower }: { tower: Tower }) {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3 border-b border-border pb-3">
-        <h3 className="font-serif text-h4 text-ink">{tower.name}</h3>
+        <h3 className="font-serif text-h4 text-heading">{tower.name}</h3>
         <p className="text-meta font-sans text-ink-muted">
           {towerFacts}
           {tower.units.length > 0 ? `${towerFacts ? " · " : ""}${tower.units.length} available` : ""}

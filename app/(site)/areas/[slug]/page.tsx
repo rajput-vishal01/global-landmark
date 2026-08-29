@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { CTABand } from "@/components/sections/CTABand";
 import { ListingCard } from "@/components/ui/ListingCard";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Button } from "@/components/ui/Button";
+import { PageHeader, SectionHeading, SECTION } from "../../_components/page-chrome";
 import { getAreaPage } from "@/lib/db/areas";
 import { COMPANY } from "@/lib/data";
 import { breadcrumbJsonLd, canonical, jsonLdHtml } from "@/lib/seo";
@@ -82,54 +81,25 @@ export default async function AreaDetailPage({
       />
       <Header />
       <main>
-        <section className="relative flex min-h-[55vh] flex-col justify-end overflow-hidden bg-dark-deep">
-          {area.coverImage && (
-            <Image
-              src={area.coverImage}
-              alt=""
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover opacity-80"
-            />
-          )}
-          <div
-            aria-hidden
-            className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-black/80 via-black/35 to-transparent"
-          />
-          <div className="relative px-5 pb-16 pt-40 md:px-12 md:pb-20">
-            <div className="mb-4">
-              <Breadcrumbs items={breadcrumbItems} tone="dark" />
-            </div>
-            <span aria-hidden className="mb-8 block h-px w-16 bg-gold" />
-            <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.25em] text-cream/70">
-              {cityContext(area.name, area.city) ?? "Area"}
-            </p>
-            <h1 className="mt-4 max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
-              {area.name}
-            </h1>
-            {area.blurb && (
-              <p className="mt-6 max-w-2xl text-pretty text-body font-sans text-cream/80">
-                {area.blurb}
-              </p>
-            )}
-          </div>
-        </section>
+        <PageHeader
+          breadcrumbs={breadcrumbItems}
+          image={area.coverImage ? { src: area.coverImage } : null}
+          eyebrow={cityContext(area.name, area.city) ?? "Area"}
+          title={area.name}
+          sub={area.blurb}
+        />
 
-        <section className="px-5 py-20 md:px-12 md:py-28">
-          <div className="mb-10 flex flex-wrap items-end justify-between gap-4 border-b border-border pb-5 md:mb-12">
-            <h2 className="font-serif text-h3 text-ink">
-              Available in {area.name}
-            </h2>
-            <span className="text-meta font-sans text-ink-muted">
-              {properties.length} propert{properties.length === 1 ? "y" : "ies"}
-            </span>
-          </div>
+        <section className={SECTION}>
+          <SectionHeading
+            eyebrow="Current stock"
+            title={`Available in ${area.name}`}
+            aside={`${properties.length} propert${properties.length === 1 ? "y" : "ies"}`}
+          />
 
           {properties.length === 0 ? (
             <div className="max-w-xl">
               <span aria-hidden className="mb-6 block h-px w-12 bg-gold" />
-              <p className="font-serif text-h4 text-ink">
+              <p className="font-serif text-h4 text-heading">
                 Nothing listed in {area.name} right now.
               </p>
               <p className="mt-4 text-pretty text-body font-sans text-ink-muted">
@@ -138,13 +108,13 @@ export default async function AreaDetailPage({
                 comes up.
               </p>
               <div className="mt-8">
-                <Button href="/contact" variant="outline">
+                <Button href="/contact" variant="primary">
                   Register your requirement
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 md:grid-cols-3 md:gap-8">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 md:grid-cols-3 md:gap-8">
               {properties.map((property) => (
                 <ListingCard key={property.id} property={property} />
               ))}

@@ -4,6 +4,7 @@ import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { CTABand } from "@/components/sections/CTABand";
 import { ListingCard } from "@/components/ui/ListingCard";
+import { Button } from "@/components/ui/Button";
 import { PropertiesFilters } from "@/components/PropertiesFilters";
 import { CollectionGrid } from "@/components/CollectionGrid";
 import { CityTabs } from "@/components/CityTabs";
@@ -11,6 +12,12 @@ import { ConfigTabs } from "@/components/ConfigTabs";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { Pagination } from "@/components/Pagination";
 import { ListingsToolbar } from "@/components/ListingsToolbar";
+import {
+  PageHeader,
+  SectionHeading,
+  SECTION,
+  SECTION_BAND,
+} from "../_components/page-chrome";
 import {
   listProperties,
   countProperties,
@@ -59,10 +66,22 @@ export const metadata: Metadata = {
 // Filter-driven (reads searchParams), so this route renders per request.
 export const dynamic = "force-dynamic";
 
+const BREADCRUMBS = [
+  { name: "Home", path: "/" },
+  { name: "Properties", path: "/properties" },
+];
+
 const FILTERS: { value: CategoryValue | "all"; label: string }[] = [
   { value: "all", label: "All" },
   ...CATEGORIES.map((c) => ({ value: c.value, label: c.label })),
 ];
+
+/** The label that opens each row of the filter panel. */
+const FILTER_LABEL =
+  "text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted";
+
+/** One row inside the filter panel — hairline-separated, evenly padded. */
+const FILTER_ROW = "border-b border-border px-5 py-5 last:border-b-0 md:px-6";
 
 const pick = (value: string | undefined, allowed: readonly string[]) =>
   value && allowed.includes(value) ? value : undefined;
@@ -125,6 +144,11 @@ export default async function PropertiesPage({
     listCityCounts(),
   ]);
   const totalPages = Math.max(1, Math.ceil(totalCount / PROPERTIES_PAGE_SIZE));
+  // The "Showing 25-48 of 112" orientation line every portal carries above
+  // its grid. Derived from what the query already returned rather than a
+  // second count.
+  const firstOnPage = (page - 1) * PROPERTIES_PAGE_SIZE + 1;
+  const lastOnPage = firstOnPage + properties.length - 1;
 
   // Every server-rendered filter link (category chips, collection cards,
   // configuration tabs) merges its own override onto this — so clicking one
@@ -149,93 +173,124 @@ export default async function PropertiesPage({
     <>
       <Header />
       <main>
-        <section className="bg-dark-deep px-5 pb-12 pt-36 md:px-12 md:pb-14 md:pt-44">
-          <span className="mb-8 block h-px w-16 bg-gold" />
-          <h1 className="max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
-            {PROPERTIES_PAGE.title}
-          </h1>
-          <p className="mt-6 max-w-xl text-pretty text-body font-sans text-cream/75">
-            {totalCount === 0
+        <PageHeader
+          breadcrumbs={BREADCRUMBS}
+          eyebrow="Portfolio"
+          title={PROPERTIES_PAGE.title}
+          sub={
+            totalCount === 0
               ? `${PROPERTIES_PAGE.emptySub} ${PROPERTIES_PAGE.subSuffix}`
-              : `${totalCount} residence${totalCount === 1 ? "" : "s"} represented. ${PROPERTIES_PAGE.subSuffix}`}
-          </p>
-        </section>
+              : `${totalCount} residence${totalCount === 1 ? "" : "s"} represented. ${PROPERTIES_PAGE.subSuffix}`
+          }
+        />
 
-        <section className="px-5 py-16 md:px-12 md:py-20">
-          <span className="mb-8 block h-px w-16 bg-gold" />
-          <h2 className="mb-8 font-serif text-h3 text-ink">
-            Browse by Collection
-          </h2>
+        <section className={SECTION_BAND}>
+          <SectionHeading
+            eyebrow="Start here"
+            title="Browse by collection"
+            aside={
+              <Link href="#listings" className="font-sans transition-colors hover:text-ink">
+                Skip to all listings
+              </Link>
+            }
+          />
           <CollectionGrid counts={collectionCounts} current={current} />
         </section>
 
-        <section id="listings" className="px-5 py-20 md:px-12 md:py-28">
-          <nav
-            aria-label="Filter by category"
-           
-            className="mb-8 flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-border pb-5"
-          >
-            {/* h2, not a span — the page would otherwise jump h1 → h3 (cards) */}
-            <h2 className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
-              Portfolio
-            </h2>
-            {FILTERS.map((filter) => {
-              const isActive =
-                filter.value === "all" ? !category : category === filter.value;
-              return (
-                <Link
-                  key={filter.value}
-                  href={propertiesHref(current, {
-                    category: filter.value === "all" ? undefined : filter.value,
-                  })}
-                  aria-current={isActive ? "page" : undefined}
-                  className={`text-eyebrow relative pb-1 font-sans font-medium uppercase tracking-[0.18em] transition-colors duration-300 ${
-                    isActive ? "text-ink" : "text-ink-muted hover:text-ink"
-                  }`}
-                >
-                  {filter.label}
-                  <span
-                    aria-hidden
-                    className={`absolute bottom-0 left-0 h-px w-full origin-left bg-gold transition-transform duration-500 ease-out ${
-                      isActive ? "scale-x-100" : "scale-x-0"
+        <section id="listings" className={SECTION}>
+          <SectionHeading
+            eyebrow="The portfolio"
+            title="All listings"
+            aside={
+              totalCount > 0
+                ? `Showing ${firstOnPage}-${lastOnPage} of ${totalCount}`
+                : undefined
+            }
+          />
+
+          {/* One bordered panel instead of four loose bands. The controls
+              themselves were already right; stacked down the page with a
+              full-width rule under each, they read as four separate features
+              rather than one place to narrow the list. */}
+          <div className="mb-10 border border-border bg-cream">
+            <nav
+              aria-label="Filter by category"
+              className={`flex flex-wrap items-center gap-x-6 gap-y-3 ${FILTER_ROW}`}
+            >
+              <span className={FILTER_LABEL}>Category</span>
+              {FILTERS.map((filter) => {
+                const isActive =
+                  filter.value === "all" ? !category : category === filter.value;
+                return (
+                  <Link
+                    key={filter.value}
+                    href={propertiesHref(
+                      current,
+                      {
+                        category: filter.value === "all" ? undefined : filter.value,
+                        page: undefined,
+                      },
+                      "listings"
+                    )}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`text-eyebrow relative pb-1 font-sans font-medium uppercase tracking-[0.15em] transition-colors duration-300 ${
+                      isActive ? "text-ink" : "text-ink-muted hover:text-ink"
                     }`}
-                  />
-                </Link>
-              );
-            })}
-          </nav>
+                  >
+                    {filter.label}
+                    <span
+                      aria-hidden
+                      className={`absolute bottom-0 left-0 h-px w-full origin-left bg-gold transition-transform duration-500 ease-out ${
+                        isActive ? "scale-x-100" : "scale-x-0"
+                      }`}
+                    />
+                  </Link>
+                );
+              })}
+            </nav>
 
-          <div className="mb-10 border-b border-border pb-10">
-            <CityTabs
-              cities={cityCounts}
-              city={city ?? ""}
-              locality={locality ?? ""}
-              sector={sector ?? ""}
-            />
+            <div className={FILTER_ROW}>
+              <CityTabs
+                cities={cityCounts}
+                city={city ?? ""}
+                locality={locality ?? ""}
+                sector={sector ?? ""}
+              />
+            </div>
+
+            <div className={FILTER_ROW}>
+              <ConfigTabs configuration={configuration} current={current} />
+            </div>
+
+            <div className={FILTER_ROW}>
+              <PropertiesFilters
+                propertyType={propertyType ?? ""}
+                possession={possessionStatus ?? ""}
+                furnishing={furnishing ?? ""}
+              />
+            </div>
           </div>
 
-          <div className="mb-10 border-b border-border pb-10">
-            <ConfigTabs configuration={configuration} current={current} />
-          </div>
-
-          <div className="mb-14">
-            <PropertiesFilters
-              propertyType={propertyType ?? ""}
-              possession={possessionStatus ?? ""}
-              furnishing={furnishing ?? ""}
-            />
-          </div>
-
-          <ListingsToolbar sort={sort} view={view} current={current} />
+          <ListingsToolbar sort={sort} view={view} current={current} rule={false} />
 
           {properties.length === 0 ? (
-            <p className="text-body font-sans text-ink-muted">{PROPERTIES_PAGE.emptyBody}</p>
+            <div className="max-w-xl">
+              <span aria-hidden className="mb-6 block h-px w-12 bg-gold" />
+              <p className="text-body font-sans text-ink-muted">
+                {PROPERTIES_PAGE.emptyBody}
+              </p>
+              <div className="mt-8">
+                <Button href="/contact" variant="primary">
+                  Tell us what you need
+                </Button>
+              </div>
+            </div>
           ) : (
             <div
               className={
                 view === "list"
                   ? "flex flex-col gap-10"
-                  : "grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3"
+                  : "grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3"
               }
             >
               {properties.map((property) => (

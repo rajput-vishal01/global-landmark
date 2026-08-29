@@ -29,13 +29,23 @@ export function ListingsToolbar({
   sort,
   view,
   current,
+  /**
+   * Draw the bottom hairline. Off when the toolbar sits directly under
+   * the filter panel, whose own border would otherwise double with it.
+   */
+  rule = true,
 }: {
   sort: PropertySort;
   view: PropertyView;
   current: PropertiesFilterParams;
+  rule?: boolean;
 }) {
   return (
-    <div className="mb-10 flex flex-wrap items-center justify-between gap-x-10 gap-y-5 border-b border-border pb-5">
+    <div
+      className={`flex flex-wrap items-center justify-between gap-x-10 gap-y-5 ${
+        rule ? "mb-10 border-b border-border pb-5" : "mb-6"
+      }`}
+    >
       <nav aria-label="Sort listings" className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
           Sort

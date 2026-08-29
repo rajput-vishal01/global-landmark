@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/sections/Header";
@@ -9,7 +8,6 @@ import { CTABand } from "@/components/sections/CTABand";
 import { ContactForm } from "@/components/ContactForm";
 import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
 import { ListingCard, propertySpecs } from "@/components/ui/ListingCard";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { EnquiryToggleButton } from "@/components/EnquiryToggleButton";
 import { EmiCalculator } from "@/components/EmiCalculator";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
@@ -18,6 +16,12 @@ import { GalleryMapToggle } from "@/components/property/GalleryMapToggle";
 import { PropertyTabs, type PropertyTab } from "@/components/property/PropertyTabs";
 import { TourRequestForm } from "@/components/property/TourRequestForm";
 import { amenityIcon } from "@/components/amenity-icons";
+import {
+  PageHeader,
+  SectionHeading,
+  SECTION,
+  SECTION_BAND,
+} from "../../_components/page-chrome";
 import { toEnquiryCartItem } from "@/lib/enquiry-cart-item";
 import { getPropertyBySlug, listProperties } from "@/lib/db/queries";
 import { getPropertyDetailExtras } from "@/lib/db/property-detail";
@@ -226,8 +230,17 @@ export default async function PropertyDetailPage({
     brochure: "Download Brochure",
   };
 
+    // The enquiry rail. Every control in it has to be the same full-width
+  // block, and two of them open a third-party app in a new tab, which the
+  // Link-based <Button> cannot express — so the rail keeps plain anchors and
+  // uses the CTA tokens directly. One yellow action, the rest quiet.
+  const RAIL_PRIMARY =
+    "text-eyebrow inline-flex justify-center bg-cta px-7 py-4 text-center font-sans font-semibold uppercase tracking-[0.2em] text-cta-ink transition-colors duration-200 hover:bg-cta-hover";
+  const RAIL_SECONDARY =
+    "text-eyebrow inline-flex justify-center border border-border px-7 py-4 text-center font-sans font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:border-gold";
+
   const LINK_BUTTON =
-    "text-eyebrow inline-flex items-center gap-2 border border-ink/25 px-5 py-3 font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold";
+    "text-eyebrow inline-flex items-center gap-2 border border-border px-5 py-3 font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold";
 
   // The tab panels. Built as values rather than inline JSX so the tab list
   // below can simply drop any panel with nothing in it — a listing with no
@@ -304,7 +317,7 @@ export default async function PropertyDetailPage({
         <Block title="Furnishing">
           <div className="max-w-2xl">
             {property.furnishing && (
-              <p className="font-serif text-h4 text-ink">{property.furnishing}</p>
+              <p className="font-serif text-h4 text-heading">{property.furnishing}</p>
             )}
             {furnishingInventory.length > 0 && (
               <ul className="mt-4 flex flex-wrap gap-2.5">
@@ -563,58 +576,32 @@ export default async function PropertyDetailPage({
       />
       <Header />
       <main>
-        {/* Hero — photography leads, type stays out of the way */}
-        <section className="relative flex min-h-[88vh] flex-col justify-end overflow-hidden bg-dark-deep">
-          {cover && (
-            <Image
-              src={cover.url}
-              alt={cover.alt || property.title}
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover"
-            />
-          )}
-          <div
-            aria-hidden
-            className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/75 via-black/25 to-transparent"
-          />
-          <div className="relative px-5 pb-16 pt-40 md:px-12 md:pb-20">
-            <div className="mb-4">
-              <Breadcrumbs items={breadcrumbItems} tone="dark" />
+        <PageHeader
+          breadcrumbs={breadcrumbItems}
+          image={cover ? { src: cover.url, alt: cover.alt || property.title } : null}
+          eyebrow={`${categoryLabel(property.category)}${property.project ? ` · ${property.project.name}` : ""}`}
+          title={property.title}
+          sub={`${property.location}${specs ? ` — ${specs}` : ""}`}
+        >
+          {plcAttributes.length > 0 && (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {plcAttributes.map((attr) => (
+                <span
+                  key={attr}
+                  className="text-eyebrow border border-cream/30 px-3 py-1.5 font-sans tracking-[0.15em] text-cream/90"
+                >
+                  {attr}
+                </span>
+              ))}
             </div>
-            <span className="mb-8 block h-px w-16 bg-gold" />
-            <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.25em] text-cream/70">
-              {categoryLabel(property.category)}
-              {property.project ? ` · ${property.project.name}` : ""}
-            </p>
-            <h1 className="mt-4 max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
-              {property.title}
-            </h1>
-            <p className="mt-5 max-w-xl text-pretty text-body font-sans text-cream/80">
-              {property.location}
-              {specs ? ` — ${specs}` : ""}
-            </p>
-            {plcAttributes.length > 0 && (
-              <div className="mt-5 flex flex-wrap gap-2">
-                {plcAttributes.map((attr) => (
-                  <span
-                    key={attr}
-                    className="text-eyebrow border border-cream/30 px-3 py-1.5 font-sans tracking-[0.15em] text-cream/90"
-                  >
-                    {attr}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
+          )}
+        </PageHeader>
 
         {/* Gallery / Map, above the tabs — the reference portal's first
             decision after the hero is "show me the photos or show me where
             this is", and it should not be buried under the copy. */}
         {(gallery.length > 0 || mapPin) && (
-          <section className="px-5 pt-16 md:px-12 md:pt-20">
+          <section className="px-5 pt-14 md:px-12 md:pt-20">
             <GalleryMapToggle
               images={gallery}
               title={property.title}
@@ -625,7 +612,7 @@ export default async function PropertyDetailPage({
         )}
 
         {/* Tabs beside the enquiry rail — big.dk metadata-sidebar pattern */}
-        <section className="grid grid-cols-1 gap-14 px-5 py-16 md:grid-cols-[1.7fr_1fr] md:gap-20 md:px-12 md:py-20">
+        <section className={`grid grid-cols-1 gap-14 md:grid-cols-[1.7fr_1fr] md:gap-20 ${SECTION}`}>
           <PropertyTabs tabs={tabs} />
 
           <aside className="md:sticky md:top-28 md:self-start">
@@ -633,7 +620,7 @@ export default async function PropertyDetailPage({
               <span aria-hidden className="mb-6 block h-px w-12 bg-gold" />
               <div className="mb-7 border-b border-border pb-7">
                 <span className={EYEBROW}>Price</span>
-                <p className="mt-2 font-serif text-h3 text-ink">{priceLabel}</p>
+                <p className="mt-2 font-serif text-h3 text-heading">{priceLabel}</p>
               </div>
               <dl className="flex flex-col">
                 {facts.map(([label, value], i) => (
@@ -659,29 +646,23 @@ export default async function PropertyDetailPage({
                 {PROPERTY_DETAIL.sidebarNote}
               </p>
               <div className="mt-7 flex flex-col gap-3">
-                <a
-                  href="#inquire"
-                  className="text-eyebrow inline-flex justify-center bg-ink px-7 py-4 text-center font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
-                >
+                <a href="#inquire" className={RAIL_PRIMARY}>
                   Request Details
                 </a>
-                <a
-                  href={COMPANY.phoneHref}
-                  className="text-eyebrow inline-flex justify-center border border-ink/25 px-7 py-4 text-center font-sans font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:border-gold"
-                >
+                <a href={COMPANY.phoneHref} className={RAIL_SECONDARY}>
                   Call {COMPANY.phone}
                 </a>
                 <a
                   href={whatsApp}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-eyebrow inline-flex justify-center border border-ink/25 px-7 py-4 text-center font-sans font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:border-gold"
+                  className={RAIL_SECONDARY}
                 >
                   Chat on WhatsApp
                 </a>
                 <EnquiryToggleButton
                   item={toEnquiryCartItem(property)}
-                  className="text-eyebrow inline-flex justify-center border border-ink/25 px-7 py-4 text-center font-sans font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:border-gold"
+                  className={RAIL_SECONDARY}
                 />
                 {/* R-44. A plain link, not a client component: wa.me opens
                     the contact picker on mobile and WhatsApp Web on desktop,
@@ -725,10 +706,13 @@ export default async function PropertyDetailPage({
         </section>
 
         {/* Inquiry */}
-        <section id="inquire" className="border-t border-border bg-white px-5 py-20 md:px-12 md:py-28">
+        <section id="inquire" className={SECTION_BAND}>
           <div className="grid grid-cols-1 gap-14 md:grid-cols-[1fr_1.4fr] md:gap-24">
             <div className="md:sticky md:top-32 md:self-start">
-              <h2 className="max-w-sm text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
+              <p className="text-eyebrow mb-3 font-sans font-medium uppercase tracking-[0.2em] text-gold-deep">
+                Enquire
+              </p>
+              <h2 className="max-w-sm text-balance font-serif text-h3 text-heading">
                 {PROPERTY_DETAIL.inquiryHeading}
               </h2>
               <p className="mt-5 max-w-sm text-pretty text-body font-sans text-ink-muted">
@@ -740,19 +724,20 @@ export default async function PropertyDetailPage({
         </section>
 
         {similar.length > 0 && (
-          <section className="px-5 py-20 md:px-12 md:py-28">
-            <div className="mb-12 flex flex-wrap items-end justify-between gap-6">
-              <h2 className="text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
-                Also Represented
-              </h2>
-              <Link
-                href={`/properties?category=${property.category}`}
-                className="text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-ink-muted transition-colors hover:text-ink"
-              >
-                View all {categoryLabel(property.category).toLowerCase()} listings
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+          <section className={SECTION}>
+            <SectionHeading
+              eyebrow="Comparable stock"
+              title="Also represented"
+              aside={
+                <Link
+                  href={`/properties?category=${property.category}`}
+                  className="font-sans transition-colors hover:text-ink"
+                >
+                  View all {categoryLabel(property.category).toLowerCase()} listings
+                </Link>
+              }
+            />
+            <div className="grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
               {similar.map((p) => (
                 <div key={p.id}>
                   <ListingCard property={p} />

@@ -6,7 +6,7 @@ import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { CTABand } from "@/components/sections/CTABand";
 import { getBuilderBySlug, type PublicBuilderDetail } from "@/lib/db/queries";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { PageHeader, SECTION } from "../../_components/page-chrome";
 import { COMPANY } from "@/lib/data";
 import { breadcrumbJsonLd, canonical, jsonLdHtml } from "@/lib/seo";
 
@@ -95,32 +95,14 @@ export default async function BuilderDetailPage({
       />
       <Header />
       <main>
-        {/* Hero — quiet dark ground, same shape as the project detail hero */}
-        <section className="relative flex min-h-[60vh] flex-col justify-end overflow-hidden bg-dark-deep">
-          <div
-            aria-hidden
-            className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/75 via-black/25 to-transparent"
-          />
-          <div className="relative px-5 pb-16 pt-40 md:px-12 md:pb-20">
-            <div className="mb-4">
-              <Breadcrumbs items={breadcrumbItems} tone="dark" />
-            </div>
-            <span className="mb-8 block h-px w-16 bg-gold" />
-            <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.25em] text-cream/70">
-              Developer
-            </p>
-            <h1 className="mt-4 max-w-4xl text-balance font-serif text-h1 uppercase tracking-[0.04em] text-cream">
-              {builder.name}
-            </h1>
-            {builder.belongsTo && (
-              <p className="mt-5 max-w-xl text-pretty text-body font-sans text-cream/80">
-                {builder.belongsTo}
-              </p>
-            )}
-          </div>
-        </section>
+        <PageHeader
+          breadcrumbs={breadcrumbItems}
+          eyebrow="Developer"
+          title={builder.name}
+          sub={builder.belongsTo}
+        />
 
-        <section className="grid grid-cols-1 gap-14 px-5 py-20 md:grid-cols-[1.7fr_1fr] md:gap-20 md:px-12 md:py-28">
+        <section className={`grid grid-cols-1 gap-14 md:grid-cols-[1.7fr_1fr] md:gap-20 ${SECTION}`}>
           <div className="flex flex-col gap-16">
             {builder.about && (
               <div>
@@ -236,7 +218,7 @@ function ProjectCard({ project }: { project: BuilderProject }) {
         )}
       </div>
       <div className="flex flex-col gap-1.5">
-        <h3 className="font-serif text-h4 text-ink">{project.name}</h3>
+        <h3 className="font-serif text-h4 text-heading">{project.name}</h3>
         {location && <p className="text-meta font-sans text-ink-muted">{location}</p>}
         {project.possessionStatus && (
           <p className="text-meta font-sans text-ink-muted">{project.possessionStatus}</p>

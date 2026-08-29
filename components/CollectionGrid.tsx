@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { COLLECTIONS, type CollectionValue } from "@/lib/attributes";
 import { propertiesHref, type PropertiesFilterParams } from "@/lib/properties-url";
@@ -19,16 +20,18 @@ export function CollectionGrid({
   counts,
   current,
 }: {
-  counts: { value: CollectionValue; count: number }[];
+  counts: { value: CollectionValue; count: number; coverUrl?: string | null }[];
   current: PropertiesFilterParams;
 }) {
-  const countFor = (value: CollectionValue) =>
-    counts.find((c) => c.value === value)?.count ?? 0;
+  const entryFor = (value: CollectionValue) =>
+    counts.find((c) => c.value === value);
 
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {COLLECTIONS.map((collection, i) => {
-        const count = countFor(collection.value);
+        const entry = entryFor(collection.value);
+        const count = entry?.count ?? 0;
+        const coverUrl = entry?.coverUrl ?? null;
         const feature = i < 2;
         return (
           <Link
@@ -38,15 +41,25 @@ export function CollectionGrid({
               feature ? "h-44 lg:col-span-2 lg:h-64" : "h-44 lg:h-48"
             }`}
           >
-            {/* ponytail: solid navy placeholder standing in for a
-                representative photo per collection. Wiring a real cover
-                needs a new per-collection cover query in lib/db/queries.ts,
-                which is owned by parallel work this round (out of scope
-                here — that file is explicitly hands-off). Swap this block
-                for an <Image src={collection.coverUrl}> once that lands. */}
+            {/* A real listing photo from inside the collection, so the tile
+                shows what it is offering rather than a coloured block. A
+                collection with nothing public in it has no cover and keeps
+                the solid navy — the honest rendering, since there is
+                nothing behind the tile to show. */}
+            {coverUrl && (
+              <Image
+                src={coverUrl}
+                alt=""
+                fill
+                sizes={feature ? "(min-width: 1024px) 50vw, 50vw" : "(min-width: 1024px) 25vw, 50vw"}
+                className="img-zoom"
+              />
+            )}
+            {/* Heavier than a card scrim: the label and count sit directly
+                on the photograph with no plate behind them. */}
             <span
               aria-hidden
-              className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent"
+              className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10"
             />
             <span aria-hidden className="absolute inset-x-4 top-4 h-px bg-gold/40" />
 
