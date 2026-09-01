@@ -45,7 +45,10 @@ export function Dialog({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25, ease: EASE }}
           onClick={onClose}
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-dark-deep/60 p-4 backdrop-blur-sm sm:items-center sm:p-6"
+          // Pinned to the top, not centred: these forms are taller than a laptop
+          // viewport, and a centred tall dialog opens with its own heading
+          // scrolled off screen.
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-dark-deep/60 p-4 backdrop-blur-sm sm:p-6"
         >
           <m.div
             role="dialog"
@@ -56,7 +59,7 @@ export function Dialog({
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.3, ease: EASE }}
             onClick={(e) => e.stopPropagation()}
-            className="relative my-8 w-full max-w-xl border border-border bg-cream p-6 sm:my-0 md:p-8"
+            className="relative my-6 w-full max-w-xl border border-border bg-cream p-6 md:p-8"
           >
             <button
               type="button"

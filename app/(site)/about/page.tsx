@@ -2,13 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
+import { FoundersMessage } from "@/components/sections/FoundersMessage";
 import { Button } from "@/components/ui/Button";
-import {
-  PageHeader,
-  SectionHeading,
-  SECTION,
-  SECTION_BAND,
-} from "../_components/page-chrome";
+import { PageHeader, SectionHeading, SECTION } from "../_components/page-chrome";
 import { ABOUT_PAGE, COMPANY } from "@/lib/data";
 import { canonical } from "@/lib/seo";
 
@@ -33,7 +29,6 @@ const BREADCRUMBS = [
   { name: "About", path: "/about" },
 ];
 
-const MILESTONES = ABOUT_PAGE.milestones;
 const PRINCIPALS = ABOUT_PAGE.principals;
 const RECORD = ABOUT_PAGE.record;
 
@@ -84,62 +79,67 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* History: chronology with a hairline spine */}
-        <section className={SECTION_BAND}>
-          <SectionHeading eyebrow="Track record" title={ABOUT_PAGE.historyHeading} />
-          <ol className="flex flex-col">
-            {MILESTONES.map((m) => (
-              <li
-                key={m.year}
-                className="grid grid-cols-1 gap-4 border-b border-border py-8 last:border-b-0 md:grid-cols-[160px_1fr_2fr] md:gap-10"
-              >
-                <span className="font-serif text-h4 leading-none text-gold-deep">
-                  {m.year}
-                </span>
-                <h3 className="font-serif text-h4 text-heading">{m.title}</h3>
-                <p className="max-w-xl text-pretty text-body font-sans text-ink-muted">
-                  {m.body}
-                </p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
-        {/* Principals */}
+        {/* Founders: a full profile each, not a portrait with a job title.
+            These are the two people a client actually deals with, and the
+            client supplied their own words — so the section is set as an
+            article per founder rather than a card grid. */}
         <section className={SECTION}>
           <SectionHeading
-            eyebrow="The principals"
+            eyebrow="The founders"
             title={ABOUT_PAGE.principalsHeading}
             aside={ABOUT_PAGE.principalsNote}
           />
-          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 md:max-w-2xl md:gap-8">
+          <div className="flex flex-col gap-16 md:gap-24">
             {PRINCIPALS.map((person) => (
-              <figure key={person.name} className="flex flex-col gap-5">
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  <Image
-                    src={person.image}
-                    alt={`Portrait of ${person.name}`}
-                    fill
-                    sizes="(min-width: 640px) 40vw, 100vw"
-                    className="object-cover grayscale"
-                  />
+              <article
+                key={person.name}
+                className="grid grid-cols-1 gap-8 md:grid-cols-[300px_1fr] md:gap-14"
+              >
+                <div className="flex flex-col gap-5">
+                  <div className="relative aspect-[3/4] overflow-hidden">
+                    <Image
+                      src={person.image}
+                      alt={`Portrait of ${person.name}`}
+                      fill
+                      sizes="(min-width: 768px) 300px, 100vw"
+                      className="object-cover grayscale"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-h4 text-heading">{person.name}</h3>
+                    <p className="mt-1 text-meta font-sans text-gold-deep">
+                      {person.title}
+                    </p>
+                    <p className="mt-2 text-meta font-sans text-ink-muted">
+                      {person.credentials}
+                    </p>
+                  </div>
                 </div>
-                <figcaption>
-                  <p className="font-serif text-h4 text-heading">{person.name}</p>
-                  <p className="mt-1 text-meta font-sans text-ink-muted">
-                    {person.title}
-                  </p>
-                </figcaption>
-              </figure>
+
+                <div className="flex flex-col gap-5">
+                  {person.bio.map((paragraph) => (
+                    <p
+                      key={paragraph}
+                      className="text-pretty text-body font-sans leading-relaxed text-ink"
+                    >
+                      {paragraph}
+                    </p>
+                  ))}
+                  <blockquote className="mt-2 border-l-2 border-gold pl-6 text-pretty font-serif text-h4 leading-snug text-heading">
+                    &ldquo;{person.quote}&rdquo;
+                  </blockquote>
+                </div>
+              </article>
             ))}
           </div>
         </section>
 
+        <FoundersMessage />
+
         {/* The record: quiet definition list on the chrome navy */}
-        <section className="bg-navy px-5 py-16 md:px-12 md:py-24">
+        <section className="bg-surface px-5 py-16 md:px-12 md:py-24">
           <div className="mx-auto max-w-3xl">
             <SectionHeading
-              tone="dark"
               eyebrow="By the numbers"
               title={ABOUT_PAGE.recordHeading}
             />
@@ -147,10 +147,10 @@ export default function AboutPage() {
               {RECORD.map((row) => (
                 <div
                   key={row.label}
-                  className="flex items-baseline justify-between gap-6 border-b border-cream/15 py-5 last:border-b-0"
+                  className="flex items-baseline justify-between gap-6 border-b border-border py-5 last:border-b-0"
                 >
-                  <dt className="text-body font-sans text-cream/60">{row.label}</dt>
-                  <dd className="font-serif text-h3 text-cream">{row.value}</dd>
+                  <dt className="text-body font-sans text-ink-muted">{row.label}</dt>
+                  <dd className="font-serif text-h3 text-heading">{row.value}</dd>
                 </div>
               ))}
             </dl>

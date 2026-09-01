@@ -216,9 +216,12 @@ export const NEWS_PAGE = {
 
 export const ABOUT_PAGE = {
   title: "The Group",
+  // No founding year and no "N years in the market" anywhere on this page,
+  // at the client's instruction — the group is described by how it works,
+  // not by how long it has been working.
   facts: [
-    ["Est.", "2009"],
     ["Home office", "Panchkula"],
+    ["Markets", "Tricity"],
     ["Sold to date", "₹385 Cr+"],
   ] as [string, string][],
   ethosImage:
@@ -228,56 +231,78 @@ export const ABOUT_PAGE = {
     "Most brokerages measure themselves by how much they list. We measure ourselves by what we decline.",
   ethosParagraphs: [
     "Global Landmark was founded on a narrow premise: a few exceptional residences, represented completely, will always outperform a large inventory handled adequately. Every property we accept is walked by a principal and prepared as if it were the only one on the books.",
-    "Photography is commissioned per residence. Showings are private and few. Most sales close without ever appearing on a public listing — and the average client relationship now runs nine years.",
+    "Photography is commissioned per residence. Showings are private and few, and most sales close without ever appearing on a public listing.",
   ],
-  historyHeading: "Fifteen years, four chapters",
-  milestones: [
-    {
-      year: "2009",
-      title: "Founded in Panchkula",
-      body: "A two-person desk representing a single kothi. The sale sets a sector record that stands for years.",
-    },
-    {
-      year: "2014",
-      title: "The first ₹10 Crore year",
-      body: "A run of off-market kothi and penthouse transactions builds a reputation for quiet, record-setting sales.",
-    },
-    {
-      year: "2019",
-      title: "Across the Tricity",
-      body: "Desks open for Zirakpur, Mohali, and Chandigarh. A city practice becomes the region's private brokerage.",
-    },
-    {
-      year: "2026",
-      title: "Today",
-      body: "Over ₹385 Crore in landmark sales — and the same standard as day one: few properties, chosen carefully.",
-    },
-  ],
-  principalsHeading: "The Principals",
+
+  principalsHeading: "The Founders",
   principalsNote: "One senior team, every engagement",
-  // Real names from the client. Photos are placeholders — swap the image URLs.
+  // The client's own profiles, in their words. Photographs are placeholders
+  // until their portraits arrive — swap the image URLs only.
   principals: [
     {
       name: "Ashu Goyal",
-      title: "Founding Principal",
+      title: "Founder & Managing Director",
+      credentials: "B.A. (Honours) English · MBA, Panjab University",
       image:
         "https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=700&auto=format&fit=crop",
+      bio: [
+        "Ashu Goyal is the Founder and Managing Director of Global Landmark Realty Group, a professionally managed real estate consultancy focused on Chandigarh, Panchkula, Mohali and emerging investment destinations. He completed his B.A. (Honours) in English and went on to an MBA from Panjab University, an education that shaped his approach to business, communication, client relationships and strategic decision-making.",
+        "His focus is on identifying quality properties, promising investment opportunities and value-driven deals, guided by three principles: trust, transparency and professionalism. He works closely with clients to understand their individual goals and guide them through every stage of the property journey — from identifying the right opportunity and evaluating the investment through to negotiation and closing.",
+        "His vision is to establish Global Landmark Realty Group as a trusted and respected real estate advisory brand, known not only for its property expertise but for the long-term relationships it builds with clients.",
+      ],
+      quote:
+        "Real estate is not just about buying a property; it is about making the right decision for your future.",
     },
     {
       name: "Divya Goyal",
-      title: "Head of Sales",
+      title: "Co-Founder",
+      credentials: "B.Com · LL.B., Panjab University",
       image:
         "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=700&auto=format&fit=crop",
+      bio: [
+        "Divya Goyal is the Co-Founder of Global Landmark Realty Group, driven by a simple belief — real estate is not just about properties; it is about people, dreams, and the future they envision.",
+        "A Commerce and Law graduate of Panjab University, her B.Com and LL.B. give her a firm grounding in the financial and legal side of property transactions, while her experience in the business has built a deep understanding of clients and their individual requirements. After completing her education she joined her husband, Ashu Goyal, in the business, and together they built Global Landmark Realty Group around honest advice, carefully selected properties and a smooth buying experience.",
+        "She does not see herself as a traditional broker, but as a bridge between a client's dream and the right property. Whether the client is looking for a home, a plot for the future or a sound investment, she believes in understanding the need first and guiding the decision second — on trust, transparency, personal attention and long-term relationships.",
+      ],
+      quote:
+        "I am not here just to sell a property. I am here to become the medium through which my clients can fulfill their property dreams.",
     },
   ],
+
   recordHeading: "The record",
   record: [
-    { label: "Founded", value: "2009" },
     { label: "Micro-markets", value: "6" },
     { label: "Sales volume", value: "₹385 Cr+" },
     { label: "Properties transacted", value: "120+" },
-    { label: "Average client tenure", value: "9 years" },
   ],
   closingLine: "If your property belongs in this company, we should speak.",
   closingCta: "Start the Conversation",
+};
+
+/**
+ * The founders' message, in the client's own words. Its own constant rather
+ * than more ABOUT_PAGE keys because it renders as its own component and is
+ * meant to read as a signed statement, not as another page section.
+ */
+export const FOUNDERS_MESSAGE = {
+  eyebrow: "A message from the founders",
+  heading: "Invest With Confidence",
+  standfirst:
+    "Your investment deserves more than a property. It deserves the right guidance.",
+  body: [
+    "At Global Landmark Realty Group, we understand that every investment represents a goal — financial growth, future security, a dream home, or a better tomorrow for your family.",
+    "Our role is to understand your requirements, investment objectives and budget, and then help you identify the right property opportunities. From selecting the location and evaluating the property to understanding the documentation and completing the transaction, we aim to make the entire process simple, transparent and informed.",
+    "We do not believe in simply selling properties. We believe in building trust and helping our clients make decisions they can feel confident about.",
+    "With our knowledge of the Tricity real estate market and a carefully selected range of properties, we work to connect our clients with opportunities that match their individual needs.",
+  ],
+  closingHeading: "Your Vision. Your Investment. Our Commitment.",
+  closingBody: [
+    "We understand that buying a property is not just a financial decision. It is often connected to your family's future, your hard-earned savings, your dreams, and the life you want to build.",
+    "That is why we take the time to listen to your needs, understand your priorities, and guide you with honesty and care. Whether you are purchasing your first home, investing for the future, or looking for the right commercial opportunity, we believe you deserve clear advice and genuine support at every step.",
+    "With Global Landmark Realty Group, you are not just choosing a property. You are choosing a trusted partner who stands beside you from the first conversation to the final decision.",
+  ],
+  signOff:
+    "Let Global Landmark Realty Group be your trusted medium in turning your property vision into reality.",
+  signature: "Ashu Goyal & Divya Goyal",
+  signatureRole: "Founders, Global Landmark Realty Group",
 };
