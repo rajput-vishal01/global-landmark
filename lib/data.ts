@@ -63,8 +63,8 @@ export const HERO = {
     {
       category: "sale",
       label: "Sale",
-      img: "https://images.unsplash.com/photo-1711114377419-09b0cd2d786b?q=80&w=2400&auto=format&fit=crop",
-      alt: "A private pool villa in Maharashtra, wrapped in landscaped gardens",
+      img: "/local/gl-towers-night.jpg",
+      alt: "Landscaped courtyard lit at night beneath residential towers in Zirakpur",
     },
     {
       category: "purchase",
@@ -75,8 +75,8 @@ export const HERO = {
     {
       category: "lease",
       label: "Lease",
-      img: "https://images.unsplash.com/photo-1564834552305-aea63611ff08?q=80&w=2400&auto=format&fit=crop",
-      alt: "A modern apartment tower with balconies against a clear blue sky in Noida",
+      img: "/local/gl-lounge.jpg",
+      alt: "Residents lounge inside a Tricity apartment clubhouse",
     },
     {
       category: "invest",
@@ -105,8 +105,8 @@ export const CREDIBILITY = {
 export const ABOUT_SPLIT = {
   heading: "Built on landmark sales",
   body: "The residences other brokerages call career-defining. Our clients stay private. Our results do not.",
-  image: "/local/zirakpur-fields-towers.jpg",
-  alt: "Open land on the Zirakpur edge with new apartment towers rising behind it",
+  image: "/local/gl-aerial.jpg",
+  alt: "Aerial view of a Zirakpur residential development and the streets around it",
   ctaLabel: "About the Group",
 };
 
