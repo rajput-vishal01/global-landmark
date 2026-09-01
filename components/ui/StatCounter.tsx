@@ -25,7 +25,9 @@ export function StatCounter({
 
   return (
     <div className="flex flex-col items-center gap-4 text-center">
-      <p className="font-serif text-[clamp(2.5rem,4.5vw,4.5rem)] leading-none text-ink">
+      {/* nowrap: "₹385 Cr+" broke after the figure and set the prefix and
+          suffix on separate lines, which read as two numbers. */}
+      <p className="whitespace-nowrap font-serif text-[clamp(2.25rem,4vw,4rem)] leading-none text-ink">
         {prefix}
         {value.toFixed(decimals)}
         {suffix}

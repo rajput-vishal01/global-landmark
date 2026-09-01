@@ -746,6 +746,12 @@ export const textTestimonials = pgTable(
     author: text("author").notNull(),
     /** "Bought in Sector 71" — context that makes the quote credible. */
     context: text("context"),
+    /**
+     * Client's photo for the testimonial wall. Optional on purpose: the
+     * card falls back to the author's initials, so a quote is never held
+     * back waiting for a headshot.
+     */
+    avatarUrl: text("avatar_url"),
     sortOrder: integer("sort_order").notNull().default(0),
     isPublished: boolean("is_published").notNull().default(true),
     createdAt: timestamp("created_at").defaultNow().notNull(),

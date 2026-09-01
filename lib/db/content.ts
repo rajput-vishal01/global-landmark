@@ -64,6 +64,7 @@ const listTextTestimonialsCached = unstable_cache(
         quote: textTestimonials.quote,
         author: textTestimonials.author,
         context: textTestimonials.context,
+        avatarUrl: textTestimonials.avatarUrl,
       })
       .from(textTestimonials)
       .where(eq(textTestimonials.isPublished, true))

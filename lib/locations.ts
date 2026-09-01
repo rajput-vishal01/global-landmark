@@ -71,6 +71,7 @@ export const COUNTRIES: Country[] = [
         slug: "mohali",
         localities: [
           { name: "Sector Area", authority: "GMADA" },
+          { name: "Aerocity", authority: "GMADA" },
           { name: "IT City", authority: "GMADA" },
           { name: "Airport Road", authority: "GMADA" },
           { name: "PR-7 Road", authority: "GMADA" },

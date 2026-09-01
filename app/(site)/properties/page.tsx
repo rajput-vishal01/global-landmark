@@ -1,31 +1,21 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { CTABand } from "@/components/sections/CTABand";
 import { ListingCard } from "@/components/ui/ListingCard";
 import { Button } from "@/components/ui/Button";
-import { PropertiesFilters } from "@/components/PropertiesFilters";
-import { CollectionGrid } from "@/components/CollectionGrid";
-import { CityTabs } from "@/components/CityTabs";
-import { ConfigTabs } from "@/components/ConfigTabs";
+import { FilterBar } from "@/components/FilterBar";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { Pagination } from "@/components/Pagination";
 import { ListingsToolbar } from "@/components/ListingsToolbar";
-import {
-  PageHeader,
-  SectionHeading,
-  SECTION,
-  SECTION_BAND,
-} from "../_components/page-chrome";
+import { PageHeader, SectionHeading, SECTION } from "../_components/page-chrome";
 import {
   listProperties,
   countProperties,
-  listCollectionCounts,
   listCityCounts,
   PROPERTIES_PAGE_SIZE,
 } from "@/lib/db/queries";
-import { CATEGORIES, isCategory, type CategoryValue } from "@/lib/categories";
+import { isCategory } from "@/lib/categories";
 import {
   FURNISHINGS,
   POSSESSION_STATUSES,
@@ -39,7 +29,6 @@ import {
   DEFAULT_VIEW,
   isPropertySort,
   isPropertyView,
-  propertiesHref,
   sortParam,
   viewParam,
   type PropertiesFilterParams,
@@ -70,18 +59,6 @@ const BREADCRUMBS = [
   { name: "Home", path: "/" },
   { name: "Properties", path: "/properties" },
 ];
-
-const FILTERS: { value: CategoryValue | "all"; label: string }[] = [
-  { value: "all", label: "All" },
-  ...CATEGORIES.map((c) => ({ value: c.value, label: c.label })),
-];
-
-/** The label that opens each row of the filter panel. */
-const FILTER_LABEL =
-  "text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted";
-
-/** One row inside the filter panel — hairline-separated, evenly padded. */
-const FILTER_ROW = "border-b border-border px-5 py-5 last:border-b-0 md:px-6";
 
 const pick = (value: string | undefined, allowed: readonly string[]) =>
   value && allowed.includes(value) ? value : undefined;
@@ -137,10 +114,9 @@ export default async function PropertiesPage({
     q,
   };
 
-  const [properties, totalCount, collectionCounts, cityCounts] = await Promise.all([
+  const [properties, totalCount, cityCounts] = await Promise.all([
     listProperties(activeFilters, page, sort),
     countProperties(activeFilters),
-    listCollectionCounts(),
     listCityCounts(),
   ]);
   const totalPages = Math.max(1, Math.ceil(totalCount / PROPERTIES_PAGE_SIZE));
@@ -184,19 +160,6 @@ export default async function PropertiesPage({
           }
         />
 
-        <section className={SECTION_BAND}>
-          <SectionHeading
-            eyebrow="Start here"
-            title="Browse by collection"
-            aside={
-              <Link href="#listings" className="font-sans transition-colors hover:text-ink">
-                Skip to all listings
-              </Link>
-            }
-          />
-          <CollectionGrid counts={collectionCounts} current={current} />
-        </section>
-
         <section id="listings" className={SECTION}>
           <SectionHeading
             eyebrow="The portfolio"
@@ -208,68 +171,7 @@ export default async function PropertiesPage({
             }
           />
 
-          {/* One bordered panel instead of four loose bands. The controls
-              themselves were already right; stacked down the page with a
-              full-width rule under each, they read as four separate features
-              rather than one place to narrow the list. */}
-          <div className="mb-10 border border-border bg-cream">
-            <nav
-              aria-label="Filter by category"
-              className={`flex flex-wrap items-center gap-x-6 gap-y-3 ${FILTER_ROW}`}
-            >
-              <span className={FILTER_LABEL}>Category</span>
-              {FILTERS.map((filter) => {
-                const isActive =
-                  filter.value === "all" ? !category : category === filter.value;
-                return (
-                  <Link
-                    key={filter.value}
-                    href={propertiesHref(
-                      current,
-                      {
-                        category: filter.value === "all" ? undefined : filter.value,
-                        page: undefined,
-                      },
-                      "listings"
-                    )}
-                    aria-current={isActive ? "page" : undefined}
-                    className={`text-eyebrow relative pb-1 font-sans font-medium uppercase tracking-[0.15em] transition-colors duration-300 ${
-                      isActive ? "text-ink" : "text-ink-muted hover:text-ink"
-                    }`}
-                  >
-                    {filter.label}
-                    <span
-                      aria-hidden
-                      className={`absolute bottom-0 left-0 h-px w-full origin-left bg-gold transition-transform duration-500 ease-out ${
-                        isActive ? "scale-x-100" : "scale-x-0"
-                      }`}
-                    />
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div className={FILTER_ROW}>
-              <CityTabs
-                cities={cityCounts}
-                city={city ?? ""}
-                locality={locality ?? ""}
-                sector={sector ?? ""}
-              />
-            </div>
-
-            <div className={FILTER_ROW}>
-              <ConfigTabs configuration={configuration} current={current} />
-            </div>
-
-            <div className={FILTER_ROW}>
-              <PropertiesFilters
-                propertyType={propertyType ?? ""}
-                possession={possessionStatus ?? ""}
-                furnishing={furnishing ?? ""}
-              />
-            </div>
-          </div>
+          <FilterBar current={current} cityCounts={cityCounts} />
 
           <ListingsToolbar sort={sort} view={view} current={current} rule={false} />
 

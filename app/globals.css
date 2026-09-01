@@ -48,6 +48,9 @@
      better too — #000 on #ffdf00 is ~16:1, comfortably past AA at the
      small bold sizes these buttons use. */
   --color-cta-ink: #000000;
+  /* WhatsApp brand green — the dock button and the footer icon are the only
+     things allowed to use it, so the mark reads as WhatsApp on sight. */
+  --color-whatsapp: #25d366;
   /* Headings sit slightly warm-navy rather than the near-black body ink,
      which is what stops a white page of serif headings reading as harsh. */
   --color-heading: #262838;
@@ -190,6 +193,17 @@ body {
 /* Activity ticker — slower than the press marquee, reads while moving */
 .animate-ticker {
   animation: marquee 60s linear infinite;
+}
+
+/* Testimonial wall — slow enough to read a whole card while it drifts.
+   Pausing on hover is what makes it readable rather than teasing: the
+   quote you reached for stops moving. */
+.animate-wall {
+  animation: marquee 70s linear infinite;
+}
+.wall-track:hover .animate-wall,
+.wall-track:focus-within .animate-wall {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {

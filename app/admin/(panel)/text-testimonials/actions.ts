@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { textTestimonials } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
+import { isAllowedImageUrl } from "@/lib/admin/property-parse";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
 import type { DeleteState } from "../properties/actions";
 
@@ -18,8 +19,13 @@ export type TextTestimonialFormState = { error?: string };
 
 function parseTestimonial(formData: FormData) {
   const sortOrder = Number(formData.get("sortOrder"));
+  // Same allowlist the property gallery uses: an uploaded /api/images key or
+  // one of the permitted external hosts. Anything else is dropped rather
+  // than stored, so the <Image> src can never be attacker-chosen.
+  const avatar = String(formData.get("avatarUrl") ?? "").trim();
   return {
     context: String(formData.get("context") ?? "").trim().slice(0, 200) || null,
+    avatarUrl: avatar && isAllowedImageUrl(avatar) ? avatar.slice(0, 1000) : null,
     sortOrder: Number.isFinite(sortOrder) ? Math.trunc(sortOrder) : 0,
     isPublished: formData.get("isPublished") === "on",
   };

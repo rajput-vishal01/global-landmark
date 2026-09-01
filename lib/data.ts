@@ -88,10 +88,13 @@ export const HERO = {
 };
 
 export const CREDIBILITY = {
-  eyebrow: "Featured",
-  headingPre: "Over",
-  headingHighlight: "₹385 Crore",
-  headingPost: "in landmark sales",
+  eyebrow: "Our Record",
+  // No figure in the heading: the stats directly below already carry the
+  // ₹385 Cr number, and saying it twice in one band read as a duplicate
+  // rather than as emphasis.
+  headingPre: "A portfolio built on",
+  headingHighlight: "repeat clients",
+  headingPost: "and referrals",
   sub: "Considered residences across the Tricity, trusted by the most private buyers and sellers.",
   stats: [
     { value: 385, prefix: "₹", suffix: " Cr+", label: "Worth of Real Estate Sold" },
@@ -162,11 +165,6 @@ export const CTA_BAND = {
   ctaLabel: "Request a Valuation",
 };
 
-export const FOOTER = {
-  disclaimer:
-    "All information is deemed reliable but not guaranteed and should be independently verified. Listings are subject to change or withdrawal without notice.",
-};
-
 /** Randomized placeholder activity for the bottom ticker (client request). */
 export const TICKER = {
   names: [
@@ -205,7 +203,10 @@ export const TICKER = {
 };
 
 export const WHATSAPP = {
-  defaultMessage: "Hi",
+  // Ends mid-sentence on purpose: the visitor lands in WhatsApp with the
+  // greeting written and one blank to fill, which is a far easier first
+  // message to send than an empty thread containing the word "Hi".
+  defaultMessage: "Hi Global Landmark! I have been looking at ",
   nudgeTitle: "Considering a residence?",
   nudgeBody:
     "Contact us for more details — we respond within one business day.",

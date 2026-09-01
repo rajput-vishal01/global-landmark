@@ -3,28 +3,43 @@ import { Header } from "@/components/sections/Header";
 import { Hero } from "@/components/sections/Hero";
 import { CredibilityBand } from "@/components/sections/CredibilityBand";
 import { FeaturedListings } from "@/components/sections/FeaturedListings";
-import { CollectionGrid } from "@/components/CollectionGrid";
+import { LocationGrid } from "@/components/LocationGrid";
 import { AboutSplit } from "@/components/sections/AboutSplit";
 import { PressMarquee } from "@/components/sections/PressMarquee";
 import { CTABand } from "@/components/sections/CTABand";
 import { Testimonials } from "@/components/sections/Testimonials";
+import { TextTestimonials } from "@/components/sections/TextTestimonials";
 import { Services } from "@/components/sections/Services";
 import { Footer } from "@/components/sections/Footer";
 import { DealOfWeek } from "@/components/sections/DealOfWeek";
 import {
   getActiveDeal,
   getFeaturedProperties,
-  listCollectionCounts,
+  listLocationCards,
 } from "@/lib/db/queries";
+
+/**
+ * The micro-markets the client actually sells in, in the order they want
+ * them read. Aerocity is a locality of Mohali rather than a city of its
+ * own, so its tile narrows on both.
+ */
+const LANDING_LOCATIONS = [
+  { city: "Chandigarh" },
+  { city: "Panchkula" },
+  { city: "Zirakpur" },
+  { city: "Mohali" },
+  { city: "Mohali", locality: "Aerocity" },
+  { city: "New Chandigarh" },
+];
 
 export default async function Home() {
   // Render per request (Docker builds have no DB to prerender against);
   // the queries themselves are cached and busted by admin mutations.
   await connection();
-  const [featured, activeDeal, collectionCounts] = await Promise.all([
+  const [featured, activeDeal, locationCards] = await Promise.all([
     getFeaturedProperties(),
     getActiveDeal(),
-    listCollectionCounts(),
+    listLocationCards(LANDING_LOCATIONS),
   ]);
 
   return (
@@ -36,20 +51,18 @@ export default async function Home() {
           <CredibilityBand />
           <FeaturedListings properties={featured} />
 
-          {/* Browse-by-collection bento, the same one /properties uses.
-              It replaced the areas grid here: two card grids back to back
-              (listings, then areas) read as the same section rendered
-              twice, and this one is doing a different job — it sorts the
-              portfolio by what KIND of thing you want rather than showing
-              more of the individual listings directly above it. The areas
-              pages themselves are untouched and still live at /areas. */}
+          {/* Browse-by-location bento. This was the collection grid (Kothi /
+              Plot / Flats ...) — buyers in this market start from a
+              micro-market, not a property type, and the type filters are
+              one click away on /properties, which still leads with the
+              collection grid. */}
           <section className="bg-surface px-5 py-16 md:px-12 md:py-24">
             <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
               <h2 className="text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
-                Browse by Collection
+                Browse by Location
               </h2>
             </div>
-            <CollectionGrid counts={collectionCounts} current={{}} />
+            <LocationGrid cards={locationCards} />
           </section>
 
           <DealOfWeek deal={activeDeal} />
@@ -57,6 +70,7 @@ export default async function Home() {
           <AboutSplit />
           <PressMarquee />
           <CTABand />
+          <TextTestimonials />
           <Testimonials />
         </div>
       </main>

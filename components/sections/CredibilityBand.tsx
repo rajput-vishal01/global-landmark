@@ -31,7 +31,7 @@ export async function CredibilityBand() {
           sub={CREDIBILITY.sub}
         />
 
-        <div className="grid grid-cols-1 gap-10 border-t border-border pt-12 sm:grid-cols-3">
+        <div className="mx-auto grid max-w-2xl grid-cols-1 gap-10 border-t border-border pt-12 sm:grid-cols-2">
           {CREDIBILITY.stats.map((stat) => (
             <div key={stat.label}>
               <StatCounter

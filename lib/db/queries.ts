@@ -334,6 +334,66 @@ export const listCollectionCounts = failSoft(
   []
 );
 
+/**
+ * The landing page's location grid: one tile per micro-market the client
+ * sells in, each with a live count and a real listing photo.
+ *
+ * Unlike listCityCounts below, the tile list is FIXED — a market with
+ * nothing published yet still gets its tile (and its "0 listings"), because
+ * the grid is telling a visitor where we operate, not only where we happen
+ * to have stock this week. A locality tile (Aerocity) narrows on both city
+ * and locality, which is the same pair the /properties filters accept.
+ */
+export type LocationCard = {
+  city: string;
+  locality?: string;
+  label: string;
+  count: number;
+  coverUrl: string | null;
+};
+
+const listLocationCardsCached = unstable_cache(
+  async (
+    targets: { city: string; locality?: string }[]
+  ): Promise<LocationCard[]> =>
+    Promise.all(
+      targets.map(async ({ city, locality }) => {
+        const where = and(
+          publicVisibility(),
+          eq(properties.city, city),
+          locality ? eq(properties.locality, locality) : undefined
+        );
+
+        const [[{ n }], cover] = await Promise.all([
+          db.select({ n: count() }).from(properties).where(where),
+          db
+            .select({ url: propertyImages.url })
+            .from(propertyImages)
+            .innerJoin(properties, eq(propertyImages.propertyId, properties.id))
+            .where(where)
+            .orderBy(...IMAGE_ORDER)
+            .limit(1),
+        ]);
+
+        return {
+          city,
+          locality,
+          label: locality ?? city,
+          count: n,
+          coverUrl: cover[0]?.url ?? null,
+        };
+      })
+    ),
+  ["listLocationCards"],
+  CACHE_OPTS
+);
+
+export const listLocationCards = failSoft(
+  listLocationCardsCached,
+  "listLocationCards",
+  []
+);
+
 /** Live per-city counts for the city tab row (R-08) — cities with zero public listings are simply absent. */
 const listCityCountsCached = unstable_cache(
   async (): Promise<{ city: string; count: number }[]> => {

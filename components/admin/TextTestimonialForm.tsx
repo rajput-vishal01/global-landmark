@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import type { textTestimonials } from "@/lib/db/schema";
 import { FIELD, LABEL } from "@/components/form-classes";
+import { CoverImageInput } from "@/components/admin/CoverImageInput";
 import type { TextTestimonialFormState } from "@/app/admin/(panel)/text-testimonials/actions";
 
 type TextTestimonial = typeof textTestimonials.$inferSelect;
@@ -76,6 +77,18 @@ export function TextTestimonialForm({
             className={FIELD}
           />
         </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <span className={LABEL}>
+          Photo <span className="normal-case text-ink-muted">(optional)</span>
+        </span>
+        <CoverImageInput name="avatarUrl" initial={testimonial?.avatarUrl ?? null} />
+        <p className="text-meta font-sans text-ink-muted">
+          Shown as a round portrait on the card. Without one the card falls
+          back to the author&rsquo;s initials, so a quote never waits on a
+          headshot.
+        </p>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">

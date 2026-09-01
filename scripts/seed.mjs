@@ -640,9 +640,9 @@ await section("leads and settings", async () => {
      on conflict (key) do nothing`,
     [
       JSON.stringify({
-        headingPre: "Over",
-        headingHighlight: "₹385 Crore",
-        headingPost: "in landmark sales",
+        headingPre: "A portfolio built on",
+        headingHighlight: "repeat clients",
+        headingPost: "and referrals",
         sub: "Considered residences across the Tricity, trusted by the most private buyers and sellers.",
         stats: [
           { value: 385, prefix: "₹", suffix: " Cr+", label: "Worth of Real Estate Sold" },
