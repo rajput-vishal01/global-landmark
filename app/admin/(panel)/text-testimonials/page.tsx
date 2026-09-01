@@ -3,7 +3,7 @@ import { asc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { textTestimonials } from "@/lib/db/schema";
 import { DeleteButton } from "@/components/admin/DeleteButton";
-import { Button } from "@/components/ui/Button";
+import { AddQuoteButton } from "@/components/admin/AddQuoteButton";
 import { deleteTextTestimonial } from "./actions";
 
 export const metadata = { title: "Written testimonials" };
@@ -35,9 +35,7 @@ export default async function AdminTextTestimonialsPage() {
             Testimonials.
           </p>
         </div>
-        <Button href="/admin/text-testimonials/new" variant="outline">
-          Add testimonial
-        </Button>
+        <AddQuoteButton />
       </div>
 
       {rows.length === 0 ? (

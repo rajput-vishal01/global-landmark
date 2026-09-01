@@ -11,7 +11,7 @@ import {
 } from "@/lib/db/schema";
 import { getActiveDeal, todayIST } from "@/lib/db/queries";
 import { LISTING_STATUSES, STATUS_BADGE } from "@/lib/taxonomy/status";
-import { DEAL_STAGES, brokerageAmount, brokeragePending, isClosedStage } from "@/lib/taxonomy/brokerage";
+import { brokerageAmount, brokeragePending, isClosedStage } from "@/lib/taxonomy/brokerage";
 import { formatIndianShort } from "@/lib/attributes";
 
 const STALE_DAYS = 30;
@@ -60,21 +60,6 @@ async function leadCounts(): Promise<{ today: number; week: number }> {
   } catch (err) {
     console.error("leadCounts failed:", err);
     return { today: 0, week: 0 };
-  }
-}
-
-/** R-35: deals by stage. */
-async function dealsByStage(): Promise<{ stage: string; n: number }[]> {
-  try {
-    const rows = await db
-      .select({ stage: crmDeals.stage, n: count() })
-      .from(crmDeals)
-      .groupBy(crmDeals.stage);
-    const byStage = new Map(rows.map((r) => [r.stage, r.n]));
-    return DEAL_STAGES.map((stage) => ({ stage, n: byStage.get(stage) ?? 0 }));
-  } catch (err) {
-    console.error("dealsByStage failed:", err);
-    return DEAL_STAGES.map((stage) => ({ stage, n: 0 }));
   }
 }
 
@@ -136,13 +121,12 @@ async function staleListingCount(): Promise<number> {
 }
 
 export default async function AdminDashboard() {
-  const [stats, activeDeal, byStatus, leadStats, byStage, brokeragePendingTotal, staleCount] =
+  const [stats, activeDeal, byStatus, leadStats, brokeragePendingTotal, staleCount] =
     await Promise.all([
       counts(),
       getActiveDeal(),
       listingsByStatus(),
       leadCounts(),
-      dealsByStage(),
       totalBrokeragePending(),
       staleListingCount(),
     ]);
@@ -150,7 +134,7 @@ export default async function AdminDashboard() {
   const cards = [
     { label: "Properties", value: stats.properties, href: "/admin/properties" },
     { label: "Projects", value: stats.projects, href: "/admin/projects" },
-    { label: "Live & queued deals", value: stats.deals, href: "/admin/deals" },
+    { label: "Featured deals queued", value: stats.deals, href: "/admin/deals" },
   ];
 
   return (
@@ -159,8 +143,8 @@ export default async function AdminDashboard() {
         <h1 className="font-serif text-h2 text-ink">Portfolio</h1>
         <p className="mt-2 text-body font-sans text-ink-muted">
           {activeDeal
-            ? `Deal of the Week is live: ${activeDeal.property.title} (through ${activeDeal.endsAt}).`
-            : "No Deal of the Week is currently live."}
+            ? `Featured Deal is live: ${activeDeal.property.title} (through ${activeDeal.endsAt}).`
+            : "No Featured Deal is currently live."}
         </p>
       </div>
 
@@ -209,7 +193,9 @@ export default async function AdminDashboard() {
           Listings by status
         </p>
         <div className="flex flex-wrap gap-2.5">
-          {byStatus.map(({ status, n }) => (
+          {byStatus
+            .filter(({ n }) => n > 0)
+            .map(({ status, n }) => (
             <Link
               key={status}
               href={`/admin/properties?status=${encodeURIComponent(status)}`}
@@ -228,27 +214,6 @@ export default async function AdminDashboard() {
             {staleCount} available listing{staleCount === 1 ? "" : "s"} not updated in {STALE_DAYS}+ days
           </Link>
         )}
-      </div>
-
-      <div>
-        <p className="text-eyebrow mb-3 font-sans font-medium uppercase tracking-[0.18em] text-ink-muted">
-          Deals by stage
-        </p>
-        <div className="flex flex-wrap gap-2.5">
-          {byStage.map(({ stage, n }) => (
-            // The board shows every stage as its own column already — this
-            // links to the board itself rather than a per-stage filter,
-            // which the board doesn't (and doesn't need to) support.
-            <Link
-              key={stage}
-              href="/admin/crm/deals"
-              className="inline-flex items-center gap-2 whitespace-nowrap border border-border bg-white px-3 py-1.5 text-eyebrow font-sans font-medium uppercase tracking-[0.12em] text-ink transition-colors hover:border-gold"
-            >
-              {stage}
-              <span className="tabular-nums text-ink-muted">{n}</span>
-            </Link>
-          ))}
-        </div>
       </div>
 
       <div>
