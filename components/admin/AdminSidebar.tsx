@@ -51,11 +51,18 @@ function NavLinks({
     .sort((a, b) => b.length - a.length)[0];
 
   return (
-    <nav className="flex flex-col gap-4">
+    <nav className="flex flex-col gap-3">
       {nav.map((group, i) => (
-        <div key={group.heading ?? `group-${i}`} className="flex flex-col gap-0.5">
+        <div
+          key={group.heading ?? `group-${i}`}
+          // A hairline above each labelled run does the separating, so the
+          // label itself can be quiet instead of shouting to mark a boundary.
+          className={`flex flex-col gap-0.5 ${
+            group.heading ? "mt-1 border-t border-border/70 pt-4" : ""
+          }`}
+        >
           {group.heading && (
-            <h2 className="text-eyebrow px-3 pb-1 font-sans font-semibold uppercase tracking-[0.14em] text-ink-muted/70">
+            <h2 className="nav-group-heading px-3 pb-1.5 font-sans text-ink-muted/60">
               {group.heading}
             </h2>
           )}

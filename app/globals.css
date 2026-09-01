@@ -118,6 +118,22 @@
   text-transform: none;
 }
 
+/* Sidebar group labels.
+
+   The .admin-panel h1-h4 rule above deliberately de-serifs and un-cases
+   every admin heading, which is right for page titles and wrong here: it
+   turned the nav group labels into title-case semibold text at the same
+   size as the links under them, so each one read as a page heading — or
+   worse, as another nav item. These stay real <h2>s (they group the nav
+   for a screen reader) but are styled as the quiet captions they are.
+   Specificity 0,2,0 beats the 0,1,1 of the rule above. */
+.admin-panel .nav-group-heading {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 /* Table density. Admin tables are for scanning many rows, so cells get the
    tighter padding a dashboard expects and long cell text stops wrapping
    into three-line rows. */

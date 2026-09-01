@@ -30,7 +30,6 @@ const BREADCRUMBS = [
 ];
 
 const PRINCIPALS = ABOUT_PAGE.principals;
-const RECORD = ABOUT_PAGE.record;
 
 export default function AboutPage() {
   return (
@@ -135,27 +134,6 @@ export default function AboutPage() {
         </section>
 
         <FoundersMessage />
-
-        {/* The record: quiet definition list on the chrome navy */}
-        <section className="bg-surface px-5 py-16 md:px-12 md:py-24">
-          <div className="mx-auto max-w-3xl">
-            <SectionHeading
-              eyebrow="By the numbers"
-              title={ABOUT_PAGE.recordHeading}
-            />
-            <dl className="flex flex-col">
-              {RECORD.map((row) => (
-                <div
-                  key={row.label}
-                  className="flex items-baseline justify-between gap-6 border-b border-border py-5 last:border-b-0"
-                >
-                  <dt className="text-body font-sans text-ink-muted">{row.label}</dt>
-                  <dd className="font-serif text-h3 text-heading">{row.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </section>
 
         {/* Quiet closing line */}
         <section className={`text-center ${SECTION}`}>

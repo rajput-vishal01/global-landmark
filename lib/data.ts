@@ -269,12 +269,6 @@ export const ABOUT_PAGE = {
     },
   ],
 
-  recordHeading: "The record",
-  record: [
-    { label: "Micro-markets", value: "6" },
-    { label: "Sales volume", value: "₹385 Cr+" },
-    { label: "Properties transacted", value: "120+" },
-  ],
   closingLine: "If your property belongs in this company, we should speak.",
   closingCta: "Start the Conversation",
 };
