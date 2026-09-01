@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 import { MotionProvider } from "@/components/MotionProvider";
+import { ServiceWorker } from "@/components/ServiceWorker";
 import { COMPANY, SEO } from "@/lib/data";
 import { jsonLdHtml, organizationJsonLd, SITE_URL } from "@/lib/seo";
 
@@ -46,6 +47,37 @@ export const metadata: Metadata = {
     images: [SEO.ogImage],
   },
   robots: { index: true, follow: true },
+  // iOS reads almost none of the web app manifest. These four are what make
+  // an installed icon on an iPhone look like an app rather than a bookmark:
+  // the touch icon, standalone display, a dark status bar over our navy
+  // chrome, and the name under the icon.
+  appleWebApp: {
+    capable: true,
+    title: COMPANY.name,
+    statusBarStyle: "black-translucent",
+  },
+  applicationName: COMPANY.name,
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  // Windows tile colour, for a site pinned to the Start menu.
+  other: { "msapplication-TileColor": "#252839" },
+};
+
+/**
+ * Navy address bar on Android and the installed title bar everywhere, and
+ * viewport-fit=cover so a standalone iPhone window paints under the notch
+ * instead of leaving a white band.
+ */
+export const viewport: Viewport = {
+  themeColor: "#252839",
+  viewportFit: "cover",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default async function RootLayout({
@@ -77,6 +109,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: jsonLdHtml(orgJsonLd) }}
         />
         <MotionProvider>{children}</MotionProvider>
+        <ServiceWorker />
       </body>
     </html>
   );

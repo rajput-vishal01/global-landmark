@@ -9,6 +9,9 @@ They are used because Global Landmark brokers flats in these projects.
 | `tricity-courtyard-night.jpg` | Hero — Sale | Green Lotus (greenlotusgroup.co) |
 | `tricity-avenue.jpg` | Hero — Purchase | Trishla City (trishlacity.com) |
 | `tricity-lounge.jpg` | Hero — Lease | Green Lotus (greenlotusgroup.co) |
+| `tricity-pool.jpg` | Hero — Invest | Green Lotus (greenlotusgroup.co) |
+| `tricity-clubhouse.jpg` | About — split image | Green Lotus (greenlotusgroup.co) |
+| `tricity-theatre.jpg` | About — ethos image | Green Lotus (greenlotusgroup.co) |
 
 ## Before this goes to production
 
