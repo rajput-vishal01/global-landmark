@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { resolveCompany } from "@/lib/site-settings";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import { whatsAppHref } from "@/lib/whatsapp";
@@ -155,7 +156,18 @@ export async function Footer() {
               &copy; {new Date().getFullYear()} {COMPANY.legalName}. All rights
               reserved.
             </span>
-            <span className="text-cream/45">{COMPANY.compliance}</span>
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-cream/45">
+              {COMPANY.compliance}
+              {/* CC BY-SA on one of the site photographs requires the credit
+                  to appear wherever the work is used. Do not remove while
+                  /public/local still holds a CC-licensed file. */}
+              <Link
+                href="/credits"
+                className="underline decoration-cream/25 underline-offset-4 transition-colors hover:text-cta"
+              >
+                Photography credits
+              </Link>
+            </span>
           </div>
         </div>
       </div>

@@ -69,8 +69,8 @@ export const HERO = {
     {
       category: "purchase",
       label: "Purchase",
-      img: "https://images.unsplash.com/photo-1632400990400-416d5460f337?q=80&w=2400&auto=format&fit=crop",
-      alt: "Modern residential towers of a gated society against a clear sky",
+      img: "/local/zirakpur-skyline.jpg",
+      alt: "The Zirakpur skyline at dusk, mixed residential and commercial towers",
     },
     {
       category: "lease",
@@ -81,8 +81,8 @@ export const HERO = {
     {
       category: "invest",
       label: "Invest",
-      img: "https://images.unsplash.com/photo-1623668864555-4bb967176e6c?q=80&w=2400&auto=format&fit=crop",
-      alt: "The Mumbai skyline at Worli, seen from above",
+      img: "/local/zirakpur-fields-towers.jpg",
+      alt: "Open land on the Zirakpur edge with new apartment towers rising behind it",
     },
   ],
 };
@@ -105,9 +105,8 @@ export const CREDIBILITY = {
 export const ABOUT_SPLIT = {
   heading: "Built on landmark sales",
   body: "The residences other brokerages call career-defining. Our clients stay private. Our results do not.",
-  image:
-    "https://images.unsplash.com/photo-1777816268139-7c5ba8399d48?q=80&w=1400&auto=format&fit=crop",
-  alt: "A white colonial-style bungalow in Fort Kochi, Kerala",
+  image: "/local/zirakpur-fields-towers.jpg",
+  alt: "Open land on the Zirakpur edge with new apartment towers rising behind it",
   ctaLabel: "About the Group",
 };
 
@@ -224,9 +223,8 @@ export const ABOUT_PAGE = {
     ["Markets", "Tricity"],
     ["Sold to date", "₹385 Cr+"],
   ] as [string, string][],
-  ethosImage:
-    "https://images.unsplash.com/photo-1623668864555-4bb967176e6c?q=80&w=1600&auto=format&fit=crop",
-  ethosImageAlt: "The Mumbai skyline at Worli, seen from above",
+  ethosImage: "/local/zirakpur-skyline.jpg",
+  ethosImageAlt: "The Zirakpur skyline at dusk, mixed residential and commercial towers",
   ethosHeading:
     "Most brokerages measure themselves by how much they list. We measure ourselves by what we decline.",
   ethosParagraphs: [
