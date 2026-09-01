@@ -5,7 +5,7 @@ import { CredibilityBand } from "@/components/sections/CredibilityBand";
 import { FeaturedListings } from "@/components/sections/FeaturedListings";
 import { LocationGrid } from "@/components/LocationGrid";
 import { AboutSplit } from "@/components/sections/AboutSplit";
-import { PressMarquee } from "@/components/sections/PressMarquee";
+import { DeveloperMarquee } from "@/components/sections/DeveloperMarquee";
 import { CTABand } from "@/components/sections/CTABand";
 import { Testimonials } from "@/components/sections/Testimonials";
 import { TextTestimonials } from "@/components/sections/TextTestimonials";
@@ -55,7 +55,7 @@ export default async function Home() {
           <DealOfWeek deal={activeDeal} />
           <Services />
           <AboutSplit />
-          <PressMarquee />
+          <DeveloperMarquee />
           <CTABand />
           <TextTestimonials />
           <Testimonials />

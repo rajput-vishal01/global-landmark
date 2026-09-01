@@ -81,8 +81,8 @@ export const HERO = {
     {
       category: "invest",
       label: "Invest",
-      img: "/local/tricity-night-aerial.jpg",
-      alt: "A Tricity development lit at night, seen from above",
+      img: "/local/tricity-pool.jpg",
+      alt: "The indoor pool at a Tricity residential development",
     },
   ],
 };
@@ -105,19 +105,33 @@ export const CREDIBILITY = {
 export const ABOUT_SPLIT = {
   heading: "Built on landmark sales",
   body: "The residences other brokerages call career-defining. Our clients stay private. Our results do not.",
-  image: "/local/tricity-clubhouse-aerial.jpg",
-  alt: "Clubhouse, pool and lawns at the centre of a Tricity residential development",
+  image: "/local/tricity-clubhouse.jpg",
+  alt: "The residents clubhouse at a Tricity development",
   ctaLabel: "About the Group",
 };
 
-export const PRESS = [
-  "The Tribune",
-  "Hindustan Times",
-  "The Economic Times",
-  "Times of India",
-  "Business Standard",
-  "Mint",
+/**
+ * Developers whose projects Global Landmark brokers.
+ *
+ * This replaced an "As featured in" strip listing The Economic Times, Times
+ * of India, Business Standard, Mint, The Tribune and Hindustan Times. The
+ * agency has never been covered by any of them — it was placeholder copy
+ * that read as a claim, and an unverifiable press claim is the kind of
+ * thing a buyer checks. Developer names are a stronger signal anyway: they
+ * are true, they are local, and they are what a Tricity buyer recognises.
+ *
+ * Keep this list to developers the client genuinely deals with. Remove a
+ * name the moment that stops being true.
+ */
+export const DEVELOPERS = [
+  "Homeland Group",
+  "Green Lotus",
+  "Trishla City",
+  "Suncity Projects",
+  "Omaxe",
+  "GMADA",
 ];
+
 
 export const TESTIMONIALS = {
   heading: "From the Ground",
@@ -223,8 +237,8 @@ export const ABOUT_PAGE = {
     ["Markets", "Tricity"],
     ["Sold to date", "₹385 Cr+"],
   ] as [string, string][],
-  ethosImage: "/local/tricity-towers-aerial.jpg",
-  ethosImageAlt: "Residential towers and landscaped grounds in the Tricity, seen from above",
+  ethosImage: "/local/tricity-theatre.jpg",
+  ethosImageAlt: "The private screening room at a Tricity residential development",
   ethosHeading:
     "Most brokerages measure themselves by how much they list. We measure ourselves by what we decline.",
   ethosParagraphs: [

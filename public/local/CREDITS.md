@@ -9,12 +9,6 @@ They are used because Global Landmark brokers flats in these projects.
 | `tricity-courtyard-night.jpg` | Hero — Sale | Green Lotus (greenlotusgroup.co) |
 | `tricity-avenue.jpg` | Hero — Purchase | Trishla City (trishlacity.com) |
 | `tricity-lounge.jpg` | Hero — Lease | Green Lotus (greenlotusgroup.co) |
-| `tricity-night-aerial.jpg` | Hero — Invest | Homeland Group (homelandgroup.org) |
-| `tricity-clubhouse-aerial.jpg` | About — split image | Trishla City (trishlacity.com) |
-| `tricity-towers-aerial.jpg` | About — ethos image | Homeland Group (homelandgroup.org) |
-| `tricity-courtyard.jpg` | not currently placed | Trishla City |
-| `tricity-towers-courts.jpg` | not currently placed | Trishla City |
-| `tricity-retail.jpg` | not currently placed | Homeland Regalia |
 
 ## Before this goes to production
 
@@ -22,8 +16,8 @@ Brokering a project is not by itself a licence to republish the developer's
 photography. What normally makes it fine is the **channel-partner marketing
 kit** builders issue to their authorised brokers. Confirm one of:
 
-1. Global Landmark holds the marketing kit for Green Lotus, Trishla and
-   Homeland that includes these images, or
+1. Global Landmark holds the marketing kit for Green Lotus and Trishla
+   that includes these images, or
 2. Each developer has given written permission (an email is enough), or
 3. Replace them with Global Landmark's own photographs of the projects.
 
