@@ -14,12 +14,20 @@ domain + DNS, newsdata.io key, society naming
 conventions, ticker style sign-off (marquee vs. quieter toast).
 
 **Since (Aug 2026):** [REQUIREMENTS_V2.md](REQUIREMENTS_V2.md)'s CFF field
-expansion — Phases 1–6 of [.planning/ROADMAP.md](../.planning/ROADMAP.md)
-have shipped (taxonomy/schema foundation, the admin property form rebuild,
-builders/projects/tower inventory, the public listings rework, the
-enquiry cart, and the CRM). ROADMAP.md's Progress table is the current
-source of truth for phase status; this file's task list below predates
-that work and is not being kept in step with it line by line.
+expansion has shipped — taxonomy/schema foundation, the admin property form
+rebuild, builders/projects/tower inventory, the public listings rework, the
+enquiry cart, and the CRM — followed by the landing/brand pass, the local
+Tricity imagery pass and PWA support. The build is complete and the app is
+production-bound.
+
+The old `.planning/` GSD scaffolding that used to track this was deleted in
+the Sep 2026 audit: it had drifted badly (its STATE.md still read "0 of 10
+phases, status: planning", and its codebase notes still described
+Cloudinary, Lenis and ScrollTrigger, all long removed). Stale docs that
+assert false things about the code are worse than no docs.
+[REQUIREMENTS_V2.md](REQUIREMENTS_V2.md) is the requirement register;
+this file's task list below predates the expansion and is not kept in
+step with it line by line.
 
 ## Phase 0 — Open decisions (resolve before or at start of Phase 1)
 

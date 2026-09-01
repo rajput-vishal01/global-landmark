@@ -19,8 +19,8 @@ No component library decided yet. Recommendation: hand-build components against 
 
 ## GSAP + Framer Motion integration
 
-- `npm install gsap @gsap/react framer-motion` when code phase begins.
-- GSAP: use the `useGSAP()` hook from `@gsap/react` (never raw `useEffect` for GSAP setup) — register `gsap.registerPlugin(useGSAP, ScrollTrigger, ...)` once, at app entry (e.g. a client-only `lib/gsap.ts` imported where needed). All GSAP code is client-only — never called during SSR.
+- GSAP: use the `useGSAP()` hook from `@gsap/react` (never raw `useEffect` for GSAP setup) — plugins are registered once in the client-only `lib/gsap.ts`. All GSAP code is client-only, never called during SSR.
+- Post-Phase-A, GSAP covers exactly one thing: the hero's SplitText load-in. ScrollTrigger was culled and is not registered — see the banner in [ANIMATION_GUIDELINES.md](ANIMATION_GUIDELINES.md).
 - Framer Motion: `m.*` components (not `motion.*`) under app-wide `LazyMotion strict` (`components/MotionProvider.tsx`) — `strict` throws if a full `motion.*` import sneaks back in, keeping only the ~6KB LazyMotion entry in the shared bundle. Used inside client components (`"use client"`) only. Server Components stay animation-free by default; a page is a Server Component unless it needs client interactivity.
 - Both libraries coexist per the division of labor in [ANIMATION_GUIDELINES.md](ANIMATION_GUIDELINES.md#division-of-labor) — do not duplicate the same interaction in both.
 

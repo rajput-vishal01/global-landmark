@@ -1,5 +1,24 @@
 # Animation Guidelines
 
+> **Status: partly superseded. Read this before the catalogue below.**
+>
+> The Phase A motion cull removed ScrollTrigger and Lenis from the project
+> at the client's request ("less animations"). Neither is a dependency any
+> more, and `lib/gsap.ts` registers only `useGSAP` and `SplitText`.
+>
+> What actually ships today:
+> - **GSAP**: the hero load-in only — a SplitText reveal that runs once on
+>   mount. Nothing is driven by scroll position.
+> - **Framer Motion**: everything else (enter/exit, modals, hover states),
+>   through `LazyMotion` with the `m.*` components.
+> - **CSS**: the marquees and the testimonial wall.
+>
+> Every ScrollTrigger row in the catalogue below is therefore a REJECTED
+> pattern, kept for the rationale and easing values rather than as
+> instruction. Do not reintroduce scroll-driven motion without the client
+> asking for it. The division-of-labour rule and the perf/a11y sections
+> still hold.
+
 GSAP + Framer Motion, split by job. Distilled from the gsap-core/scrolltrigger/timeline/react/performance/plugins skills and the motion catalogue in [DESIGN_REFERENCES.md](DESIGN_REFERENCES.md). No dedicated Framer Motion skill is installed in this environment — its patterns below follow official Framer Motion conventions.
 
 ## Division of labor

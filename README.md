@@ -1,8 +1,8 @@
 # Global Landmark Realty Group
 
 Luxury real-estate marketing site. Next.js 16 (App Router), Tailwind v4,
-GSAP (ScrollTrigger + SplitText), Framer Motion, Lenis smooth scroll,
-PostgreSQL (Drizzle ORM), local filesystem image storage.
+GSAP (SplitText only), Framer Motion, PostgreSQL (Drizzle ORM), local
+filesystem image storage, installable as a PWA.
 
 ```bash
 npm install
@@ -55,6 +55,25 @@ path outside the deploy directory in production so a redeploy cannot wipe it.
 - `components/ui/`, `components/admin/`, `components/gallery/` — primitives, admin forms, lightbox
 - `lib/db/` — Drizzle schema, fail-soft public queries, public column allowlists; `lib/storage.ts`, `lib/news.ts`, `lib/admin/`
 - `proxy.ts` — /admin session gate
+
+## Checks
+
+```bash
+npm run check
+```
+
+Runs the service-worker routing assertions, the taxonomy and EMI/ranking
+assertions, `tsc --noEmit` and `eslint`. There is no test framework —
+these assert-based scripts are the suite (`scripts/check-*.mjs`).
+
+## PWA
+
+`app/manifest.ts` plus `public/sw.js` make the site installable on
+Android, iOS, Windows and macOS, admin panel included. The service worker
+is network-first for navigations, falling back to cache and then
+`/offline`; `/api` and `/admin` are never served from cache.
+`components/InstallPrompt.tsx` offers installation on a timer and
+`components/InstallButton.tsx` puts a standing offer in the nav.
 
 Env vars are documented in [.env.example](.env.example). `UPLOAD_DIR` sets
 where uploaded files are written; an empty `NEWSDATA_API_KEY` gives `/news` a
