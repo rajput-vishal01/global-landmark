@@ -10,7 +10,10 @@
     "lint": "eslint",
     "db:push": "drizzle-kit push",
     "db:seed": "node scripts/seed.mjs",
-    "check:sw": "node scripts/check-sw.mjs"
+    "check:sw": "node scripts/check-sw.mjs",
+    "check:taxonomy": "node scripts/check-taxonomy.mjs",
+    "check:features": "node scripts/check-features.mjs",
+    "check": "npm run check:sw && npm run check:taxonomy && npm run check:features && tsc --noEmit && eslint ."
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
