@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "@/app/admin/LogoutButton";
+import { InstallButton } from "@/components/InstallButton";
 import { useModalLock } from "@/lib/hooks";
 
 export type NavItem = { label: string; href: string | null };
@@ -183,7 +184,12 @@ export function AdminSidebar({
               </button>
             </div>
             <NavLinks nav={nav} pathname={pathname} onNavigate={() => setOpen(false)} />
-            <div className="mt-auto border-t border-border pt-4">
+            <div className="mt-auto flex flex-col gap-3 border-t border-border pt-4">
+              <InstallButton
+                onAction={() => setOpen(false)}
+                label="Add to home screen"
+                className="text-meta font-sans text-ink-muted hover:text-ink"
+              />
               <LogoutButton />
             </div>
           </div>
@@ -194,7 +200,10 @@ export function AdminSidebar({
       <aside className="hidden md:sticky md:top-0 md:flex md:h-screen md:w-60 md:shrink-0 md:flex-col md:gap-8 md:overflow-y-auto md:border-r md:border-border md:bg-white md:px-4 md:py-6">
         {brand}
         <NavLinks nav={nav} pathname={pathname} />
-        <div className="mt-auto border-t border-border pt-4">
+        <div className="mt-auto flex flex-col gap-3 border-t border-border pt-4">
+          <InstallButton className="text-meta font-sans text-ink-muted hover:text-ink" />
+        </div>
+        <div className="border-t border-border pt-4">
           <LogoutButton />
         </div>
       </aside>

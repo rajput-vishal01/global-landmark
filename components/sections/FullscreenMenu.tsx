@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, m } from "framer-motion";
 import { MENU_GROUPS } from "./nav-links";
+import { InstallButton } from "@/components/InstallButton";
 import { PropertySearch } from "@/components/PropertySearch";
 import { useModalLock, useMounted } from "@/lib/hooks";
 import { COMPANY } from "@/lib/data";
@@ -113,6 +114,16 @@ export function FullscreenMenu({
               </m.div>
             ))}
           </m.nav>
+
+          {/* This menu IS the nav on a phone, which is also where installing
+              matters most — the bar's own button starts at md. Closes the
+              menu on the way out: on iOS the button opens the instruction
+              card, which sits below this overlay. */}
+          <InstallButton
+            onAction={onClose}
+            label="Add to home screen"
+            className="mx-auto -mt-6 w-full max-w-6xl px-6 pb-8 text-meta font-sans uppercase tracking-[0.16em] text-gold-highlight/80 hover:text-gold-highlight md:hidden"
+          />
 
           <m.div
             initial={{ opacity: 0 }}

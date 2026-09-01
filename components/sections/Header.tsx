@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { HEADER_LINKS } from "./nav-links";
 import { FullscreenMenu } from "./FullscreenMenu";
+import { InstallButton } from "@/components/InstallButton";
 import { COMPANY } from "@/lib/data";
 
 /**
@@ -86,6 +87,14 @@ export function Header() {
               Contact
             </Link>
           </nav>
+
+          {/* Renders only where the browser can actually install, and only
+              from md up: the bar already carries a wordmark, a phone number
+              and a menu button, and a phone-width row has no space left.
+              Below that the menu carries the same offer. */}
+          <InstallButton
+            className={`hidden font-sans text-meta font-medium tracking-wide md:flex ${toneMuted}`}
+          />
 
           {/* The phone number is a real tel: link, not decoration — on a
               brokerage site it is the shortest path from interest to a

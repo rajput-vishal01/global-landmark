@@ -6,19 +6,21 @@ import { AnimatePresence, m } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { EASE } from "@/lib/motion";
 import { useMounted } from "@/lib/hooks";
-
-/** Chrome/Edge fire this; it is not in lib.dom yet. */
-type InstallEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-};
+import {
+  clearInstallRequest,
+  isInstalled,
+  isIos,
+  runInstall,
+  useInstallEvent,
+  useInstallRequested,
+} from "@/lib/install";
 
 const DISMISS_KEY = "gld-install-dismissed";
 /** A month. Long enough that saying no is respected, short enough to re-offer. */
 const SNOOZE_MS = 30 * 24 * 60 * 60 * 1000;
 
-/** Public pages already throw a lead pop-up at 10s; wait it out. */
-const DELAY_PUBLIC_MS = 45_000;
+/** Public pages already throw a lead pop-up at 10s; the retry below waits it out. */
+const DELAY_PUBLIC_MS = 30_000;
 /** The panel has no competing pop-up, and it is where installing actually pays. */
 const DELAY_ADMIN_MS = 8_000;
 /** How often to re-check once another dialog has pushed us back. */
@@ -40,18 +42,6 @@ function snooze() {
   } catch {
     /* nothing to do */
   }
-}
-
-/** Already installed — standalone window, or iOS's own flag. */
-function isInstalled(): boolean {
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
-  );
-}
-
-function isIos(): boolean {
-  return /iphone|ipad|ipod/i.test(navigator.userAgent);
 }
 
 /**
@@ -85,10 +75,14 @@ function subscribeToWidth(onChange: () => void) {
  * The copy follows the screen, not the OS: a phone is asked to add to the
  * home screen, a desktop to install a shortcut, since those are the words
  * each platform uses for the thing that appears afterwards.
+ *
+ * Appears on a timer, or immediately when InstallButton asks for it — the
+ * nav button routes iOS here, since instructions are all iOS can be given.
  */
 export function InstallPrompt() {
-  const [event, setEvent] = useState<InstallEvent | null>(null);
-  const [visible, setVisible] = useState(false);
+  const event = useInstallEvent();
+  const requested = useInstallRequested();
+  const [onTimer, setOnTimer] = useState(false);
   const [iosHelp, setIosHelp] = useState(false);
   const isSmall = useSyncExternalStore(
     subscribeToWidth,
@@ -101,7 +95,9 @@ export function InstallPrompt() {
 
   const close = useCallback(() => {
     snooze();
-    setVisible(false);
+    setOnTimer(false);
+    clearInstallRequest();
+    setIosHelp(false);
   }, []);
 
   useEffect(() => {
@@ -111,52 +107,35 @@ export function InstallPrompt() {
 
     const delay = isAdmin ? DELAY_ADMIN_MS : DELAY_PUBLIC_MS;
 
-    const onPrompt = (e: Event) => {
-      // Keep the event: Chrome only lets us open the dialog through it.
-      e.preventDefault();
-      setEvent(e as InstallEvent);
-    };
-    window.addEventListener("beforeinstallprompt", onPrompt);
-
     // Never stack on top of another dialog (the lead pop-up, a delete
     // confirmation) — that is the moment this reads as spam. But wait it
     // out rather than giving up: the lead pop-up opens at 10s and stays
-    // until dismissed, so a one-shot check at 45s found it still open and
-    // the offer never appeared on the public site at all.
+    // until dismissed, so a one-shot check at 30s finds it still open and
+    // the offer would never appear on the public site at all.
     let timer: ReturnType<typeof setTimeout>;
     const tryShow = () => {
       if (document.querySelector("[role=dialog]")) {
         timer = setTimeout(tryShow, RETRY_MS);
         return;
       }
-      setVisible(true);
+      setOnTimer(true);
     };
     timer = setTimeout(tryShow, delay);
 
-    const onInstalled = () => {
-      snooze();
-      setVisible(false);
-    };
-    window.addEventListener("appinstalled", onInstalled);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", onPrompt);
-      window.removeEventListener("appinstalled", onInstalled);
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [pathname, isAdmin]);
 
   async function install() {
-    if (!event) return;
-    await event.prompt();
-    await event.userChoice;
+    await runInstall();
     // Either way the question has been answered; do not ask again.
     snooze();
-    setEvent(null);
-    setVisible(false);
+    setOnTimer(false);
+    clearInstallRequest();
   }
 
-  if (!mounted || !visible) return null;
+  // The button asking for it beats the snooze: that is someone going
+  // looking for this, not us interrupting them.
+  if (!mounted || (!onTimer && !requested)) return null;
   // Nothing installable and no iOS instructions to give: stay silent.
   if (!event && !isIos()) return null;
 
@@ -198,7 +177,9 @@ export function InstallPrompt() {
         <p className="font-serif text-h4 leading-snug text-heading">{addLabel}</p>
         <p className="mt-2 text-meta font-sans leading-relaxed text-ink-muted">{body}</p>
 
-        {iosHelp ? (
+        {/* Someone who pressed "Install app" in the nav has already asked;
+            making them press "Show me how" too is one click of nothing. */}
+        {iosHelp || (requested && !event) ? (
           // iOS has no install API — these are the actual taps.
           <ol className="mt-4 flex list-decimal flex-col gap-1.5 pl-4 text-meta font-sans text-ink">
             <li>Tap the Share button in Safari&rsquo;s toolbar.</li>
