@@ -114,6 +114,21 @@ export const CITIES: City[] = COUNTRIES.flatMap((c) => c.cities);
 
 export const CITY_NAMES = CITIES.map((c) => c.name);
 
+/**
+ * The micro-markets the location bento offers, in the order the client wants
+ * them read. Shared by the landing page and the mid-grid break on
+ * /properties so the two cannot drift apart. Aerocity is a locality of
+ * Mohali rather than a city of its own, so its tile narrows on both.
+ */
+export const LANDING_LOCATIONS: { city: string; locality?: string }[] = [
+  { city: "Chandigarh" },
+  { city: "Panchkula" },
+  { city: "Zirakpur" },
+  { city: "Mohali" },
+  { city: "Mohali", locality: "Aerocity" },
+  { city: "New Chandigarh" },
+];
+
 export function isCity(name: string): boolean {
   return CITY_NAMES.includes(name);
 }

@@ -16,7 +16,7 @@ export function CTABand() {
           flush
           align="center"
           tone="dark"
-          eyebrow="Sell With Us"
+          eyebrow="List with us"
           title={CTA_BAND.heading}
           sub={CTA_BAND.sub}
         />

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
-import Image from "next/image";
+import { NewsGrid } from "@/components/NewsGrid";
 import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { CTABand } from "@/components/sections/CTABand";
@@ -11,7 +11,7 @@ import { canonical } from "@/lib/seo";
 
 const PAGE_TITLE = "Market News";
 const PAGE_DESCRIPTION =
-  "Curated real-estate market coverage — the stories shaping property, development, and investment.";
+  "Property and real-estate coverage from across the Tricity — Chandigarh, Panchkula, Mohali and Zirakpur.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,
@@ -30,17 +30,6 @@ const BREADCRUMBS = [
   { name: "Home", path: "/" },
   { name: "News", path: "/news" },
 ];
-
-function formatDate(iso: string | null): string | null {
-  if (!iso) return null;
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 export default async function NewsPage() {
   // Render per request (build has no API key to prerender against); the
@@ -62,7 +51,7 @@ export default async function NewsPage() {
 
         <section className={SECTION}>
           <SectionHeading
-            eyebrow="Updated daily"
+            eyebrow="Tricity property desk"
             title="Latest coverage"
             aside={
               articles.length > 0
@@ -80,47 +69,7 @@ export default async function NewsPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-              {articles.map((article) => {
-                const published = formatDate(article.publishedAt);
-                return (
-                  <a
-                    key={article.link}
-                    href={article.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group flex flex-col border border-border bg-surface transition-colors duration-300 hover:border-gold"
-                  >
-                    <div className="relative aspect-[3/2] overflow-hidden bg-ink/5">
-                      <Image
-                        src={article.image}
-                        alt={article.title}
-                        fill
-                        // News images come from arbitrary publisher hosts, which
-                        // remotePatterns intentionally does not allow.
-                        unoptimized
-                        sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
-                        className="img-zoom"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2 p-5">
-                      <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-gold-deep">
-                        {article.source}
-                        {published ? ` · ${published}` : ""}
-                      </p>
-                      <h3 className="text-balance font-serif text-h4 leading-snug text-heading transition-colors duration-300 group-hover:text-gold-deep">
-                        {article.title}
-                      </h3>
-                      {article.excerpt && (
-                        <p className="line-clamp-3 text-pretty text-meta font-sans leading-relaxed text-ink-muted">
-                          {article.excerpt}
-                        </p>
-                      )}
-                    </div>
-                  </a>
-                );
-              })}
-            </div>
+            <NewsGrid articles={articles} />
           )}
         </section>
 

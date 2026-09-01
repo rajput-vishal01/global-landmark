@@ -3,63 +3,39 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { listTestimonialVideos } from "@/lib/db/queries";
 import { VideoTestimonials } from "@/components/VideoTestimonials";
 
-const QUOTES = TESTIMONIALS.quotes;
-
 /**
- * Client testimonials: serif intro on the left. The right column shows
- * admin-managed YouTube video testimonials when any exist, and falls back
- * to the auto-scrolling written-quote loop until then.
+ * "From the Ground" — the client's own reels: site walkthroughs, plot
+ * visits, buying advice.
  *
- * The intro column used to stick to the viewport while the quotes scrolled
- * past it. Sticky is scroll-driven behaviour like any other and it went
- * with the rest — the column is short, so it now simply sits at the top of
- * its cell.
+ * Redesigned away from a heading column beside a 2x2 grid. Two problems
+ * with that: the heading column was mostly empty space, and the section sat
+ * directly under the written-testimonial wall on a matching light
+ * background, so the page read as the same section rendered twice. It is
+ * now a full-width navy band with a centred heading — the same treatment
+ * the other dark bands get — which separates it from the wall above and the
+ * services grid below on colour alone.
+ *
+ * The written-quote fallback is gone with it: that loop existed when this
+ * was the only place quotes appeared, and it is now a worse copy of the
+ * testimonial wall. No videos means no section.
  */
 export async function Testimonials() {
   const videos = await listTestimonialVideos();
+  if (videos.length === 0) return null;
 
   return (
-    <section className="grid grid-cols-1 gap-10 bg-cream px-5 py-16 md:grid-cols-[1fr_1.6fr] md:gap-16 md:px-12 md:py-24">
-      {/* Wrapped: SectionHeading bottom-aligns its own row, and this cell is
-          as tall as the quote loop beside it. */}
-      <div>
+    <section className="overflow-hidden bg-navy py-16 md:py-24">
+      <div className="px-5 md:px-12">
         <SectionHeading
-          flush
+          align="center"
+          tone="dark"
           eyebrow="From Our Clients"
           title={TESTIMONIALS.heading}
           sub={TESTIMONIALS.sub}
         />
       </div>
 
-      {videos.length > 0 ? (
-        <VideoTestimonials videos={videos} />
-      ) : (
-        <div className="group/scroll relative max-h-[32rem] overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,black_12%,black_88%,transparent)]">
-          <div className="animate-marquee-y flex flex-col group-hover/scroll:[animation-play-state:paused]">
-            {[0, 1].map((copy) => (
-              <div key={copy} aria-hidden={copy === 1} className="flex flex-col">
-                {QUOTES.map((item) => (
-                  <figure
-                    key={`${copy}-${item.name}`}
-                    className="flex flex-col gap-4 border-b border-border py-7"
-                  >
-                    <blockquote className="max-w-xl text-balance font-serif text-h4 leading-snug text-heading">
-                      &ldquo;{item.quote}&rdquo;
-                    </blockquote>
-                    <figcaption className="flex items-baseline gap-3">
-                      <span className="h-px w-8 bg-gold" aria-hidden />
-                      <span className="text-meta font-sans text-ink">{item.name}</span>
-                      <span className="text-meta font-sans text-ink-muted">
-                        {item.role}
-                      </span>
-                    </figcaption>
-                  </figure>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <VideoTestimonials videos={videos} />
     </section>
   );
 }

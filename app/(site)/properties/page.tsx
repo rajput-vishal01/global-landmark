@@ -5,6 +5,8 @@ import { CTABand } from "@/components/sections/CTABand";
 import { ListingCard } from "@/components/ui/ListingCard";
 import { Button } from "@/components/ui/Button";
 import { FilterBar } from "@/components/FilterBar";
+import { LocationGrid } from "@/components/LocationGrid";
+import { LANDING_LOCATIONS } from "@/lib/locations";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { Pagination } from "@/components/Pagination";
 import { ListingsToolbar } from "@/components/ListingsToolbar";
@@ -13,8 +15,10 @@ import {
   listProperties,
   countProperties,
   listCityCounts,
+  listLocationCards,
   PROPERTIES_PAGE_SIZE,
 } from "@/lib/db/queries";
+import type { PublicPropertyWithMedia } from "@/lib/db/public-columns";
 import { isCategory } from "@/lib/categories";
 import {
   FURNISHINGS,
@@ -29,6 +33,7 @@ import {
   DEFAULT_VIEW,
   isPropertySort,
   isPropertyView,
+  type PropertyView,
   sortParam,
   viewParam,
   type PropertiesFilterParams,
@@ -59,6 +64,34 @@ const BREADCRUMBS = [
   { name: "Home", path: "/" },
   { name: "Properties", path: "/properties" },
 ];
+
+/** Listings shown before the location bento interrupts the grid — two rows of three. */
+const MID_BREAK = 6;
+
+/** The listing grid itself, rendered either side of that break. */
+function ListingsGrid({
+  properties,
+  view,
+}: {
+  properties: PublicPropertyWithMedia[];
+  view: PropertyView;
+}) {
+  return (
+    <div
+      className={
+        view === "list"
+          ? "flex flex-col gap-10"
+          : "grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3"
+      }
+    >
+      {properties.map((property) => (
+        <div key={property.id}>
+          <ListingCard property={property} variant={view} />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const pick = (value: string | undefined, allowed: readonly string[]) =>
   value && allowed.includes(value) ? value : undefined;
@@ -114,10 +147,11 @@ export default async function PropertiesPage({
     q,
   };
 
-  const [properties, totalCount, cityCounts] = await Promise.all([
+  const [properties, totalCount, cityCounts, locationCards] = await Promise.all([
     listProperties(activeFilters, page, sort),
     countProperties(activeFilters),
     listCityCounts(),
+    listLocationCards(LANDING_LOCATIONS),
   ]);
   const totalPages = Math.max(1, Math.ceil(totalCount / PROPERTIES_PAGE_SIZE));
   // The "Showing 25-48 of 112" orientation line every portal carries above
@@ -188,19 +222,29 @@ export default async function PropertiesPage({
               </div>
             </div>
           ) : (
-            <div
-              className={
-                view === "list"
-                  ? "flex flex-col gap-10"
-                  : "grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3"
-              }
-            >
-              {properties.map((property) => (
-                <div key={property.id}>
-                  <ListingCard property={property} variant={view} />
-                </div>
-              ))}
-            </div>
+            <>
+              <ListingsGrid properties={properties.slice(0, MID_BREAK)} view={view} />
+
+              {/* The location bento, dropped into the middle of the results
+                  rather than above them: a visitor who has scrolled one row
+                  deep and not found it is looking to jump markets, and this
+                  is where that decision happens. It only earns the break
+                  when there are listings on both sides of it — otherwise it
+                  is a divider under a short grid. */}
+              {properties.length > MID_BREAK && (
+                <>
+                  <div className="my-16 border-y border-border py-12 md:my-20">
+                    <SectionHeading
+                      eyebrow="Not finding it here?"
+                      title="Browse by location"
+                    />
+                    <LocationGrid cards={locationCards} />
+                  </div>
+
+                  <ListingsGrid properties={properties.slice(MID_BREAK)} view={view} />
+                </>
+              )}
+            </>
           )}
 
           <Pagination page={page} totalPages={totalPages} current={current} />

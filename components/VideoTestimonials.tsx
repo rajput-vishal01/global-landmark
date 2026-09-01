@@ -25,41 +25,56 @@ export function VideoTestimonials({ videos }: { videos: TestimonialVideo[] }) {
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2">
-        {videos.map((video) => (
-          <figure key={video.id} className="group flex flex-col gap-4">
-            <button
-              type="button"
-              onClick={() => setOpenVideo(video)}
-              aria-label={`Play video${video.caption ? ` — ${video.caption}` : ""}`}
-              className="relative block aspect-video cursor-pointer overflow-hidden bg-dark-deep"
-            >
-              <VideoThumb
-                provider={video.provider}
-                videoId={video.videoId}
-                className="img-zoom h-full w-full"
-              />
-              <span
-                aria-hidden
-                className="absolute inset-0 bg-black/25 transition-colors duration-300 group-hover:bg-black/15"
-              />
-              <span
-                aria-hidden
-                className="absolute left-1/2 top-1/2 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gold/70 bg-dark-deep/70 backdrop-blur-sm transition-transform duration-300 group-hover:scale-110"
-              >
-                <svg width="18" height="20" viewBox="0 0 18 20" fill="none" className="ml-1 text-cream">
-                  <path d="M1 1.5v17L16.5 10 1 1.5Z" fill="currentColor" />
-                </svg>
-              </span>
-            </button>
-            {video.caption && (
-              <figcaption className="flex items-baseline gap-3">
-                <span className="h-px w-8 bg-gold" aria-hidden />
-                <span className="text-meta font-sans text-ink">{video.caption}</span>
-              </figcaption>
-            )}
-          </figure>
-        ))}
+      {/* A rail of portrait cards, not a 16:9 grid: these are reels, and a
+          9:16 video in a landscape box is mostly black bars. Native
+          scroll-snap does the paging — no carousel library, and it swipes
+          on touch and scrolls on a trackpad for free. */}
+      <div
+        tabIndex={0}
+        role="region"
+        aria-label="Client video reels"
+        className="no-scrollbar snap-x snap-mandatory overflow-x-auto px-5 focus-visible:outline-2 focus-visible:outline-gold md:px-12"
+      >
+        <ul className="flex gap-5 md:gap-6">
+          {videos.map((video) => (
+            <li key={video.id} className="w-[15rem] shrink-0 snap-start md:w-[17rem]">
+              <figure className="group flex flex-col gap-4">
+                <button
+                  type="button"
+                  onClick={() => setOpenVideo(video)}
+                  aria-label={`Play video${video.caption ? ` — ${video.caption}` : ""}`}
+                  className="relative block aspect-[9/16] w-full cursor-pointer overflow-hidden bg-dark-deep"
+                >
+                  <VideoThumb
+                    provider={video.provider}
+                    videoId={video.videoId}
+                    className="img-zoom h-full w-full"
+                  />
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/25 transition-colors duration-300 group-hover:from-black/60"
+                  />
+                  <span
+                    aria-hidden
+                    className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-gold/70 bg-dark-deep/70 backdrop-blur-sm transition-transform duration-300 group-hover:scale-110"
+                  >
+                    <svg width="16" height="18" viewBox="0 0 18 20" fill="none" className="ml-1 text-cream">
+                      <path d="M1 1.5v17L16.5 10 1 1.5Z" fill="currentColor" />
+                    </svg>
+                  </span>
+                </button>
+                {video.caption && (
+                  <figcaption className="flex items-baseline gap-3">
+                    <span className="h-px w-6 shrink-0 bg-gold" aria-hidden />
+                    <span className="text-meta font-sans text-cream/80">
+                      {video.caption}
+                    </span>
+                  </figcaption>
+                )}
+              </figure>
+            </li>
+          ))}
+        </ul>
       </div>
 
       <AnimatePresence>

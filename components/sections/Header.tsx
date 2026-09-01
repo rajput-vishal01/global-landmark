@@ -110,10 +110,13 @@ export function Header() {
             {COMPANY.phone}
           </a>
 
+          {/* Hidden from lg up, where the nav above already lists every
+              destination — a hamburger next to the links it duplicates just
+              asks the visitor which of the two is the real menu. */}
           <button
             onClick={() => setMenuOpen(true)}
             aria-label="Open menu"
-            className={`flex h-10 w-8 flex-col items-end justify-center gap-[5px] transition-colors duration-300 ${tone}`}
+            className={`flex h-10 w-8 flex-col items-end justify-center gap-[5px] transition-colors duration-300 lg:hidden ${tone}`}
           >
             <span className="block h-px w-6 bg-current" />
             <span className="block h-px w-6 bg-current" />

@@ -1,6 +1,7 @@
 import { WhatsAppDock } from "@/components/WhatsAppDock";
 import { EnquiryDock } from "@/components/EnquiryDock";
 import { SocialProofTicker } from "@/components/SocialProofTicker";
+import { LeadCapturePopup } from "@/components/LeadCapturePopup";
 import { BackToTop } from "@/components/BackToTop";
 
 // Public site shell. The engagement layer (WhatsApp dock, enquiry pop-up,
@@ -23,6 +24,9 @@ export default function SiteLayout({
       <WhatsAppDock />
       <EnquiryDock />
       <SocialProofTicker />
+      {/* Ten seconds in, once per session. Mounted here rather than per
+          page so it is not re-armed by a client-side navigation. */}
+      <LeadCapturePopup />
       <BackToTop />
     </>
   );

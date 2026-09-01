@@ -17,20 +17,7 @@ import {
   getFeaturedProperties,
   listLocationCards,
 } from "@/lib/db/queries";
-
-/**
- * The micro-markets the client actually sells in, in the order they want
- * them read. Aerocity is a locality of Mohali rather than a city of its
- * own, so its tile narrows on both.
- */
-const LANDING_LOCATIONS = [
-  { city: "Chandigarh" },
-  { city: "Panchkula" },
-  { city: "Zirakpur" },
-  { city: "Mohali" },
-  { city: "Mohali", locality: "Aerocity" },
-  { city: "New Chandigarh" },
-];
+import { LANDING_LOCATIONS } from "@/lib/locations";
 
 export default async function Home() {
   // Render per request (Docker builds have no DB to prerender against);

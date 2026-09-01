@@ -121,42 +121,8 @@ export const PRESS = [
 ];
 
 export const TESTIMONIALS = {
-  // With videos present the section shows them; the written quotes below are
-  // the fallback until real client videos replace the current project reels.
   heading: "From the Ground",
   sub: "Walkthroughs and updates from the projects and plots we represent.",
-  quotes: [
-    {
-      quote:
-        "One person answered every call for eleven months. No other firm has done that for us.",
-      name: "S. Kapoor",
-      role: "Buyer, Zirakpur",
-    },
-    {
-      quote:
-        "The presentation of our home was better than our own company's campaigns.",
-      name: "H. Bedi",
-      role: "Seller, Panchkula",
-    },
-    {
-      quote:
-        "We asked for discretion above all. Not one neighbour knew until we told them.",
-      name: "A. Rehman",
-      role: "Seller, Mohali",
-    },
-    {
-      quote:
-        "Every question about yield was answered with numbers, not adjectives.",
-      name: "C. Chopra",
-      role: "Investor, Aerocity",
-    },
-    {
-      quote:
-        "They walked away from the first offer on our behalf. The second paid for the advice many times over.",
-      name: "J. Bajwa",
-      role: "Buyer, Chandigarh",
-    },
-  ],
 };
 
 export const CTA_BAND = {
@@ -207,10 +173,6 @@ export const WHATSAPP = {
   // greeting written and one blank to fill, which is a far easier first
   // message to send than an empty thread containing the word "Hi".
   defaultMessage: "Hi Global Landmark! I have been looking at ",
-  nudgeTitle: "Considering a residence?",
-  nudgeBody:
-    "Contact us for more details — we respond within one business day.",
-  nudgeCta: "Start an Inquiry",
   modalTitle: "Contact us for more details",
   modalBody: "Tell us what you are considering.",
 };
@@ -244,17 +206,12 @@ export const CONTACT_PAGE = {
   sub: "Answered personally within one business day.",
 };
 
-export const SELL_PAGE = {
-  title: "Sell With Us",
-  sub: "A private valuation and a discreet, well-matched buyer pool across the Tricity.",
-};
-
 export const NEWS_PAGE = {
   title: "Market News",
-  sub: "The coverage shaping Indian property and investment.",
+  sub: "Property coverage from across the Tricity — Chandigarh, Panchkula, Mohali and Zirakpur.",
   emptyTitle: "The briefing returns shortly.",
   emptyBody:
-    "The feed is being prepared. Speak with us directly for current conditions.",
+    "No Tricity property stories in the last 48 hours. Speak with us directly for current conditions.",
 };
 
 export const ABOUT_PAGE = {
@@ -262,7 +219,7 @@ export const ABOUT_PAGE = {
   facts: [
     ["Est.", "2009"],
     ["Home office", "Panchkula"],
-    ["Sold to date", "₹85 Cr+"],
+    ["Sold to date", "₹385 Cr+"],
   ] as [string, string][],
   ethosImage:
     "https://images.unsplash.com/photo-1623668864555-4bb967176e6c?q=80&w=1600&auto=format&fit=crop",
@@ -293,7 +250,7 @@ export const ABOUT_PAGE = {
     {
       year: "2026",
       title: "Today",
-      body: "Over ₹85 Crore in landmark sales — and the same standard as day one: few properties, chosen carefully.",
+      body: "Over ₹385 Crore in landmark sales — and the same standard as day one: few properties, chosen carefully.",
     },
   ],
   principalsHeading: "The Principals",
@@ -317,7 +274,7 @@ export const ABOUT_PAGE = {
   record: [
     { label: "Founded", value: "2009" },
     { label: "Micro-markets", value: "6" },
-    { label: "Sales volume", value: "₹85 Cr+" },
+    { label: "Sales volume", value: "₹385 Cr+" },
     { label: "Properties transacted", value: "120+" },
     { label: "Average client tenure", value: "9 years" },
   ],

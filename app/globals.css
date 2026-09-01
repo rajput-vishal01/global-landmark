@@ -195,6 +195,16 @@ body {
   animation: marquee 60s linear infinite;
 }
 
+/* Scroll rails that carry their own affordance (snap points, a peeking next
+   card) and would otherwise show a permanent horizontal bar across the band. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Testimonial wall — slow enough to read a whole card while it drifts.
    Pausing on hover is what makes it readable rather than teasing: the
    quote you reached for stops moving. */

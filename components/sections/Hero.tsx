@@ -70,9 +70,30 @@ export function Hero() {
             { scale: 1, autoAlpha: 1, duration: 1.2 },
             0
           )
-          .from(".hero-heading", { autoAlpha: 0, y: 18, duration: 0.9 }, 0.35)
-          .from(".hero-cats", { autoAlpha: 0, y: 12, duration: 0.7 }, 0.6)
-          .from(".hero-search", { autoAlpha: 0, y: 16, duration: 0.8 }, 0.75);
+          // fromTo, not from: a `from` tween that is interrupted before it
+          // plays — a killed context on a fast re-render, a throttled
+          // background tab — leaves its target parked at the FROM values,
+          // which here means an invisible headline and an invisible search
+          // bar over a photograph. Naming the end state explicitly means the
+          // worst case is an un-animated hero rather than an empty one.
+          .fromTo(
+            ".hero-heading",
+            { autoAlpha: 0, y: 18 },
+            { autoAlpha: 1, y: 0, duration: 0.9 },
+            0.35
+          )
+          .fromTo(
+            ".hero-cats",
+            { autoAlpha: 0, y: 12 },
+            { autoAlpha: 1, y: 0, duration: 0.7 },
+            0.6
+          )
+          .fromTo(
+            ".hero-search",
+            { autoAlpha: 0, y: 16 },
+            { autoAlpha: 1, y: 0, duration: 0.8 },
+            0.75
+          );
       });
     },
     { scope }
@@ -81,9 +102,14 @@ export function Hero() {
   return (
     <section
       ref={scope}
-      className="relative flex min-h-[92dvh] w-full items-center justify-center overflow-hidden bg-dark-deep"
+      // No overflow-hidden here: the search bar's dropdowns are absolutely
+      // positioned children of this section and open past its bottom edge,
+      // so clipping the section cut every city / type / status list off
+      // mid-list. The clip belongs on the image layer, which is the only
+      // thing that actually needs it.
+      className="relative flex min-h-[92dvh] w-full items-center justify-center bg-dark-deep"
     >
-      <div className="hero-img absolute inset-0">
+      <div className="hero-img absolute inset-0 overflow-hidden">
         {SLIDES.map(
           (slide, i) =>
             (i === 0 || warm) && (

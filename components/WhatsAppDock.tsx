@@ -1,15 +1,13 @@
 "use client";
 
 import { EASE } from "@/lib/motion";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, m } from "framer-motion";
 import { ContactForm } from "@/components/ContactForm";
 import { useModalLock, useMounted } from "@/lib/hooks";
 import { whatsAppHref } from "@/lib/whatsapp";
 import { WHATSAPP } from "@/lib/data";
-const NUDGE_DELAY_MS = 30_000;
-const NUDGE_DISMISS_KEY = "gld-nudge-dismissed";
 
 /**
  * Persistent contact layer: WhatsApp button bottom-right, a quiet nudge
@@ -17,72 +15,24 @@ const NUDGE_DISMISS_KEY = "gld-nudge-dismissed";
  * site's ContactForm. Portaled to <body> to escape section stacking.
  */
 export function WhatsAppDock() {
-  const [showNudge, setShowNudge] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const mounted = useMounted();
-
-  useEffect(() => {
-    if (sessionStorage.getItem(NUDGE_DISMISS_KEY)) return;
-    const id = setTimeout(() => setShowNudge(true), NUDGE_DELAY_MS);
-    return () => clearTimeout(id);
-  }, []);
 
   useModalLock(
     isModalOpen,
     useCallback(() => setIsModalOpen(false), [])
   );
 
-  function dismissNudge() {
-    sessionStorage.setItem(NUDGE_DISMISS_KEY, "1");
-    setShowNudge(false);
-  }
-
   if (!mounted) return null;
 
   return createPortal(
     <>
       <div className="fixed bottom-12 right-5 z-40 flex flex-col items-end gap-3 md:bottom-14 md:right-8">
-        <AnimatePresence>
-          {showNudge && !isModalOpen && (
-            <m.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={{ duration: 0.6, ease: EASE }}
-              className="w-72 border border-border bg-white p-5 shadow-[0_24px_60px_-24px_rgba(20,20,20,0.45)]"
-            >
-              <button
-                type="button"
-                onClick={dismissNudge}
-                aria-label="Dismiss"
-                className="absolute right-3 top-3 cursor-pointer p-1 text-ink-muted transition-colors hover:text-ink"
-              >
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M4 4l16 16M20 4L4 20" />
-                </svg>
-              </button>
-              <span aria-hidden className="mb-3 block h-px w-8 bg-gold" />
-              <p className="font-serif text-h4 leading-snug text-ink">
-                {WHATSAPP.nudgeTitle}
-              </p>
-              <p className="mt-2 text-meta font-sans leading-relaxed text-ink-muted">
-                {WHATSAPP.nudgeBody}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  dismissNudge();
-                  setIsModalOpen(true);
-                }}
-                className="text-eyebrow mt-4 cursor-pointer bg-ink px-5 py-2.5 font-sans font-medium uppercase tracking-[0.18em] text-cream transition-opacity hover:opacity-90"
-              >
-                {WHATSAPP.nudgeCta}
-              </button>
-            </m.div>
-          )}
-        </AnimatePresence>
-
+        {/* The 30-second nudge card that used to sit here is gone: the
+            lead-capture pop-up now asks the same question at 10 seconds, and
+            two uninvited prompts in one visit is one too many. The dock
+            button itself stays — it is a control the visitor chooses. */}
         <m.a
           href={whatsAppHref(WHATSAPP.defaultMessage)}
           target="_blank"
