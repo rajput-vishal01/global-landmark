@@ -7,6 +7,9 @@ import { LogoutButton } from "@/app/admin/LogoutButton";
 
 export type NavItem = { label: string; href: string | null };
 
+/** A labelled run of nav items. A group with no heading is a loose row (Dashboard, Settings). */
+export type NavGroup = { heading?: string; items: NavItem[] };
+
 /**
  * Sentence case, normal tracking, tight rows.
  *
@@ -29,35 +32,61 @@ function isCurrent(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function NavLinks({ nav, pathname, onNavigate }: { nav: NavItem[]; pathname: string; onNavigate?: () => void }) {
+function NavLinks({
+  nav,
+  pathname,
+  onNavigate,
+}: {
+  nav: NavGroup[];
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  // Only the MOST specific match highlights. \"Clients\" (/admin/crm) is a
+  // prefix of \"Deal Pipeline\" (/admin/crm/deals), so a plain prefix test lit
+  // both rows at once and the sidebar looked like it had lost its place.
+  const activeHref = nav
+    .flatMap((group) => group.items)
+    .map((item) => item.href)
+    .filter((href): href is string => href !== null && isCurrent(pathname, href))
+    .sort((a, b) => b.length - a.length)[0];
+
   return (
-    <nav className="flex flex-col gap-0.5">
-      {nav.map((item) =>
-        item.href ? (
-          <Link
-            key={item.label}
-            href={item.href}
-            onClick={onNavigate}
-            aria-current={isCurrent(pathname, item.href) ? "page" : undefined}
-            className={`${NAV_ITEM} ${
-              isCurrent(pathname, item.href)
-                ? "border-l-2 border-gold bg-gold/10 text-ink"
-                : "border-l-2 border-transparent text-ink-muted hover:border-border hover:text-ink"
-            }`}
-          >
-            {item.label}
-          </Link>
-        ) : (
-          <span
-            key={item.label}
-            aria-disabled="true"
-            title="Not built yet"
-            className={`${NAV_ITEM} cursor-default border-l-2 border-transparent text-ink-muted/40`}
-          >
-            {item.label}
-          </span>
-        )
-      )}
+    <nav className="flex flex-col gap-4">
+      {nav.map((group, i) => (
+        <div key={group.heading ?? `group-${i}`} className="flex flex-col gap-0.5">
+          {group.heading && (
+            <h2 className="text-eyebrow px-3 pb-1 font-sans font-semibold uppercase tracking-[0.14em] text-ink-muted/70">
+              {group.heading}
+            </h2>
+          )}
+          {group.items.map((item) =>
+            item.href ? (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={onNavigate}
+                aria-current={item.href === activeHref ? "page" : undefined}
+                className={`${NAV_ITEM} ${
+                  item.href === activeHref
+                    ? "border-l-2 border-gold bg-gold/10 text-ink"
+                    : "border-l-2 border-transparent text-ink-muted hover:border-border hover:text-ink"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <span
+                key={item.label}
+                aria-disabled="true"
+                title="Not built yet"
+                className={`${NAV_ITEM} cursor-default border-l-2 border-transparent text-ink-muted/40`}
+              >
+                {item.label}
+              </span>
+            )
+          )}
+        </div>
+      ))}
     </nav>
   );
 }
@@ -77,7 +106,7 @@ export function AdminSidebar({
   nav,
 }: {
   companyName: string;
-  nav: NavItem[];
+  nav: NavGroup[];
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);

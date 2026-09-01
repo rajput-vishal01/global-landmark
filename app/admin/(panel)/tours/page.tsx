@@ -145,7 +145,11 @@ export default async function AdminToursPage({
       </div>
 
       {rows.length === 0 ? (
-        <p className="text-body font-sans text-ink-muted">No tour requests yet.</p>
+        <p className="text-body font-sans text-ink-muted">
+          No tour requests yet. These arrive on their own when a visitor uses
+          the &ldquo;Request a tour&rdquo; form on a property page — there is
+          nothing to set up here.
+        </p>
       ) : (
         <div className="flex flex-col gap-4">
           <p className="text-meta font-sans tabular-nums text-ink-muted">

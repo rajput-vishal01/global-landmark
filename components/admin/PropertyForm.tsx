@@ -14,6 +14,7 @@ import { FIELD, LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
 import { FormSection } from "./FormSection";
+import { RequiredFieldsPanel } from "./RequiredFieldsPanel";
 import { SaveBar, type AutosaveStatus } from "./SaveBar";
 import { BasicDetailsSection } from "./BasicDetailsSection";
 import { LocationSection } from "./LocationSection";
@@ -212,6 +213,8 @@ export function PropertyForm({
         name="id"
         defaultValue={property?.id ?? ""}
       />
+
+      <RequiredFieldsPanel propertyType={propertyType} />
 
       {/* Identity: never collapsed, because this is what the listing IS. */}
       <div className="flex flex-col gap-5 border border-border bg-white px-5 py-6">

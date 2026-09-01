@@ -45,7 +45,11 @@ export default async function AdminSubscribersPage() {
       </div>
 
       {rows.length === 0 ? (
-        <p className="text-body font-sans text-ink-muted">No subscribers yet.</p>
+        <p className="text-body font-sans text-ink-muted">
+          Nobody has signed up yet. Names appear here on their own when a
+          visitor enters their email in the footer form — there is nothing to
+          set up here.
+        </p>
       ) : (
         <div className="flex flex-col gap-5">
           <ul className="border border-border bg-white">
