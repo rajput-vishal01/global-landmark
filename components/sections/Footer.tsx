@@ -66,7 +66,10 @@ export async function Footer() {
 
   return (
     <footer className="bg-navy text-cream">
-      <div className="mx-auto max-w-6xl px-5 md:px-12">
+      {/* Full-bleed with the site's standard gutters, not a centred
+          max-width column: every other band on the page runs edge to edge,
+          so a boxed footer read as a different site pasted underneath. */}
+      <div className="px-5 md:px-12">
         {/* Masthead: the wordmark and how to reach a human on the left, the
             newsletter on the right. The link-column block that used to sit
             below this was removed at the client's request — the header nav

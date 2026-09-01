@@ -1,7 +1,7 @@
 "use client";
 
 import { EASE } from "@/lib/motion";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, m } from "framer-motion";
 import type { TestimonialVideo } from "@/lib/db/schema";
 import { useModalLock } from "@/lib/hooks";
@@ -15,21 +15,85 @@ import { VideoThumb } from "@/components/VideoThumb";
  */
 export function VideoTestimonials({ videos }: { videos: TestimonialVideo[] }) {
   const [openVideo, setOpenVideo] = useState<TestimonialVideo | null>(null);
+  const railRef = useRef<HTMLDivElement>(null);
+  const [atStart, setAtStart] = useState(true);
+  const [atEnd, setAtEnd] = useState(false);
 
   useModalLock(
     openVideo !== null,
     useCallback(() => setOpenVideo(null), [])
   );
 
+  /**
+   * Arrow controls, because a hidden scrollbar left the rail with no way to
+   * move on a desktop: a mouse wheel scrolls the PAGE, not a horizontal
+   * container, so the scrollbar had been the only affordance. Touch and
+   * trackpads still swipe natively; these are for everyone else.
+   */
+  const syncArrows = useCallback(() => {
+    const el = railRef.current;
+    if (!el) return;
+    // 2px of slack: sub-pixel widths mean scrollLeft rarely lands exactly on
+    // the maximum, which would leave the right arrow enabled forever.
+    setAtStart(el.scrollLeft <= 2);
+    setAtEnd(el.scrollLeft >= el.scrollWidth - el.clientWidth - 2);
+  }, []);
+
+  useEffect(() => {
+    syncArrows();
+    window.addEventListener("resize", syncArrows);
+    return () => window.removeEventListener("resize", syncArrows);
+  }, [syncArrows]);
+
+  function scrollRail(direction: -1 | 1) {
+    const el = railRef.current;
+    if (!el) return;
+    // Roughly one card and its gap, so a click advances the rail by a whole
+    // reel rather than an arbitrary distance.
+    el.scrollBy({ left: direction * (el.clientWidth * 0.6), behavior: "smooth" });
+  }
+
   const isInstagram = openVideo?.provider === "instagram";
 
   return (
     <>
+      {/* Arrows sit above the rail, aligned with its right edge. Hidden
+          when the whole rail already fits — controls for a rail that cannot
+          move are just decoration. */}
+      {!(atStart && atEnd) && (
+        <div className="mb-5 flex justify-end gap-2 px-5 md:px-12">
+          {(
+            [
+              [-1, "Previous videos", "M15 5l-7 7 7 7"],
+              [1, "Next videos", "M9 5l7 7-7 7"],
+            ] as const
+          ).map(([direction, label, path]) => {
+            const disabled = direction === -1 ? atStart : atEnd;
+            return (
+              <button
+                key={label}
+                type="button"
+                onClick={() => scrollRail(direction)}
+                disabled={disabled}
+                aria-label={label}
+                className="flex h-11 w-11 cursor-pointer items-center justify-center border border-cream/25 text-cream transition-colors duration-300 hover:border-cta hover:text-cta disabled:cursor-not-allowed disabled:border-cream/10 disabled:text-cream/25"
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d={path} />
+                </svg>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* A rail of portrait cards, not a 16:9 grid: these are reels, and a
           9:16 video in a landscape box is mostly black bars. Native
           scroll-snap does the paging — no carousel library, and it swipes
           on touch and scrolls on a trackpad for free. */}
       <div
+        ref={railRef}
+        onScroll={syncArrows}
         tabIndex={0}
         role="region"
         aria-label="Client video reels"
