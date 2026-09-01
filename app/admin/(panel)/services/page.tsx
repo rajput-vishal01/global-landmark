@@ -3,9 +3,10 @@ import { asc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { services } from "@/lib/db/schema";
 import { DeleteButton } from "@/components/admin/DeleteButton";
-import { Button } from "@/components/ui/Button";
+import { AddRecordDialog } from "@/components/admin/AddRecordDialog";
+import { ServiceForm } from "@/components/admin/ServiceForm";
 import { SERVICE_ICONS, SERVICE_ICON_FALLBACK } from "@/components/service-icons";
-import { deleteService } from "./actions";
+import { createService, deleteService } from "./actions";
 
 export const metadata = { title: "Services" };
 
@@ -40,9 +41,13 @@ export default async function AdminServicesPage() {
             interiors. Lowest sort order appears first.
           </p>
         </div>
-        <Button href="/admin/services/new" variant="outline">
-          Add service
-        </Button>
+        <AddRecordDialog
+          label="Add service"
+          title="Add a service"
+          description="Appears in the “Our Services” grid on the landing page."
+        >
+          <ServiceForm action={createService} />
+        </AddRecordDialog>
       </div>
 
       {rows.length === 0 ? (

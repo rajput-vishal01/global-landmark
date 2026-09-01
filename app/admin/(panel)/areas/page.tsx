@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { DeleteButton } from "@/components/admin/DeleteButton";
-import { Button } from "@/components/ui/Button";
+import { AddRecordDialog } from "@/components/admin/AddRecordDialog";
+import { AreaForm } from "@/components/admin/AreaForm";
 import { listAllAreasWithCounts } from "@/lib/db/areas";
-import { deleteArea } from "./actions";
+import { createArea, deleteArea } from "./actions";
 
 export const metadata = { title: "Areas" };
 
@@ -35,9 +36,13 @@ export default async function AdminAreasPage() {
             property never means re-saving an area.
           </p>
         </div>
-        <Button href="/admin/areas/new" variant="outline">
-          Add area
-        </Button>
+        <AddRecordDialog
+          label="Add area"
+          title="Add an area"
+          description="A locality landing page. It claims listings by their own address."
+        >
+          <AreaForm action={createArea} />
+        </AddRecordDialog>
       </div>
 
       {rows.length === 0 ? (

@@ -3,8 +3,9 @@ import { count, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { builders, projects } from "@/lib/db/schema";
 import { DeleteButton } from "@/components/admin/DeleteButton";
-import { Button } from "@/components/ui/Button";
-import { deleteBuilder } from "./actions";
+import { AddRecordDialog } from "@/components/admin/AddRecordDialog";
+import { BuilderForm } from "@/components/admin/BuilderForm";
+import { createBuilder, deleteBuilder } from "./actions";
 
 export const metadata = { title: "Builders" };
 
@@ -41,9 +42,13 @@ export default async function AdminBuildersPage() {
             used when pitching.
           </p>
         </div>
-        <Button href="/admin/builders/new" variant="outline">
-          Add builder
-        </Button>
+        <AddRecordDialog
+          label="Add builder"
+          title="Add a builder"
+          description="Developers a project can belong to. Contact details stay internal."
+        >
+          <BuilderForm action={createBuilder} />
+        </AddRecordDialog>
       </div>
 
       {rows.length === 0 ? (
