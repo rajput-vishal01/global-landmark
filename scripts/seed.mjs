@@ -17,8 +17,12 @@ if (!process.env.DATABASE_URL) {
   process.exit(0);
 }
 
+// Repo-bundled paths pass through untouched; anything else is still treated
+// as an Unsplash id, so a stray stock photo would stand out here.
 const u = (id) =>
-  `https://images.unsplash.com/${id}?q=80&w=1600&auto=format&fit=crop`;
+  id.startsWith("/")
+    ? id
+    : `https://images.unsplash.com/${id}?q=80&w=1600&auto=format&fit=crop`;
 
 // Mirrors lib/taxonomy/status.ts's cityCode()/refCode() — duplicated rather
 // than imported since this script is plain .mjs run standalone with `node`,
@@ -31,20 +35,25 @@ const CITY_CODES = {
 const refCode = (city, year, seq) =>
   `GL-${(city && CITY_CODES[city]) || "GEN"}-${String(year % 100).padStart(2, "0")}-${String(seq).padStart(4, "0")}`;
 
-// Visually verified, genuinely Indian-shot stock imagery (each confirmed via
-// its Unsplash location tag before being added — see REQUIREMENTS_V2.md).
-// Swap for the client's real project photos when available.
+// Tricity project photography bundled in public/local — the same images the
+// marketing pages use. These replaced Unsplash stock shot in Mumbai, Kerala,
+// Noida and Delhi: a Zirakpur listing illustrated with a Fort Kochi bungalow
+// is exactly the "this could be anywhere" feel the client rejected.
+//
+// The gallery re-sync below means editing this map updates already-seeded
+// databases on the next run, so swapping in the client's own photographs is
+// a change here and nothing else. Provenance: public/local/CREDITS.md.
 const IMG = {
-  villaDusk: "photo-1711114377419-09b0cd2d786b", // Velgaon, Maharashtra
-  whiteVilla: "photo-1777816268139-7c5ba8399d48", // Fort Kochi, Kerala
-  towers: "photo-1632400990400-416d5460f337",
-  apartments: "photo-1564834552305-aea63611ff08", // Noida, Uttar Pradesh
-  township: "photo-1623668864555-4bb967176e6c", // Worli, Mumbai
-  livingRoom: "photo-1785402231092-859d0a6c4397", // New Delhi
-  bedroom: "photo-1750420556288-d0e32a6f517b", // New Delhi
-  lobby: "photo-1745301558339-44eb3217d5da", // New Delhi
-  glassLiving: "photo-1785402231092-859d0a6c4397", // New Delhi
-  kitchenLiving: "photo-1684222965591-1662016c2d2c", // Mumbai, Maharashtra
+  villaDusk: "/local/tricity-courtyard-night.jpg",
+  whiteVilla: "/local/tricity-avenue.jpg",
+  towers: "/local/tricity-avenue.jpg",
+  apartments: "/local/tricity-courtyard-night.jpg",
+  township: "/local/tricity-avenue.jpg",
+  livingRoom: "/local/tricity-lounge.jpg",
+  bedroom: "/local/tricity-clubhouse.jpg",
+  lobby: "/local/tricity-clubhouse.jpg",
+  glassLiving: "/local/tricity-theatre.jpg",
+  kitchenLiving: "/local/tricity-pool.jpg",
 };
 
 const PROJECTS = [

@@ -5,7 +5,6 @@ import fs from "node:fs";
 
 const src = fs.readFileSync("public/sw.js", "utf8");
 const handlers = {};
-const events = [];
 const self = {
   addEventListener: (t, fn) => (handlers[t] = fn),
   location: { origin: "https://example.com" },

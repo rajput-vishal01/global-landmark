@@ -10,7 +10,12 @@ import {
   PUBLICATION_STATES,
 } from "../attributes";
 import { CITY_NAMES, isLocalityIn } from "../locations";
-import { isLocalImageUrl, MAX_UPLOAD_BYTES, storageKeyFromUrl } from "../storage";
+import {
+  isBundledImageUrl,
+  isLocalImageUrl,
+  MAX_UPLOAD_BYTES,
+  storageKeyFromUrl,
+} from "../storage";
 import { requiredFieldsFor } from "../taxonomy/sections";
 import {
   DOCUMENTATION_FLAGS,
@@ -65,6 +70,9 @@ const IMAGE_HOSTS = new Set(["images.unsplash.com"]);
 
 export function isAllowedImageUrl(url: string): boolean {
   if (isLocalImageUrl(url)) return true;
+  // Repo-bundled Tricity photography (public/local) — same origin, no
+  // remotePattern needed, and what the seed data points at.
+  if (isBundledImageUrl(url)) return true;
   try {
     const u = new URL(url);
     return u.protocol === "https:" && IMAGE_HOSTS.has(u.hostname);

@@ -157,6 +157,21 @@ export function isLocalImageUrl(url: string): boolean {
   return key !== null && isStorageKey(key);
 }
 
+/**
+ * Imagery we ship in the repo under public/local — the Tricity project
+ * photography the seed data points at.
+ *
+ * Deliberately a strict whitelist pattern rather than a startsWith check: a
+ * stored image URL ends up in next/image, so anything admitting `..` or a
+ * second path segment would be a traversal hole. Lowercase name, single
+ * segment, known extension, nothing else.
+ */
+const BUNDLED_IMAGE = /^\/local\/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png|webp|avif)$/;
+
+export function isBundledImageUrl(url: string): boolean {
+  return BUNDLED_IMAGE.test(url);
+}
+
 /** The storage key inside one of our own image URLs, or null. */
 export function storageKeyFromUrl(url: string): string | null {
   return isLocalImageUrl(url) ? url.slice("/api/images/".length) : null;
