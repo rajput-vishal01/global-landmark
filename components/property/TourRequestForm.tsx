@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
 import { requestTour, type TourState } from "@/app/(site)/tours/actions";
 import { TOUR_TIMES, TOUR_TYPES } from "@/lib/taxonomy/tours";
@@ -101,6 +102,7 @@ export function TourRequestForm({
         <div className="flex flex-col gap-2">
           <label htmlFor="tourName" className={LABEL}>
             Name
+            <Req />
           </label>
           <input
             id="tourName"
@@ -114,6 +116,7 @@ export function TourRequestForm({
         <div className="flex flex-col gap-2">
           <label htmlFor="tourPhone" className={LABEL}>
             Phone
+            <Req />
           </label>
           <input
             id="tourPhone"

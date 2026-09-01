@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import type { services } from "@/lib/db/schema";
 import { FIELD, LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import {
   SERVICE_ICONS,
   SERVICE_ICON_KEYS,
@@ -40,6 +41,7 @@ export function ServiceForm({
       <div className="flex flex-col gap-1.5">
         <label htmlFor="title" className={LABEL}>
           Title
+          <Req />
         </label>
         <input
           id="title"

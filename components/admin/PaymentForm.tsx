@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { FIELD, LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { addPayment, type PaymentFormState } from "@/app/admin/(panel)/crm/deal-actions";
 
 const initialState: PaymentFormState = {};
@@ -20,6 +21,7 @@ export function PaymentForm({ dealId }: { dealId: number }) {
       <div className="flex flex-col gap-1.5">
         <label htmlFor="paidAt" className={LABEL}>
           Date
+          <Req />
         </label>
         <input id="paidAt" name="paidAt" type="date" required className={`${FIELD} sm:w-40`} />
       </div>
@@ -27,6 +29,7 @@ export function PaymentForm({ dealId }: { dealId: number }) {
       <div className="flex flex-col gap-1.5">
         <label htmlFor="amount" className={LABEL}>
           Amount (rupees)
+          <Req />
         </label>
         <input
           id="amount"

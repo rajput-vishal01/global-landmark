@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import type { CrmClient } from "@/lib/db/schema";
 import { FIELD, LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { PROPERTY_TYPES } from "@/lib/attributes";
 import { CITY_NAMES } from "@/lib/locations";
 import { ChecklistField } from "@/components/admin/ChecklistField";
@@ -27,6 +28,7 @@ export function ClientForm({ client, action }: { client?: CrmClient; action: Act
         <div className="flex flex-col gap-1.5">
           <label htmlFor="name" className={LABEL}>
             Name
+            <Req />
           </label>
           <input
             id="name"

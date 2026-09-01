@@ -6,6 +6,7 @@ import { projects } from "@/lib/db/schema";
 import { StatusBadge } from "@/components/admin/BasicDetailsSection";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { FIELD, LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { formatIndianShort } from "@/lib/attributes";
 import { createTower, deleteTower } from "../actions";
 import { duplicateProperty } from "../../properties/actions";
@@ -217,6 +218,7 @@ export default async function ProjectPitchViewPage({
           <div className="flex min-w-40 flex-col gap-1.5">
             <label htmlFor="towerName" className={LABEL}>
               New tower name
+              <Req />
             </label>
             <input
               id="towerName"

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Select } from "@/components/ui/Select";
 import { FIELD, LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { FormSection, countFilled } from "./FormSection";
 import { CITY_NAMES, localitiesIn } from "@/lib/locations";
 import { withEmptyOption } from "@/lib/attributes";
@@ -97,6 +98,7 @@ export function LocationSection({
       <div className="flex flex-col gap-2">
         <label htmlFor="location" className={LABEL}>
           Address line
+          <Req />
         </label>
         <input
           id="location"

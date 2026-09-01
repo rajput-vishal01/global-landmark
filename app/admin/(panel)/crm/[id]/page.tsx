@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { crmClients } from "@/lib/db/schema";
 import { ClientForm } from "@/components/admin/ClientForm";
 import { FIELD, LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { formatIndianShort } from "@/lib/attributes";
 import { brokerageAmount, brokeragePending, isClosedStage } from "@/lib/taxonomy/brokerage";
 import { ACTIVITY_KINDS } from "@/lib/taxonomy/activities";
@@ -186,6 +187,7 @@ export default async function ClientDetailPage({
           <div className="flex w-40 flex-col gap-1.5">
             <label htmlFor="kind" className={LABEL}>
               Kind
+              <Req />
             </label>
             <select id="kind" name="kind" required className={FIELD}>
               {ACTIVITY_KINDS.map((k) => (

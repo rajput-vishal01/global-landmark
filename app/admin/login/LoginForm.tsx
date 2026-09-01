@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Req } from "@/components/ui/RequiredMark";
 import { login, type LoginState } from "./actions";
 
 const initialState: LoginState = {};
@@ -15,6 +16,7 @@ export function LoginForm() {
         className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink"
       >
         Password
+        <Req />
       </label>
       <input
         id="password"

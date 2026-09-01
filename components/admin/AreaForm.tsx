@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import type { Area } from "@/lib/db/schema";
 import { FIELD, LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
 import { CoverImageInput } from "@/components/admin/CoverImageInput";
 import { CITY_NAMES, localitiesIn } from "@/lib/locations";
@@ -40,6 +41,7 @@ export function AreaForm({ area, action }: { area?: Area; action: Action }) {
       <div className="flex flex-col gap-1.5">
         <label htmlFor="name" className={LABEL}>
           Name
+          <Req />
         </label>
         <input
           id="name"

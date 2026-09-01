@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
 import { submitInquiry, type InquiryState } from "@/app/(site)/contact/actions";
 
@@ -41,9 +42,6 @@ export function ContactForm({
   useEffect(() => {
     if (state.status === "sent") onSuccess?.();
   }, [state.status, onSuccess]);
-  // R-05: "must never send silently without a name and phone" — required
-  // for the cart path specifically; the plain contact form keeps it optional.
-  const phoneRequired = propertyIds.length > 0;
 
   // Written directly to the DOM after mount, not React state — these are
   // uncontrolled hidden inputs, and useSearchParams() would force every
@@ -101,28 +99,29 @@ export function ContactForm({
         <div className="flex flex-col gap-2">
           <label htmlFor={fid("name")} className={LABEL}>
             Name
+            <Req />
           </label>
           <input id={fid("name")} name="name" type="text" required autoComplete="name" className={FIELD_CLASSES} />
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor={fid("email")} className={LABEL}>
-            Email
+            Email <span className="normal-case text-ink-muted">(optional)</span>
           </label>
-          <input id={fid("email")} name="email" type="email" required autoComplete="email" className={FIELD_CLASSES} />
+          <input id={fid("email")} name="email" type="email" autoComplete="email" className={FIELD_CLASSES} />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor={fid("phone")} className={LABEL}>
-            Phone{" "}
-            {!phoneRequired && <span className="normal-case text-ink-muted">(optional)</span>}
+            Phone
+            <Req />
           </label>
           <input
             id={fid("phone")}
             name="phone"
             type="tel"
-            required={phoneRequired}
+            required
             autoComplete="tel"
             className={FIELD_CLASSES}
           />
@@ -148,6 +147,7 @@ export function ContactForm({
       <div className="flex flex-col gap-2">
         <label htmlFor={fid("message")} className={LABEL}>
           Message
+          <Req />
         </label>
         <textarea id={fid("message")} name="message" rows={5} required className={FIELD_CLASSES} />
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Req } from "@/components/ui/RequiredMark";
 import {
   subscribeToNewsletter,
   type SubscribeState,
@@ -43,8 +44,11 @@ export function NewsletterForm() {
         className="hidden"
       />
 
+      {/* The one form where email stays mandatory: it IS the subscription,
+          so there is nothing to store without it. */}
       <label htmlFor="newsletter-email" className={LABEL_ON_NAVY}>
         Subscribe for monthly updates
+        <Req />
       </label>
 
       <div className="flex items-end gap-3">

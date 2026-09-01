@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { Select } from "@/components/ui/Select";
 import { ChecklistField } from "./ChecklistField";
 import { FIELD, LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { FormSection } from "./FormSection";
 import { AMENITIES, AREA_UNITS, POSSESSION_STATUSES, withEmptyOption } from "@/lib/attributes";
 import { CITY_NAMES, localitiesIn } from "@/lib/locations";
@@ -70,6 +71,7 @@ export function ProjectForm({
         <div className="flex flex-col gap-2">
           <label htmlFor="name" className={LABEL}>
             Name
+            <Req />
           </label>
           <input
             id="name"

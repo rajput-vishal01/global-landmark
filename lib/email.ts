@@ -76,7 +76,7 @@ function shell(bodyHtml: string, company: ResolvedCompany) {
 function detailRows(data: InquiryData) {
   const rows: [string, string][] = [
     ["Name", data.name],
-    ["Email", data.email],
+    ["Email", data.email || "Not provided"],
     ["Phone", data.phone || "Not provided"],
     ["Looking to", data.interest],
     ["Message", data.message],
@@ -116,6 +116,14 @@ function propertiesList(data: InquiryData) {
 }
 
 function renderAdminEmail(data: InquiryData, company: ResolvedCompany) {
+  // Email is optional on every public form, so the reply button follows
+  // whichever channel the enquirer actually left. A bare `mailto:` would
+  // otherwise open an empty compose window addressed to nobody.
+  const reply = data.email
+    ? { href: `mailto:${escapeHtml(data.email)}`, label: `Reply to ${escapeHtml(data.name)}` }
+    : data.phone
+      ? { href: `tel:${escapeHtml(data.phone.replace(/[^\d+]/g, ""))}`, label: `Call ${escapeHtml(data.name)}` }
+      : null;
   return shell(
     `
     <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:normal;color:${BRAND.ink};margin:0 0 8px;">New inquiry</h1>
@@ -123,11 +131,15 @@ function renderAdminEmail(data: InquiryData, company: ResolvedCompany) {
       Submitted through the website contact form.
     </p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${detailRows(data)}${propertiesList(data)}</table>
-    <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:24px;">
+    ${
+      reply
+        ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:24px;">
       <tr><td style="background-color:${BRAND.navy};">
-        <a href="mailto:${escapeHtml(data.email)}" style="display:inline-block;padding:12px 28px;font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:${BRAND.cream};text-decoration:none;">Reply to ${escapeHtml(data.name)}</a>
+        <a href="${reply.href}" style="display:inline-block;padding:12px 28px;font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:${BRAND.cream};text-decoration:none;">${reply.label}</a>
       </td></tr>
-    </table>
+    </table>`
+        : ""
+    }
   `,
     company
   );
@@ -179,13 +191,20 @@ export async function sendContactEmails(data: InquiryData): Promise<boolean> {
   await transporter.sendMail({
     from: `"${company.name} Website" <${from}>`,
     to: admin,
-    replyTo: data.email,
+    // Email is optional on every public form, so replyTo is only set when
+    // there is an address to reply to — nodemailer would otherwise put an
+    // empty header on the notification.
+    ...(data.email ? { replyTo: data.email } : {}),
     subject: `New inquiry from ${data.name}`,
     html: renderAdminEmail(data, company),
   });
 
   // Confirmation is best-effort: once the admin has the inquiry, a failed
   // courtesy email must not make the submitter retry (and double-notify).
+  // No address given means there is simply nobody to confirm to — the
+  // enquiry still reached the agency, which is what matters.
+  if (!data.email) return true;
+
   try {
     await transporter.sendMail({
       from: `"${company.legalName}" <${from}>`,

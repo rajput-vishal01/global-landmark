@@ -1,6 +1,7 @@
 "use client";
 
 import { FIELD, LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { useActionState, useState } from "react";
 import { createDeal, type DealFormState } from "./actions";
 
@@ -91,12 +92,12 @@ export function DealCreateForm({ items }: { items: DealPickerItem[] }) {
       <div className="flex flex-wrap items-end gap-4">
         {/* ponytail: native date inputs — a picker lib adds nothing here */}
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="startsAt" className={LABEL}>Starts</label>
+          <label htmlFor="startsAt" className={LABEL}>Starts<Req /></label>
           <input id="startsAt" name="startsAt" type="date" required
             className={FIELD} />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="endsAt" className={LABEL}>Ends</label>
+          <label htmlFor="endsAt" className={LABEL}>Ends<Req /></label>
           <input id="endsAt" name="endsAt" type="date" required
             className={FIELD} />
         </div>

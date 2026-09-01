@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import type { Builder } from "@/lib/db/schema";
 import { FIELD, LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import type { BuilderFormState } from "@/app/admin/(panel)/builders/actions";
 
 type Action = (
@@ -32,6 +33,7 @@ export function BuilderForm({
       <div className="flex flex-col gap-1.5">
         <label htmlFor="name" className={LABEL}>
           Name
+          <Req />
         </label>
         <input
           id="name"

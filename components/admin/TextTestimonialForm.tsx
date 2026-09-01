@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import type { textTestimonials } from "@/lib/db/schema";
 import { FIELD, LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { CoverImageInput } from "@/components/admin/CoverImageInput";
 import type { TextTestimonialFormState } from "@/app/admin/(panel)/text-testimonials/actions";
 
@@ -33,6 +34,7 @@ export function TextTestimonialForm({
       <div className="flex flex-col gap-1.5">
         <label htmlFor="quote" className={LABEL}>
           Quote
+          <Req />
         </label>
         <textarea
           id="quote"
@@ -50,6 +52,7 @@ export function TextTestimonialForm({
         <div className="flex flex-col gap-1.5">
           <label htmlFor="author" className={LABEL}>
             Author
+            <Req />
           </label>
           <input
             id="author"

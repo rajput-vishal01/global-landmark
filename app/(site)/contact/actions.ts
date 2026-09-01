@@ -65,23 +65,28 @@ export async function submitInquiry(
     message: String(formData.get("message") ?? "").trim().slice(0, 5000),
   };
 
-  if (!data.name || !data.message || !EMAIL_RE.test(data.email)) {
+  // Phone, not email, is the required channel: email is optional on every
+  // public form now, and a lead with neither is a lead nobody can answer.
+  // An address that IS given still has to be a real one — a typo'd address
+  // is worse than none, because it looks answerable and is not.
+  if (!data.name || !data.phone || !data.message) {
     return {
       status: "error",
-      message: "Please fill in your name, a valid email, and a message.",
+      message: "Please fill in your name, phone number, and a message.",
+    };
+  }
+  if (data.email && !EMAIL_RE.test(data.email)) {
+    return {
+      status: "error",
+      message: "That email address does not look right. Correct it or leave it blank.",
     };
   }
   if (!INTERESTS.has(data.interest)) data.interest = "other";
 
+  // R-05's separate "cart path needs a phone" guard is gone: phone is now
+  // required on every submission, so the cart case is covered by the check
+  // above rather than by a second rule that could drift from it.
   const propertyIds = parsePropertyIds(String(formData.get("propertyIdsJson") ?? "[]"));
-  // R-05: the enquiry cart path must never send silently without a phone —
-  // unlike the plain contact form, where phone stays optional.
-  if (propertyIds.length > 0 && !data.phone) {
-    return {
-      status: "error",
-      message: "Please add a phone number so we can reach you about these properties.",
-    };
-  }
   const pageUrl = String(formData.get("pageUrl") ?? "").trim().slice(0, 500) || null;
   const source = String(formData.get("source") ?? "").trim().slice(0, 100) || null;
   const utm = parseUtm(formData);

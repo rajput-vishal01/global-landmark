@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { LABEL, FIELD } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { submitSellInquiry, type SellInquiryState } from "@/app/(site)/sell/actions";
 
 const initialState: SellInquiryState = { status: "idle" };
@@ -37,12 +38,14 @@ export function SellForm() {
         <div className="flex flex-col gap-2">
           <label htmlFor="sell-name" className={LABEL}>
             Name
+            <Req />
           </label>
           <input id="sell-name" name="name" type="text" required autoComplete="name" className={FIELD} />
         </div>
         <div className="flex flex-col gap-2">
           <label htmlFor="sell-phone" className={LABEL}>
             Phone
+            <Req />
           </label>
           <input id="sell-phone" name="phone" type="tel" required autoComplete="tel" className={FIELD} />
         </div>
@@ -50,15 +53,16 @@ export function SellForm() {
 
       <div className="flex flex-col gap-2">
         <label htmlFor="sell-email" className={LABEL}>
-          Email
+          Email <span className="normal-case text-ink-muted">(optional)</span>
         </label>
-        <input id="sell-email" name="email" type="email" required autoComplete="email" className={FIELD} />
+        <input id="sell-email" name="email" type="email" autoComplete="email" className={FIELD} />
       </div>
 
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor="sell-propertyType" className={LABEL}>
             Property type / configuration
+            <Req />
           </label>
           <input
             id="sell-propertyType"
@@ -72,6 +76,7 @@ export function SellForm() {
         <div className="flex flex-col gap-2">
           <label htmlFor="sell-locality" className={LABEL}>
             Locality
+            <Req />
           </label>
           <input
             id="sell-locality"

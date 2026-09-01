@@ -11,6 +11,7 @@ import { CATEGORIES } from "@/lib/categories";
 import { PROPERTY_TYPES, withEmptyOption } from "@/lib/attributes";
 import { sectionsFor } from "@/lib/taxonomy/sections";
 import { FIELD, LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
 import { FormSection } from "./FormSection";
 import { SaveBar, type AutosaveStatus } from "./SaveBar";
@@ -217,6 +218,7 @@ export function PropertyForm({
         <div className="flex flex-col gap-2">
           <label htmlFor="title" className={LABEL}>
             Title
+            <Req />
           </label>
           <input
             id="title"

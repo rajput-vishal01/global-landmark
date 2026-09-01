@@ -1,6 +1,7 @@
 "use client";
 
 import { FIELD, LABEL } from "@/components/form-classes";
+import { Req } from "@/components/ui/RequiredMark";
 import { useActionState } from "react";
 import { createTestimonialVideo, type TestimonialFormState } from "./actions";
 
@@ -18,7 +19,7 @@ export function TestimonialCreateForm() {
       className="flex flex-wrap items-end gap-4 border border-border bg-white p-4"
     >
       <div className="flex min-w-64 flex-[2] flex-col gap-1.5">
-        <label htmlFor="video" className={LABEL}>YouTube or Instagram link</label>
+        <label htmlFor="video" className={LABEL}>YouTube or Instagram link<Req /></label>
         <input id="video" name="video" type="text" required
           placeholder="youtube.com/watch?v=...  or  instagram.com/reel/..." className={FIELD} />
       </div>

@@ -39,10 +39,18 @@ export async function submitSellInquiry(
   const alreadyListed = formData.get("alreadyListed") === "on";
   const note = String(formData.get("message") ?? "").trim().slice(0, 5000);
 
-  if (!name || !phone || !EMAIL_RE.test(email) || !propertyType || !locality) {
+  // Email is optional here as on every public form; phone is the channel we
+  // actually answer on. A given address still has to be a valid one.
+  if (!name || !phone || !propertyType || !locality) {
     return {
       status: "error",
-      message: "Please fill in your name, phone, a valid email, property type, and locality.",
+      message: "Please fill in your name, phone, property type, and locality.",
+    };
+  }
+  if (email && !EMAIL_RE.test(email)) {
+    return {
+      status: "error",
+      message: "That email address does not look right. Correct it or leave it blank.",
     };
   }
 
