@@ -3,6 +3,7 @@ import { Playfair_Display, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 import { MotionProvider } from "@/components/MotionProvider";
 import { ServiceWorker } from "@/components/ServiceWorker";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { COMPANY, SEO } from "@/lib/data";
 import { jsonLdHtml, organizationJsonLd, SITE_URL } from "@/lib/seo";
 
@@ -47,14 +48,20 @@ export const metadata: Metadata = {
     images: [SEO.ogImage],
   },
   robots: { index: true, follow: true },
-  // iOS reads almost none of the web app manifest. These four are what make
-  // an installed icon on an iPhone look like an app rather than a bookmark:
-  // the touch icon, standalone display, a dark status bar over our navy
-  // chrome, and the name under the icon.
+  // iOS reads almost none of the web app manifest. These are what make an
+  // installed icon on an iPhone look like an app rather than a bookmark:
+  // the touch icon, standalone display, a status bar, and the name under
+  // the icon.
+  //
+  // "default", not "black-translucent": translucent lets the page paint
+  // under the status bar, which only works if every fixed element carries
+  // env(safe-area-inset-top) padding. Nothing here does, so the site
+  // header and the panel's top bar would open under the clock. iOS
+  // reserving the strip is the correct-looking failure, not the broken one.
   appleWebApp: {
     capable: true,
     title: COMPANY.name,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
   },
   applicationName: COMPANY.name,
   icons: {
@@ -69,13 +76,13 @@ export const metadata: Metadata = {
 };
 
 /**
- * Navy address bar on Android and the installed title bar everywhere, and
- * viewport-fit=cover so a standalone iPhone window paints under the notch
- * instead of leaving a white band.
+ * Navy address bar on Android and the installed title bar everywhere.
+ *
+ * No viewport-fit=cover: it goes with the translucent status bar above,
+ * and both are only safe once the fixed chrome handles safe-area insets.
  */
 export const viewport: Viewport = {
   themeColor: "#252839",
-  viewportFit: "cover",
   width: "device-width",
   initialScale: 1,
 };
@@ -108,7 +115,12 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLdHtml(orgJsonLd) }}
         />
-        <MotionProvider>{children}</MotionProvider>
+        <MotionProvider>
+          {children}
+          {/* Root layout, not the site group: the panel is where installing
+              actually pays off, so admins get the offer too. */}
+          <InstallPrompt />
+        </MotionProvider>
         <ServiceWorker />
       </body>
     </html>

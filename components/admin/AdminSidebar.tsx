@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "@/app/admin/LogoutButton";
+import { useModalLock } from "@/lib/hooks";
 
 export type NavItem = { label: string; href: string | null };
 
@@ -117,6 +118,12 @@ export function AdminSidebar({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  // Escape closes it, and the page behind stops scrolling — without the
+  // lock, a swipe inside the drawer scrolls the list underneath it.
+  useModalLock(
+    open,
+    useCallback(() => setOpen(false), [])
+  );
 
   const brand = (
     // One line, not two: the wordmark was a 24px serif that wrapped in a
@@ -158,7 +165,10 @@ export function AdminSidebar({
             onClick={() => setOpen(false)}
             className="absolute inset-0 cursor-default bg-dark-deep/50"
           />
-          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col gap-6 border-r border-border bg-cream p-5">
+          {/* overflow-y-auto is load-bearing: sixteen items under five
+              headings is taller than a short phone, and without it the
+              bottom of the nav and the log-out button are unreachable. */}
+          <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col gap-6 overflow-y-auto overscroll-contain border-r border-border bg-cream p-5">
             <div className="flex items-center justify-between">
               {brand}
               <button
