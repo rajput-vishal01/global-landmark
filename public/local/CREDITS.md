@@ -1,52 +1,50 @@
-# Local photography — sources and provenance
+# Local photography — sources and permission status
 
-Every image in this folder is a real Tricity property, self-hosted rather
-than hotlinked. Two groups, with different obligations.
+Every image here is a real Tricity development, self-hosted rather than
+hotlinked, and every one is **a developer's own marketing photography**.
+They are used because Global Landmark brokers flats in these projects.
 
-## 1. Creative Commons (attribution required, credit shown at /credits)
-
-| File | Subject | Author | Licence | Source |
-|---|---|---|---|---|
-| `zirakpur-skyline.jpg` | Zirakpur skyline at dusk | Botjagdeep567 | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) — public domain | [Commons](https://commons.wikimedia.org/wiki/File:Zirakpur_Skyline.jpg) |
-| `zirakpur-fields-towers.jpg` | Land at the Zirakpur edge, towers behind | Manojkhurana | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) — **attribution required** | [Commons](https://commons.wikimedia.org/wiki/File:Zirakpur.jpg) |
-
-Both were downscaled to 2400px. Under CC BY-SA the resized copy is a
-derivative and keeps the same licence and credit, which is what `/credits`
-and the footer link exist for.
-
-## 2. Developer project photography — PERMISSION REQUIRED
-
-| File | Subject | Source |
+| File | Where it appears | Project / source |
 |---|---|---|
-| `gl-towers-night.jpg` | Courtyard at night below the towers | greenlotusgroup.co |
-| `gl-towers-day.jpg` | Towers above landscaped grounds, daytime | greenlotusgroup.co |
-| `gl-aerial.jpg` | Aerial of the development and surrounding streets | greenlotusgroup.co |
-| `gl-lounge.jpg` | Clubhouse lounge interior | greenlotusgroup.co |
-| `gl-gym.jpg` | Gym interior (not currently placed on any page) | greenlotusgroup.co |
+| `tricity-courtyard-night.jpg` | Hero — Sale | Green Lotus (greenlotusgroup.co) |
+| `tricity-avenue.jpg` | Hero — Purchase | Trishla City (trishlacity.com) |
+| `tricity-lounge.jpg` | Hero — Lease | Green Lotus (greenlotusgroup.co) |
+| `tricity-night-aerial.jpg` | Hero — Invest | Homeland Group (homelandgroup.org) |
+| `tricity-clubhouse-aerial.jpg` | About — split image | Trishla City (trishlacity.com) |
+| `tricity-towers-aerial.jpg` | About — ethos image | Homeland Group (homelandgroup.org) |
+| `tricity-courtyard.jpg` | not currently placed | Trishla City |
+| `tricity-towers-courts.jpg` | not currently placed | Trishla City |
+| `tricity-retail.jpg` | not currently placed | Homeland Regalia |
 
-These are **Green Lotus's own marketing photographs**, used here because
-Global Landmark brokers flats in that project. Brokering a project is not by
-itself a licence to republish the developer's photography — the thing that
-makes this safe is the channel-partner marketing kit builders issue to their
-authorised brokers.
+## Before this goes to production
 
-**Before this goes to production, confirm one of:**
+Brokering a project is not by itself a licence to republish the developer's
+photography. What normally makes it fine is the **channel-partner marketing
+kit** builders issue to their authorised brokers. Confirm one of:
 
-1. Global Landmark holds the Green Lotus channel-partner/marketing kit that
-   includes these images, or
-2. Green Lotus has given written permission (an email is enough), or
-3. Replace them with Global Landmark's own photographs of the project.
+1. Global Landmark holds the marketing kit for Green Lotus, Trishla and
+   Homeland that includes these images, or
+2. Each developer has given written permission (an email is enough), or
+3. Replace them with Global Landmark's own photographs of the projects.
 
-Each file is referenced from `lib/data.ts` by path only, so swapping any one
-of them is a single-line change — drop a new JPEG in with the same filename
-and nothing else needs to move.
+Every file is referenced from `lib/data.ts` by path only, so swapping one is
+a single-line change — drop a new JPEG in under the same filename and
+nothing else moves.
 
-## Filling the rest
+## Selection rules applied
 
-Only one developer's project is represented here, because automated
-collection from the other builder sites (homelandgroup.org,
-homelandglobalpark.com, flatszirakpur.com, trishlacity.com) was blocked
-during the build. The better source for those is the client anyway:
-**the admin panel takes image uploads directly** (Properties → a listing →
-Photos), so their own site photography of Homeland Urva, Trishla, Imperial
-Residency and Grand Mega Township can go straight in without a code change.
+- **No developer branding.** Anything showing a builder's name or logo was
+  rejected or cropped: several Trishla shots carry a red "TRISHLA CITY"
+  entrance gate, and a Green Lotus facade shot carried the project name.
+  A competitor's name has no place on Global Landmark's masthead.
+- **Buildings, not land.** Field and open-ground shots were dropped at the
+  client's instruction — this is a luxury brokerage, so the imagery is
+  towers, courtyards, clubhouses and interiors.
+- **No marketing furniture.** "Ranked No. 1" badges, celebrity endorsements
+  and icon graphics were all rejected.
+
+## Adding more
+
+The admin panel takes image uploads directly (Properties → a listing →
+Photos), so the client's own site photography can go in without a code
+change — that is the route that removes the permission question entirely.

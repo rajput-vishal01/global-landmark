@@ -63,26 +63,26 @@ export const HERO = {
     {
       category: "sale",
       label: "Sale",
-      img: "/local/gl-towers-night.jpg",
+      img: "/local/tricity-courtyard-night.jpg",
       alt: "Landscaped courtyard lit at night beneath residential towers in Zirakpur",
     },
     {
       category: "purchase",
       label: "Purchase",
-      img: "/local/zirakpur-skyline.jpg",
-      alt: "The Zirakpur skyline at dusk, mixed residential and commercial towers",
+      img: "/local/tricity-avenue.jpg",
+      alt: "A tree-lined avenue running between residential towers in the Tricity",
     },
     {
       category: "lease",
       label: "Lease",
-      img: "/local/gl-lounge.jpg",
+      img: "/local/tricity-lounge.jpg",
       alt: "Residents lounge inside a Tricity apartment clubhouse",
     },
     {
       category: "invest",
       label: "Invest",
-      img: "/local/zirakpur-fields-towers.jpg",
-      alt: "Open land on the Zirakpur edge with new apartment towers rising behind it",
+      img: "/local/tricity-night-aerial.jpg",
+      alt: "A Tricity development lit at night, seen from above",
     },
   ],
 };
@@ -105,8 +105,8 @@ export const CREDIBILITY = {
 export const ABOUT_SPLIT = {
   heading: "Built on landmark sales",
   body: "The residences other brokerages call career-defining. Our clients stay private. Our results do not.",
-  image: "/local/gl-aerial.jpg",
-  alt: "Aerial view of a Zirakpur residential development and the streets around it",
+  image: "/local/tricity-clubhouse-aerial.jpg",
+  alt: "Clubhouse, pool and lawns at the centre of a Tricity residential development",
   ctaLabel: "About the Group",
 };
 
@@ -223,8 +223,8 @@ export const ABOUT_PAGE = {
     ["Markets", "Tricity"],
     ["Sold to date", "₹385 Cr+"],
   ] as [string, string][],
-  ethosImage: "/local/zirakpur-skyline.jpg",
-  ethosImageAlt: "The Zirakpur skyline at dusk, mixed residential and commercial towers",
+  ethosImage: "/local/tricity-towers-aerial.jpg",
+  ethosImageAlt: "Residential towers and landscaped grounds in the Tricity, seen from above",
   ethosHeading:
     "Most brokerages measure themselves by how much they list. We measure ourselves by what we decline.",
   ethosParagraphs: [
