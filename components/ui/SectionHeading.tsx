@@ -39,10 +39,16 @@ export function SectionHeading({
   const subTone = tone === "dark" ? "text-cream/70" : "text-ink-muted";
 
   return (
+    // The alignment utilities are picked, never stacked: emitting
+    // `items-end` and `items-center` together leaves the winner to CSS
+    // source order, which is what made every centered heading render
+    // hard against the right edge.
     <div
-      className={`flex flex-wrap items-end justify-between gap-x-8 gap-y-5 ${
-        flush ? "" : "mb-10 md:mb-12"
-      } ${centered ? "flex-col items-center justify-center text-center" : ""}`}
+      className={`flex gap-x-8 gap-y-5 ${flush ? "" : "mb-10 md:mb-12"} ${
+        centered
+          ? "flex-col items-center justify-center text-center"
+          : "flex-wrap items-end justify-between"
+      }`}
     >
       <div className={`flex flex-col gap-3 ${centered ? "items-center" : ""}`}>
         {eyebrow && (

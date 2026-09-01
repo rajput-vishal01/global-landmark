@@ -90,52 +90,12 @@ export const HERO = {
 export const CREDIBILITY = {
   eyebrow: "Featured",
   headingPre: "Over",
-  headingHighlight: "₹85 Crore",
+  headingHighlight: "₹385 Crore",
   headingPost: "in landmark sales",
   sub: "Considered residences across the Tricity, trusted by the most private buyers and sellers.",
-  // The ₹85 Cr figure is deliberately NOT repeated as a stat: the heading
-  // directly above already says "Over ₹85 Crore in landmark sales", and
-  // showing the same number twice within one band read as a duplicate
-  // rather than as emphasis. It remains editable in the admin (Settings →
-  // credibility), so a client who wants it back can add it there without a
-  // code change.
   stats: [
-    { value: 120, prefix: "", suffix: "+", label: "Properties Transacted" },
-    { value: 15, prefix: "", suffix: "", label: "Years in the Tricity" },
-  ],
-};
-
-export const ARCH_REVEAL = {
-  image:
-    "https://images.unsplash.com/photo-1667721939391-696df4f72caf?q=80&w=2000&auto=format&fit=crop",
-  alt: "Ornate red sandstone jali facade with carved geometric lattice work",
-  caption: "Architecture deserves an audience.",
-};
-
-export const PILLARS = {
-  heading: "From First Viewing to Final Signature",
-  items: [
-    {
-      title: ["Thoughtful", "Curation"],
-      body: "We represent few properties by intention. Every residence is walked and studied before it carries our name.",
-      image:
-        "https://images.unsplash.com/photo-1785402231092-859d0a6c4397?q=80&w=900&auto=format&fit=crop",
-      alt: "A composed New Delhi living room with considered furnishing",
-    },
-    {
-      title: ["Quiet", "Discretion"],
-      body: "Off-market introductions, unlisted showings, and negotiations handled by one senior team, start to close.",
-      image:
-        "https://images.unsplash.com/photo-1750420556288-d0e32a6f517b?q=80&w=900&auto=format&fit=crop",
-      alt: "A softly lit master bedroom in a New Delhi residence",
-    },
-    {
-      title: ["Enduring", "Craft"],
-      body: "Photography, film, and print produced for each residence individually — never from a template.",
-      image:
-        "https://images.unsplash.com/photo-1745301558339-44eb3217d5da?q=80&w=900&auto=format&fit=crop",
-      alt: "A warmly lit residential lounge under a chandelier",
-    },
+    { value: 385, prefix: "₹", suffix: " Cr+", label: "Worth of Real Estate Sold" },
+    { value: 120, prefix: "", suffix: "+", label: "Happy Families" },
   ],
 };
 

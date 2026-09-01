@@ -103,7 +103,7 @@ export function Hero() {
       {/* One even scrim rather than a bottom gradient: the content is centred
           now, so the darkening has to be centred too, or the headline lands
           in the brightest part of the photograph. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/45" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/65" />
 
       <div className="relative z-10 flex w-full max-w-5xl flex-col items-center px-5 pt-20 text-center md:px-8">
         <h1 className="hero-heading text-balance font-serif text-h1 text-cream">

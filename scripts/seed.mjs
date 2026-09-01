@@ -641,12 +641,12 @@ await section("leads and settings", async () => {
     [
       JSON.stringify({
         headingPre: "Over",
-        headingHighlight: "₹85 Crore",
+        headingHighlight: "₹385 Crore",
         headingPost: "in landmark sales",
         sub: "Considered residences across the Tricity, trusted by the most private buyers and sellers.",
         stats: [
-            { value: 120, prefix: "", suffix: "+", label: "Properties Transacted" },
-          { value: 15, prefix: "", suffix: "", label: "Years in the Tricity" },
+          { value: 385, prefix: "₹", suffix: " Cr+", label: "Worth of Real Estate Sold" },
+          { value: 120, prefix: "", suffix: "+", label: "Happy Families" },
         ],
       }),
     ]

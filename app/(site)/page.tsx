@@ -4,8 +4,6 @@ import { Hero } from "@/components/sections/Hero";
 import { CredibilityBand } from "@/components/sections/CredibilityBand";
 import { FeaturedListings } from "@/components/sections/FeaturedListings";
 import { CollectionGrid } from "@/components/CollectionGrid";
-import { ArchReveal } from "@/components/sections/ArchReveal";
-import { Pillars } from "@/components/sections/Pillars";
 import { AboutSplit } from "@/components/sections/AboutSplit";
 import { PressMarquee } from "@/components/sections/PressMarquee";
 import { CTABand } from "@/components/sections/CTABand";
@@ -55,8 +53,6 @@ export default async function Home() {
           </section>
 
           <DealOfWeek deal={activeDeal} />
-          <ArchReveal />
-          <Pillars />
           <Services />
           <AboutSplit />
           <PressMarquee />

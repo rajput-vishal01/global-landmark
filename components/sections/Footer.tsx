@@ -7,11 +7,16 @@ import { listPublishedAreas } from "@/lib/db/areas";
 import { COLLECTIONS } from "@/lib/attributes";
 import { propertiesHref } from "@/lib/properties-url";
 import { CITY_NAMES } from "@/lib/locations";
+import { MENU_GROUPS } from "@/components/sections/nav-links";
 
-// Icons keyed by social label; a label without an icon falls back to text.
+/**
+ * Icons keyed by social label; a label without an icon falls back to text.
+ * Hand-drawn rather than lucide: lucide v1 dropped brand glyphs, and these
+ * are the four marks the client's profiles actually need.
+ */
 const SOCIAL_ICONS: Record<string, ReactNode> = {
   Instagram: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <rect x="3" y="3" width="18" height="18" rx="5" />
       <circle cx="12" cy="12" r="4.5" />
       <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
@@ -26,29 +31,31 @@ const SOCIAL_ICONS: Record<string, ReactNode> = {
     <span className="font-sans text-[13px] font-semibold leading-none">in</span>
   ),
   YouTube: (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <rect x="2.5" y="5.5" width="19" height="13" rx="3.5" />
       <path d="M10 9.5l5 2.5-5 2.5z" fill="currentColor" stroke="none" />
     </svg>
   ),
   Facebook: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M14 8h3V5h-3a4 4 0 0 0-4 4v2H7v3h3v7h3v-7h3l1-3h-4V9a1 1 0 0 1 1-1Z" />
     </svg>
   ),
 };
 
-/** Column label — yellow, so the eye can find a block in a dense navy field. */
 const BLOCK_HEADING =
-  "text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-cta";
+  "text-eyebrow font-sans font-semibold uppercase tracking-[0.2em] text-cta";
+
+const FOOTER_LINK =
+  "text-meta font-sans text-cream/65 transition-colors hover:text-cta";
 
 /**
- * One SEO link block. Rendered as a wrapped, pipe-separated run rather than
- * a stacked list: three of these as columns of <li>s would add a screen of
- * height to every page, which is exactly the footer sprawl we are trying to
- * avoid while still giving crawlers the links.
+ * A stacked link column. The old footer ran these as pipe-separated prose to
+ * save height; at three blocks it read as a wall of grey text with no shape.
+ * Columns cost the same vertical space inside the grid and give the eye a
+ * structure to scan.
  */
-function LinkBlock({
+function LinkColumn({
   heading,
   links,
 }: {
@@ -57,20 +64,12 @@ function LinkBlock({
 }) {
   if (!links.length) return null;
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       <h3 className={BLOCK_HEADING}>{heading}</h3>
-      <ul className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-        {links.map((link, i) => (
-          <li key={link.href} className="flex items-center gap-x-2">
-            {i > 0 && (
-              <span aria-hidden className="text-cream/25">
-                |
-              </span>
-            )}
-            <Link
-              href={link.href}
-              className="text-meta font-sans text-cream/70 transition-colors hover:text-cta"
-            >
+      <ul className="flex flex-col gap-2.5">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link href={link.href} className={FOOTER_LINK}>
               {link.label}
             </Link>
           </li>
@@ -89,142 +88,137 @@ export async function Footer() {
     listPublishedAreas(),
   ]);
 
+  const socials = COMPANY.socials.filter((s) => s.href.startsWith("http"));
+
   return (
     <footer className="bg-navy text-cream">
-      {/* Brand block */}
-      <div className="flex flex-col items-center gap-2 px-5 pb-12 pt-16 text-center md:pt-20">
-        <p className="font-serif text-3xl uppercase tracking-[0.18em] md:text-4xl">
-          {COMPANY.name}
-        </p>
-        <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.35em] text-cta">
-          {COMPANY.tagline}
-        </p>
-        <p className="mt-2 text-meta font-sans text-cream/60">{COMPANY.license}</p>
-      </div>
+      <div className="mx-auto max-w-6xl px-5 md:px-12">
+        {/* Masthead: the wordmark and the newsletter share one row, so the
+            signup reads as part of the brand address block rather than as
+            the isolated full-width band it used to be. */}
+        <div className="grid grid-cols-1 gap-10 border-b border-cream/10 py-14 md:grid-cols-[1.1fr_1fr] md:gap-20 md:py-16">
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="font-serif text-3xl uppercase tracking-[0.16em] md:text-4xl">
+                {COMPANY.name}
+              </p>
+              <p className="mt-1.5 text-eyebrow font-sans font-semibold uppercase tracking-[0.35em] text-cta">
+                {COMPANY.tagline}
+              </p>
+            </div>
+            <p className="max-w-sm text-pretty text-meta font-sans leading-relaxed text-cream/60">
+              {COMPANY.license}
+            </p>
+            {socials.length > 0 && (
+              <ul className="mt-2 flex flex-wrap gap-2.5">
+                {socials.map((social) => (
+                  <li key={social.label}>
+                    <a
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={social.label}
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-cream/20 text-cream/80 transition-colors duration-300 hover:border-cta hover:text-cta"
+                    >
+                      {SOCIAL_ICONS[social.label] ?? (
+                        <span className="font-sans text-[11px]">{social.label}</span>
+                      )}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-      {/* Contact / Office / Social */}
-      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-5 pb-14 md:grid-cols-[1fr_auto_1.4fr_auto_1fr] md:items-start md:gap-0">
-        <div className="flex flex-col gap-3 md:pr-10">
-          <span className={BLOCK_HEADING}>Contact</span>
-          <p className="text-meta font-sans leading-relaxed text-cream/80">
-            <a
-              href={`mailto:${COMPANY.email}`}
-              className="underline decoration-cream/25 underline-offset-4 transition-colors hover:decoration-cta hover:text-cta"
-            >
-              {COMPANY.email}
-            </a>
-            <br />
-            <a href={COMPANY.phoneHref} className="underline decoration-cream/25 underline-offset-4 transition-colors hover:decoration-cta hover:text-cta">
-              {COMPANY.phone}
-            </a>
-            {" · "}
-            <a href={COMPANY.phoneAltHref} className="underline decoration-cream/25 underline-offset-4 transition-colors hover:decoration-cta hover:text-cta">
-              {COMPANY.phoneAlt}
-            </a>
-          </p>
+          <div className="md:pt-2">
+            <NewsletterForm />
+          </div>
         </div>
 
-        <span aria-hidden className="hidden w-px self-stretch bg-cream/15 md:block" />
-
-        <div className="flex flex-col gap-3 md:px-10">
-          <span className={BLOCK_HEADING}>Office</span>
-          <p className="text-meta font-sans leading-relaxed text-cream/80">
-            {COMPANY.addressLines.map((line, i) => (
-              <span key={line}>
-                {i > 0 && <br />}
-                {line}
-              </span>
-            ))}
-          </p>
-          <ul className="mt-2 flex flex-wrap gap-x-0 gap-y-2">
-            {COMPANY.markets.map((city, i) => (
-              <li
-                key={city}
-                className={`text-meta font-sans text-cream/60 ${
-                  i > 0 ? "border-l border-cream/15 pl-4" : ""
-                } ${i < COMPANY.markets.length - 1 ? "pr-4" : ""}`}
-              >
-                {city}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <span aria-hidden className="hidden w-px self-stretch bg-cream/15 md:block" />
-
-        <div className="flex flex-col gap-3 md:pl-10">
-          <span className={BLOCK_HEADING}>Follow</span>
-          <ul className="flex flex-wrap gap-3">
-            {COMPANY.socials.filter((s) => s.href.startsWith("http")).map((social) => (
-              <li key={social.label}>
-                <a
-                  href={social.href}
-                  aria-label={social.label}
-                  className="flex h-11 w-11 items-center justify-center border border-cream/20 text-cream transition-colors duration-300 hover:border-cta hover:text-cta"
-                >
-                  {SOCIAL_ICONS[social.label] ?? (
-                    <span className="font-sans text-[11px]">{social.label}</span>
-                  )}
+        {/* Four columns: how to reach us, then the three crawlable link sets.
+            Every link is derived from live data, so a new area or a retired
+            collection changes this without anyone editing the footer. */}
+        <div className="grid grid-cols-1 gap-10 border-b border-cream/10 py-12 sm:grid-cols-2 lg:grid-cols-4 md:gap-12">
+          <div className="flex flex-col gap-4">
+            <h3 className={BLOCK_HEADING}>Contact</h3>
+            <ul className="flex flex-col gap-2.5">
+              <li>
+                <a href={`mailto:${COMPANY.email}`} className={FOOTER_LINK}>
+                  {COMPANY.email}
                 </a>
               </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+              <li>
+                <a href={COMPANY.phoneHref} className={FOOTER_LINK}>
+                  {COMPANY.phone}
+                </a>
+              </li>
+              <li>
+                <a href={COMPANY.phoneAltHref} className={FOOTER_LINK}>
+                  {COMPANY.phoneAlt}
+                </a>
+              </li>
+            </ul>
+            <address className="not-italic text-meta font-sans leading-relaxed text-cream/60">
+              {COMPANY.addressLines.map((line, i) => (
+                <span key={line}>
+                  {i > 0 && <br />}
+                  {line}
+                </span>
+              ))}
+            </address>
+          </div>
 
-      {/* SEO link blocks — every link derived from live data, so a new area or
-          a retired collection changes this without anyone editing the footer. */}
-      <div className="border-t border-cream/10 px-5 py-10 md:px-12">
-        <div className="mx-auto flex max-w-6xl flex-col gap-8">
-          <LinkBlock
-            heading="Properties by location"
-            links={areas.map((area) => ({
-              href: `/areas/${area.slug}`,
-              label: area.name,
+          <LinkColumn
+            heading="Explore"
+            links={MENU_GROUPS.map((link) => ({
+              href: link.href,
+              label: link.label,
             }))}
           />
-          <LinkBlock
+
+          <LinkColumn
             heading="Browse by collection"
             links={COLLECTIONS.map((collection) => ({
               href: propertiesHref({}, { group: collection.value }),
               label: collection.label,
             }))}
           />
-          <LinkBlock
-            heading="Browse by city"
-            links={CITY_NAMES.map((city) => ({
-              href: propertiesHref({}, { city }),
-              label: city,
-            }))}
+
+          <LinkColumn
+            heading={areas.length ? "Popular localities" : "Browse by city"}
+            links={
+              areas.length
+                ? areas.slice(0, 8).map((area) => ({
+                    href: `/areas/${area.slug}`,
+                    label: area.name,
+                  }))
+                : CITY_NAMES.map((city) => ({
+                    href: propertiesHref({}, { city }),
+                    label: city,
+                  }))
+            }
           />
         </div>
-      </div>
 
-      {/* Newsletter */}
-      <div className="border-t border-cream/10 px-5 py-10 md:px-12">
-        <div className="mx-auto w-full max-w-xl">
-          <NewsletterForm />
+        <div className="flex flex-col gap-5 py-8">
+          <p className="max-w-4xl text-[0.72rem] font-sans leading-relaxed text-cream/45">
+            {FOOTER.disclaimer}
+          </p>
+          {/* RERA line (R-71). Indian property advertising is expected to carry
+              the agency's registration number, and the client has not supplied
+              one yet — so this renders the generic compliance sentence only. Do
+              NOT write a number in here: when the client confirms it, append it
+              to COMPANY.license / COMPANY.compliance in lib/data.ts (or set it
+              through the admin contact override) and it appears here and in the
+              masthead above at once. Never hardcode it at this call site. */}
+          <div className="flex flex-col gap-2 border-t border-cream/10 pt-6 text-meta font-sans text-cream/55 md:flex-row md:items-center md:justify-between">
+            <span>
+              &copy; {new Date().getFullYear()} {COMPANY.legalName}. All rights
+              reserved.
+            </span>
+            <span className="text-cream/45">{COMPANY.compliance}</span>
+          </div>
         </div>
-      </div>
-
-      {/* Disclaimer + compliance */}
-      <div className="border-t border-cream/10 px-5 py-8 md:px-12">
-        <p className="max-w-4xl text-meta font-sans leading-relaxed text-cream/55">
-          {FOOTER.disclaimer}
-        </p>
-        {/* RERA line (R-71). Indian property advertising is expected to carry
-            the agency's registration number, and the client has not supplied
-            one yet — so this renders the generic compliance sentence only. Do
-            NOT write a number in here: when the client confirms it, append it
-            to COMPANY.license / COMPANY.compliance in lib/data.ts (or set it
-            through the admin contact override) and it appears here and in the
-            brand block above at once. Never hardcode it at this call site. */}
-        <p className="mt-4 text-meta font-sans text-cream/70">{COMPANY.compliance}</p>
-      </div>
-
-      <div className="flex flex-col items-start gap-2 border-t border-cream/10 px-5 py-6 text-meta font-sans text-cream/55 md:flex-row md:items-center md:justify-between md:px-12">
-        <span>&copy; {new Date().getFullYear()} {COMPANY.legalName}. All rights reserved.</span>
-        <span>{COMPANY.markets.join(" · ")}</span>
       </div>
     </footer>
   );
