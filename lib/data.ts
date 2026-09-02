@@ -237,8 +237,12 @@ export const ABOUT_PAGE = {
     ["Markets", "Tricity"],
     ["Sold to date", "₹385 Cr+"],
   ] as [string, string][],
-  ethosImage: "/local/tricity-theatre.jpg",
-  ethosImageAlt: "The private screening room at a Tricity residential development",
+  // An exterior, deliberately: the split image above this band is already an
+  // interior, and the ethos copy is about restraint rather than amenities —
+  // a screening room sells facilities, which is the opposite of "we measure
+  // ourselves by what we decline".
+  ethosImage: "/local/tricity-towers-night.jpg",
+  ethosImageAlt: "Lit residences at dusk in a Tricity development",
   ethosHeading:
     "Most brokerages measure themselves by how much they list. We measure ourselves by what we decline.",
   ethosParagraphs: [

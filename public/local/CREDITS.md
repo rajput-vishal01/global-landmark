@@ -11,7 +11,8 @@ They are used because Global Landmark brokers flats in these projects.
 | `tricity-lounge.jpg` | Hero — Lease | Green Lotus (greenlotusgroup.co) |
 | `tricity-pool.jpg` | Hero — Invest | Green Lotus (greenlotusgroup.co) |
 | `tricity-clubhouse.jpg` | About — split image | Green Lotus (greenlotusgroup.co) |
-| `tricity-theatre.jpg` | About — ethos image | Green Lotus (greenlotusgroup.co) |
+| `tricity-theatre.jpg` | Listing gallery (seed) | Green Lotus (greenlotusgroup.co) |
+| `tricity-towers-night.jpg` | About — ethos band | Green Lotus (greenlotusgroup.co) |
 
 ## Before this goes to production
 
