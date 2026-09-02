@@ -759,6 +759,13 @@ export async function deleteProperty(
     await db.delete(properties).where(eq(properties.id, id));
     await deleteStoredFiles(imageKeys, "public");
     await deleteStoredFiles(documentKeys, "private");
+    // Publishing a brochure COPIES it into public/ (syncPublicDocumentFile),
+    // and /api/images/<key> serves anything sitting there without consulting
+    // the database. Sweeping only private/ therefore left a published
+    // document downloadable forever — cached immutably, no row left to
+    // un-publish it. A key that was never published simply is not there,
+    // and deleteStoredFiles treats a missing file as a no-op.
+    await deleteStoredFiles(documentKeys, "public");
   } catch (err) {
     console.error("deleteProperty failed:", err);
     return { error: "Delete failed. Try again." };
@@ -802,10 +809,11 @@ export async function bulkDeleteProperties(
         images.map((r) => r.storageKey).filter((k): k is string => Boolean(k)),
         "public"
       );
-      await deleteStoredFiles(
-        documents.map((r) => r.storageKey),
-        "private"
-      );
+      const documentKeys = documents.map((r) => r.storageKey);
+      await deleteStoredFiles(documentKeys, "private");
+      // See deleteProperty: a published document also has a copy in public/,
+      // which /api/images serves with no database check.
+      await deleteStoredFiles(documentKeys, "public");
     } catch (err) {
       console.error(`bulkDeleteProperties failed for id ${id}:`, err);
       failed++;
