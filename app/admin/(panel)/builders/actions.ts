@@ -8,13 +8,11 @@ import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
 import { slugify } from "@/lib/slugify";
 import type { DeleteState } from "../properties/actions";
+import { textField } from "@/lib/admin/form-fields";
 
 export type BuilderFormState = { error?: string };
 
 /** `formData.get(...)` → trimmed string capped at `max`, or null when empty. */
-function textField(formData: FormData, key: string, max: number): string | null {
-  return String(formData.get(key) ?? "").trim().slice(0, max) || null;
-}
 
 function parseBuilder(formData: FormData) {
   return {

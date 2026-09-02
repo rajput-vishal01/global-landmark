@@ -10,19 +10,11 @@ import { slugify } from "@/lib/slugify";
 import { isLocalityIn } from "@/lib/locations";
 import { parseAmenities } from "@/lib/admin/property-parse";
 import type { DeleteState } from "../properties/actions";
+import { textField, intField } from "@/lib/admin/form-fields";
 
 export type ProjectFormState = { error?: string };
 
-function str(formData: FormData, key: string, max: number): string | null {
-  return String(formData.get(key) ?? "").trim().slice(0, max) || null;
-}
 
-function int(formData: FormData, key: string, max = 100_000): number | null {
-  const raw = String(formData.get(key) ?? "").trim();
-  if (!raw) return null;
-  const n = Number(raw);
-  return Number.isInteger(n) && n >= 0 && n <= max ? n : null;
-}
 
 function date(formData: FormData, key: string): string | null {
   const raw = String(formData.get(key) ?? "").trim();
@@ -44,32 +36,32 @@ async function parseSharedFields(formData: FormData) {
     builderName = row?.name ?? null;
   }
 
-  const city = str(formData, "city", 120);
-  const localityRaw = str(formData, "locality", 200);
+  const city = textField(formData, "city", 120);
+  const localityRaw = textField(formData, "locality", 200);
   const amenities = parseAmenities(String(formData.get("amenitiesJson") ?? "[]")) ?? [];
 
   return {
     builderId,
     builderName,
-    description: str(formData, "description", 2000),
-    reraNumber: str(formData, "reraNumber", 60),
-    possessionStatus: str(formData, "possessionStatus", 60),
+    description: textField(formData, "description", 2000),
+    reraNumber: textField(formData, "reraNumber", 60),
+    possessionStatus: textField(formData, "possessionStatus", 60),
     launchDate: date(formData, "launchDate"),
     possessionDate: date(formData, "possessionDate"),
-    priceAppreciation: str(formData, "priceAppreciation", 2000),
-    totalTowers: int(formData, "totalTowers", 500),
-    totalUnits: int(formData, "totalUnits", 50_000),
-    numberOfFloors: int(formData, "numberOfFloors", 500),
-    greenAreaValue: int(formData, "greenAreaValue", 10_000_000),
-    greenAreaUnit: str(formData, "greenAreaUnit", 20),
+    priceAppreciation: textField(formData, "priceAppreciation", 2000),
+    totalTowers: intField(formData, "totalTowers", 500),
+    totalUnits: intField(formData, "totalUnits", 50_000),
+    numberOfFloors: intField(formData, "numberOfFloors", 500),
+    greenAreaValue: intField(formData, "greenAreaValue", 10_000_000),
+    greenAreaUnit: textField(formData, "greenAreaUnit", 20),
     amenities,
-    country: str(formData, "country", 60) ?? "India",
+    country: textField(formData, "country", 60) ?? "India",
     city,
     // A locality is only meaningful under its own city — the same rule
     // LocationSection's property-side counterpart enforces.
     locality: city && localityRaw && isLocalityIn(city, localityRaw) ? localityRaw : null,
-    sector: str(formData, "sector", 120),
-    coverImage: str(formData, "coverImage", 2000),
+    sector: textField(formData, "sector", 120),
+    coverImage: textField(formData, "coverImage", 2000),
   };
 }
 
@@ -78,7 +70,7 @@ export async function createProject(
   formData: FormData
 ): Promise<ProjectFormState> {
   await requireAdmin();
-  const name = str(formData, "name", 200);
+  const name = textField(formData, "name", 200);
   if (!name) return { error: "A name is required." };
 
   const fields = await parseSharedFields(formData);
@@ -101,7 +93,7 @@ export async function updateProject(
   await requireAdmin();
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id)) return { error: "Missing project id." };
-  const name = str(formData, "name", 200);
+  const name = textField(formData, "name", 200);
   if (!name) return { error: "A name is required." };
 
   const fields = await parseSharedFields(formData);
@@ -159,17 +151,17 @@ export async function createTower(formData: FormData): Promise<void> {
   await requireAdmin();
   const projectId = Number(formData.get("projectId"));
   if (!Number.isInteger(projectId)) redirect("/admin/projects");
-  const name = str(formData, "name", 200);
+  const name = textField(formData, "name", 200);
   if (!name) redirect(`/admin/projects/${projectId}`);
 
   try {
     await db.insert(towers).values({
       projectId,
       name,
-      totalFloors: int(formData, "totalFloors", 500),
-      unitsPerFloor: int(formData, "unitsPerFloor", 500),
-      totalUnits: int(formData, "totalUnits", 50_000),
-      notes: str(formData, "notes", 2000),
+      totalFloors: intField(formData, "totalFloors", 500),
+      unitsPerFloor: intField(formData, "unitsPerFloor", 500),
+      totalUnits: intField(formData, "totalUnits", 50_000),
+      notes: textField(formData, "notes", 2000),
     });
   } catch (err) {
     // Logged, not surfaced — matching duplicateProperty's fail-quiet

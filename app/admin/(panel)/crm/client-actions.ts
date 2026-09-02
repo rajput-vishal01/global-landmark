@@ -7,20 +7,11 @@ import { crmActivities, crmClients, crmDeals, leads } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { DEAL_STAGES } from "@/lib/taxonomy/brokerage";
 import { ACTIVITY_KINDS } from "@/lib/taxonomy/activities";
+import { textField, moneyField } from "@/lib/admin/form-fields";
 
 export type ClientFormState = { error?: string };
 
-function str(formData: FormData, key: string, max: number): string | null {
-  return String(formData.get(key) ?? "").trim().slice(0, max) || null;
-}
 
-/** Whole-rupee money field — same idiom as `int()` in properties/projects actions. */
-function money(formData: FormData, key: string, max = 1_000_000_000): number | null {
-  const raw = String(formData.get(key) ?? "").trim();
-  if (!raw) return null;
-  const n = Number(raw);
-  return Number.isInteger(n) && n >= 0 && n <= max ? n : null;
-}
 
 /** ChecklistField emits its selection as a JSON array in a hidden input. */
 function jsonStringArray(formData: FormData, key: string): string[] {
@@ -38,11 +29,11 @@ function jsonStringArray(formData: FormData, key: string): string[] {
 
 function parseClient(formData: FormData) {
   return {
-    phone: str(formData, "phone", 30),
-    email: str(formData, "email", 200),
-    requirementNotes: str(formData, "requirementNotes", 4000),
-    budgetMin: money(formData, "budgetMin"),
-    budgetMax: money(formData, "budgetMax"),
+    phone: textField(formData, "phone", 30),
+    email: textField(formData, "email", 200),
+    requirementNotes: textField(formData, "requirementNotes", 4000),
+    budgetMin: moneyField(formData, "budgetMin"),
+    budgetMax: moneyField(formData, "budgetMax"),
     preferredLocations: jsonStringArray(formData, "preferredLocationsJson"),
     preferredTypes: jsonStringArray(formData, "preferredTypesJson"),
   };
@@ -132,8 +123,8 @@ export async function addActivity(formData: FormData): Promise<void> {
       await db.insert(crmActivities).values({
         clientId,
         kind,
-        note: str(formData, "note", 4000),
-        author: str(formData, "author", 200),
+        note: textField(formData, "note", 4000),
+        author: textField(formData, "author", 200),
         followUpAt: dateField(formData, "followUpAt"),
         ...(occurredAt ? { occurredAt } : {}),
       });

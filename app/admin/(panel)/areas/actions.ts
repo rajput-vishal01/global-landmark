@@ -16,6 +16,7 @@ import { deleteStoredFiles, storageKeyFromUrl } from "@/lib/storage";
 import { CITY_NAMES, isLocalityIn } from "@/lib/locations";
 import { slugify } from "@/lib/slugify";
 import type { DeleteState } from "../properties/actions";
+import { textField } from "@/lib/admin/form-fields";
 
 export type AreaFormState = { error?: string };
 
@@ -31,9 +32,6 @@ type AreaFields = {
 };
 
 /** `formData.get(...)` → trimmed string capped at `max`, or null when empty. */
-function textField(formData: FormData, key: string, max: number): string | null {
-  return String(formData.get(key) ?? "").trim().slice(0, max) || null;
-}
 
 /**
  * Everything except the name, which the callers validate because it also

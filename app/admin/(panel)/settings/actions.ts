@@ -6,13 +6,10 @@ import { siteSettings } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
 import { SETTING_KEYS, type ContactOverride, type CredibilityOverride } from "@/lib/site-settings";
+import { textField } from "@/lib/admin/form-fields";
 
 export type SettingsFormState = { error?: string };
 
-function str(formData: FormData, key: string, max: number): string | undefined {
-  const v = String(formData.get(key) ?? "").trim().slice(0, max);
-  return v || undefined;
-}
 
 function num(formData: FormData, key: string): number {
   const v = Number(String(formData.get(key) ?? "").trim());
@@ -32,25 +29,28 @@ export async function saveContactSettings(
 ): Promise<SettingsFormState> {
   await requireAdmin();
 
-  const addressLines = str(formData, "addressLines", 500)
-    ?.split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean);
+  // ContactOverride's fields are optional, not nullable: an absent key
+  // falls through to the lib/data.ts default, whereas an explicit null
+  // would override the default with nothing.
+  const opt = (key: string, max: number) => textField(formData, key, max) ?? undefined;
 
   const value: ContactOverride = {
-    addressLines,
-    phone: str(formData, "phone", 40),
-    phoneHref: str(formData, "phoneHref", 40),
-    phoneAlt: str(formData, "phoneAlt", 40),
-    phoneAltHref: str(formData, "phoneAltHref", 40),
-    email: str(formData, "email", 200),
-    officeHours: str(formData, "officeHours", 200),
+    addressLines: opt("addressLines", 500)
+      ?.split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean),
+    phone: opt("phone", 40),
+    phoneHref: opt("phoneHref", 40),
+    phoneAlt: opt("phoneAlt", 40),
+    phoneAltHref: opt("phoneAltHref", 40),
+    email: opt("email", 200),
+    officeHours: opt("officeHours", 200),
     socials: [
-      { label: "Instagram", href: str(formData, "socialInstagram", 300) ?? "#" },
-      { label: "X", href: str(formData, "socialX", 300) ?? "#" },
-      { label: "LinkedIn", href: str(formData, "socialLinkedin", 300) ?? "#" },
-      { label: "YouTube", href: str(formData, "socialYoutube", 300) ?? "#" },
-      { label: "Facebook", href: str(formData, "socialFacebook", 300) ?? "#" },
+      { label: "Instagram", href: opt("socialInstagram", 300) ?? "#" },
+      { label: "X", href: opt("socialX", 300) ?? "#" },
+      { label: "LinkedIn", href: opt("socialLinkedin", 300) ?? "#" },
+      { label: "YouTube", href: opt("socialYoutube", 300) ?? "#" },
+      { label: "Facebook", href: opt("socialFacebook", 300) ?? "#" },
     ].filter((s) => s.href !== "#"),
   };
 
@@ -72,16 +72,16 @@ export async function saveCredibilitySettings(
 
   const stats = [1, 2, 3].map((i) => ({
     value: num(formData, `stat${i}Value`),
-    prefix: str(formData, `stat${i}Prefix`, 10) ?? "",
-    suffix: str(formData, `stat${i}Suffix`, 10) ?? "",
-    label: str(formData, `stat${i}Label`, 100) ?? "",
+    prefix: textField(formData, `stat${i}Prefix`, 10) ?? "",
+    suffix: textField(formData, `stat${i}Suffix`, 10) ?? "",
+    label: textField(formData, `stat${i}Label`, 100) ?? "",
   }));
 
   const value: CredibilityOverride = {
-    headingPre: str(formData, "headingPre", 60),
-    headingHighlight: str(formData, "headingHighlight", 60),
-    headingPost: str(formData, "headingPost", 60),
-    sub: str(formData, "sub", 300),
+    headingPre: textField(formData, "headingPre", 60) ?? undefined,
+    headingHighlight: textField(formData, "headingHighlight", 60) ?? undefined,
+    headingPost: textField(formData, "headingPost", 60) ?? undefined,
+    sub: textField(formData, "sub", 300) ?? undefined,
     stats: stats.some((s) => s.label) ? stats : undefined,
   };
 

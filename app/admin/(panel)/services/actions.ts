@@ -8,15 +8,13 @@ import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
 import { SERVICE_ICON_KEYS } from "@/components/service-icons";
 import type { DeleteState } from "../properties/actions";
+import { textField } from "@/lib/admin/form-fields";
 
 export type ServiceFormState = { error?: string };
 
 const ICON_KEYS: ReadonlySet<string> = new Set(SERVICE_ICON_KEYS);
 
 /** `formData.get(...)` → trimmed string capped at `max`, or null when empty. */
-function textField(formData: FormData, key: string, max: number): string | null {
-  return String(formData.get(key) ?? "").trim().slice(0, max) || null;
-}
 
 /**
  * A link is rendered into next/link's href, so `javascript:` typed here
