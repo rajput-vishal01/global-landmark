@@ -14,8 +14,6 @@ export type ServiceFormState = { error?: string };
 
 const ICON_KEYS: ReadonlySet<string> = new Set(SERVICE_ICON_KEYS);
 
-/** `formData.get(...)` → trimmed string capped at `max`, or null when empty. */
-
 /**
  * A link is rendered into next/link's href, so `javascript:` typed here
  * would execute on a public page. Only a site-relative path or an explicit

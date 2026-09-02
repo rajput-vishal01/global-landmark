@@ -31,8 +31,6 @@ type AreaFields = {
   isPublished: boolean;
 };
 
-/** `formData.get(...)` → trimmed string capped at `max`, or null when empty. */
-
 /**
  * Everything except the name, which the callers validate because it also
  * produces the slug.

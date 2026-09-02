@@ -7,6 +7,26 @@ export type NewsArticle = {
   publishedAt: string | null;
 };
 
+/**
+ * An article link is rendered straight into an `href` on /news, so it has
+ * to be a real http(s) URL — React renders `javascript:` hrefs, it only
+ * warns about them in development.
+ *
+ * newsdata.io is a trusted API and is not the threat here; the point is
+ * that nothing downstream re-checks, and the admin path already applies
+ * exactly this rule to hand-typed links (see services/actions.ts). An
+ * article that fails is dropped rather than rendered unlinked — a news
+ * card with no link is not worth a row.
+ */
+function isSafeHttpUrl(url: string | undefined): url is string {
+  if (!url) return false;
+  try {
+    return /^https?:$/.test(new URL(url).protocol);
+  } catch {
+    return false;
+  }
+}
+
 type NewsdataResponse = {
   status: string;
   nextPage?: string | null;
@@ -169,7 +189,7 @@ export async function fetchRealEstateNews(): Promise<NewsArticle[]> {
     for (const data of responses) {
       if (data.status !== "success" || !Array.isArray(data.results)) continue;
       for (const item of data.results) {
-        if (!item.title || !item.link) continue;
+        if (!item.title || !isSafeHttpUrl(item.link)) continue;
         const bucket = classify(item.title, item.description ?? null);
         if (!bucket) continue;
 

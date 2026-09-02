@@ -12,8 +12,6 @@ import { textField } from "@/lib/admin/form-fields";
 
 export type BuilderFormState = { error?: string };
 
-/** `formData.get(...)` → trimmed string capped at `max`, or null when empty. */
-
 function parseBuilder(formData: FormData) {
   return {
     belongsTo: textField(formData, "belongsTo", 200),
