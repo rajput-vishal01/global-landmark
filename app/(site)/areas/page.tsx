@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { CTABand } from "@/components/sections/CTABand";
-import { AreaCard } from "@/components/sections/AreaGrid";
+import { AreaCard } from "@/components/sections/AreaCard";
 import { PageHeader, SectionHeading, SECTION } from "../_components/page-chrome";
 import { listPublishedAreas } from "@/lib/db/areas";
 import { breadcrumbJsonLd, canonical, jsonLdHtml } from "@/lib/seo";

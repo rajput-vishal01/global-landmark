@@ -11,6 +11,7 @@ import { StatusBadge } from "@/components/admin/BasicDetailsSection";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { daysOnMarket } from "@/lib/taxonomy/status";
 import type { DeleteState } from "@/app/admin/(panel)/properties/actions";
+import { formatDate } from "@/lib/dates";
 
 type Row = {
   id: number;
@@ -29,12 +30,6 @@ type Row = {
 
 type BulkAction = (prev: DeleteState, formData: FormData) => Promise<DeleteState>;
 
-function formatDate(value: Date | null | undefined): string {
-  if (!value) return "—";
-  return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" }).format(
-    new Date(value)
-  );
-}
 
 const TH =
   "text-eyebrow whitespace-nowrap px-4 py-3 text-left font-sans font-medium uppercase tracking-[0.15em] text-ink-muted";

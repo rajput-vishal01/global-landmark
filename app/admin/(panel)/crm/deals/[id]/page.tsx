@@ -7,6 +7,7 @@ import { DealEditForm } from "@/components/admin/DealEditForm";
 import { PaymentForm } from "@/components/admin/PaymentForm";
 import { formatRupees } from "@/lib/attributes";
 import { brokerageAmount, brokeragePending, bpToPercent } from "@/lib/taxonomy/brokerage";
+import { formatDate } from "@/lib/dates";
 
 export const metadata = { title: "Deal" };
 
@@ -22,14 +23,6 @@ async function loadDeal(id: number) {
   });
 }
 
-function formatDate(value: string | Date | null | undefined): string {
-  if (!value) return "—";
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
-}
 
 const STAT = "flex flex-col gap-1 border border-border bg-white p-5";
 const STAT_LABEL = "text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted";

@@ -10,6 +10,7 @@ import { formatIndianShort } from "@/lib/attributes";
 import { brokerageAmount, brokeragePending, isClosedStage } from "@/lib/taxonomy/brokerage";
 import { ACTIVITY_KINDS } from "@/lib/taxonomy/activities";
 import { addActivity, updateClient } from "../client-actions";
+import { formatDateTime } from "@/lib/dates";
 
 export const metadata = { title: "Client" };
 
@@ -31,15 +32,6 @@ async function loadClient(id: number) {
   });
 }
 
-function formatDateTime(value: Date | string): string {
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
 
 function formatDateOnly(value: Date | string): string {
   return new Intl.DateTimeFormat("en-IN", {

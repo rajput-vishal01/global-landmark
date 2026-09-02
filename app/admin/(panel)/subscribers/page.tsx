@@ -1,6 +1,7 @@
 import { desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { newsletterSubscribers } from "@/lib/db/schema";
+import { formatDate } from "@/lib/dates";
 
 export const metadata = { title: "Subscribers" };
 
@@ -93,10 +94,3 @@ export default async function AdminSubscribersPage() {
   );
 }
 
-function formatDate(value: Date): string {
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
-}

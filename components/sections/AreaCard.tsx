@@ -1,12 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
 import type { AreaWithCount } from "@/lib/db/areas";
 
 /**
- * "Explore by location" — the client's most-asked-for missing feature
- * (R-46). A buyer who does not yet know a project name knows a locality,
- * and this is the only entry point on the site that starts from one.
+ * One locality tile on /areas (R-46). A buyer who does not yet know a
+ * project name knows a locality, and the areas index is where that search
+ * starts. (The landing page's own location entry point is LocationGrid,
+ * which filters /properties directly rather than linking to area pages —
+ * the "Explore by Location" band that used to live here was replaced by
+ * it and is gone.)
  *
  * The count on each card is counted live per request; nothing about it is
  * stored, so it cannot drift away from what the landing page actually
@@ -41,36 +43,5 @@ export function AreaCard({ area }: { area: AreaWithCount }) {
         </p>
       </div>
     </Link>
-  );
-}
-
-export function AreaGrid({ areas }: { areas: AreaWithCount[] }) {
-  if (areas.length === 0) return null;
-
-  return (
-    <section className="bg-surface py-16 md:py-24">
-      <div className="mb-10 flex flex-wrap items-end justify-between gap-6 px-5 md:mb-12 md:px-12">
-        <div>
-          <h2 className="text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
-            Explore by Location
-          </h2>
-          <p className="mt-3 max-w-lg text-pretty text-body font-sans text-ink-muted">
-            {areas.length} area{areas.length === 1 ? "" : "s"} across the region,
-            each with everything we currently hold there.
-          </p>
-        </div>
-        <div>
-          <Button href="/areas">View All Areas</Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-5 px-5 sm:grid-cols-2 md:grid-cols-3 md:gap-6 md:px-12">
-        {/* Six is the reference portal's shape and the point at which the row
-            still reads as a set rather than a directory; /areas has the rest. */}
-        {areas.slice(0, 6).map((area) => (
-          <AreaCard key={area.id} area={area} />
-        ))}
-      </div>
-    </section>
   );
 }

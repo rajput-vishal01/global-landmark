@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { properties, tourRequests } from "@/lib/db/schema";
 import { TOUR_STATUS_BADGE } from "@/lib/taxonomy/tours";
 import { TourEditForm } from "./TourEditForm";
+import { formatDateTime } from "@/lib/dates";
 
 export const metadata = { title: "Tour requests" };
 
@@ -94,15 +95,6 @@ async function resolveProperties(
   }
 }
 
-function formatDateTime(value: Date): string {
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
 
 /** `preferred_date` is a DATE column — a plain YYYY-MM-DD string, no zone. */
 function formatDay(value: string): string {

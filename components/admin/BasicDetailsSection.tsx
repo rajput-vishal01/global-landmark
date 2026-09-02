@@ -11,6 +11,7 @@ import {
   STATUS_BADGE,
   type ListingStatus,
 } from "@/lib/attributes";
+import { formatDate } from "@/lib/dates";
 
 /**
  * CFF group 1 — Basic Details. Every field here is INTERNAL: the client was
@@ -188,14 +189,6 @@ function Fact({
   );
 }
 
-function formatDate(value: Date | null | undefined): string {
-  if (!value) return "—";
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
-}
 
 /** Status pill for the admin list. Colours come from the taxonomy. */
 export function StatusBadge({ status }: { status: string }) {

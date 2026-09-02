@@ -6,6 +6,7 @@ import { LEAD_STATUS_BADGE, isLeadStatus } from "@/lib/taxonomy/leads";
 import { LeadFilters, type LeadFilterValues } from "./LeadFilters";
 import { LeadEditForm } from "./LeadEditForm";
 import { convertLead } from "./actions";
+import { formatDateTime } from "@/lib/dates";
 
 export const metadata = { title: "Leads" };
 
@@ -132,15 +133,6 @@ async function resolveProperties(rows: LeadRow[]): Promise<Map<number, PropertyR
   }
 }
 
-function formatDate(value: Date): string {
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
 
 function pageHref(values: LeadFilterValues, page: number): string {
   const params = new URLSearchParams();
@@ -314,7 +306,7 @@ export default async function AdminLeadsPage({
                         </div>
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-meta font-sans text-ink-muted">
-                        {formatDate(lead.createdAt)}
+                        {formatDateTime(lead.createdAt)}
                         {lead.source && <div className="text-ink-muted/70">{lead.source}</div>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3">
