@@ -2,6 +2,7 @@ import { desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { newsletterSubscribers } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
+import { csvField } from "@/lib/csv";
 
 /**
  * Streams the newsletter list as CSV — same contract as the leads export.
@@ -56,9 +57,3 @@ export async function GET() {
   });
 }
 
-/** RFC 4180: quote a field if it carries a comma, quote, or newline; double
- * any quote inside. */
-function csvField(value: unknown): string {
-  const s = String(value ?? "");
-  return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-}

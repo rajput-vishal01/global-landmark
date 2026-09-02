@@ -19,7 +19,7 @@ const out = mkdtempSync(join(tmpdir(), "gl-features-"));
 
 try {
   execSync(
-    `npx tsc lib/emi.ts lib/similar.ts --outDir "${out}" --rootDir lib ` +
+    `npx tsc lib/emi.ts lib/similar.ts lib/csv.ts --outDir "${out}" --rootDir lib ` +
       `--target es2022 --module commonjs --esModuleInterop --skipLibCheck`,
     { stdio: "pipe" }
   );
@@ -28,6 +28,7 @@ try {
   const require = createRequire(join(out, "noop.cjs"));
   const { computeEmi, seedLoanAmount, EMI_DEFAULTS } = require(join(out, "emi.js"));
   const { rankSimilar, similarityScore } = require(join(out, "similar.js"));
+  const { csvField } = require(join(out, "csv.js"));
 
   // --- EMI (R-41) ----------------------------------------------------------
   // ₹50 L at 8.5% over 20 years is ₹43,391/month by the standard amortising
@@ -123,6 +124,31 @@ try {
   );
   assert.equal(rankSimilar(subject, [blank], 3).length, 0, "nothing in common is not shown");
   assert.equal(rankSimilar(subject, [sameLocality, sameCityOnly], 1).length, 1, "limit honoured");
+
+  // --- CSV export escaping -------------------------------------------------
+  // Lead names and messages are typed by anonymous visitors and the client
+  // opens the export in Excel, so a field that starts a formula must stop
+  // being one. Quoting alone does not disarm it.
+  assert.equal(
+    csvField('=HYPERLINK("http://evil","Invoice")'),
+    `"'=HYPERLINK(""http://evil"",""Invoice"")"`,
+    "formula is neutered and still RFC 4180 quoted"
+  );
+  for (const lead of ["=1+1", "+1+1", "@SUM(A1)", "-cmd|'/c calc'!A0", "\tlead"]) {
+    assert.ok(csvField(lead).startsWith("'") || csvField(lead).startsWith(`"'`), `neutered: ${lead}`);
+  }
+
+  // ...but a real number must stay a number, or a numeric column turns into
+  // text in the client's spreadsheet. "+1" is a bare number, not a payload:
+  // a spreadsheet renders it as 1 and there is nothing to run.
+  assert.equal(csvField(-4200), "-4200", "negative numbers are left alone");
+  assert.equal(csvField(-3.5e4), "-35000", "scientific notation is still a number");
+  assert.equal(csvField("+1"), "+1", "a signed number is not a formula");
+
+  assert.equal(csvField('a,b'), '"a,b"', "comma forces quoting");
+  assert.equal(csvField('say "hi"'), '"say ""hi"""', "inner quotes are doubled");
+  assert.equal(csvField("line\nbreak"), '"line\nbreak"', "newline forces quoting");
+  assert.equal(csvField(null), "", "null is an empty field");
 
   console.log("check-features: all assertions passed");
 } finally {

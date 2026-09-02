@@ -10,7 +10,7 @@ import {
   type PublicArea,
   type PublicPropertyWithMedia,
 } from "./public-columns";
-import { IMAGE_ORDER, SITE_DATA_TAG } from "./queries";
+import { failSoft, IMAGE_ORDER, SITE_DATA_TAG } from "./queries";
 import { PUBLIC_STATUSES } from "@/lib/taxonomy/status";
 
 /**
@@ -68,22 +68,6 @@ function areaMatch(area: { matchCity: string | null; matchLocality: string | nul
       : undefined,
   ].filter((c): c is SQL => Boolean(c));
   return or(...clauses) ?? sql`false`;
-}
-
-/** Fail soft: a database blip degrades one section, it does not 500 the page. */
-function failSoft<A extends unknown[], R>(
-  fn: (...args: A) => Promise<R>,
-  label: string,
-  fallback: R
-): (...args: A) => Promise<R> {
-  return async (...args: A) => {
-    try {
-      return await fn(...args);
-    } catch (err) {
-      console.error(`${label} failed:`, err);
-      return fallback;
-    }
-  };
 }
 
 export type AreaWithCount = PublicArea & { propertyCount: number };
