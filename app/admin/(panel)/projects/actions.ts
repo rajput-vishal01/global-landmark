@@ -204,8 +204,15 @@ export async function deleteTower(
   redirect(`/admin/projects/${tower.projectId}`);
 }
 
-/** Builder options for the project form's selector, cheapest-first. */
+/**
+ * Builder options for the project form's selector, cheapest-first.
+ *
+ * Guarded like every other export here: this file is "use server", so an
+ * exported function is a callable endpoint whether or not a page calls it,
+ * and both callers are already admin pages — the check costs nothing.
+ */
 export async function listBuildersForSelect(): Promise<{ id: number; name: string }[]> {
+  await requireAdmin();
   try {
     return await db.select({ id: builders.id, name: builders.name }).from(builders).orderBy(sql`lower(${builders.name})`);
   } catch (err) {
