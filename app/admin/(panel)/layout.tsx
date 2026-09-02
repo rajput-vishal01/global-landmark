@@ -40,6 +40,11 @@ const NAV: NavGroup[] = [
     items: [
       { label: "Leads", href: "/admin/leads" },
       { label: "Tour Requests", href: "/admin/tours" },
+      // Owners offering a property through /sell. It sits with the other
+      // inboxes rather than under Portfolio because the job is the same one
+      // — someone got in touch and is waiting on a reply — even though what
+      // arrives is a draft listing.
+      { label: "Property Submissions", href: "/admin/submissions" },
       { label: "Newsletter Signups", href: "/admin/subscribers" },
     ],
   },

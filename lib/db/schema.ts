@@ -144,6 +144,19 @@ export const properties = pgTable(
     sourceName: text("source_name"),
     /** When it went on the market — distinct from row creation. */
     listedAt: timestamp("listed_at").defaultNow().notNull(),
+    /**
+     * Set only by the public "list your property" form; null for anything an
+     * admin created. Its presence is what makes a row a SUBMISSION rather
+     * than a draft the office started itself, which is the difference the
+     * review queue is built on — `addedBy = 'Owner'` cannot carry that,
+     * since an admin entering an owner-sourced listing by hand sets it too.
+     *
+     * A submission needs no lifecycle vocabulary of its own: it arrives as
+     * `publication_state = 'draft'`, which the single `isPubliclyVisible`
+     * gate already hides, approving it is publishing it, and declining it is
+     * archiving it.
+     */
+    submittedAt: timestamp("submitted_at"),
 
     // --- Location (CFF 3) --------------------------------------------------
     /** Free-text address line, kept as the display fallback for legacy rows. */

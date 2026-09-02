@@ -34,6 +34,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     { url: `${SITE_URL}/news`, changeFrequency: "daily", priority: 0.7 },
     { url: `${SITE_URL}/about`, changeFrequency: "monthly", priority: 0.7 },
+    // Sellers searching "sell my flat in Zirakpur" are the whole point of
+    // this page, so it is worth more than the contact page to a crawler.
+    { url: `${SITE_URL}/sell`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${SITE_URL}/contact`, changeFrequency: "yearly", priority: 0.6 },
   ];
 }
