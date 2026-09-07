@@ -4,7 +4,7 @@ import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { FoundersMessage } from "@/components/sections/FoundersMessage";
 import { Button } from "@/components/ui/Button";
-import { PageHeader, SectionHeading, SECTION } from "../_components/page-chrome";
+import { PageHeader, SectionHeading, SECTION, SECTION_BAND } from "../_components/page-chrome";
 import { ABOUT_PAGE, COMPANY } from "@/lib/data";
 import { canonical } from "@/lib/seo";
 
@@ -76,6 +76,28 @@ export default function AboutPage() {
               ))}
             </div>
           </div>
+        </section>
+
+        {/* Values: a banded list, not cards. Four short claims read as a
+            statement of how the group works; boxing each one would turn
+            them into a feature grid, which is the wrong register for the
+            page they sit on. */}
+        <section className={SECTION_BAND}>
+          <SectionHeading
+            eyebrow="What we stand for"
+            title={ABOUT_PAGE.valuesHeading}
+            aside={ABOUT_PAGE.valuesSub}
+          />
+          <dl className="mx-auto grid max-w-5xl grid-cols-1 gap-x-12 gap-y-10 sm:grid-cols-2">
+            {ABOUT_PAGE.values.map(([term, description]) => (
+              <div key={term} className="flex flex-col gap-3 border-t border-border pt-6">
+                <dt className="font-serif text-h4 text-ink">{term}</dt>
+                <dd className="text-pretty text-body font-sans leading-relaxed text-ink-muted">
+                  {description}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </section>
 
         {/* Founders: a full profile each, not a portrait with a job title.

@@ -106,6 +106,5 @@ export async function resolveCredibility(): Promise<typeof CREDIBILITY> {
     headingHighlight: override.headingHighlight ?? CREDIBILITY.headingHighlight,
     headingPost: override.headingPost ?? CREDIBILITY.headingPost,
     sub: override.sub ?? CREDIBILITY.sub,
-    stats: override.stats?.length ? override.stats : CREDIBILITY.stats,
   };
 }

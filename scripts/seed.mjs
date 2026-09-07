@@ -652,11 +652,10 @@ await section("leads and settings", async () => {
         headingPre: "A portfolio built on",
         headingHighlight: "repeat clients",
         headingPost: "and referrals",
+        // No `stats` key: the counters that used to sit under this band are
+        // gone at the client's instruction, along with every other figure
+        // on the site. See lib/data.ts's CREDIBILITY.
         sub: "Considered residences across the Tricity, trusted by the most private buyers and sellers.",
-        stats: [
-          { value: 385, prefix: "₹", suffix: " Cr+", label: "Worth of Real Estate Sold" },
-          { value: 120, prefix: "", suffix: "+", label: "Happy Families" },
-        ],
       }),
     ]
   );

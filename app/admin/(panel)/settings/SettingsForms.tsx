@@ -144,11 +144,11 @@ export function ContactSettingsForm({ initial }: { initial: ContactOverride | nu
 
 export function CredibilitySettingsForm({ initial }: { initial: CredibilityOverride | null }) {
   const [state, formAction, isPending] = useActionState(saveCredibilitySettings, initialState);
-  const stats = initial?.stats ?? [];
+
 
   return (
     <form action={formAction} className="flex flex-col gap-6 border border-border bg-white p-6">
-      <h2 className="font-serif text-h4 text-ink">Credibility stats</h2>
+      <h2 className="font-serif text-h4 text-ink">Landing page claim</h2>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
         <div className="flex flex-col gap-2">
           <label htmlFor="headingPre" className={LABEL}>
@@ -181,61 +181,6 @@ export function CredibilitySettingsForm({ initial }: { initial: CredibilityOverr
         </label>
         <textarea id="sub" name="sub" rows={2} defaultValue={initial?.sub ?? ""} className={FIELD} />
       </div>
-      {[1, 2, 3].map((i) => {
-        const s = stats[i - 1];
-        return (
-          <div key={i} className="grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-4">
-            <div className="flex flex-col gap-2">
-              <label htmlFor={`stat${i}Value`} className={LABEL}>
-                Stat {i} — value
-              </label>
-              <input
-                id={`stat${i}Value`}
-                name={`stat${i}Value`}
-                type="number"
-                defaultValue={s?.value ?? ""}
-                className={FIELD}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor={`stat${i}Prefix`} className={LABEL}>
-                Prefix
-              </label>
-              <input
-                id={`stat${i}Prefix`}
-                name={`stat${i}Prefix`}
-                type="text"
-                defaultValue={s?.prefix ?? ""}
-                className={FIELD}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor={`stat${i}Suffix`} className={LABEL}>
-                Suffix
-              </label>
-              <input
-                id={`stat${i}Suffix`}
-                name={`stat${i}Suffix`}
-                type="text"
-                defaultValue={s?.suffix ?? ""}
-                className={FIELD}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label htmlFor={`stat${i}Label`} className={LABEL}>
-                Label
-              </label>
-              <input
-                id={`stat${i}Label`}
-                name={`stat${i}Label`}
-                type="text"
-                defaultValue={s?.label ?? ""}
-                className={FIELD}
-              />
-            </div>
-          </div>
-        );
-      })}
       {state.error && (
         <p role="alert" className="font-sans text-meta text-error">
           {state.error}

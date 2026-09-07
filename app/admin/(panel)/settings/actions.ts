@@ -11,11 +11,6 @@ import { textField } from "@/lib/admin/form-fields";
 export type SettingsFormState = { error?: string };
 
 
-function num(formData: FormData, key: string): number {
-  const v = Number(String(formData.get(key) ?? "").trim());
-  return Number.isFinite(v) ? v : 0;
-}
-
 async function upsertSetting(key: string, value: unknown): Promise<void> {
   await db
     .insert(siteSettings)
@@ -70,19 +65,11 @@ export async function saveCredibilitySettings(
 ): Promise<SettingsFormState> {
   await requireAdmin();
 
-  const stats = [1, 2, 3].map((i) => ({
-    value: num(formData, `stat${i}Value`),
-    prefix: textField(formData, `stat${i}Prefix`, 10) ?? "",
-    suffix: textField(formData, `stat${i}Suffix`, 10) ?? "",
-    label: textField(formData, `stat${i}Label`, 100) ?? "",
-  }));
-
   const value: CredibilityOverride = {
     headingPre: textField(formData, "headingPre", 60) ?? undefined,
     headingHighlight: textField(formData, "headingHighlight", 60) ?? undefined,
     headingPost: textField(formData, "headingPost", 60) ?? undefined,
     sub: textField(formData, "sub", 300) ?? undefined,
-    stats: stats.some((s) => s.label) ? stats : undefined,
   };
 
   try {

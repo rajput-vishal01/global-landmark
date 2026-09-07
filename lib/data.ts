@@ -87,24 +87,27 @@ export const HERO = {
   ],
 };
 
+/**
+ * The band under the hero. It carries a claim and nothing to count.
+ *
+ * The counters that used to sit here — value sold, properties transacted,
+ * years in the Tricity — are gone at the client's instruction. No figure
+ * the client cannot back up if a buyer asks appears anywhere on the site,
+ * and that is easiest to guarantee by there being no figure at all.
+ */
 export const CREDIBILITY = {
   eyebrow: "Our Record",
-  // No figure in the heading: the stats directly below already carry the
-  // ₹385 Cr number, and saying it twice in one band read as a duplicate
-  // rather than as emphasis.
   headingPre: "A portfolio built on",
   headingHighlight: "repeat clients",
   headingPost: "and referrals",
   sub: "Considered residences across the Tricity, trusted by the most private buyers and sellers.",
-  stats: [
-    { value: 385, prefix: "₹", suffix: " Cr+", label: "Worth of Real Estate Sold" },
-    { value: 120, prefix: "", suffix: "+", label: "Happy Families" },
-  ],
 };
 
 export const ABOUT_SPLIT = {
-  heading: "Built on landmark sales",
-  body: "The residences other brokerages call career-defining. Our clients stay private. Our results do not.",
+  // Was "Built on landmark sales" — replaced along with the figures, since
+  // it was the same claim in words.
+  heading: "Represented properly, start to finish",
+  body: "Every property walked before it is listed, every enquiry answered by someone who has stood in it. Our clients stay private. Our work does not.",
   image: "/local/tricity-clubhouse.jpg",
   alt: "The residents clubhouse at a Tricity development",
   ctaLabel: "About the Group",
@@ -229,38 +232,67 @@ export const NEWS_PAGE = {
 
 export const ABOUT_PAGE = {
   title: "The Group",
-  // No founding year and no "N years in the market" anywhere on this page,
-  // at the client's instruction — the group is described by how it works,
-  // not by how long it has been working.
+  // No founding year, no "N years in the market" and no dealt-value figure
+  // anywhere on this page, at the client's instruction — the group is
+  // described by how it works, not by how long or how much.
   facts: [
     ["Home office", "Panchkula"],
     ["Markets", "Tricity"],
-    ["Sold to date", "₹385 Cr+"],
+    ["Focus", "Residential & commercial"],
   ] as [string, string][],
   // An exterior, deliberately: the split image above this band is already an
-  // interior, and the ethos copy is about restraint rather than amenities —
-  // a screening room sells facilities, which is the opposite of "we measure
-  // ourselves by what we decline".
+  // interior, and the ethos copy is about how the work is done rather than
+  // about amenities — a screening room sells facilities, which is a
+  // different argument entirely.
   ethosImage: "/local/tricity-towers-night.jpg",
   ethosImageAlt: "Lit residences at dusk in a Tricity development",
   ethosHeading:
-    "Most brokerages measure themselves by how much they list. We measure ourselves by what we decline.",
+    "Most brokerages measure themselves by how much they list. We measure ourselves by what we deliver.",
   ethosParagraphs: [
-    "Global Landmark was founded on a narrow premise: a few exceptional residences, represented completely, will always outperform a large inventory handled adequately. Every property we accept is walked by a principal and prepared as if it were the only one on the books.",
-    "Photography is commissioned per residence. Showings are private and few, and most sales close without ever appearing on a public listing.",
+    "Global Landmark was founded on a narrow premise: a property represented completely will always outperform one handled adequately. Every property we take on is walked by the team and prepared as if it were the only one on the books.",
+    "Photography is commissioned per residence. Viewings are arranged personally, and every enquiry is answered by someone who has actually stood in the property.",
   ],
+
+  /**
+   * Four values, because three reads as a slogan and five as a policy
+   * document. Each is a noun the client used themselves — trust,
+   * transparency, professionalism — plus the one their bios keep returning
+   * to: understanding the requirement before recommending anything.
+   */
+  valuesHeading: "Our Values",
+  valuesSub:
+    "The four things every engagement is held to, whether it is a first flat or a portfolio purchase.",
+  values: [
+    [
+      "Trust",
+      "Advice you can act on, including when it costs us the deal. If a property is wrong for you, we say so.",
+    ],
+    [
+      "Transparency",
+      "The full picture up front — pricing, paperwork, what is settled and what is not. No detail surfaces late.",
+    ],
+    [
+      "Professionalism",
+      "Every property verified and prepared before it is shown, and every enquiry answered by someone who knows it.",
+    ],
+    [
+      "Understanding first",
+      "We start with what you actually need — a home, a plot, an investment — and recommend second.",
+    ],
+  ] as [string, string][],
 
   principalsHeading: "The Founders",
   principalsNote: "One senior team, every engagement",
-  // The client's own profiles, in their words. Photographs are placeholders
-  // until their portraits arrive — swap the image URLs only.
+  // The client's own profiles, in their words. Ashu's portrait is the real
+  // one, supplied by the client; Divya's is still a placeholder and is the
+  // last stock photograph standing in for a named person on this site.
   principals: [
     {
       name: "Ashu Goyal",
       title: "Founder & Managing Director",
-      credentials: "B.A. (Honours) English · MBA, Panjab University",
-      image:
-        "https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=700&auto=format&fit=crop",
+      // Highest qualification first, at the client's instruction.
+      credentials: "MBA, Panjab University · B.A. (Honours) English",
+      image: "/local/ashu-goyal.jpg",
       bio: [
         "Ashu Goyal is the Founder and Managing Director of Global Landmark Realty Group, a professionally managed real estate consultancy focused on Chandigarh, Panchkula, Mohali and emerging investment destinations. He completed his B.A. (Honours) in English and went on to an MBA from Panjab University, an education that shaped his approach to business, communication, client relationships and strategic decision-making.",
         "His focus is on identifying quality properties, promising investment opportunities and value-driven deals, guided by three principles: trust, transparency and professionalism. He works closely with clients to understand their individual goals and guide them through every stage of the property journey — from identifying the right opportunity and evaluating the investment through to negotiation and closing.",
@@ -272,7 +304,7 @@ export const ABOUT_PAGE = {
     {
       name: "Divya Goyal",
       title: "Co-Founder",
-      credentials: "B.Com · LL.B., Panjab University",
+      credentials: "LL.B., Panjab University · B.Com",
       image:
         "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=700&auto=format&fit=crop",
       bio: [

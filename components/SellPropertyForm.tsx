@@ -37,7 +37,7 @@ export function SellPropertyForm() {
         <span aria-hidden className="block h-px w-12 bg-gold" />
         <h2 className="font-serif text-h3 text-ink">Thank you — we have your property</h2>
         <p className="max-w-md text-pretty text-body font-sans text-ink-muted">
-          One of the principals will call you to confirm the details and
+          Our executive will call you to confirm the details and
           arrange photographs. Nothing appears on the site until you and we
           have agreed what it says.
         </p>

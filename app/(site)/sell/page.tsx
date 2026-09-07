@@ -7,7 +7,7 @@ import { canonical } from "@/lib/seo";
 
 const PAGE_TITLE = "Sell your property";
 const PAGE_DESCRIPTION =
-  "List a Tricity home, plot or commercial space with Global Landmark. Send the details and a principal will call you.";
+  "List a Tricity home, plot or commercial space with Global Landmark. Send the details and our team will call you.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,
@@ -31,9 +31,9 @@ const BREADCRUMBS = [
     honest answer ("a person reads it") is also the reassuring one. */
 const STEPS: [string, string][] = [
   ["You send the details", "Three fields are required. The rest we can fill in together."],
-  ["A principal calls you", "To confirm the details, agree a price and arrange photographs."],
+  ["Our executive calls you", "To confirm the details, agree a price and arrange photographs."],
   [
-    "We publish it",
+    "We list it on our website",
     "Only once you have seen how it reads. Nothing goes live automatically, and your phone number and address are never shown.",
   ],
 ];
@@ -46,7 +46,7 @@ export default function SellPage() {
         <PageHeader
           eyebrow="List with us"
           title={PAGE_TITLE}
-          sub="Tell us what you have. A principal reads every submission personally — nothing is published until you have agreed what it says."
+          sub="Tell us what you have. Our team reads every submission personally — nothing is published until you have agreed what it says."
           breadcrumbs={BREADCRUMBS}
         />
 
