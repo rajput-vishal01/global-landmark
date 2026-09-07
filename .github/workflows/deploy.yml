@@ -20,6 +20,27 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      # An unset secret is the empty string, not an error. Without this, a
+      # missing DEPLOY_PATH turns the deploy step into `cd  && bash ...` —
+      # which runs in the home directory and fails with "No such file",
+      # sending you to look at the server instead of at the secrets page.
+      - name: Check the secrets exist
+        env:
+          H: ${{ secrets.DEPLOY_HOST }}
+          U: ${{ secrets.DEPLOY_USER }}
+          P: ${{ secrets.DEPLOY_PATH }}
+          K: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          missing=""
+          [ -n "$H" ] || missing="$missing DEPLOY_HOST"
+          [ -n "$U" ] || missing="$missing DEPLOY_USER"
+          [ -n "$P" ] || missing="$missing DEPLOY_PATH"
+          [ -n "$K" ] || missing="$missing DEPLOY_SSH_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::missing repository secrets:$missing"
+            exit 1
+          fi
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
