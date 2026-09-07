@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { and, count, desc, eq, ilike, inArray, isNotNull, or, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, like, inArray, isNotNull, or, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { leads, properties } from "@/lib/db/schema";
 import { LEAD_STATUS_BADGE, isLeadStatus } from "@/lib/taxonomy/leads";
@@ -48,10 +48,10 @@ async function listPage(
     const pattern = `%${likeEscape(values.q)}%`;
     conditions.push(
       or(
-        ilike(leads.name, pattern),
-        ilike(leads.email, pattern),
-        ilike(leads.phone, pattern),
-        ilike(leads.interest, pattern)
+        like(leads.name, pattern),
+        like(leads.email, pattern),
+        like(leads.phone, pattern),
+        like(leads.interest, pattern)
       )!
     );
   }

@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { and, asc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, eq, like, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   projects,
@@ -103,10 +103,7 @@ async function writeChildTables(
   await tx
     .insert(propertyInternal)
     .values({ propertyId, circleRate: data.circleRate })
-    .onConflictDoUpdate({
-      target: propertyInternal.propertyId,
-      set: { circleRate: data.circleRate },
-    });
+    .onDuplicateKeyUpdate({ set: { circleRate: data.circleRate } });
 }
 
 /**
@@ -145,7 +142,7 @@ async function resolveProjectId(name: string): Promise<number | null> {
     const [row] = await db
       .insert(projects)
       .values({ name, slug: slugify(name) || `project-${Date.now()}` })
-      .returning({ id: projects.id });
+      .$returningId();
     return row.id;
   } catch {
     // Lost a race or slug collision — re-read by name, then by slug (a new
@@ -199,7 +196,7 @@ async function resolveTowerId(
   const [row] = await db
     .insert(towers)
     .values({ projectId, name })
-    .returning({ id: towers.id });
+    .$returningId();
   return row.id;
 }
 
@@ -267,7 +264,7 @@ export async function createProperty(
     .from(properties)
     .where(
       and(
-        ilike(properties.title, fields.title),
+        like(properties.title, fields.title),
         sql`${properties.createdAt} > now() - interval '2 minutes'`
       )
     )
@@ -288,7 +285,7 @@ export async function createProperty(
       const [row] = await tx
         .insert(properties)
         .values({ ...fields, projectId, towerId, slug })
-        .returning({ id: properties.id });
+        .$returningId();
       // Ref code is assigned from the row id, inside the same transaction:
       // the id is already unique and monotonic, so two brokers saving at the
       // same moment cannot collide the way a count(*)+1 sequence would. It
@@ -559,7 +556,7 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
       const [row] = await tx
         .insert(properties)
         .values({ ...fields, projectId, towerId, slug })
-        .returning({ id: properties.id });
+        .$returningId();
       newId = row.id;
       await tx
         .update(properties)
@@ -672,7 +669,7 @@ export async function duplicateProperty(formData: FormData): Promise<void> {
           publicationState: "draft",
           listingStatus: "Available",
         })
-        .returning({ id: properties.id });
+        .$returningId();
 
       await tx
         .update(properties)

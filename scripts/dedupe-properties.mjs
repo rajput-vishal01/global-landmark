@@ -25,7 +25,7 @@
 //      admin UI: gather image/document storage keys, delete the DB row
 //      (cascades child tables), THEN sweep the stored files — never the
 //      other way round.
-import { Client } from "pg";
+import mysql from "mysql2/promise";
 import { deleteStoredFiles } from "../lib/storage.ts";
 
 try {
@@ -36,16 +36,23 @@ try {
 
 const shouldDelete = process.argv.includes("--delete");
 
-const client = new Client({ connectionString: process.env.DATABASE_URL });
-await client.connect();
+const conn = await mysql.createConnection({
+  uri: process.env.DATABASE_URL,
+  charset: "utf8mb4",
+  dateStrings: ["DATE"],
+  multipleStatements: false,
+});
+
+// mysql2 returns [rows, fields] where pg returned { rows }.
+const all = async (sql, params = []) => (await conn.execute(sql, params))[0];
 
 // id asc as the tiebreaker, not just created_at: rows from the same
-// double-submit can share an identical created_at down to the microsecond
+// double-submit can share an identical created_at down to the second
 // (a single INSERT statement evaluates now() once for every row it
 // inserts), which makes created_at alone an unreliable sort key for "which
-// one happened first." id is a serial primary key — strictly monotonic, so
-// it can never tie.
-const { rows } = await client.query(`
+// one happened first." id is an auto-increment primary key — strictly
+// monotonic, so it can never tie.
+const rows = await all(`
   select id, ref_code, title, publication_state, created_at
   from properties
   order by lower(trim(title)), created_at asc, id asc
@@ -62,7 +69,7 @@ const duplicateGroups = [...groups.values()].filter((g) => g.length > 1);
 
 if (duplicateGroups.length === 0) {
   console.log("No duplicate titles found.");
-  await client.end();
+  await conn.end();
   process.exit(0);
 }
 
@@ -96,7 +103,7 @@ console.log(
 
 if (!shouldDelete) {
   console.log("\nDry run only — nothing was deleted. Re-run with --delete to remove the draft duplicates listed above.");
-  await client.end();
+  await conn.end();
   process.exit(0);
 }
 
@@ -109,21 +116,21 @@ for (const group of duplicateGroups) {
     // property_images' TS field is storageKey, but the column is still
     // literally named public_id (a holdover from the Cloudinary-only era —
     // see the comment on propertyImages.storageKey in lib/db/schema.ts).
-    const images = await client.query(
-      `select public_id as storage_key from property_images where property_id = $1`,
+    const images = await all(
+      `select public_id as storage_key from property_images where property_id = ?`,
       [dupe.id]
     );
-    const documents = await client.query(
-      `select storage_key from property_documents where property_id = $1`,
+    const documents = await all(
+      `select storage_key from property_documents where property_id = ?`,
       [dupe.id]
     );
-    await client.query(`delete from properties where id = $1`, [dupe.id]);
+    await conn.execute(`delete from properties where id = ?`, [dupe.id]);
     await deleteStoredFiles(
-      images.rows.map((r) => r.storage_key).filter(Boolean),
+      images.map((r) => r.storage_key).filter(Boolean),
       "public"
     );
     await deleteStoredFiles(
-      documents.rows.map((r) => r.storage_key).filter(Boolean),
+      documents.map((r) => r.storage_key).filter(Boolean),
       "private"
     );
     console.log(`  removed #${dupe.id} (${dupe.ref_code ?? "no ref"}) "${dupe.title}"`);
@@ -132,4 +139,4 @@ for (const group of duplicateGroups) {
 }
 console.log(`\nDone — removed ${removed} duplicate row(s).`);
 
-await client.end();
+await conn.end();

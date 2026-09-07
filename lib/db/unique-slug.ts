@@ -1,4 +1,4 @@
-import { eq, ilike, or } from "drizzle-orm";
+import { eq, like, or } from "drizzle-orm";
 import { db } from "./index";
 import { properties } from "./schema";
 import { slugify } from "@/lib/slugify";
@@ -25,7 +25,7 @@ export async function uniqueSlug(title: string, excludeId?: number): Promise<str
   const existing = await db
     .select({ id: properties.id, slug: properties.slug })
     .from(properties)
-    .where(or(eq(properties.slug, base), ilike(properties.slug, pattern)));
+    .where(or(eq(properties.slug, base), like(properties.slug, pattern)));
 
   const taken = new Set(
     existing.filter((row) => row.id !== excludeId).map((row) => row.slug)

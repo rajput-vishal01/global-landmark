@@ -1,68 +1,12 @@
 {
   "version": "7",
-  "dialect": "postgresql",
+  "dialect": "mysql",
   "entries": [
     {
       "idx": 0,
-      "version": "7",
-      "when": 1787208453788,
-      "tag": "0000_baseline",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1787208522383,
-      "tag": "0001_cff_expansion",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1787210374226,
-      "tag": "0002_local_file_storage",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1787210822138,
-      "tag": "0003_drop_db_blob_storage",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1787239638445,
-      "tag": "0004_crm_foundation",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1787553508737,
-      "tag": "0005_crm_followup",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1787996851969,
-      "tag": "0006_redesign_areas_units_tours_content",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1788245801306,
-      "tag": "0007_testimonial_avatars",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1788337101277,
-      "tag": "0008_public_property_submissions",
+      "version": "5",
+      "when": 1788779535736,
+      "tag": "0000_baseline_mysql",
       "breakpoints": true
     }
   ]

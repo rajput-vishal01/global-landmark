@@ -52,7 +52,7 @@ export async function createClient(
     const [row] = await db
       .insert(crmClients)
       .values({ name, ...parseClient(formData) })
-      .returning({ id: crmClients.id });
+      .$returningId();
     id = row.id;
   } catch (err) {
     console.error("createClient failed:", err);
@@ -163,7 +163,7 @@ export async function convertLeadToClient(leadId: number): Promise<void> {
           requirementNotes: lead.message,
           convertedFromLeadId: lead.id,
         })
-        .returning({ id: crmClients.id });
+        .$returningId();
 
       const propertyIds = lead.propertyIds ?? [];
       if (propertyIds.length) {

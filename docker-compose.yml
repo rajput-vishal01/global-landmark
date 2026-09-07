@@ -1,22 +1,28 @@
 services:
   db:
-    image: postgres:16-alpine
+    # MySQL, matching the production server. utf8mb4 is not optional:
+    # property titles and owner names carry non-Latin scripts, and three-byte
+    # utf8 truncates them.
+    image: mysql:8.4
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
-      POSTGRES_PASSWORD: dev
-      POSTGRES_DB: global_landmark
+      MYSQL_ROOT_PASSWORD: dev
+      MYSQL_DATABASE: global_landmark
+      MYSQL_USER: gl
+      MYSQL_PASSWORD: dev
     ports:
       # Loopback-only — this compose file is for local testing; the DB must
       # never be reachable from the network with this dev password.
-      - "127.0.0.1:5439:5432"
+      - "127.0.0.1:3399:3306"
     volumes:
       # Named volume — data survives container recreation, so seeding is a
       # one-time affair.
-      - pgdata:/var/lib/postgresql/data
+      - mysqldata:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d global_landmark"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-ugl", "-pdev"]
       interval: 3s
       timeout: 3s
-      retries: 15
+      retries: 20
 
   web:
     build: .
@@ -26,7 +32,7 @@ services:
       - .env
     environment:
       # Overrides .env — inside the compose network the DB host is `db`.
-      DATABASE_URL: postgresql://postgres:dev@db:5432/global_landmark
+      DATABASE_URL: mysql://gl:dev@db:3306/global_landmark
       # Uploaded imagery lives on the mounted volume below, NOT inside the
       # image — a rebuild replaces the container filesystem, and without
       # this every property photo would go with it.
@@ -38,5 +44,5 @@ services:
         condition: service_healthy
 
 volumes:
-  pgdata:
+  mysqldata:
   uploads:

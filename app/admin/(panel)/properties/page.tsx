@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { and, asc, count, desc, eq, ilike, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, like, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { projects, properties } from "@/lib/db/schema";
 import { PropertiesTable } from "@/components/admin/PropertiesTable";
@@ -90,10 +90,10 @@ async function listPage(
     // Non-null because every operand is a defined column comparison.
     conditions.push(
       or(
-        ilike(properties.refCode, pattern),
-        ilike(properties.title, pattern),
-        ilike(properties.locality, pattern),
-        ilike(projects.name, pattern)
+        like(properties.refCode, pattern),
+        like(properties.title, pattern),
+        like(properties.locality, pattern),
+        like(projects.name, pattern)
       )!
     );
   }

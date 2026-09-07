@@ -86,7 +86,7 @@ export async function createDeal(
         sharedAmount: fields.sharedAmount,
         assignedTo: fields.assignedTo,
       })
-      .returning({ id: crmDeals.id });
+      .$returningId();
     id = row.id;
   } catch (err) {
     console.error("createDeal failed:", err);

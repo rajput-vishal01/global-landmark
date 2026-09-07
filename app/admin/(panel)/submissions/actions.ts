@@ -32,13 +32,16 @@ async function setState(
   if (!Number.isInteger(id) || id <= 0) return { error: "Missing submission id." };
 
   try {
-    const updated = await db
+    // MySQL has no RETURNING on an UPDATE, so the "did this row exist and
+    // match?" question is answered by affectedRows instead. The WHERE is
+    // unchanged and still carries the isNotNull guard, so this can only ever
+    // touch a public submission — an ordinary listing is not reachable here.
+    const [result] = await db
       .update(properties)
       .set({ publicationState })
-      .where(and(eq(properties.id, id), isNotNull(properties.submittedAt)))
-      .returning({ id: properties.id });
+      .where(and(eq(properties.id, id), isNotNull(properties.submittedAt)));
 
-    if (!updated.length) return { error: "That submission no longer exists." };
+    if (result.affectedRows === 0) return { error: "That submission no longer exists." };
   } catch (err) {
     console.error(`submission ${publicationState} failed for id ${id}:`, err);
     return { error: "Could not update that submission. Try again." };

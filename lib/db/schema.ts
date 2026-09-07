@@ -2,15 +2,15 @@ import {
   bigint,
   boolean,
   date,
-  integer,
-  jsonb,
-  pgEnum,
-  pgTable,
-  serial,
+  int,
+  json,
+  mysqlEnum,
+  mysqlTable,
   text,
   timestamp,
+  varchar,
   index,
-} from "drizzle-orm/pg-core";
+} from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 
 
@@ -35,21 +35,16 @@ import { relations } from "drizzle-orm";
  */
 
 // A listing is either a whole project/society or a single unit within one.
-export const propertyKind = pgEnum("property_kind", ["project", "unit"]);
+export const PROPERTY_KINDS = ["project", "unit"] as const;
 
 // The four hero categories; user-facing labels live in lib/categories.ts.
-export const propertyCategory = pgEnum("property_category", [
-  "sale",
-  "purchase",
-  "lease",
-  "invest",
-]);
+export const PROPERTY_CATEGORIES = ["sale", "purchase", "lease", "invest"] as const;
 
 /** Builders, so a project pitch pulls their details straight from the CRM. */
-export const builders = pgTable("builders", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
-  slug: text("slug").notNull().unique(),
+export const builders = mysqlTable("builders", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
   /** "Belongs To" in the CFF — the builder's home city/region. */
   belongsTo: text("belongs_to"),
   about: text("about"),
@@ -65,31 +60,31 @@ export const builders = pgTable("builders", {
 });
 
 /** Societies/projects managed by the admin ("Nirvana", "Green Lotus", ...). */
-export const projects = pgTable("projects", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
-  slug: text("slug").notNull().unique(),
+export const projects = mysqlTable("projects", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull().unique(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
   description: text("description"),
   /** Kept as free text for legacy rows; `builderId` is the real link. */
   builderName: text("builder_name"),
-  builderId: integer("builder_id").references(() => builders.id, {
+  builderId: int("builder_id").references(() => builders.id, {
     onDelete: "set null",
   }),
   reraNumber: text("rera_number"),
   possessionStatus: text("possession_status"),
-  launchDate: date("launch_date"),
-  possessionDate: date("possession_date"),
+  launchDate: date("launch_date", { mode: "string" }),
+  possessionDate: date("possession_date", { mode: "string" }),
   /** Internal — a projection, not a published claim. */
   priceAppreciation: text("price_appreciation"),
-  totalTowers: integer("total_towers"),
-  totalUnits: integer("total_units"),
-  numberOfFloors: integer("number_of_floors"),
-  greenAreaValue: integer("green_area_value"),
+  totalTowers: int("total_towers"),
+  totalUnits: int("total_units"),
+  numberOfFloors: int("number_of_floors"),
+  greenAreaValue: int("green_area_value"),
   greenAreaUnit: text("green_area_unit"),
   /** Society-wide amenities; a unit inherits these instead of re-entering. */
-  amenities: text("amenities").array(),
+  amenities: json("amenities").$type<string[]>(),
   country: text("country").default("India"),
-  city: text("city"),
+  city: varchar("city", { length: 100 }),
   locality: text("locality"),
   sector: text("sector"),
   coverImage: text("cover_image"),
@@ -97,15 +92,15 @@ export const projects = pgTable("projects", {
 });
 
 /** Towers within a project — a single building can hold many available units. */
-export const towers = pgTable("towers", {
-  id: serial("id").primaryKey(),
-  projectId: integer("project_id")
+export const towers = mysqlTable("towers", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("project_id")
     .notNull()
     .references(() => projects.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  totalFloors: integer("total_floors"),
-  unitsPerFloor: integer("units_per_floor"),
-  totalUnits: integer("total_units"),
+  name: varchar("name", { length: 255 }).notNull(),
+  totalFloors: int("total_floors"),
+  unitsPerFloor: int("units_per_floor"),
+  totalUnits: int("total_units"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -117,28 +112,28 @@ export const towers = pgTable("towers", {
  * decision) but only published when `showPricePublicly` is set, which
  * defaults to false. Circle rate is NOT here; it is internal always.
  */
-export const properties = pgTable(
+export const properties = mysqlTable(
   "properties",
   {
-    id: serial("id").primaryKey(),
-    slug: text("slug").notNull().unique(),
+    id: int("id").autoincrement().primaryKey(),
+    slug: varchar("slug", { length: 255 }).notNull().unique(),
     title: text("title").notNull(),
-    kind: propertyKind("kind").notNull().default("unit"),
-    category: propertyCategory("category").notNull().default("sale"),
-    projectId: integer("project_id").references(() => projects.id, {
+    kind: mysqlEnum("kind", PROPERTY_KINDS).notNull().default("unit"),
+    category: mysqlEnum("category", PROPERTY_CATEGORIES).notNull().default("sale"),
+    projectId: int("project_id").references(() => projects.id, {
       onDelete: "set null",
     }),
-    towerId: integer("tower_id").references(() => towers.id, {
+    towerId: int("tower_id").references(() => towers.id, {
       onDelete: "set null",
     }),
     description: text("description").notNull().default(""),
 
     // --- Provenance and lifecycle (CFF 1) — all internal ------------------
     /** GL-PKL-26-0142. Assigned once on insert, never reused. */
-    refCode: text("ref_code").unique(),
+    refCode: varchar("ref_code", { length: 40 }).unique(),
     /** draft | published | archived. Only published + Available is public. */
-    publicationState: text("publication_state").notNull().default("draft"),
-    listingStatus: text("listing_status").notNull().default("Available"),
+    publicationState: varchar("publication_state", { length: 40 }).notNull().default("draft"),
+    listingStatus: varchar("listing_status", { length: 40 }).notNull().default("Available"),
     /** Global Landmark | Dealer | Owner, with `sourceName` naming which. */
     addedBy: text("added_by").notNull().default("Global Landmark"),
     sourceName: text("source_name"),
@@ -162,13 +157,13 @@ export const properties = pgTable(
     /** Free-text address line, kept as the display fallback for legacy rows. */
     location: text("location").notNull().default(""),
     country: text("country").default("India"),
-    city: text("city"),
+    city: varchar("city", { length: 100 }),
     locality: text("locality"),
     sector: text("sector"),
     block: text("block"),
     society: text("society"),
-    floorNumber: integer("floor_number"),
-    totalFloors: integer("total_floors"),
+    floorNumber: int("floor_number"),
+    totalFloors: int("total_floors"),
     /** CONFIRM whether this may be shown publicly; treated as internal. */
     unitNumber: text("unit_number"),
     /**
@@ -187,76 +182,76 @@ export const properties = pgTable(
     showMapPublicly: boolean("show_map_publicly").notNull().default(false),
 
     // --- Classification (CFF 2, 7, 10, 11, 12) -----------------------------
-    propertyType: text("property_type"),
+    propertyType: varchar("property_type", { length: 100 }),
     /** Pre-Leased / Investment — deal shape, orthogonal to the type. */
-    dealAttributes: text("deal_attributes").array(),
+    dealAttributes: json("deal_attributes").$type<string[]>(),
     /** One value for a unit. */
     configuration: text("configuration"),
     /** Projects advertise a range ("2-4 BHK"), which one value cannot hold. */
-    configurations: text("configurations").array(),
-    beds: integer("beds"),
-    baths: integer("baths"),
-    balconies: integer("balconies"),
-    roomFlags: text("room_flags").array(),
+    configurations: json("configurations").$type<string[]>(),
+    beds: int("beds"),
+    baths: int("baths"),
+    balconies: int("balconies"),
+    roomFlags: json("room_flags").$type<string[]>(),
     facing: text("facing"),
     possessionStatus: text("possession_status"),
     propertyAge: text("property_age"),
 
     // --- Area (CFF 5) ------------------------------------------------------
     /** Legacy display area — the value shown when no measure is specified. */
-    areaValue: integer("area_value"),
+    areaValue: int("area_value"),
     areaUnit: text("area_unit").notNull().default("sqft"),
-    plotArea: integer("plot_area"),
+    plotArea: int("plot_area"),
     plotAreaUnit: text("plot_area_unit"),
-    builtUpArea: integer("built_up_area"),
+    builtUpArea: int("built_up_area"),
     builtUpAreaUnit: text("built_up_area_unit"),
-    superArea: integer("super_area"),
+    superArea: int("super_area"),
     superAreaUnit: text("super_area_unit"),
-    carpetArea: integer("carpet_area"),
+    carpetArea: int("carpet_area"),
     carpetAreaUnit: text("carpet_area_unit"),
     /**
      * Primary area normalised to sq.ft, written by the server action. Exists
      * only so filtering and sorting can compare a 500 sq.yd plot against a
      * 2000 sq.ft flat; never rendered.
      */
-    areaSqft: integer("area_sqft"),
-    frontFeet: integer("front_feet"),
-    depthFeet: integer("depth_feet"),
-    plcAttributes: text("plc_attributes").array(),
+    areaSqft: int("area_sqft"),
+    frontFeet: int("front_feet"),
+    depthFeet: int("depth_feet"),
+    plcAttributes: json("plc_attributes").$type<string[]>(),
 
     // --- Specifications (CFF 20) -------------------------------------------
-    roadWidth: integer("road_width"),
-    entranceWidth: integer("entrance_width"),
-    ceilingHeight: integer("ceiling_height"),
+    roadWidth: int("road_width"),
+    entranceWidth: int("entrance_width"),
+    ceilingHeight: int("ceiling_height"),
     isCorner: boolean("is_corner").default(false),
     isParkFacing: boolean("is_park_facing").default(false),
 
     // --- Features (CFF 9, 15, 16) ------------------------------------------
     furnishing: text("furnishing"),
-    furnishingInventory: text("furnishing_inventory").array(),
-    amenities: text("amenities").array(),
-    parkingTypes: text("parking_types").array(),
-    parkingSlots: integer("parking_slots"),
+    furnishingInventory: json("furnishing_inventory").$type<string[]>(),
+    amenities: json("amenities").$type<string[]>(),
+    parkingTypes: json("parking_types").$type<string[]>(),
+    parkingSlots: int("parking_slots"),
 
     // --- Legal, documentation, loan (CFF 13, 14, 17) -----------------------
     /** Public subset only; "Mortgaged" lives on property_internal. */
-    legalFlags: text("legal_flags").array(),
+    legalFlags: json("legal_flags").$type<string[]>(),
     reraNumber: text("rera_number"),
     /** Internal by default — CONFIRM a trimmed public version. */
-    documentationFlags: text("documentation_flags").array(),
-    loanFlags: text("loan_flags").array(),
-    banksOnPanel: text("banks_on_panel").array(),
+    documentationFlags: json("documentation_flags").$type<string[]>(),
+    loanFlags: json("loan_flags").$type<string[]>(),
+    banksOnPanel: json("banks_on_panel").$type<string[]>(),
 
     // --- Price (CFF 6) -----------------------------------------------------
     /** Rupees. bigint because int4 tops out around 214 Cr. */
     demandPrice: bigint("demand_price", { mode: "number" }),
-    perSqftRate: integer("per_sqft_rate"),
+    perSqftRate: int("per_sqft_rate"),
     isNegotiable: boolean("is_negotiable").default(false),
     /** Off by default — "Price on request" stays the standing behaviour. */
     showPricePublicly: boolean("show_price_publicly").notNull().default(false),
 
     /** Admin-defined custom attributes — anything not covered above. */
-    extras: jsonb("extras").$type<{ title: string; description: string }[]>(),
+    extras: json("extras").$type<{ title: string; description: string }[]>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
@@ -274,11 +269,11 @@ export const properties = pgTable(
 );
 
 /** File media. `storageKey` is the opaque handle used to delete the asset. */
-export const propertyImages = pgTable(
+export const propertyImages = mysqlTable(
   "property_images",
   {
-    id: serial("id").primaryKey(),
-    propertyId: integer("property_id")
+    id: int("id").autoincrement().primaryKey(),
+    propertyId: int("property_id")
       .notNull()
       .references(() => properties.id, { onDelete: "cascade" }),
     url: text("url").notNull(),
@@ -295,7 +290,7 @@ export const propertyImages = pgTable(
     /** cover | interior | exterior | floor_plan | other. One cover per property. */
     mediaKind: text("media_kind").notNull().default("other"),
     alt: text("alt").notNull().default(""),
-    sortOrder: integer("sort_order").notNull().default(0),
+    sortOrder: int("sort_order").notNull().default(0),
   },
   (t) => [index("property_images_property_idx").on(t.propertyId, t.sortOrder)]
 );
@@ -305,17 +300,17 @@ export const propertyImages = pgTable(
  * from `property_images` because these are URLs to embed, not files we host,
  * and each embed host needs its own CSP `frame-src` entry before it renders.
  */
-export const propertyMedia = pgTable(
+export const propertyMedia = mysqlTable(
   "property_media",
   {
-    id: serial("id").primaryKey(),
-    propertyId: integer("property_id")
+    id: int("id").autoincrement().primaryKey(),
+    propertyId: int("property_id")
       .notNull()
       .references(() => properties.id, { onDelete: "cascade" }),
     kind: text("kind").notNull(),
     url: text("url").notNull(),
     label: text("label").notNull().default(""),
-    sortOrder: integer("sort_order").notNull().default(0),
+    sortOrder: int("sort_order").notNull().default(0),
   },
   (t) => [index("property_media_property_idx").on(t.propertyId, t.sortOrder)]
 );
@@ -327,18 +322,18 @@ export const propertyMedia = pgTable(
  * phone numbers must never reach a public component. Multiple rows per
  * property because joint ownership is the norm.
  */
-export const propertyOwners = pgTable(
+export const propertyOwners = mysqlTable(
   "property_owners",
   {
-    id: serial("id").primaryKey(),
-    propertyId: integer("property_id")
+    id: int("id").autoincrement().primaryKey(),
+    propertyId: int("property_id")
       .notNull()
       .references(() => properties.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
     sellerCategory: text("seller_category"),
     ownerType: text("owner_type"),
-    ownerCount: integer("owner_count"),
-    mobile: text("mobile"),
+    ownerCount: int("owner_count"),
+    mobile: varchar("mobile", { length: 40 }),
     altMobile: text("alt_mobile"),
     address: text("address"),
     notes: text("notes"),
@@ -353,8 +348,8 @@ export const propertyOwners = pgTable(
 );
 
 /** 1:1 internal facts. Circle rate lives here and nowhere else. */
-export const propertyInternal = pgTable("property_internal", {
-  propertyId: integer("property_id")
+export const propertyInternal = mysqlTable("property_internal", {
+  propertyId: int("property_id")
     .primaryKey()
     .references(() => properties.id, { onDelete: "cascade" }),
   circleRate: bigint("circle_rate", { mode: "number" }),
@@ -369,11 +364,11 @@ export const propertyInternal = pgTable("property_internal", {
  * Charges beyond the demand price. A row per charge so the list grows
  * without a migration and each carries its own basis.
  */
-export const propertyCharges = pgTable(
+export const propertyCharges = mysqlTable(
   "property_charges",
   {
-    id: serial("id").primaryKey(),
-    propertyId: integer("property_id")
+    id: int("id").autoincrement().primaryKey(),
+    propertyId: int("property_id")
       .notNull()
       .references(() => properties.id, { onDelete: "cascade" }),
     chargeType: text("charge_type").notNull(),
@@ -388,11 +383,11 @@ export const propertyCharges = pgTable(
 );
 
 /** Every demand-price change, so a negotiation has a paper trail. */
-export const propertyPriceHistory = pgTable(
+export const propertyPriceHistory = mysqlTable(
   "property_price_history",
   {
-    id: serial("id").primaryKey(),
-    propertyId: integer("property_id")
+    id: int("id").autoincrement().primaryKey(),
+    propertyId: int("property_id")
       .notNull()
       .references(() => properties.id, { onDelete: "cascade" }),
     demandPrice: bigint("demand_price", { mode: "number" }),
@@ -408,18 +403,18 @@ export const propertyPriceHistory = pgTable(
  * by an admin-gated route that calls requireAdmin() and streams the bytes.
  * Never put these in a sitemap, JSON-LD or an <Image> src.
  */
-export const propertyDocuments = pgTable(
+export const propertyDocuments = mysqlTable(
   "property_documents",
   {
-    id: serial("id").primaryKey(),
-    propertyId: integer("property_id")
+    id: int("id").autoincrement().primaryKey(),
+    propertyId: int("property_id")
       .notNull()
       .references(() => properties.id, { onDelete: "cascade" }),
     docType: text("doc_type").notNull(),
     storageKey: text("storage_key").notNull(),
     fileName: text("file_name").notNull(),
     mimeType: text("mime_type").notNull(),
-    sizeBytes: integer("size_bytes").notNull(),
+    sizeBytes: int("size_bytes").notNull(),
     note: text("note"),
     uploadedBy: text("uploaded_by"),
     uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
@@ -454,21 +449,21 @@ export const propertyDocuments = pgTable(
  * Every enquiry, persisted before the email is sent so an SMTP failure
  * cannot lose a lead.
  */
-export const leads = pgTable(
+export const leads = mysqlTable(
   "leads",
   {
-    id: serial("id").primaryKey(),
-    name: text("name").notNull(),
-    email: text("email"),
+    id: int("id").autoincrement().primaryKey(),
+    name: varchar("name", { length: 255 }).notNull(),
+    email: varchar("email", { length: 255 }),
     phone: text("phone"),
     interest: text("interest"),
     message: text("message"),
     /** Shortlisted properties when the enquiry came from the cart. */
-    propertyIds: integer("property_ids").array(),
+    propertyIds: json("property_ids").$type<number[]>(),
     pageUrl: text("page_url"),
     source: text("source"),
-    utm: jsonb("utm").$type<Record<string, string>>(),
-    status: text("status").notNull().default("new"),
+    utm: json("utm").$type<Record<string, string>>(),
+    status: varchar("status", { length: 40 }).notNull().default("new"),
     assignedTo: text("assigned_to"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
@@ -479,18 +474,18 @@ export const leads = pgTable(
 // Named crm_* deliberately: `deals` (above) is the unrelated Deal-of-the-Week
 // marketing feature, and the two must never collide on a shared name.
 
-export const crmClients = pgTable("crm_clients", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
+export const crmClients = mysqlTable("crm_clients", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
   phone: text("phone"),
-  email: text("email"),
+  email: varchar("email", { length: 255 }),
   requirementNotes: text("requirement_notes"),
   budgetMin: bigint("budget_min", { mode: "number" }),
   budgetMax: bigint("budget_max", { mode: "number" }),
-  preferredLocations: text("preferred_locations").array(),
-  preferredTypes: text("preferred_types").array(),
+  preferredLocations: json("preferred_locations").$type<string[]>(),
+  preferredTypes: json("preferred_types").$type<string[]>(),
   /** Set when this client originated from a website enquiry (R-30). */
-  convertedFromLeadId: integer("converted_from_lead_id").references(() => leads.id, {
+  convertedFromLeadId: int("converted_from_lead_id").references(() => leads.id, {
     onDelete: "set null",
   }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -503,17 +498,17 @@ export const crmClients = pgTable("crm_clients", {
  * properties becomes one client and three deals on conversion, not one
  * deal juggling three properties.
  */
-export const crmDeals = pgTable(
+export const crmDeals = mysqlTable(
   "crm_deals",
   {
-    id: serial("id").primaryKey(),
-    clientId: integer("client_id")
+    id: int("id").autoincrement().primaryKey(),
+    clientId: int("client_id")
       .notNull()
       .references(() => crmClients.id, { onDelete: "cascade" }),
-    propertyId: integer("property_id").references(() => properties.id, {
+    propertyId: int("property_id").references(() => properties.id, {
       onDelete: "set null",
     }),
-    stage: text("stage").notNull().default("Enquiry"),
+    stage: varchar("stage", { length: 40 }).notNull().default("Enquiry"),
     dealValue: bigint("deal_value", { mode: "number" }),
     /** Percent of dealValue; the stored brokerage amount below can override it. */
     brokeragePercent: bigint("brokerage_percent_bp", { mode: "number" }),
@@ -533,15 +528,15 @@ export const crmDeals = pgTable(
 );
 
 /** Dated payment entries so partial brokerage receipts add up (R-31). */
-export const crmPayments = pgTable(
+export const crmPayments = mysqlTable(
   "crm_payments",
   {
-    id: serial("id").primaryKey(),
-    dealId: integer("deal_id")
+    id: int("id").autoincrement().primaryKey(),
+    dealId: int("deal_id")
       .notNull()
       .references(() => crmDeals.id, { onDelete: "cascade" }),
     amount: bigint("amount", { mode: "number" }).notNull(),
-    paidAt: date("paid_at").notNull(),
+    paidAt: date("paid_at", { mode: "string" }).notNull(),
     mode: text("mode"),
     note: text("note"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -550,14 +545,14 @@ export const crmPayments = pgTable(
 );
 
 /** Call / site visit / note / WhatsApp / email, timestamped and authored (R-30). */
-export const crmActivities = pgTable(
+export const crmActivities = mysqlTable(
   "crm_activities",
   {
-    id: serial("id").primaryKey(),
-    clientId: integer("client_id")
+    id: int("id").autoincrement().primaryKey(),
+    clientId: int("client_id")
       .notNull()
       .references(() => crmClients.id, { onDelete: "cascade" }),
-    dealId: integer("deal_id").references(() => crmDeals.id, { onDelete: "cascade" }),
+    dealId: int("deal_id").references(() => crmDeals.id, { onDelete: "cascade" }),
     kind: text("kind").notNull(),
     note: text("note"),
     author: text("author"),
@@ -597,23 +592,23 @@ export const crmActivitiesRelations = relations(crmActivities, ({ one }) => ({
  * Admin-editable overrides for company details and stats, so changing a
  * phone number is not a code deploy. lib/data.ts stays the fallback default.
  */
-export const siteSettings = pgTable("site_settings", {
-  key: text("key").primaryKey(),
-  value: jsonb("value").notNull(),
+export const siteSettings = mysqlTable("site_settings", {
+  key: varchar("key", { length: 100 }).primaryKey(),
+  value: json("value").notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const videoProvider = pgEnum("video_provider", ["youtube", "instagram"]);
+export const VIDEO_PROVIDERS = ["youtube", "instagram"] as const;
 
 /** Video testimonials/reels, managed in the admin, shown on the landing page. */
-export const testimonialVideos = pgTable("testimonial_videos", {
-  id: serial("id").primaryKey(),
-  provider: videoProvider("provider").notNull().default("youtube"),
+export const testimonialVideos = mysqlTable("testimonial_videos", {
+  id: int("id").autoincrement().primaryKey(),
+  provider: mysqlEnum("provider", VIDEO_PROVIDERS).notNull().default("youtube"),
   /** YouTube 11-char id, or Instagram post/reel shortcode. */
   videoId: text("video_id").notNull(),
   /** Caption under the video — e.g. "Grand Mega Township, Panchkula Extension". */
   caption: text("caption").notNull().default(""),
-  sortOrder: integer("sort_order").notNull().default(0),
+  sortOrder: int("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -624,13 +619,13 @@ export type TestimonialVideo = typeof testimonialVideos.$inferSelect;
  * NOTE: this is the marketing feature, not the CRM. The CRM's pipeline
  * tables are named crm_* precisely so they never collide with this.
  */
-export const deals = pgTable("deals", {
-  id: serial("id").primaryKey(),
-  propertyId: integer("property_id")
+export const deals = mysqlTable("deals", {
+  id: int("id").autoincrement().primaryKey(),
+  propertyId: int("property_id")
     .notNull()
     .references(() => properties.id, { onDelete: "cascade" }),
-  startsAt: date("starts_at").notNull(),
-  endsAt: date("ends_at").notNull(),
+  startsAt: date("starts_at", { mode: "string" }).notNull(),
+  endsAt: date("ends_at", { mode: "string" }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -650,14 +645,14 @@ export const deals = pgTable("deals", {
  * by virtue of where it is, and making the broker maintain that link by
  * hand on every save is work the address already did.
  */
-export const areas = pgTable(
+export const areas = mysqlTable(
   "areas",
   {
-    id: serial("id").primaryKey(),
-    name: text("name").notNull(),
-    slug: text("slug").notNull().unique(),
+    id: int("id").autoincrement().primaryKey(),
+    name: varchar("name", { length: 255 }).notNull(),
+    slug: varchar("slug", { length: 255 }).notNull().unique(),
     /** Which city this area sits in — drives the "6 Areas of X" grouping. */
-    city: text("city"),
+    city: varchar("city", { length: 100 }),
     /** Value matched against properties.city (case-insensitive). */
     matchCity: text("match_city"),
     /** Value matched against properties.locality (case-insensitive). */
@@ -665,7 +660,7 @@ export const areas = pgTable(
     coverImage: text("cover_image"),
     coverImageKey: text("cover_image_key"),
     blurb: text("blurb"),
-    sortOrder: integer("sort_order").notNull().default(0),
+    sortOrder: int("sort_order").notNull().default(0),
     isPublished: boolean("is_published").notNull().default(false),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -685,20 +680,20 @@ export type Area = typeof areas.$inferSelect;
  * not the negotiated one — the internal demand price stays on `properties`
  * behind `showPricePublicly`.
  */
-export const propertyUnitSizes = pgTable(
+export const propertyUnitSizes = mysqlTable(
   "property_unit_sizes",
   {
-    id: serial("id").primaryKey(),
-    propertyId: integer("property_id")
+    id: int("id").autoincrement().primaryKey(),
+    propertyId: int("property_id")
       .notNull()
       .references(() => properties.id, { onDelete: "cascade" }),
     /** "2 BHK", "3 + S BHK" — free text, the client's own vocabulary. */
     unitLabel: text("unit_label").notNull(),
-    areaValue: integer("area_value"),
+    areaValue: int("area_value"),
     areaUnit: text("area_unit"),
     /** Whole rupees, same convention as every other money column here. */
     price: bigint("price", { mode: "number" }),
-    sortOrder: integer("sort_order").notNull().default(0),
+    sortOrder: int("sort_order").notNull().default(0),
   },
   (t) => [index("property_unit_sizes_property_idx").on(t.propertyId, t.sortOrder)]
 );
@@ -709,38 +704,38 @@ export const propertyUnitSizes = pgTable(
  * columns into the enquiry inbox would blur two things the broker works
  * through differently. Internal — never read by a public query.
  */
-export const tourRequests = pgTable(
+export const tourRequests = mysqlTable(
   "tour_requests",
   {
-    id: serial("id").primaryKey(),
-    propertyId: integer("property_id").references(() => properties.id, {
+    id: int("id").autoincrement().primaryKey(),
+    propertyId: int("property_id").references(() => properties.id, {
       onDelete: "set null",
     }),
-    name: text("name").notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
     phone: text("phone"),
-    email: text("email"),
+    email: varchar("email", { length: 255 }),
     /** In person / video call — the reference portal offers both. */
     tourType: text("tour_type"),
-    preferredDate: date("preferred_date"),
+    preferredDate: date("preferred_date", { mode: "string" }),
     preferredTime: text("preferred_time"),
     message: text("message"),
-    status: text("status").notNull().default("new"),
+    status: varchar("status", { length: 40 }).notNull().default("new"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [index("tour_requests_status_idx").on(t.status, t.createdAt)]
 );
 
 /** Advisory services shown on the landing page ("Buying or Selling", "Home Loan"). */
-export const services = pgTable(
+export const services = mysqlTable(
   "services",
   {
-    id: serial("id").primaryKey(),
+    id: int("id").autoincrement().primaryKey(),
     title: text("title").notNull(),
     description: text("description"),
     /** Key into a fixed inline-SVG set in the UI — not a URL, not user HTML. */
     icon: text("icon"),
     href: text("href"),
-    sortOrder: integer("sort_order").notNull().default(0),
+    sortOrder: int("sort_order").notNull().default(0),
     isPublished: boolean("is_published").notNull().default(true),
   },
   (t) => [index("services_published_idx").on(t.isPublished, t.sortOrder)]
@@ -751,10 +746,10 @@ export const services = pgTable(
  * than a nullable-everything merge: a quote and a reel share only a sort
  * order, and the admin screens for them look nothing alike.
  */
-export const textTestimonials = pgTable(
+export const textTestimonials = mysqlTable(
   "text_testimonials",
   {
-    id: serial("id").primaryKey(),
+    id: int("id").autoincrement().primaryKey(),
     quote: text("quote").notNull(),
     author: text("author").notNull(),
     /** "Bought in Sector 71" — context that makes the quote credible. */
@@ -765,7 +760,7 @@ export const textTestimonials = pgTable(
      * back waiting for a headshot.
      */
     avatarUrl: text("avatar_url"),
-    sortOrder: integer("sort_order").notNull().default(0),
+    sortOrder: int("sort_order").notNull().default(0),
     isPublished: boolean("is_published").notNull().default(true),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
@@ -777,11 +772,11 @@ export const textTestimonials = pgTable(
  * `unsubscribedAt` rather than a delete so an unsubscribe is durable: a
  * deleted row would be re-added silently by the next form submission.
  */
-export const newsletterSubscribers = pgTable(
+export const newsletterSubscribers = mysqlTable(
   "newsletter_subscribers",
   {
-    id: serial("id").primaryKey(),
-    email: text("email").notNull().unique(),
+    id: int("id").autoincrement().primaryKey(),
+    email: varchar("email", { length: 255 }).notNull().unique(),
     source: text("source"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     unsubscribedAt: timestamp("unsubscribed_at"),

@@ -12,10 +12,14 @@ export type SettingsFormState = { error?: string };
 
 
 async function upsertSetting(key: string, value: unknown): Promise<void> {
+  // MySQL's ON DUPLICATE KEY UPDATE — the equivalent of Postgres's
+  // ON CONFLICT DO UPDATE. It keys off any unique index on the table, which
+  // here is site_settings' primary key on `key`, so there is no target to
+  // name.
   await db
     .insert(siteSettings)
     .values({ key, value, updatedAt: new Date() })
-    .onConflictDoUpdate({ target: siteSettings.key, set: { value, updatedAt: new Date() } });
+    .onDuplicateKeyUpdate({ set: { value, updatedAt: new Date() } });
 }
 
 export async function saveContactSettings(

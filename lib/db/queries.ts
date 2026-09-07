@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { and, asc, desc, eq, ilike, lte, gte, or, sql, inArray, count } from "drizzle-orm";
+import { and, asc, desc, eq, like, lte, gte, or, sql, inArray, count } from "drizzle-orm";
 import { db } from "./index";
 import { builders, deals, projects, properties, propertyImages, propertyMedia, testimonialVideos } from "./schema";
 import type { Deal, TestimonialVideo } from "./schema";
@@ -96,11 +96,16 @@ const PUBLIC_PRICE_EXTRA = { publicPrice: publicPrice.as("public_price") } as co
  * createdAt tiebreak keeps paging stable when prices collide.
  */
 function propertyOrder(sort: PropertySort = DEFAULT_SORT) {
+  // MySQL has no NULLS LAST. It sorts NULLs first ascending and last
+  // descending, so "unknown at the bottom either way" has to be expressed as
+  // a leading key: 1 for a withheld price, 0 for a real one. Same resulting
+  // order the Postgres version produced.
+  const nullsLast = sql`case when ${publicPrice} is null then 1 else 0 end`;
   switch (sort) {
     case "price-asc":
-      return [sql`${publicPrice} asc nulls last`, desc(properties.createdAt)];
+      return [asc(nullsLast), sql`${publicPrice} asc`, desc(properties.createdAt)];
     case "price-desc":
-      return [sql`${publicPrice} desc nulls last`, desc(properties.createdAt)];
+      return [asc(nullsLast), sql`${publicPrice} desc`, desc(properties.createdAt)];
     default:
       return [desc(properties.createdAt)];
   }
@@ -198,12 +203,12 @@ function collectionCondition(collection: CollectionValue) {
 function keywordCondition(raw: string) {
   const term = `%${raw.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
   return or(
-    ilike(properties.title, term),
-    ilike(properties.location, term),
-    ilike(properties.locality, term),
-    ilike(properties.propertyType, term),
-    ilike(properties.configuration, term),
-    sql`${properties.projectId} in (select p.id from projects p where p.name ilike ${term})`
+    like(properties.title, term),
+    like(properties.location, term),
+    like(properties.locality, term),
+    like(properties.propertyType, term),
+    like(properties.configuration, term),
+    sql`${properties.projectId} in (select p.id from projects p where p.name like ${term})`
   );
 }
 
@@ -494,14 +499,14 @@ export async function searchProperties(
     const tokenConditions = tokens.map((token) => {
       const term = `%${token}%`;
       return or(
-        ilike(properties.title, term),
-        ilike(properties.location, term),
-        ilike(properties.description, term),
-        ilike(properties.configuration, term),
-        ilike(properties.propertyType, term),
+        like(properties.title, term),
+        like(properties.location, term),
+        like(properties.description, term),
+        like(properties.configuration, term),
+        like(properties.propertyType, term),
         // Raw identifiers: interpolating drizzle columns here would inherit
         // the outer query's "properties" alias and break the subquery.
-        sql`${properties.projectId} in (select p.id from projects p where p.name ilike ${term})`
+        sql`${properties.projectId} in (select p.id from projects p where p.name like ${term})`
       );
     });
 
@@ -514,9 +519,11 @@ export async function searchProperties(
       with: { images: coverImageJoin, project: PUBLIC_PROJECT_JOIN },
       // Relevance: whole-phrase title hits first, then location hits,
       // then newest.
+      // No ::int cast — MySQL comparisons already yield 1/0, and `::` is
+      // Postgres-only syntax that fails to parse here.
       orderBy: [
-        desc(sql`(${properties.title} ilike ${full})::int`),
-        desc(sql`(${properties.location} ilike ${full})::int`),
+        desc(sql`(${properties.title} like ${full})`),
+        desc(sql`(${properties.location} like ${full})`),
         desc(properties.createdAt),
       ],
       limit,
@@ -533,7 +540,7 @@ export async function searchProjects(q: string, limit = 4): Promise<PublicProjec
   try {
     return await db.query.projects.findMany({
       columns: PUBLIC_PROJECT_COLUMNS,
-      where: ilike(projects.name, term),
+      where: like(projects.name, term),
       orderBy: [asc(projects.name)],
       limit,
     });

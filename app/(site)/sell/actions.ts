@@ -142,7 +142,7 @@ export async function submitProperty(
           // page until an admin deliberately publishes it.
           demandPrice: positiveNumber(formData, "expectedPrice", 100_000_000_000),
         })
-        .returning({ id: properties.id });
+        .$returningId();
 
       // Same scheme as the admin path: derived from the row id inside the
       // transaction, so two submissions at the same moment cannot collide.

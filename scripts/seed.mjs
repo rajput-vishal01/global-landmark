@@ -1,7 +1,7 @@
 // Seed the real Global Landmark Tricity portfolio (projects sourced from the
 // agency's own listings) plus their Instagram reels as landing-page videos.
 // Idempotent: skips rows that already exist. Run: npm run db:push && npm run db:seed
-import { Client } from "pg";
+import mysql from "mysql2/promise";
 
 try {
   process.loadEnvFile();
@@ -11,7 +11,7 @@ try {
 
 // Same guard as migrate.mjs: this now runs as part of `npm run build`, which
 // also happens with no database at all (the Docker image build) — without
-// this, `pg` would try to connect to a default local socket and throw.
+// this, `mysql2` would try to connect to a default local server and throw.
 if (!process.env.DATABASE_URL) {
   console.log("seed: DATABASE_URL not set — skipping (image build)");
   process.exit(0);
@@ -155,17 +155,23 @@ const VIDEOS = [
   ["DY4mauazbgi", "Global Landmark — property, plots & kothis"],
 ];
 
-const client = new Client({ connectionString: process.env.DATABASE_URL });
-await client.connect();
+const conn = await mysql.createConnection({
+  uri: process.env.DATABASE_URL,
+  charset: "utf8mb4",
+  // DATE columns are `mode: "string"` in the schema, so keep them strings here
+  // too rather than letting mysql2 hand back a timezone-shifted JS Date.
+  dateStrings: ["DATE"],
+  multipleStatements: false,
+});
 
 /**
  * Every block below runs through this wrapper — a real production database
  * (months of a broker adding real listings through the admin panel) can have
  * data this script never anticipated, and one section hitting an edge case
  * must not stop every section after it from running. Before this existed,
- * an unhandled rejection anywhere (e.g. the projects insert, which only
- * guards `on conflict (slug)` — a broker-created project with a colliding
- * NAME but different slug throws a bare unique-violation) silently killed
+ * an unhandled rejection anywhere (e.g. the projects insert, which back then
+ * only guarded the slug conflict — a broker-created project with a colliding
+ * NAME but different slug threw a bare unique-violation) silently killed
  * the rest of the script, including the videos loop far below. `npm run
  * build`'s `(node scripts/seed.mjs || true)` swallows the exit code, so this
  * failed with no visible symptom beyond "some seed rows just never showed
@@ -180,66 +186,67 @@ async function section(name, fn) {
   }
 }
 
+// mysql2 returns [rows, fields] where pg returned { rows }. These two keep the
+// call sites below reading the way they did under pg.
+const all = async (sql, params = []) => (await conn.execute(sql, params))[0];
+const one = async (sql, params = []) => (await all(sql, params))[0];
+
 const projectId =
   (await section("projects", async () => {
     for (const [name, slug, description, builder, rera] of PROJECTS) {
       // Real production projects come from resolveProjectId() in the admin
       // panel, keyed only by name (see app/admin/(panel)/properties/actions.ts)
       // — a broker-typed project can land with the exact seed name but a
-      // different slug, which `on conflict (slug)` alone won't catch, since
-      // `name` carries its own unique constraint too. Caught and skipped per
-      // row rather than per section, so one real collision doesn't also skip
-      // the other three seed projects.
+      // different slug, since `name` carries its own unique constraint too.
+      // `insert ignore` covers both collisions; the try/catch stays for
+      // anything else (a bad column value, say) so one real failure doesn't
+      // also skip the other three seed projects.
       try {
-        await client.query(
-          `insert into projects (name, slug, description, builder_name, rera_number)
-           values ($1,$2,$3,$4,$5) on conflict (slug) do nothing`,
+        await conn.execute(
+          `insert ignore into projects (name, slug, description, builder_name, rera_number)
+           values (?,?,?,?,?)`,
           [name, slug, description, builder, rera]
         );
       } catch (err) {
         console.error(`seed: project "${name}" insert failed — skipping:`, err.message);
       }
     }
-    const { rows } = await client.query(`select id, slug from projects`);
+    const rows = await all(`select id, slug from projects`);
     return Object.fromEntries(rows.map((r) => [r.slug, r.id]));
   })) ?? {};
 
 await section("properties", async () => {
   for (const p of PROPERTIES) {
-    const res = await client.query(
-      `insert into properties (slug, title, kind, category, project_id, description, location, city,
+    await conn.execute(
+      `insert ignore into properties (slug, title, kind, category, project_id, description, location, city,
          property_type, configuration, beds, baths, area_value, area_unit,
          facing, possession_status, furnishing, amenities, extras, publication_state)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,'published')
-       on conflict (slug) do nothing
-       returning id`,
+       values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'published')`,
       [p.slug, p.title, p.kind, p.category, p.project ? projectId[p.project] : null,
        p.description, p.location, p.city, p.propertyType, p.configuration, p.beds, p.baths,
        p.area, p.unit, p.facing, p.possession, p.furnishing,
-       p.amenities, JSON.stringify(p.extras)]
+       JSON.stringify(p.amenities), JSON.stringify(p.extras)]
     );
-    // A property that already existed still needs its id — `on conflict do
-    // nothing` returns no row, so re-select by slug rather than skip outright.
-    const newId = res.rows[0]?.id;
-    const id =
-      newId ??
-      (await client.query(`select id from properties where slug = $1`, [p.slug])).rows[0].id;
+    // MySQL has no RETURNING, and a row that already existed was ignored above
+    // and so has no insertId either — re-select by slug, which is correct for
+    // both the fresh-insert and the already-there case.
+    const { id } = await one(`select id from properties where slug = ?`, [p.slug]);
     // Backfill by null check, not "was this row new this run" — a row can be
     // missing its ref_code from before this fix existed too, same as
     // createProperty() in the admin panel assigns one (buildRefCode from
     // city/year/id) the moment a broker saves a listing.
-    await client.query(
-      `update properties set ref_code = $1 where id = $2 and ref_code is null`,
+    await conn.execute(
+      `update properties set ref_code = ? where id = ? and ref_code is null`,
       [refCode(p.city, new Date().getFullYear(), id), id]
     );
     // Always re-sync the gallery to the current IMG mapping (delete + reinsert)
     // instead of "insert once, skip forever" — otherwise swapping IMG.* here
     // never reaches an already-seeded database, and stale stock photos survive
     // every re-run indefinitely.
-    await client.query(`delete from property_images where property_id = $1`, [id]);
+    await conn.execute(`delete from property_images where property_id = ?`, [id]);
     for (let i = 0; i < p.images.length; i++) {
-      await client.query(
-        `insert into property_images (property_id, url, alt, sort_order) values ($1,$2,$3,$4)`,
+      await conn.execute(
+        `insert into property_images (property_id, url, alt, sort_order) values (?,?,?,?)`,
         [id, u(p.images[i]), p.title, i]
       );
     }
@@ -255,19 +262,21 @@ await section("properties", async () => {
  * the landing page lost its Deal of the Week section on day six.
  */
 await section("deal of the week", async () => {
-  const { rows: liveDeals } = await client.query(
-    `select count(*)::int as n from deals where current_date between starts_at and ends_at`
+  const liveDeals = await one(
+    `select count(*) as n from deals where current_date between starts_at and ends_at`
   );
-  if (liveDeals[0].n === 0) {
-    const { rows: pr } = await client.query(
+  if (Number(liveDeals.n) === 0) {
+    const pr = await all(
       `select id, slug from properties where slug in ('imperial-residency-3bhk','grand-mega-township-plots')`
     );
     const bySlug = Object.fromEntries(pr.map((r) => [r.slug, r.id]));
-    await client.query(`delete from deals`);
-    await client.query(
+    await conn.execute(`delete from deals`);
+    // `current_date - 2` in MySQL is numeric arithmetic on YYYYMMDD, not date
+    // arithmetic — day intervals are the only correct form here.
+    await conn.execute(
       `insert into deals (property_id, starts_at, ends_at) values
-       ($1, current_date - 2, current_date + 5),
-       ($2, current_date + 6, current_date + 13)`,
+       (?, current_date - interval 2 day, current_date + interval 5 day),
+       (?, current_date + interval 6 day, current_date + interval 13 day)`,
       [bySlug["imperial-residency-3bhk"], bySlug["grand-mega-township-plots"]]
     );
   }
@@ -281,14 +290,16 @@ await section("deal of the week", async () => {
  */
 await section("videos", async () => {
   for (let i = 0; i < VIDEOS.length; i++) {
-    // `on conflict` would not help here: video_id carries no unique
-    // constraint, so only a primary-key collision would trigger it and every
-    // re-run would duplicate the row instead.
-    await client.query(
+    // `insert ignore` would not help here: video_id carries no unique
+    // constraint, so only a primary-key collision would be ignored and every
+    // re-run would duplicate the row instead. MySQL needs the `from dual` for
+    // a SELECT with a WHERE but no table, and repeats the placeholder value
+    // because `?` is positional, not numbered like Postgres' `$1`.
+    await conn.execute(
       `insert into testimonial_videos (provider, video_id, caption, sort_order)
-       select 'instagram', $1, $2, $3
-       where not exists (select 1 from testimonial_videos where video_id = $1)`,
-      [VIDEOS[i][0], VIDEOS[i][1], i]
+       select 'instagram', ?, ?, ? from dual
+       where not exists (select 1 from testimonial_videos where video_id = ?)`,
+      [VIDEOS[i][0], VIDEOS[i][1], i, VIDEOS[i][0]]
     );
   }
 });
@@ -324,10 +335,9 @@ const AREAS = [
 await section("areas", async () => {
   for (let i = 0; i < AREAS.length; i++) {
     const [name, slug, city, matchCity, matchLocality, img, blurb] = AREAS[i];
-    await client.query(
-      `insert into areas (name, slug, city, match_city, match_locality, cover_image, blurb, sort_order, is_published)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,true)
-       on conflict (slug) do nothing`,
+    await conn.execute(
+      `insert ignore into areas (name, slug, city, match_city, match_locality, cover_image, blurb, sort_order, is_published)
+       values (?,?,?,?,?,?,?,?,true)`,
       [name, slug, city, matchCity, matchLocality, u(img), blurb, i]
     );
   }
@@ -345,11 +355,11 @@ const SERVICES = [
 await section("services", async () => {
   for (let i = 0; i < SERVICES.length; i++) {
     const [title, description, icon] = SERVICES[i];
-    await client.query(
+    await conn.execute(
       `insert into services (title, description, icon, sort_order, is_published)
-       select $1,$2,$3,$4,true
-       where not exists (select 1 from services where title = $1)`,
-      [title, description, icon, i]
+       select ?,?,?,?,true from dual
+       where not exists (select 1 from services where title = ?)`,
+      [title, description, icon, i, title]
     );
   }
 });
@@ -368,11 +378,11 @@ const TEXT_TESTIMONIALS = [
 await section("text testimonials", async () => {
   for (let i = 0; i < TEXT_TESTIMONIALS.length; i++) {
     const [quote, author, context] = TEXT_TESTIMONIALS[i];
-    await client.query(
+    await conn.execute(
       `insert into text_testimonials (quote, author, context, sort_order, is_published)
-       select $1,$2,$3,$4,true
-       where not exists (select 1 from text_testimonials where author = $2)`,
-      [quote, author, context, i]
+       select ?,?,?,?,true from dual
+       where not exists (select 1 from text_testimonials where author = ?)`,
+      [quote, author, context, i, author]
     );
   }
 });
@@ -381,38 +391,41 @@ await section("text testimonials", async () => {
 // Without these, the admin screens and the leak check have nothing to
 // exercise on a fresh database.
 
-const one = async (sql, params = []) => (await client.query(sql, params)).rows[0];
-
 const propId =
   (await section("CFF fixtures", async () => {
-    const { id: builderId } = await one(
+    // `on duplicate key update` does not make LAST_INSERT_ID() point at the
+    // existing row, so the id comes from a follow-up select rather than
+    // `insertId` — same reasoning as the tower below.
+    await conn.execute(
       `insert into builders (name, slug, belongs_to, about, website, contact_name, contact_phone, past_projects)
        values ('Homeland Group','homeland-group','Mohali, Punjab',
                'Regional developer active across Mohali and New Chandigarh.',
                'https://example.com','Seed Builder Contact','9812300001',
                'Homeland Heights, Homeland Residency')
-       on conflict (slug) do update set name = excluded.name
-       returning id`
+       on duplicate key update name = values(name)`
+    );
+    const { id: builderId } = await one(
+      `select id from builders where slug = 'homeland-group'`
     );
 
-    await client.query(
-      `update projects set builder_id = $1, possession_status = 'Under Construction',
-         launch_date = current_date - 400, possession_date = current_date + 365,
+    await conn.execute(
+      `update projects set builder_id = ?, possession_status = 'Under Construction',
+         launch_date = current_date - interval 400 day, possession_date = current_date + interval 365 day,
          total_towers = 4, total_units = 320, number_of_floors = 14,
          green_area_value = 3, green_area_unit = 'acre',
-         amenities = $2, country = 'India', city = 'Mohali', locality = 'Sector Area'
+         amenities = ?, country = 'India', city = 'Mohali', locality = 'Sector Area'
        where slug = 'homeland-urva-luxury'`,
-      [builderId, ["Club House", "Swimming Pool", "Gym", "Gated Community"]]
+      [builderId, JSON.stringify(["Club House", "Swimming Pool", "Gym", "Gated Community"])]
     );
 
-    const { rows: allProps } = await client.query(`select id, slug from properties`);
+    const allProps = await all(`select id, slug from properties`);
     const ids = Object.fromEntries(allProps.map((r) => [r.slug, r.id]));
 
     // A tower, so the project page has real inventory to group units under.
-    // Insert-then-select rather than relying on RETURNING: on a re-run the
-    // insert matches nothing and returns no row, which would leave the unit
+    // Insert-then-select rather than relying on insertId: on a re-run the
+    // insert matches nothing and inserts no row, which would leave the unit
     // unlinked.
-    await client.query(
+    await conn.execute(
       `insert into towers (project_id, name, total_floors, units_per_floor, total_units)
        select p.id, 'Tower A', 14, 4, 56 from projects p
        where p.slug = 'homeland-urva-luxury'
@@ -426,8 +439,8 @@ const propId =
     const towerId = towerRow?.id ?? null;
 
     if (towerId) {
-      await client.query(
-        `update properties set tower_id = $1, floor_number = 7, total_floors = 14,
+      await conn.execute(
+        `update properties set tower_id = ?, floor_number = 7, total_floors = 14,
            unit_number = '704', configuration = '3 BHK', balconies = 2,
            super_area = 1850, super_area_unit = 'sqft',
            carpet_area = 1320, carpet_area_unit = 'sqft'
@@ -443,46 +456,46 @@ const propId =
      */
     const leakProp = ids["panchkula-corner-kothi"];
     if (leakProp) {
-      await client.query(
+      await conn.execute(
         `insert into property_owners (property_id, name, seller_category, owner_type,
            owner_count, mobile, alt_mobile, address, notes)
-         select $1,'Leakcheck Owner','Owner','Individual',2,'9876500011','9876500022',
-           'Leakcheck Address, Panchkula','Seeded fixture for the section 4.1 leak check'
-         where not exists (select 1 from property_owners where property_id = $1)`,
-        [leakProp]
+         select ?,'Leakcheck Owner','Owner','Individual',2,'9876500011','9876500022',
+           'Leakcheck Address, Panchkula','Seeded fixture for the section 4.1 leak check' from dual
+         where not exists (select 1 from property_owners where property_id = ?)`,
+        [leakProp, leakProp]
       );
-      await client.query(
+      await conn.execute(
         `insert into property_internal (property_id, circle_rate, market_value_note,
            is_mortgaged, internal_notes)
-         values ($1, 733377, 'Leakcheck circle rate note', true, 'Leakcheck internal note')
-         on conflict (property_id) do update set circle_rate = excluded.circle_rate`,
+         values (?, 733377, 'Leakcheck circle rate note', true, 'Leakcheck internal note')
+         on duplicate key update circle_rate = values(circle_rate)`,
         [leakProp]
       );
-      await client.query(
+      await conn.execute(
         `insert into property_charges (property_id, charge_type, amount, basis, is_included_in_demand)
-         select $1,'Club Charges',588899,'lump_sum',false
-         where not exists (select 1 from property_charges where property_id = $1)`,
-        [leakProp]
+         select ?,'Club Charges',588899,'lump_sum',false from dual
+         where not exists (select 1 from property_charges where property_id = ?)`,
+        [leakProp, leakProp]
       );
-      await client.query(
+      await conn.execute(
         `insert into property_documents (property_id, doc_type, storage_key, file_name,
            mime_type, size_bytes, uploaded_by)
-         select $1,'Registry Available','private/seed/registry.pdf','registry.pdf',
-           'application/pdf', 24680, 'seed'
-         where not exists (select 1 from property_documents where property_id = $1)`,
-        [leakProp]
+         select ?,'Registry Available','private/seed/registry.pdf','registry.pdf',
+           'application/pdf', 24680, 'seed' from dual
+         where not exists (select 1 from property_documents where property_id = ?)`,
+        [leakProp, leakProp]
       );
-      await client.query(
+      await conn.execute(
         `insert into property_price_history (property_id, demand_price, changed_by, reason)
-         select $1, 244466600, 'seed', 'Initial listing price'
-         where not exists (select 1 from property_price_history where property_id = $1)`,
-        [leakProp]
+         select ?, 244466600, 'seed', 'Initial listing price' from dual
+         where not exists (select 1 from property_price_history where property_id = ?)`,
+        [leakProp, leakProp]
       );
       // Price captured but deliberately NOT published — the default everywhere.
-      await client.query(
+      await conn.execute(
         `update properties set demand_price = 244466600, per_sqft_rate = 6790,
            is_negotiable = true, show_price_publicly = false
-         where id = $1`,
+         where id = ?`,
         [leakProp]
       );
     }
@@ -495,17 +508,17 @@ const propId =
         ["drone", "https://www.instagram.com/reel/DW61A1IkycX/", "Drone reel"],
         ["google_map", "https://www.google.com/maps?q=Zirakpur", "Location"],
       ]) {
-        await client.query(
+        await conn.execute(
           `insert into property_media (property_id, kind, url, label)
-           select $1,$2,$3,$4
-           where not exists (select 1 from property_media where property_id = $1 and kind = $2)`,
-          [mediaProp, kind, url, label]
+           select ?,?,?,? from dual
+           where not exists (select 1 from property_media where property_id = ? and kind = ?)`,
+          [mediaProp, kind, url, label, mediaProp, kind]
         );
       }
     }
 
     return ids;
-  })) ?? (await client.query(`select id, slug from properties`)).rows.reduce(
+  })) ?? (await all(`select id, slug from properties`)).reduce(
     (acc, r) => ((acc[r.slug] = r.id), acc),
     {}
   );
@@ -529,13 +542,13 @@ await section("unit sizes", async () => {
     const [slug, label, area, unit, price] = rows[i];
     const id = propId[slug];
     if (!id) continue;
-    await client.query(
+    await conn.execute(
       `insert into property_unit_sizes (property_id, unit_label, area_value, area_unit, price, sort_order)
-       select $1,$2,$3,$4,$5,$6
+       select ?,?,?,?,?,? from dual
        where not exists (
-         select 1 from property_unit_sizes where property_id = $1 and unit_label = $2
+         select 1 from property_unit_sizes where property_id = ? and unit_label = ?
        )`,
-      [id, label, area, unit, price, i]
+      [id, label, area, unit, price, i, id, label]
     );
   }
 });
@@ -573,11 +586,11 @@ await section("public project pricing", async () => {
     ["homeland-urva-luxury-mohali", 9800000, 7600],
     ["grand-mega-township-plots", 4100000, 8200],
   ]) {
-    await client.query(
+    await conn.execute(
       `update properties
-         set demand_price = $2, per_sqft_rate = $3, show_price_publicly = true
-       where slug = $1 and demand_price is null`,
-      [slug, price, rate]
+         set demand_price = ?, per_sqft_rate = ?, show_price_publicly = true
+       where slug = ? and demand_price is null`,
+      [price, rate, slug]
     );
   }
 });
@@ -604,30 +617,30 @@ await section("map pins", async () => {
     // must show no MAP button and leak no coordinate for this row.
     ["panchkula-corner-kothi", "30.69421", "76.86061", false],
   ]) {
-    await client.query(
+    await conn.execute(
       `update properties
-         set latitude = $1, longitude = $2, show_map_publicly = $3
-       where slug = $4 and latitude is null`,
+         set latitude = ?, longitude = ?, show_map_publicly = ?
+       where slug = ? and latitude is null`,
       [lat, lng, isPublic, slug]
     );
   }
 });
 
 await section("leads and settings", async () => {
-  await client.query(
+  await conn.execute(
     `insert into leads (name, email, phone, interest, message, source, status)
      select 'Seed Enquiry','seed@example.com','9800000000','buy',
-       'Seeded lead so the admin inbox is not empty on a fresh database.','seed','new'
+       'Seeded lead so the admin inbox is not empty on a fresh database.','seed','new' from dual
      where not exists (select 1 from leads where email = 'seed@example.com')`
   );
 
   // site_settings rows must match the admin-override shape in lib/site-settings.ts
   // (SETTING_KEYS + ContactOverride/CredibilityOverride) — a bare 'officeHours'
   // key, as this used to seed, is never read by resolveCompany()/resolveCredibility().
-  await client.query(
-    `insert into site_settings (key, value)
-     values ('company_contact', $1::jsonb)
-     on conflict (key) do nothing`,
+  // `key` is a MySQL reserved word, hence the backticks. The JSON column takes
+  // the stringified object directly — no cast needed.
+  await conn.execute(
+    "insert ignore into site_settings (`key`, `value`) values ('company_contact', ?)",
     [
       JSON.stringify({
         addressLines: ["Based in Panchkula", "Tricity, India"],
@@ -643,10 +656,8 @@ await section("leads and settings", async () => {
       }),
     ]
   );
-  await client.query(
-    `insert into site_settings (key, value)
-     values ('credibility', $1::jsonb)
-     on conflict (key) do nothing`,
+  await conn.execute(
+    "insert ignore into site_settings (`key`, `value`) values ('credibility', ?)",
     [
       JSON.stringify({
         headingPre: "A portfolio built on",
@@ -668,143 +679,146 @@ await section("leads and settings", async () => {
 // active negotiation, a closed deal with brokerage paid in two tranches, and
 // a bare enquiry converted straight from the seed lead above.
 await section("CRM demo data", async () => {
-  await client.query(
+  await conn.execute(
     `insert into crm_clients (name, phone, email, requirement_notes, budget_min, budget_max, preferred_locations, preferred_types)
      select 'Rohit Malhotra','9876543210','rohit.malhotra@example.com',
        'Looking for a 3-4 BHK independent floor, ready to move, vastu-compliant.',
-       15000000, 22000000, $1, $2
+       15000000, 22000000, ?, ? from dual
      where not exists (select 1 from crm_clients where phone = '9876543210')`,
-    [["Panchkula", "Zirakpur"], ["Independent Floor", "Kothi"]]
+    [JSON.stringify(["Panchkula", "Zirakpur"]), JSON.stringify(["Independent Floor", "Kothi"])]
   );
-  await client.query(
+  await conn.execute(
     `insert into crm_clients (name, phone, email, requirement_notes, budget_min, budget_max, preferred_locations, preferred_types)
      select 'Simran Kaur','9876543211','simran.kaur@example.com',
        'Investor client — closed on a 3 BHK in Mohali, brokerage settled in two tranches.',
-       8000000, 12000000, $1, $2
+       8000000, 12000000, ?, ? from dual
      where not exists (select 1 from crm_clients where phone = '9876543211')`,
-    [["Mohali"], ["Apartment"]]
+    [JSON.stringify(["Mohali"]), JSON.stringify(["Apartment"])]
   );
-  await client.query(
+  await conn.execute(
     `insert into crm_clients (name, phone, email, requirement_notes, budget_min, budget_max, preferred_locations, preferred_types, converted_from_lead_id)
      select 'Anil Sharma','9876543212','anil.sharma@example.com',
        'Early-stage enquiry from the website contact form — plot in Panchkula Extension.',
-       5000000, 9000000, $1, $2, l.id
+       5000000, 9000000, ?, ?, l.id
      from leads l where l.email = 'seed@example.com'
      and not exists (select 1 from crm_clients where phone = '9876543212')`,
-    [["Panchkula"], ["Plot"]]
+    [JSON.stringify(["Panchkula"]), JSON.stringify(["Plot"])]
   );
 
   const crmClientId = Object.fromEntries(
     (
-      await client.query(
+      await all(
         `select id, phone from crm_clients where phone in ('9876543210','9876543211','9876543212')`
       )
-    ).rows.map((r) => [r.phone, r.id])
+    ).map((r) => [r.phone, r.id])
   );
 
   if (crmClientId["9876543210"]) {
-    await client.query(
+    await conn.execute(
       `insert into crm_deals (client_id, property_id, stage, deal_value, brokerage_percent_bp, assigned_to)
-       select $1, $2, 'Negotiation', 18500000, 200, 'Ashu Goyal'
-       where not exists (select 1 from crm_deals where client_id = $1 and stage = 'Negotiation')`,
-      [crmClientId["9876543210"], propId["imperial-residency-3bhk"] ?? null]
+       select ?, ?, 'Negotiation', 18500000, 200, 'Ashu Goyal' from dual
+       where not exists (select 1 from crm_deals where client_id = ? and stage = 'Negotiation')`,
+      [crmClientId["9876543210"], propId["imperial-residency-3bhk"] ?? null, crmClientId["9876543210"]]
     );
-    await client.query(
+    await conn.execute(
       `insert into crm_activities (client_id, kind, note, author)
-       select $1, 'Site Visit', 'Walked Imperial Residency 3BHK, unit 704. Client liked the layout, wants to negotiate on price.', 'Ashu Goyal'
-       where not exists (select 1 from crm_activities where client_id = $1 and kind = 'Site Visit')`,
-      [crmClientId["9876543210"]]
+       select ?, 'Site Visit', 'Walked Imperial Residency 3BHK, unit 704. Client liked the layout, wants to negotiate on price.', 'Ashu Goyal' from dual
+       where not exists (select 1 from crm_activities where client_id = ? and kind = 'Site Visit')`,
+      [crmClientId["9876543210"], crmClientId["9876543210"]]
     );
-    await client.query(
+    await conn.execute(
       `insert into crm_activities (client_id, kind, note, author)
-       select $1, 'Call', 'Follow-up call, client to confirm by end of week.', 'Ashu Goyal'
-       where not exists (select 1 from crm_activities where client_id = $1 and kind = 'Call')`,
-      [crmClientId["9876543210"]]
+       select ?, 'Call', 'Follow-up call, client to confirm by end of week.', 'Ashu Goyal' from dual
+       where not exists (select 1 from crm_activities where client_id = ? and kind = 'Call')`,
+      [crmClientId["9876543210"], crmClientId["9876543210"]]
     );
   }
 
   if (crmClientId["9876543211"]) {
-    const existingClosed = await client.query(
-      `select id from crm_deals where client_id = $1 and stage = 'Closed'`,
+    const existingClosed = await all(
+      `select id from crm_deals where client_id = ? and stage = 'Closed'`,
       [crmClientId["9876543211"]]
     );
-    const closedDealId = existingClosed.rows.length
-      ? existingClosed.rows[0].id
+    // A plain insert, so `insertId` is the new row's id — unlike the
+    // `on duplicate key update` cases above, which need a follow-up select.
+    const closedDealId = existingClosed.length
+      ? existingClosed[0].id
       : (
-          await one(
+          await conn.execute(
             `insert into crm_deals (client_id, property_id, stage, deal_value, brokerage_percent_bp, assigned_to, closed_at)
-             values ($1, $2, 'Closed', 9800000, 200, 'Divya Goyal', current_date - 30)
-             returning id`,
+             values (?, ?, 'Closed', 9800000, 200, 'Divya Goyal', current_date - interval 30 day)`,
             [crmClientId["9876543211"], propId["homeland-urva-luxury-mohali"] ?? null]
           )
-        ).id;
-    await client.query(
+        )[0].insertId;
+    await conn.execute(
       `insert into crm_payments (deal_id, amount, paid_at, mode, note)
-       select $1, 100000, current_date - 45, 'UPI', 'Token amount'
-       where not exists (select 1 from crm_payments where deal_id = $1 and mode = 'UPI')`,
-      [closedDealId]
+       select ?, 100000, current_date - interval 45 day, 'UPI', 'Token amount' from dual
+       where not exists (select 1 from crm_payments where deal_id = ? and mode = 'UPI')`,
+      [closedDealId, closedDealId]
     );
-    await client.query(
+    await conn.execute(
       `insert into crm_payments (deal_id, amount, paid_at, mode, note)
-       select $1, 95000, current_date - 20, 'Bank Transfer', 'Balance brokerage'
-       where not exists (select 1 from crm_payments where deal_id = $1 and mode = 'Bank Transfer')`,
-      [closedDealId]
+       select ?, 95000, current_date - interval 20 day, 'Bank Transfer', 'Balance brokerage' from dual
+       where not exists (select 1 from crm_payments where deal_id = ? and mode = 'Bank Transfer')`,
+      [closedDealId, closedDealId]
     );
-    await client.query(
+    await conn.execute(
       `insert into crm_activities (client_id, deal_id, kind, note, author)
-       select $1, $2, 'Note', 'Deal closed and registered. Brokerage settled in two tranches.', 'Divya Goyal'
-       where not exists (select 1 from crm_activities where client_id = $1 and kind = 'Note')`,
-      [crmClientId["9876543211"], closedDealId]
+       select ?, ?, 'Note', 'Deal closed and registered. Brokerage settled in two tranches.', 'Divya Goyal' from dual
+       where not exists (select 1 from crm_activities where client_id = ? and kind = 'Note')`,
+      [crmClientId["9876543211"], closedDealId, crmClientId["9876543211"]]
     );
   }
 
   if (crmClientId["9876543212"]) {
-    await client.query(
+    await conn.execute(
       `insert into crm_deals (client_id, property_id, stage, assigned_to)
-       select $1, null, 'Enquiry', 'Ashu Goyal'
-       where not exists (select 1 from crm_deals where client_id = $1 and stage = 'Enquiry')`,
-      [crmClientId["9876543212"]]
+       select ?, null, 'Enquiry', 'Ashu Goyal' from dual
+       where not exists (select 1 from crm_deals where client_id = ? and stage = 'Enquiry')`,
+      [crmClientId["9876543212"], crmClientId["9876543212"]]
     );
-    await client.query(
+    await conn.execute(
       `insert into crm_activities (client_id, kind, note, author)
-       select $1, 'WhatsApp', 'Shared plot options in Panchkula Extension, awaiting response.', 'Ashu Goyal'
-       where not exists (select 1 from crm_activities where client_id = $1 and kind = 'WhatsApp')`,
-      [crmClientId["9876543212"]]
+       select ?, 'WhatsApp', 'Shared plot options in Panchkula Extension, awaiting response.', 'Ashu Goyal' from dual
+       where not exists (select 1 from crm_activities where client_id = ? and kind = 'WhatsApp')`,
+      [crmClientId["9876543212"], crmClientId["9876543212"]]
     );
   }
 });
 
 // Runnable check (ponytail).
-const { rows: check } = await client.query(
-  `select
-     (select count(*)::int from projects) as projects,
-     (select count(*)::int from properties) as properties,
-     (select count(*)::int from property_images) as images,
-     (select count(*)::int from deals where current_date between starts_at and ends_at) as active_deals,
-     (select count(*)::int from testimonial_videos) as videos,
-     (select count(*)::int from builders) as builders,
-     (select count(*)::int from towers) as towers,
-     (select count(*)::int from property_owners) as owners,
-     (select count(*)::int from property_internal) as internal,
-     (select count(*)::int from property_charges) as charges,
-     (select count(*)::int from property_documents) as documents,
-     (select count(*)::int from property_media) as media,
-     (select count(*)::int from leads) as leads,
-     (select count(*)::int from crm_clients) as crm_clients,
-     (select count(*)::int from crm_deals) as crm_deals,
-     (select count(*)::int from crm_payments) as crm_payments,
-     (select count(*)::int from crm_activities) as crm_activities,
-     (select count(*)::int from site_settings where key = 'company_contact') as contact_setting,
-     (select count(*)::int from site_settings where key = 'credibility') as credibility_setting,
-     (select count(*)::int from properties where ref_code is null) as missing_ref_code,
-     (select count(*)::int from properties where publication_state = 'published') as published,
-     (select count(*)::int from areas) as areas,
-     (select count(*)::int from services) as services,
-     (select count(*)::int from text_testimonials) as text_testimonials,
-     (select count(*)::int from property_unit_sizes) as unit_sizes`
+const check = await all(
+  "select" +
+    "\n     (select count(*) from projects) as projects," +
+    "\n     (select count(*) from properties) as properties," +
+    "\n     (select count(*) from property_images) as images," +
+    "\n     (select count(*) from deals where current_date between starts_at and ends_at) as active_deals," +
+    "\n     (select count(*) from testimonial_videos) as videos," +
+    "\n     (select count(*) from builders) as builders," +
+    "\n     (select count(*) from towers) as towers," +
+    "\n     (select count(*) from property_owners) as owners," +
+    "\n     (select count(*) from property_internal) as `internal`," +
+    "\n     (select count(*) from property_charges) as charges," +
+    "\n     (select count(*) from property_documents) as documents," +
+    "\n     (select count(*) from property_media) as media," +
+    "\n     (select count(*) from leads) as leads," +
+    "\n     (select count(*) from crm_clients) as crm_clients," +
+    "\n     (select count(*) from crm_deals) as crm_deals," +
+    "\n     (select count(*) from crm_payments) as crm_payments," +
+    "\n     (select count(*) from crm_activities) as crm_activities," +
+    "\n     (select count(*) from site_settings where `key` = 'company_contact') as contact_setting," +
+    "\n     (select count(*) from site_settings where `key` = 'credibility') as credibility_setting," +
+    "\n     (select count(*) from properties where ref_code is null) as missing_ref_code," +
+    "\n     (select count(*) from properties where publication_state = 'published') as published," +
+    "\n     (select count(*) from areas) as areas," +
+    "\n     (select count(*) from services) as services," +
+    "\n     (select count(*) from text_testimonials) as text_testimonials," +
+    "\n     (select count(*) from property_unit_sizes) as unit_sizes"
 );
 console.table(check);
-const c = check[0];
+// MySQL's count(*) is a BIGINT, which mysql2 hands back as a JS number — but
+// Number() keeps the comparisons below honest if that ever changes.
+const c = Object.fromEntries(Object.entries(check[0]).map(([k, v]) => [k, Number(v)]));
 const failures = Object.entries({
   "projects >= 4": c.projects >= 4,
   "properties >= 6": c.properties >= 6,
@@ -840,4 +854,4 @@ if (failures.length) {
   process.exit(1);
 }
 console.log("Seed check passed.");
-await client.end();
+await conn.end();

@@ -1,5 +1,6 @@
 "use server";
 
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { newsletterSubscribers } from "@/lib/db/schema";
@@ -42,19 +43,32 @@ export async function subscribeToNewsletter(
 
   try {
     // The email column is UNIQUE and a second signup is the NORMAL case —
-    // people forget they subscribed. onConflictDoNothing turns that from a
-    // constraint violation into an empty `returning`, which also settles the
-    // race between two submissions of the same address. Note it deliberately
-    // does NOT clear `unsubscribedAt`: an unsubscribe stays honoured.
-    const inserted = await db
-      .insert(newsletterSubscribers)
-      .values({ email, source: "footer" })
-      .onConflictDoNothing({ target: newsletterSubscribers.email })
-      .returning({ id: newsletterSubscribers.id });
+    // people forget they subscribed — so a duplicate must not read as an
+    // error. MySQL has no RETURNING, so the two outcomes are told apart by
+    // asking first and letting the unique index settle the race: a
+    // simultaneous duplicate throws ER_DUP_ENTRY, which is caught below and
+    // answered with the same friendly line rather than a failure.
+    //
+    // Deliberately does NOT clear `unsubscribedAt` — an unsubscribe stays
+    // honoured, which is why this is not a blind upsert.
+    const existing = await db
+      .select({ id: newsletterSubscribers.id })
+      .from(newsletterSubscribers)
+      .where(eq(newsletterSubscribers.email, email))
+      .limit(1);
 
-    return inserted.length > 0
-      ? { status: "ok", message: "Thank you — you're on the list." }
-      : { status: "ok", message: "You're already subscribed." };
+    if (existing.length) return { status: "ok", message: "You're already subscribed." };
+
+    try {
+      await db.insert(newsletterSubscribers).values({ email, source: "footer" });
+    } catch (err) {
+      if ((err as { code?: string }).code === "ER_DUP_ENTRY") {
+        return { status: "ok", message: "You're already subscribed." };
+      }
+      throw err;
+    }
+
+    return { status: "ok", message: "Thank you — you're on the list." };
   } catch (err) {
     console.error("subscribeToNewsletter failed:", err);
     return { status: "error", message: "Something went wrong. Please try again." };

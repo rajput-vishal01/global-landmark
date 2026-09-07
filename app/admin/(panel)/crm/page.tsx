@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { count, desc, ilike, or, sql } from "drizzle-orm";
+import { count, desc, like, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { crmClients, crmDeals } from "@/lib/db/schema";
 import { formatIndianShort } from "@/lib/attributes";
@@ -45,9 +45,9 @@ async function listPage(q: string, page: number): Promise<{ rows: ClientRow[]; t
   const pattern = q ? `%${likeEscape(q)}%` : null;
   const where = pattern
     ? or(
-        ilike(crmClients.name, pattern),
-        ilike(crmClients.phone, pattern),
-        ilike(crmClients.email, pattern)
+        like(crmClients.name, pattern),
+        like(crmClients.phone, pattern),
+        like(crmClients.email, pattern)
       )
     : undefined;
 
