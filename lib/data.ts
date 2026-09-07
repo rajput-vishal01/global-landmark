@@ -283,15 +283,15 @@ export const ABOUT_PAGE = {
 
   principalsHeading: "The Founders",
   principalsNote: "One senior team, every engagement",
-  // The client's own profiles, in their words. Ashu's portrait is the real
-  // one, supplied by the client; Divya's is still a placeholder and is the
-  // last stock photograph standing in for a named person on this site.
+  // The client's own profiles, in their words, with their own portraits.
+  // No stock photograph stands in for a named person anywhere on this site.
   principals: [
     {
       name: "Ashu Goyal",
       title: "Founder & Managing Director",
-      // Highest qualification first, at the client's instruction.
-      credentials: "MBA, Panjab University · B.A. (Honours) English",
+      // An array, not a joined string: the client asked for one
+      // qualification per line rather than a run-on separated by dots.
+      credentials: ["Graduation (Honours in English)", "MBA in Finance & Marketing"],
       image: "/local/ashu-goyal.jpg",
       bio: [
         "Ashu Goyal is the Founder and Managing Director of Global Landmark Realty Group, a professionally managed real estate consultancy focused on Chandigarh, Panchkula, Mohali and emerging investment destinations. He completed his B.A. (Honours) in English and went on to an MBA from Panjab University, an education that shaped his approach to business, communication, client relationships and strategic decision-making.",
@@ -304,9 +304,8 @@ export const ABOUT_PAGE = {
     {
       name: "Divya Goyal",
       title: "Co-Founder",
-      credentials: "LL.B., Panjab University · B.Com",
-      image:
-        "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=700&auto=format&fit=crop",
+      credentials: ["B.Com", "LL.B."],
+      image: "/local/divya-goyal.jpg",
       bio: [
         "Divya Goyal is the Co-Founder of Global Landmark Realty Group, driven by a simple belief — real estate is not just about properties; it is about people, dreams, and the future they envision.",
         "A Commerce and Law graduate of Panjab University, her B.Com and LL.B. give her a firm grounding in the financial and legal side of property transactions, while her experience in the business has built a deep understanding of clients and their individual requirements. After completing her education she joined her husband, Ashu Goyal, in the business, and together they built Global Landmark Realty Group around honest advice, carefully selected properties and a smooth buying experience.",

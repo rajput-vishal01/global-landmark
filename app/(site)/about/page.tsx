@@ -131,9 +131,15 @@ export default function AboutPage() {
                     <p className="mt-1 text-meta font-sans text-gold-deep">
                       {person.title}
                     </p>
-                    <p className="mt-2 text-meta font-sans text-ink-muted">
-                      {person.credentials}
-                    </p>
+                    {/* One qualification per line, at the client's
+                        instruction — a list, not a dot-separated run-on. */}
+                    <ul className="mt-2 flex flex-col gap-0.5">
+                      {person.credentials.map((credential) => (
+                        <li key={credential} className="text-meta font-sans text-ink-muted">
+                          {credential}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 </div>
 

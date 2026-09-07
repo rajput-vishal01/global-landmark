@@ -1,11 +1,19 @@
 # Local photography — sources and permission status
 
-Every image here is a real Tricity development, self-hosted rather than
-hotlinked, and every one is **a developer's own marketing photography**.
-They are used because Global Landmark brokers flats in these projects.
+Two kinds of image live here, with very different permission stories.
+
+**The founders' portraits are the client's own** — supplied by Global
+Landmark, of Global Landmark's own people. Nothing to clear.
+
+**Everything else is a developer's marketing photography** of a real
+Tricity development, self-hosted rather than hotlinked, used because
+Global Landmark brokers flats in those projects. Those are the ones the
+permission note below applies to.
 
 | File | Where it appears | Project / source |
 |---|---|---|
+| `ashu-goyal.jpg` | About — founder portrait | Client-supplied |
+| `divya-goyal.jpg` | About — founder portrait | Client-supplied |
 | `tricity-courtyard-night.jpg` | Hero — Sale | Green Lotus (greenlotusgroup.co) |
 | `tricity-avenue.jpg` | Hero — Purchase | Trishla City (trishlacity.com) |
 | `tricity-lounge.jpg` | Hero — Lease | Green Lotus (greenlotusgroup.co) |
