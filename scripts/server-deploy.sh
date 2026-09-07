@@ -2,9 +2,13 @@
 # Runs ON the server, called over SSH by .github/workflows/deploy.yml with the
 # .next tarball the runner just built. Nothing is compiled here.
 #
-# One ordering quirk: this script pulls the commit that contains itself, so a
-# change to THIS file takes effect on the deploy AFTER the one that introduces
-# it. When you change this script, `git pull` on the server once by hand.
+# The workflow uploads THIS file next to the tarball and runs the uploaded
+# copy, deliberately. Running the server's checked-out copy instead means the
+# script pulls the commit containing itself while bash is still reading it —
+# bash then continues at its saved byte offset in a file that just changed
+# under it, and you get errors from a version of the script that is no longer
+# on disk. Uploading it means the script that runs always matches the commit
+# being deployed, with no manual `git pull` step to remember.
 set -euo pipefail
 
 TARBALL="${1:?usage: server-deploy.sh <tarball>}"
@@ -14,7 +18,11 @@ TARBALL="${1:?usage: server-deploy.sh <tarball>}"
 ENV_FILE="${GL_ENV_FILE:-/var/www/globallandmarkrealty.env}"
 PM2_NAME="${GL_PM2_NAME:-globallandmarkrealty}"
 
-cd "$(dirname "$0")/.."
+# Runs from the app root, which the caller cd's into. Deliberately NOT derived
+# from $0: this file is executed from an uploaded copy that sits outside
+# scripts/, so `dirname $0/..` would point at /var/www.
+[ -f package.json ] && [ -d scripts ] || {
+  echo "run this from the app root (cwd=$PWD)"; exit 1; }
 
 # --- make the toolchain findable -----------------------------------------
 # Node here is installed via nvm, and a non-interactive ssh shell does not

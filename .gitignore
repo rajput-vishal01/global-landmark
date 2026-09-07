@@ -52,3 +52,6 @@ next-env.d.ts
 
 # deploy bookkeeping: which package-lock the server last installed
 /.deploy-lock-hash
+
+# uploaded by the deploy workflow and executed in place
+/server-deploy.sh

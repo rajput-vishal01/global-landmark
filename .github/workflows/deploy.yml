@@ -124,8 +124,14 @@ jobs:
           SSH_USER: ${{ secrets.DEPLOY_USER }}
           APP_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
+          # The deploy script goes up with the build, and the uploaded copy is
+          # what runs. Executing the server's checked-out copy instead means
+          # the script git-resets the file bash is still reading, and you get
+          # errors from a version that is no longer on disk. Uploading it also
+          # removes the "pull once by hand after changing the script" step.
           scp -i ~/.ssh/id_deploy -o BatchMode=yes \
-            next-build.tgz "$SSH_USER@$SSH_HOST:$APP_PATH/next-build.tgz"
+            next-build.tgz scripts/server-deploy.sh \
+            "$SSH_USER@$SSH_HOST:$APP_PATH/"
 
       # Everything host-specific lives in the script, in the repo, so what runs
       # on the server is reviewable here.
@@ -136,4 +142,4 @@ jobs:
           APP_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
           ssh -i ~/.ssh/id_deploy -o BatchMode=yes "$SSH_USER@$SSH_HOST" \
-            "cd $APP_PATH && bash scripts/server-deploy.sh next-build.tgz"
+            "cd '$APP_PATH' && bash ./server-deploy.sh next-build.tgz"
