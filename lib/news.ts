@@ -1,3 +1,5 @@
+import { isMarketStory } from "./news-filter";
+
 export type NewsArticle = {
   title: string;
   link: string;
@@ -72,53 +74,17 @@ const PROPERTY_QUERIES = [
 ];
 
 /**
- * Tricity news that is not specifically about property.
- *
- * Property coverage of four small cities inside a 48-hour window is thin —
- * often one or two stories — and a page holding a single card reads as
- * broken. These fill the rest of the grid, and they rank strictly below the
- * property stories, so the top of the page is still the property desk.
- * The city gate below applies to them exactly as it does to the others: a
- * story that is not about the Tricity never appears either way.
+ * Two more property angles, added when the general-Tricity tier was
+ * removed. They widen coverage WITHIN the property subject rather than
+ * outside it, which is the only kind of widening this page wants.
  */
-const REGIONAL_QUERIES = [
-  "Chandigarh OR Panchkula OR Zirakpur OR Mohali",
-  'Tricity OR "New Chandigarh" OR Kharar OR Derabassi',
+const MARKET_QUERIES = [
+  '(Chandigarh OR Mohali OR Panchkula) AND ("housing board" OR "land acquisition" OR "master plan" OR sector)',
+  '(Chandigarh OR Zirakpur OR Mohali OR Panchkula) AND ("property rates" OR "circle rate" OR "collector rate" OR "stamp duty" OR "home loan")',
 ];
 
 /** Pages pulled per query. 10 rows a page, and the 48h window rarely holds more. */
 const PAGES_PER_QUERY = 2;
-
-/** The article has to be about one of these places... */
-const TRICITY_RE =
-  /\b(chandigarh|panchkula|zirakpur|mohali|tricity|kharar|derabassi|mullanpur|banur|new chandigarh)\b/i;
-
-/** ...and about property, not merely mention a place in a crime report. */
-const PROPERTY_RE =
-  /\b(real[- ]estate|realty|property|properties|housing|homebuyer|builder|apartment|flat|plot|township|rera|gmada|residential|commercial space|land pooling|home loan|circle rate|collector rate|stamp duty|possession)\b/i;
-
-/**
- * Crime and casualty copy, kept out of the regional filler.
- *
- * The property bucket is exempt: "ED lens on a Rs 40-crore GMADA waiver" is
- * a land story a buyer in this market genuinely wants, and stripping the
- * word "fraud" would remove the most relevant coverage there is. This gate
- * exists for the general-Tricity tier only, where an abduction report is
- * simply the wrong thing to put on a brokerage's market page.
- */
-const CRIME_RE =
-  /\b(murder|rape|abduct|kidnap|assault|molest|suicide|killed|death|dead body|shot dead|drug|smuggl|terror|accident|crash|arrested)\b/i;
-
-/** Tricity is the hard requirement; property is the ranking preference. */
-function classify(
-  title: string,
-  description: string | null
-): "property" | "regional" | null {
-  const hay = `${title} ${description ?? ""}`;
-  if (!TRICITY_RE.test(hay)) return null;
-  if (PROPERTY_RE.test(hay)) return "property";
-  return CRIME_RE.test(hay) ? null : "regional";
-}
 
 async function fetchPage(
   apiKey: string,
@@ -178,20 +144,18 @@ export async function fetchRealEstateNews(): Promise<NewsArticle[]> {
   try {
     const responses = (
       await Promise.all(
-        [...PROPERTY_QUERIES, ...REGIONAL_QUERIES].map((q) => fetchQuery(apiKey, q))
+        [...PROPERTY_QUERIES, ...MARKET_QUERIES].map((q) => fetchQuery(apiKey, q))
       )
     ).flat();
 
     const seen = new Set<string>();
-    const property: NewsArticle[] = [];
-    const regional: NewsArticle[] = [];
+    const stories: NewsArticle[] = [];
 
     for (const data of responses) {
       if (data.status !== "success" || !Array.isArray(data.results)) continue;
       for (const item of data.results) {
         if (!item.title || !isSafeHttpUrl(item.link)) continue;
-        const bucket = classify(item.title, item.description ?? null);
-        if (!bucket) continue;
+        if (!isMarketStory(item.title, item.description ?? null)) continue;
 
         const key = item.link.toLowerCase();
         const titleKey = item.title.trim().toLowerCase();
@@ -199,7 +163,7 @@ export async function fetchRealEstateNews(): Promise<NewsArticle[]> {
         seen.add(key);
         seen.add(titleKey);
 
-        (bucket === "property" ? property : regional).push({
+        stories.push({
           title: item.title,
           link: item.link,
           source: item.source_name ?? item.source_id ?? "Market Desk",
@@ -210,14 +174,12 @@ export async function fetchRealEstateNews(): Promise<NewsArticle[]> {
       }
     }
 
-    // Newest first within each bucket; the queries interleave otherwise, so
-    // the grid would open on whichever query happened to be listed first.
-    const byDate = (a: NewsArticle, b: NewsArticle) =>
-      (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
-    property.sort(byDate);
-    regional.sort(byDate);
+    // Newest first. One list now, so this is the whole ordering: the queries
+    // interleave otherwise and the grid would open on whichever query
+    // happened to be listed first rather than on the latest story.
+    stories.sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? ""));
 
-    return [...property, ...regional].slice(0, 36);
+    return stories.slice(0, 36);
   } catch (err) {
     console.error("fetchRealEstateNews failed:", err);
     return [];
