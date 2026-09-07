@@ -1,28 +1,115 @@
-# Pushes to main deploy themselves: SSH to the VPS and run the deploy script
-# that lives there. The script — not this file — owns the steps, so secrets
-# and paths stay on the server and never pass through GitHub.
 name: Deploy
 
+# Push to main and the site updates. The only thing ever done by hand is the
+# env file, which lives on the server and is never in this repository.
 on:
   push:
     branches: [main]
+    # Docs change nothing that is served.
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   workflow_dispatch:
 
 concurrency:
-  # Two deploys racing would have one `git reset --hard` land mid-build of the
-  # other. Queue them instead.
-  group: deploy-production
-  cancel-in-progress: false
+  # A second push while the first is deploying should win, not interleave.
+  group: deploy
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          command_timeout: 15m
-          script: /var/www/deploy-globallandmarkrealty.sh
+          node-version: 24
+          cache: npm
+
+      # ci, not install: the lockfile is what the server was verified against.
+      - name: Install
+        run: npm ci
+
+      # PageProps and friends are globals Next writes into .next/types, and
+      # next-env.d.ts is gitignored. A fresh checkout has neither, so tsc alone
+      # fails on every typed page with "Cannot find name 'PageProps'" — errors
+      # that do not exist locally, where .next is left over from `next dev`.
+      # typegen writes both without a full build.
+      - name: Typecheck, lint and checks
+        run: |
+          npx next typegen
+          npm run check
+
+      # Built here rather than on the server: that box serves four sites on
+      # shared vCPU, and compiling Next on it is a bad few minutes for all of
+      # them. A build that fails should also fail before the server is touched.
+      #
+      # `npx next build` rather than `npm run build`, because the npm script
+      # front-loads migrate and seed — there is no database on a runner. The
+      # server runs those itself in scripts/server-deploy.sh.
+      #
+      # NEXT_PUBLIC_* are inlined into the client bundle at build time, so they
+      # have to be set HERE, not on the server. These two must match the values
+      # in the server's env file; they are public by definition, hence no
+      # secrets. Getting SITE_URL wrong bakes localhost into every canonical
+      # tag, the sitemap and every OG card.
+      - name: Build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://globallandmarkrealty.com
+          NEXT_PUBLIC_WHATSAPP_NUMBER: "919876543210"
+        run: |
+          npx next build
+          node scripts/standalone-assets.mjs
+
+      - name: Package
+        run: tar -czf next-build.tgz .next
+
+      - name: Authorise the host
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          # tr -d '\r': a key copied on Windows carries CRLF line endings, and
+          # OpenSSL rejects the base64 body with "error in libcrypto" — which
+          # surfaces three lines later as "Permission denied (publickey)" and
+          # sends you looking at the server instead of at the secret.
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          # Structure only — counts and flags, never key material. Two rounds of
+          # guessing at this secret cost more than one round of measuring it.
+          echo "bytes=$(wc -c < ~/.ssh/id_deploy) lines=$(wc -l < ~/.ssh/id_deploy)"
+          echo "openssh_begin=$(grep -c 'BEGIN OPENSSH PRIVATE KEY' ~/.ssh/id_deploy)"
+          echo "openssh_end=$(grep -c 'END OPENSSH PRIVATE KEY' ~/.ssh/id_deploy)"
+          echo "looks_like_pubkey=$(grep -c '^ssh-' ~/.ssh/id_deploy)"
+          echo "looks_like_ppk=$(grep -c 'PuTTY-User-Key' ~/.ssh/id_deploy)"
+          echo "passphrase_protected=$(grep -c 'ENCRYPTED' ~/.ssh/id_deploy)"
+          # Fail here, where the message names the cause, rather than inside scp.
+          ssh-keygen -y -f ~/.ssh/id_deploy > /dev/null < /dev/null || {
+            echo "::error::DEPLOY_SSH_KEY is not a usable OpenSSH private key."
+            echo "Expect the whole file including the BEGIN/END lines, from a"
+            echo "key with no passphrase. A .pub file or a PuTTY .ppk fails here."
+            exit 1
+          }
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Upload
+        env:
+          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+          SSH_USER: ${{ secrets.DEPLOY_USER }}
+          APP_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          scp -i ~/.ssh/id_deploy -o BatchMode=yes \
+            next-build.tgz "$SSH_USER@$SSH_HOST:$APP_PATH/next-build.tgz"
+
+      # Everything host-specific lives in the script, in the repo, so what runs
+      # on the server is reviewable here.
+      - name: Deploy
+        env:
+          SSH_HOST: ${{ secrets.DEPLOY_HOST }}
+          SSH_USER: ${{ secrets.DEPLOY_USER }}
+          APP_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -o BatchMode=yes "$SSH_USER@$SSH_HOST" \
+            "cd $APP_PATH && bash scripts/server-deploy.sh next-build.tgz"
