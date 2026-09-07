@@ -93,9 +93,14 @@ fi
 # Before the new code is swapped in, so an additive migration is already
 # applied when the new build starts serving.
 node scripts/migrate.mjs
-# Seed only fills gaps and is idempotent; a failure here should not block a
-# deploy that is otherwise good.
-node scripts/seed.mjs || true
+
+# Seed is NOT run here, on purpose. It is a bootstrap step, and parts of it
+# are deliberately not gap-filling: seed.mjs:246 deletes and reinserts the
+# gallery of every seeded property (so that changing the seed imagery reaches
+# an existing database), and seed.mjs:494 unconditionally rewrites one
+# listing's price fields. Run on every deploy, that silently reverts photos a
+# broker added and prices they edited. Bootstrap a new database by hand:
+#   set -a; . /var/www/globallandmarkrealty.env; set +a; npm run db:seed
 
 # --- swap -----------------------------------------------------------------
 # Unpack beside the live directory and move, rather than untarring over it:
