@@ -1,0 +1,28 @@
+# Pushes to main deploy themselves: SSH to the VPS and run the deploy script
+# that lives there. The script — not this file — owns the steps, so secrets
+# and paths stay on the server and never pass through GitHub.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  # Two deploys racing would have one `git reset --hard` land mid-build of the
+  # other. Queue them instead.
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          command_timeout: 15m
+          script: /var/www/deploy-globallandmarkrealty.sh
