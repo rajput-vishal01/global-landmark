@@ -7,6 +7,13 @@ type UploaderImage = { url: string; storageKey: string | null; alt: string };
 /** Kept in step with IMAGE_MIME_TYPES / MAX_UPLOAD_BYTES in lib/storage.ts. */
 const ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
 const MAX_MB = 8;
+/**
+ * Must match MAX_IMAGES in lib/admin/property-parse.ts. The server rejects an
+ * over-long list with "Image list is invalid", which reads as a bug rather
+ * than a limit — so the cap is enforced and named here too, before a broker
+ * spends a minute uploading files that the save will refuse.
+ */
+const MAX_IMAGES = 20;
 
 /**
  * Gallery editor. Files are uploaded through our own server, which stores
@@ -49,7 +56,19 @@ export function ImageUploader({
     setBusy(true);
     setError(null);
     try {
+      // Read once from state rather than per iteration: setImages is async,
+      // so counting inside the loop would still see the pre-upload length and
+      // let a multi-file selection sail past the cap.
+      let slots = MAX_IMAGES - images.length;
+      if (slots <= 0) {
+        setError(`Already at the ${MAX_IMAGES}-image limit. Remove one to add another.`);
+        return;
+      }
       for (const file of Array.from(files)) {
+        if (slots <= 0) {
+          setError(`Only the first ${MAX_IMAGES} images were kept — that is the limit per listing.`);
+          break;
+        }
         // Checked here for a fast, specific message; the server enforces
         // the same limits regardless of what this component sends.
         if (file.size > MAX_MB * 1024 * 1024) {
@@ -70,6 +89,7 @@ export function ImageUploader({
         }
         // Same bytes uploaded twice yield the same key, so skip the duplicate
         // rather than showing the image twice in one gallery.
+        slots--;
         setImages((prev) =>
           prev.some((img) => img.storageKey === data.storageKey)
             ? prev
@@ -86,6 +106,10 @@ export function ImageUploader({
 
   function addPastedUrl() {
     const url = pasteUrl.trim();
+    if (images.length >= MAX_IMAGES) {
+      setError(`Already at the ${MAX_IMAGES}-image limit. Remove one to add another.`);
+      return;
+    }
     // Must match IMAGE_HOSTS in the property action and remotePatterns in
     // next.config.ts — an unlisted host makes next/image throw at render.
     let hostname = "";
@@ -154,7 +178,7 @@ export function ImageUploader({
       )}
 
       <label className="flex w-fit cursor-pointer items-center gap-3 border border-border bg-white px-5 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold">
-        {busy ? "Uploading..." : "Upload images"}
+        {busy ? "Uploading..." : `Upload images (${images.length}/${MAX_IMAGES})`}
         <input
           type="file"
           accept={ACCEPT}

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { ADMIN_COOKIE, verifyAdminToken } from "@/lib/admin/auth";
 import { COMPANY } from "@/lib/data";
 import { AdminSidebar, type NavGroup } from "@/components/admin/AdminSidebar";
+import { PanelContainer } from "@/components/admin/PanelContainer";
 
 /**
  * Panel information architecture (R-33), grouped.
@@ -45,7 +46,6 @@ const NAV: NavGroup[] = [
       // — someone got in touch and is waiting on a reply — even though what
       // arrives is a draft listing.
       { label: "Property Submissions", href: "/admin/submissions" },
-      { label: "Newsletter Signups", href: "/admin/subscribers" },
     ],
   },
   {
@@ -84,7 +84,7 @@ export default async function AdminPanelLayout({
     <div className="admin-panel min-h-screen md:flex">
       <AdminSidebar companyName={COMPANY.name} nav={NAV} />
       <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
-        <div className="mx-auto max-w-6xl">{children}</div>
+        <PanelContainer>{children}</PanelContainer>
       </main>
     </div>
   );

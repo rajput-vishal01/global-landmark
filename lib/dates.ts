@@ -1,8 +1,8 @@
 /**
  * Admin date rendering, in one place.
  *
- * These two shapes had been hand-copied into seven files (the leads,
- * subscribers and tours inboxes, both CRM detail pages, the properties
+ * These two shapes had been hand-copied into seven files (the leads and
+ * tours inboxes, both CRM detail pages, the pipeline table, the properties
  * table and the property form) and had already drifted: some guarded null
  * and rendered an em dash, others would have formatted it as "Invalid
  * Date". A date on an admin screen is read at a glance and compared across

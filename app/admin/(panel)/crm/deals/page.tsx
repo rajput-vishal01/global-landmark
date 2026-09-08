@@ -2,7 +2,7 @@ import Link from "next/link";
 import { desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { crmDeals } from "@/lib/db/schema";
-import { DealStageQuickForm } from "@/components/admin/DealStageQuickForm";
+import { BoardView, ListView } from "./_views";
 import { formatIndianShort } from "@/lib/attributes";
 import { DEAL_STAGES, brokerageAmount, brokeragePending } from "@/lib/taxonomy/brokerage";
 
@@ -37,7 +37,14 @@ function isSameMonth(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
 }
 
-export default async function DealsPipelinePage() {
+export default async function DealsPipelinePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ view?: string }>;
+}) {
+  // The chosen view lives in the URL, not component state: it survives the
+  // reload a stage change triggers, and the table is bookmarkable.
+  const isList = (await searchParams).view === "list";
   const rows = (await loadDeals()).map(withFigures);
   const now = new Date();
 
@@ -62,21 +69,39 @@ export default async function DealsPipelinePage() {
   }
   const agentRows = [...agentPending.entries()].sort((a, b) => b[1] - a[1]);
 
-  const columns = DEAL_STAGES.map((stage) => ({
-    stage,
-    deals: rows.filter((r) => r.deal.stage === stage),
-  }));
+  const VIEWS = [
+    { label: "Board", href: "/admin/crm/deals", active: !isList },
+    { label: "List", href: "/admin/crm/deals?view=list", active: isList },
+  ];
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-serif text-h2 text-ink">Deal pipeline</h1>
-        <Link
-          href="/admin/crm/deals/new"
-          className="bg-ink px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
-        >
-          New deal
-        </Link>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Plain links, not a client toggle — the view is a URL param, so
+              this needs no JavaScript and works on a middle-click. */}
+          <div className="flex border border-border bg-white">
+            {VIEWS.map(({ label, href, active }) => (
+              <Link
+                key={label}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={`px-4 py-2.5 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] transition-colors ${
+                  active ? "bg-ink text-cream" : "text-ink hover:text-gold-deep"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+          <Link
+            href="/admin/crm/deals/new"
+            className="bg-ink px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
+          >
+            New deal
+          </Link>
+        </div>
       </div>
 
       {/* R-31 summary view: total pending, this month's closed value,
@@ -131,58 +156,7 @@ export default async function DealsPipelinePage() {
         </div>
       </div>
 
-      {/* The board itself: one column per stage, cards stacked under each.
-          A simpler, non-drag-and-drop pipeline — the per-card Select below
-          is how a deal moves stage. */}
-      <div className="grid grid-cols-1 gap-4 overflow-x-auto sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
-        {columns.map(({ stage, deals }) => (
-          <div key={stage} className="flex min-w-[240px] flex-col gap-3">
-            <h2 className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink">
-              {stage} <span className="tabular-nums text-ink-muted">({deals.length})</span>
-            </h2>
-            <div className="flex flex-col gap-3">
-              {deals.length === 0 ? (
-                <p className="font-sans text-meta text-ink-muted">No deals.</p>
-              ) : (
-                deals.map(({ deal, amount, pending }) => (
-                  <div key={deal.id} className="flex flex-col gap-2 border border-border bg-white p-4">
-                    <Link
-                      href={`/admin/crm/deals/${deal.id}`}
-                      className="font-sans text-body font-medium text-ink underline decoration-transparent underline-offset-4 hover:decoration-gold"
-                    >
-                      {deal.client?.name ?? "Unknown client"}
-                    </Link>
-                    <p className="font-sans text-meta text-ink-muted">
-                      {deal.property
-                        ? deal.property.refCode
-                          ? `${deal.property.title} · ${deal.property.refCode}`
-                          : deal.property.title
-                        : "No property linked"}
-                    </p>
-                    <div className="flex items-center justify-between gap-3 font-sans text-meta">
-                      <span className="text-ink-muted">
-                        Value {deal.dealValue != null ? formatIndianShort(deal.dealValue) : "—"}
-                      </span>
-                      <span className="text-gold-deep">
-                        Pending {pending != null ? formatIndianShort(pending) : "—"}
-                      </span>
-                    </div>
-                    {amount != null && (
-                      <p className="font-sans text-meta text-ink-muted">
-                        Brokerage {formatIndianShort(amount)}
-                      </p>
-                    )}
-                    {deal.assignedTo && (
-                      <p className="font-sans text-meta text-ink-muted">{deal.assignedTo}</p>
-                    )}
-                    <DealStageQuickForm id={deal.id} stage={deal.stage} />
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+      {isList ? <ListView rows={rows} /> : <BoardView rows={rows} />}
     </div>
   );
 }

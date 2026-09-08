@@ -265,7 +265,11 @@ export async function createProperty(
     .where(
       and(
         like(properties.title, fields.title),
-        sql`${properties.createdAt} > now() - interval '2 minutes'`
+        // MySQL interval syntax: the unit is a bare keyword, singular, and
+        // must not be quoted. Postgres' `interval '2 minutes'` parses fine in
+        // TypeScript and fails at runtime with ER_PARSE_ERROR — which is what
+        // made every "Create property" submission end at the error boundary.
+        sql`${properties.createdAt} > now() - interval 2 minute`
       )
     )
     .limit(1);
