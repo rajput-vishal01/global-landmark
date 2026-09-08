@@ -13,9 +13,14 @@ set -euo pipefail
 
 TARBALL="${1:?usage: server-deploy.sh <tarball>}"
 
-# Secrets live outside the repo and outside git, so a deploy can never
-# overwrite them and a leaked repo never contains them.
-ENV_FILE="${GL_ENV_FILE:-/var/www/globallandmarkrealty.env}"
+# Secrets sit at the app root as .env. Safe on both counts that matter here:
+# .gitignore has `.env*`, so it is untracked and `git reset --hard` leaves it
+# alone; and it is outside .next, so the swap below never touches it. Not to
+# be confused with the uploads trap — anything that must survive a deploy has
+# to be outside .next, and this is.
+# "./" is load-bearing: `. .env` makes bash search PATH before the current
+# directory, so a bare name can source something else entirely.
+ENV_FILE="${GL_ENV_FILE:-./.env}"
 PM2_NAME="${GL_PM2_NAME:-globallandmarkrealty}"
 
 # Runs from the app root, which the caller cd's into. Deliberately NOT derived
