@@ -2,12 +2,16 @@
 
 import { useActionState } from "react";
 import { Select } from "@/components/ui/Select";
-import { FIELD, LABEL } from "@/components/form-classes";
+import { LABEL } from "@/components/form-classes";
+import { cardChrome, deskButtonPrimary, deskField } from "@/components/admin/desk";
 import { DEAL_STAGES } from "@/lib/taxonomy/brokerage";
 import { updateDeal, type DealFormState } from "@/app/admin/(panel)/crm/deal-actions";
 
 const STAGE_OPTIONS = DEAL_STAGES.map((s) => ({ value: s, label: s }));
 const initialState: DealFormState = {};
+
+/** Desk field chrome plus the full width every field in this form wants. */
+const FIELD = `${deskField} w-full`;
 
 export type EditableDeal = {
   id: number;
@@ -25,7 +29,7 @@ export function DealEditForm({ deal }: { deal: EditableDeal }) {
   const [state, formAction, isPending] = useActionState(updateDeal, initialState);
 
   return (
-    <form action={formAction} className="flex flex-col gap-6">
+    <form action={formAction} className={`${cardChrome} flex flex-col gap-6 p-5`}>
       <input type="hidden" name="id" value={deal.id} />
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -38,7 +42,7 @@ export function DealEditForm({ deal }: { deal: EditableDeal }) {
 
         <div className="flex flex-col gap-2">
           <label htmlFor="dealValue" className={LABEL}>
-            Deal value <span className="normal-case text-ink-muted">(rupees)</span>
+            Deal value <span className="normal-case text-muted">(rupees)</span>
           </label>
           <input
             id="dealValue"
@@ -56,7 +60,7 @@ export function DealEditForm({ deal }: { deal: EditableDeal }) {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor="brokeragePercent" className={LABEL}>
-            Brokerage % <span className="normal-case text-ink-muted">(e.g. 2 or 2.5)</span>
+            Brokerage % <span className="normal-case text-muted">(e.g. 2 or 2.5)</span>
           </label>
           <input
             id="brokeragePercent"
@@ -73,7 +77,7 @@ export function DealEditForm({ deal }: { deal: EditableDeal }) {
         <div className="flex flex-col gap-2">
           <label htmlFor="brokerageAmountOverride" className={LABEL}>
             Override amount{" "}
-            <span className="normal-case text-ink-muted">(rupees — wins over % if set)</span>
+            <span className="normal-case text-muted">(rupees — wins over % if set)</span>
           </label>
           <input
             id="brokerageAmountOverride"
@@ -91,7 +95,7 @@ export function DealEditForm({ deal }: { deal: EditableDeal }) {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor="sharedWithName" className={LABEL}>
-            Shared with <span className="normal-case text-ink-muted">(name, if any)</span>
+            Shared with <span className="normal-case text-muted">(name, if any)</span>
           </label>
           <input
             id="sharedWithName"
@@ -105,7 +109,7 @@ export function DealEditForm({ deal }: { deal: EditableDeal }) {
 
         <div className="flex flex-col gap-2">
           <label htmlFor="sharedAmount" className={LABEL}>
-            Shared amount <span className="normal-case text-ink-muted">(rupees)</span>
+            Shared amount <span className="normal-case text-muted">(rupees)</span>
           </label>
           <input
             id="sharedAmount"
@@ -138,12 +142,12 @@ export function DealEditForm({ deal }: { deal: EditableDeal }) {
         <button
           type="submit"
           disabled={isPending}
-          className="w-full cursor-pointer bg-ink px-8 py-3.5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60 sm:w-fit"
+          className={`${deskButtonPrimary} w-full justify-center disabled:cursor-wait disabled:opacity-60 sm:w-fit`}
         >
           {isPending ? "Saving..." : "Save changes"}
         </button>
         {state.error && (
-          <p role="alert" className="font-sans text-meta text-error">
+          <p role="alert" className="text-[13px] text-error">
             {state.error}
           </p>
         )}

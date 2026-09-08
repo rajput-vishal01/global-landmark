@@ -20,10 +20,54 @@ import * as schema from "./schema";
 // One pool across dev HMR reloads.
 const globalForDb = globalThis as unknown as { __gldPool?: mysql.Pool };
 
+/**
+ * Check the URL before handing it to mysql2, because this module is
+ * evaluated by `app/layout.tsx` — so a malformed DATABASE_URL 500s EVERY
+ * route, the public site included, and does it with `TypeError: Invalid URL`
+ * pointing at `mysql.createPool`. That names the line, not the cause, and
+ * the cause is always the env file.
+ *
+ * The two that actually happen: the key pasted into its own value
+ * (`DATABASE_URL=DATABASE_URL=mysql://…`), and a leftover `postgres://` URL
+ * after the MySQL migration. Both are named outright.
+ *
+ * The password is never printed. `redact` keeps the shape — scheme, host,
+ * port, database — which is everything needed to see what is wrong.
+ */
+function checkedDatabaseUrl(): string {
+  const raw = process.env.DATABASE_URL;
+  if (!raw) {
+    throw new Error("DATABASE_URL is not set. Copy .env.example to .env and fill it in.");
+  }
+  if (raw.startsWith("DATABASE_URL=")) {
+    throw new Error(
+      "DATABASE_URL contains its own name — the .env line reads " +
+        "`DATABASE_URL=DATABASE_URL=…`. Remove the duplicated prefix."
+    );
+  }
+  const redact = raw.replace(/\/\/[^@/]*@/, "//***@");
+  if (raw.startsWith("postgres://") || raw.startsWith("postgresql://")) {
+    throw new Error(
+      `DATABASE_URL is a PostgreSQL URL (${redact}). This app moved to MySQL — ` +
+        "it wants mysql://user:pass@host:3306/database."
+    );
+  }
+  try {
+    new URL(raw);
+  } catch {
+    throw new Error(
+      `DATABASE_URL is not a valid URL (${redact}). Expected ` +
+        "mysql://user:pass@host:3306/database, unquoted, with no spaces around the =. " +
+        "A password containing @ : / or # must be percent-encoded."
+    );
+  }
+  return raw;
+}
+
 const pool =
   globalForDb.__gldPool ??
   mysql.createPool({
-    uri: process.env.DATABASE_URL,
+    uri: checkedDatabaseUrl(),
     connectionLimit: 5,
     // Cap the wait for a connection rather than letting a request hang
     // until the platform timeout.

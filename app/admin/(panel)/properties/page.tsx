@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { STATUS_TONE } from "@/lib/admin/status-tone";
 import { and, asc, count, desc, eq, like, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { projects, properties } from "@/lib/db/schema";
@@ -7,14 +8,24 @@ import {
   PropertyFilters,
   type PropertyFilterValues,
 } from "@/components/admin/PropertyFilters";
-import { LISTING_STATUSES, PUBLICATION_STATES, STATUS_BADGE } from "@/lib/taxonomy/status";
+import {
+  LISTING_STATUSES,
+  PUBLICATION_STATES,} from "@/lib/taxonomy/status";
 import { PROPERTY_TYPES } from "@/lib/attributes";
 import { CITY_NAMES } from "@/lib/locations";
+import {
+  Chip,
+  EmptyState,
+  PageHead,
+  deskButton,
+  deskButtonPrimary,} from "@/components/admin/desk";
 import { bulkDeleteProperties, deleteProperty, duplicateProperty } from "./actions";
 
 export const metadata = { title: "Properties" };
 
 const PAGE_SIZE = 25;
+
+
 
 /**
  * The four sorts, their labels and their SQL in one place — the filter bar
@@ -209,16 +220,16 @@ export default async function AdminPropertiesPage({
   const firstRow = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-serif text-h2 text-ink">Properties</h1>
-        <Link
-          href="/admin/properties/new"
-          className="bg-ink px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
-        >
-          Add property
-        </Link>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Properties"
+        sub="Every listing the brokerage holds, drafts included — filter it down, then open one to edit it."
+        actions={
+          <Link href="/admin/properties/new" className={deskButtonPrimary}>
+            Add property
+          </Link>
+        }
+      />
 
       <PropertyFilters
         values={values}
@@ -226,54 +237,50 @@ export default async function AdminPropertiesPage({
         isFiltered={isFiltered}
       />
 
-      {/* Legend, so the badge colours carry meaning without hovering. */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
+      {/* Legend on the left, what came back on the right. Reading "1–25 of 60
+          matching" next to the filters you just set is what tells you they
+          did something. */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
           Status
         </span>
         {LISTING_STATUSES.map((status) => (
-          <span
-            key={status}
-            className={`inline-flex whitespace-nowrap border px-2.5 py-1 text-eyebrow font-sans font-medium uppercase tracking-[0.12em] ${STATUS_BADGE[status]}`}
-          >
+          <Chip key={status} tone={STATUS_TONE[status]}>
             {status}
-          </span>
+          </Chip>
         ))}
+        <span className="ml-auto text-[12px] tabular-nums text-muted">
+          {firstRow}–{Math.min(page * PAGE_SIZE, total)} of {total}
+          {isFiltered ? " matching" : ""} propert{total === 1 ? "y" : "ies"}
+        </span>
       </div>
 
       {rows.length === 0 ? (
         // Two different dead ends need two different exits: an empty portfolio
         // wants the add button, a filtered miss wants the filters cleared.
         isFiltered ? (
-          <p className="text-body font-sans text-ink-muted">
-            No properties match these filters.{" "}
-            <Link
-              href="/admin/properties"
-              className="text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-            >
-              Clear filters
-            </Link>{" "}
-            to see the whole portfolio.
-          </p>
+          <EmptyState
+            title="Nothing matches that"
+            note="No listing in the portfolio fits every filter you have set. Loosen one — status and city together are usually the pair that empties it."
+            action={
+              <Link href="/admin/properties" className={deskButton}>
+                Clear filters
+              </Link>
+            }
+          />
         ) : (
-          <p className="text-body font-sans text-ink-muted">
-            No properties yet.{" "}
-            <Link
-              href="/admin/properties/new"
-              className="text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-            >
-              Add the first one
-            </Link>
-            .
-          </p>
+          <EmptyState
+            title="No properties yet"
+            note="Add the first listing and it appears on the public site as soon as it is published — until then it stays a draft only you can see."
+            action={
+              <Link href="/admin/properties/new" className={deskButton}>
+                Add the first property
+              </Link>
+            }
+          />
         )
       ) : (
         <div className="flex flex-col gap-4">
-          <p className="text-meta font-sans tabular-nums text-ink-muted">
-            {firstRow}–{Math.min(page * PAGE_SIZE, total)} of {total}
-            {isFiltered ? " matching" : ""} propert{total === 1 ? "y" : "ies"}
-          </p>
-
           <PropertiesTable
             rows={rows}
             duplicateAction={duplicateProperty}
@@ -291,7 +298,7 @@ export default async function AdminPropertiesPage({
                 disabled={page <= 1}
                 label="Previous"
               />
-              <span className="text-meta font-sans tabular-nums text-ink-muted">
+              <span className="text-[12px] tabular-nums text-muted">
                 Page {page} of {lastPage}
               </span>
               <PageLink
@@ -307,7 +314,8 @@ export default async function AdminPropertiesPage({
   );
 }
 
-/** A step that would leave the result set renders as text, not a dead link. */
+/** A step that would leave the result set renders as a dead twin of the
+ *  button, not a dead link — so the row keeps its shape at page 1. */
 function PageLink({
   href,
   disabled,
@@ -317,20 +325,15 @@ function PageLink({
   disabled: boolean;
   label: string;
 }) {
-  const base =
-    "text-eyebrow font-sans font-medium uppercase tracking-[0.18em] border border-border px-5 py-2.5";
   if (disabled) {
     return (
-      <span aria-disabled className={`${base} text-ink-muted/40`}>
+      <span aria-disabled className={`${deskButton} pointer-events-none opacity-40`}>
         {label}
       </span>
     );
   }
   return (
-    <Link
-      href={href}
-      className={`${base} text-ink transition-colors hover:border-gold hover:text-gold-deep`}
-    >
+    <Link href={href} className={deskButton}>
       {label}
     </Link>
   );

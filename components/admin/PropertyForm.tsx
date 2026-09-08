@@ -10,10 +10,11 @@ import {
 import { CATEGORIES } from "@/lib/categories";
 import { PROPERTY_TYPES, withEmptyOption } from "@/lib/attributes";
 import { sectionsFor } from "@/lib/taxonomy/sections";
-import { FIELD, LABEL } from "@/components/form-classes";
+import { FormSection, deskFieldFull, deskLabel } from "./FormSection";
 import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
-import { FormSection } from "./FormSection";
+import { cardChrome } from "@/components/admin/desk";
+
 import { RequiredFieldsPanel } from "./RequiredFieldsPanel";
 import { SaveBar, type AutosaveStatus } from "./SaveBar";
 import { BasicDetailsSection } from "./BasicDetailsSection";
@@ -217,9 +218,9 @@ export function PropertyForm({
       <RequiredFieldsPanel propertyType={propertyType} />
 
       {/* Identity: never collapsed, because this is what the listing IS. */}
-      <div className="flex flex-col gap-5 border border-border bg-white px-5 py-6">
+      <div className={`${cardChrome} flex flex-col gap-5 px-4 py-5`}>
         <div className="flex flex-col gap-2">
-          <label htmlFor="title" className={LABEL}>
+          <label htmlFor="title" className={deskLabel}>
             Title
             <Req />
           </label>
@@ -230,7 +231,7 @@ export function PropertyForm({
             required
             maxLength={200}
             defaultValue={property?.title}
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
 
@@ -243,7 +244,7 @@ export function PropertyForm({
             actually asks, and Property type is answered in the same breath. */}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label htmlFor="kind" className={LABEL}>
+            <label htmlFor="kind" className={deskLabel}>
               Unit or project
             </label>
             <Select
@@ -258,7 +259,7 @@ export function PropertyForm({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="propertyType" className={LABEL}>
+            <label htmlFor="propertyType" className={deskLabel}>
               Property type
             </label>
             <Select
@@ -268,7 +269,7 @@ export function PropertyForm({
               onValueChange={setPropertyType}
               options={withEmptyOption("— Select a type —", PROPERTY_TYPES)}
             />
-            <p className="font-sans text-meta text-ink-muted">
+            <p className="text-[11.5px] text-muted">
               A plot is not asked for rooms or furnishing; a warehouse is not
               asked for amenities. Choosing the type here changes the rest of
               the form.
@@ -278,7 +279,7 @@ export function PropertyForm({
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label htmlFor="category" className={LABEL}>
+            <label htmlFor="category" className={deskLabel}>
               Category
             </label>
             <Select
@@ -289,9 +290,9 @@ export function PropertyForm({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="projectName" className={LABEL}>
+            <label htmlFor="projectName" className={deskLabel}>
               Project / society{" "}
-              <span className="normal-case text-ink-muted">(optional)</span>
+              <span className="normal-case text-muted">(optional)</span>
             </label>
             <ProjectSuggestInput
               id="projectName"
@@ -302,7 +303,7 @@ export function PropertyForm({
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="description" className={LABEL}>
+          <label htmlFor="description" className={deskLabel}>
             Description
           </label>
           <textarea
@@ -310,7 +311,7 @@ export function PropertyForm({
             name="description"
             rows={5}
             defaultValue={property?.description}
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
       </div>
@@ -450,7 +451,7 @@ export function PropertyForm({
       {state.error && (
         <p
           role="alert"
-          className="border border-error bg-error/5 px-4 py-3 text-meta font-sans text-error"
+          className={`${cardChrome} border-l-[3px] border-l-error px-4 py-3 text-[12px] text-error`}
         >
           {state.error}
         </p>

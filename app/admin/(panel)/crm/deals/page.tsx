@@ -12,6 +12,13 @@ import {
 } from "./_views";
 import { formatIndianShort } from "@/lib/attributes";
 import { DEAL_STAGES, brokerageAmount, brokeragePending } from "@/lib/taxonomy/brokerage";
+import {
+  Card,
+  KpiRow,
+  KpiTile,
+  PageHead,
+  deskButtonPrimary,
+} from "@/components/admin/desk";
 
 export const metadata = { title: "Deal pipeline" };
 
@@ -96,85 +103,86 @@ export default async function DealsPipelinePage({
   const listRows = isList ? filterRows(rows, filters) : rows;
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-serif text-h2 text-ink">Deal pipeline</h1>
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Plain links, not a client toggle — the view is a URL param, so
-              this needs no JavaScript and works on a middle-click. */}
-          <div className="flex border border-border bg-white">
-            {VIEWS.map(({ label, href, active }) => (
-              <Link
-                key={label}
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={`px-4 py-2.5 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] transition-colors ${
-                  active ? "bg-ink text-cream" : "text-ink hover:text-gold-deep"
-                }`}
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
-          <Link
-            href="/admin/crm/deals/new"
-            className="bg-ink px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
-          >
-            New deal
-          </Link>
-        </div>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Deal pipeline"
+        sub="Every deal in play, what it is worth, and what brokerage is still owed."
+        actions={
+          <>
+            {/* Plain links, not a client toggle — the view is a URL param, so
+                this needs no JavaScript and works on a middle-click. */}
+            <div className="inline-flex rounded-lg border border-line bg-surface p-0.5">
+              {VIEWS.map(({ label, href, active }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  className={`rounded-md px-3.5 py-1.5 text-[13px] font-medium transition-colors ${
+                    active ? "bg-ink text-cream" : "text-soft hover:text-ink"
+                  }`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+            <Link href="/admin/crm/deals/new" className={deskButtonPrimary}>
+              New deal
+            </Link>
+          </>
+        }
+      />
 
       {/* R-31 summary view: total pending, this month's closed value,
           per-stage counts, per-agent split. */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="flex flex-col gap-1 border border-border bg-white p-5">
-          <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
-            Brokerage pending
-          </span>
-          <span className="font-serif text-h3 text-gold-deep">{formatIndianShort(totalPending)}</span>
-          <span className="font-sans text-meta text-ink-muted">Across open deals</span>
-        </div>
-        <div className="flex flex-col gap-1 border border-border bg-white p-5">
-          <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
-            Closed this month
-          </span>
-          <span className="font-serif text-h3 text-ink">{formatIndianShort(closedValueThisMonth)}</span>
-          <span className="font-sans text-meta text-ink-muted">
-            {closedThisMonth.length} deal{closedThisMonth.length === 1 ? "" : "s"}
-          </span>
-        </div>
-        <div className="flex flex-col gap-2 border border-border bg-white p-5 sm:col-span-2 lg:col-span-1">
-          <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
-            Per stage
-          </span>
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
+      <KpiRow>
+        <KpiTile
+          label="Brokerage pending"
+          value={formatIndianShort(totalPending)}
+          // "Not lost", not "open". A Closed deal with brokerage still unpaid
+          // is money owed and belongs in this figure — but the list's "Still
+          // in play" filter hides Closed, so the two deliberately count
+          // different sets and each has to say which.
+          note="Everything not lost"
+          highlight
+        />
+        <KpiTile
+          label="Closed this month"
+          value={formatIndianShort(closedValueThisMonth)}
+          note={`${closedThisMonth.length} deal${closedThisMonth.length === 1 ? "" : "s"}`}
+        />
+      </KpiRow>
+
+      {/* These two are lists, not single figures, so they stay cards: a
+          KpiTile takes one formatted string and would have to drop the
+          breakdown to fit. */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Card>
+          <p className="desk-eyebrow">Per stage</p>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-ink">
             {DEAL_STAGES.map((s) => (
-              <span key={s} className="font-sans text-meta text-ink">
-                {s} <span className="tabular-nums text-ink-muted">({stageCounts.get(s) ?? 0})</span>
+              <span key={s}>
+                {s} <span className="tabular-nums text-muted">({stageCounts.get(s) ?? 0})</span>
               </span>
             ))}
           </div>
-        </div>
-        <div className="flex flex-col gap-2 border border-border bg-white p-5 sm:col-span-2 lg:col-span-1">
-          <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
-            Pending by agent
-          </span>
+        </Card>
+        <Card>
+          <p className="desk-eyebrow">Pending by agent</p>
           {agentRows.length === 0 ? (
-            <span className="font-sans text-meta text-ink-muted">No open deals yet.</span>
+            <p className="text-[13px] text-soft">No open deals yet.</p>
           ) : (
             <div className="flex flex-col gap-1">
               {agentRows.map(([agent, amount]) => (
-                <div key={agent} className="flex items-center justify-between gap-3">
-                  <span className="truncate font-sans text-meta text-ink">{agent}</span>
-                  <span className="shrink-0 font-sans text-meta tabular-nums text-ink-muted">
+                <div key={agent} className="flex items-center justify-between gap-3 text-[13px]">
+                  <span className="truncate text-ink">{agent}</span>
+                  <span className="shrink-0 tabular-nums text-muted">
                     {formatIndianShort(amount)}
                   </span>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
       {isList ? (

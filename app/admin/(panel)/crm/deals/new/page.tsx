@@ -2,6 +2,7 @@ import { asc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { crmClients, properties } from "@/lib/db/schema";
 import { NewDealForm } from "@/components/admin/NewDealForm";
+import { PageHead } from "@/components/admin/desk";
 
 export const metadata = { title: "New deal" };
 
@@ -39,8 +40,11 @@ export default async function NewDealPage({
   const defaultClientId = clientId ? Number(clientId) : undefined;
 
   return (
-    <div className="flex flex-col gap-8">
-      <h1 className="font-serif text-h2 text-ink">New deal</h1>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="New deal"
+        sub="Starts at Enquiry. Deal value and brokerage can be filled in later."
+      />
       <NewDealForm
         clients={clients}
         properties={propertyRows}

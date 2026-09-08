@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
+import { deskButtonDanger, deskButtonPrimary } from "@/components/admin/desk";
+import { deskErrorText } from "@/components/admin/FormSection";
 import {
   approveSubmission,
   declineSubmission,
@@ -9,8 +11,8 @@ import {
 
 const initialState: SubmissionActionState = {};
 
-const BUTTON =
-  "cursor-pointer whitespace-nowrap border px-3 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] transition-colors disabled:cursor-wait disabled:opacity-50";
+/** Both buttons share the same wait cursor while either action is in flight. */
+const PENDING = "disabled:cursor-wait disabled:opacity-50";
 
 /**
  * Approve and decline, as two separate one-button forms.
@@ -19,10 +21,10 @@ const BUTTON =
  * pending state, so pressing Approve does not grey out Decline, and neither
  * needs a formAction discriminator the server then has to re-validate.
  *
- * Decline is deliberately quiet — a hairline button, not a red one. It
- * archives rather than deletes, so it is reversible from the property
- * editor, and dressing a reversible action as destructive teaches the
- * broker to hesitate over the wrong thing.
+ * Approve is the filled action — ink on cream, never gold, which the palette
+ * reserves for rules, hover and emphasis. Decline is the outline danger
+ * button, so it stays a hairline rather than a red slab: it archives rather
+ * than deletes, and is reversible from the property editor afterwards.
  */
 export function SubmissionActions({ id }: { id: number }) {
   const [approveState, approve, approving] = useActionState(approveSubmission, initialState);
@@ -37,7 +39,7 @@ export function SubmissionActions({ id }: { id: number }) {
           <button
             type="submit"
             disabled={approving || declining}
-            className={`${BUTTON} border-gold bg-gold/10 text-gold-deep hover:bg-gold/20`}
+            className={`${deskButtonPrimary} whitespace-nowrap ${PENDING}`}
           >
             {approving ? "Publishing..." : "Approve & publish"}
           </button>
@@ -47,14 +49,14 @@ export function SubmissionActions({ id }: { id: number }) {
           <button
             type="submit"
             disabled={approving || declining}
-            className={`${BUTTON} border-border text-ink-muted hover:border-ink/30 hover:text-ink`}
+            className={`${deskButtonDanger} whitespace-nowrap ${PENDING}`}
           >
             {declining ? "Archiving..." : "Decline"}
           </button>
         </form>
       </div>
       {error && (
-        <span role="alert" className="text-meta font-sans text-error">
+        <span role="alert" className={deskErrorText}>
           {error}
         </span>
       )}

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { FIELD, LABEL } from "@/components/form-classes";
-import { FormSection, countFilled } from "./FormSection";
+import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+
 
 /**
  * CFF group 20 — Property specifications. Public; renders as the spec table
@@ -78,7 +78,7 @@ export function SpecificationsSection({
       </div>
 
       <div className="flex flex-col gap-3">
-        <span className={LABEL}>Position</span>
+        <span className={deskLabel}>Position</span>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Flag
             name="isCorner"
@@ -113,8 +113,8 @@ function MeasureField({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={name} className={LABEL}>
-        {label} <span className="normal-case text-ink-muted">(feet)</span>
+      <label htmlFor={name} className={deskLabel}>
+        {label} <span className="normal-case text-muted">(feet)</span>
       </label>
       <input
         id={name}
@@ -128,7 +128,7 @@ function MeasureField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={FIELD}
+        className={deskFieldFull}
       />
     </div>
   );
@@ -156,7 +156,7 @@ function Flag({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2.5 font-sans text-body text-ink">
+    <label className="flex cursor-pointer items-center gap-2.5 text-[13px] text-ink">
       <input type="hidden" name={name} value="false" />
       <input
         type="checkbox"
@@ -164,7 +164,7 @@ function Flag({
         value="true"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="h-4 w-4 shrink-0 cursor-pointer appearance-none border border-border bg-white checked:border-gold checked:bg-gold"
+        className="h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-[3px] border border-line bg-surface checked:border-gold checked:bg-gold"
       />
       {label}
     </label>

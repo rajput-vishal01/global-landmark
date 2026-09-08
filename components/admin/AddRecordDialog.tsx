@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Dialog } from "@/components/admin/Dialog";
+import { deskButtonPrimary } from "@/components/admin/desk";
 
 /**
  * "Add X" as a dialog instead of a trip to /new.
@@ -37,9 +38,10 @@ export function AddRecordDialog({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        // Matches Button variant="outline" — this is the same affordance in
-        // the same place, so it must not read as a different kind of control.
-        className="text-eyebrow inline-flex cursor-pointer items-center justify-center border border-ink/25 px-7 py-3.5 font-sans font-medium uppercase tracking-[0.18em] text-ink transition-colors duration-300 hover:border-gold"
+        // The screen's one filled action. Every page that renders this puts it
+        // in the PageHead actions slot and has no other primary, which is the
+        // rule in ADMIN_DESK §3.
+        className={deskButtonPrimary}
       >
         {label}
       </button>

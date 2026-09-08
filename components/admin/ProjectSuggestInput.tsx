@@ -4,6 +4,8 @@ import { EASE } from "@/lib/motion";
 import { useCallback, useRef, useState } from "react";
 import { AnimatePresence, m } from "framer-motion";
 import { useOutsideClick } from "@/lib/hooks";
+import { cardChrome } from "@/components/admin/desk";
+import { deskFieldFull } from "./FormSection";
 
 /**
  * Free-text project field with suggestions from existing projects — never a
@@ -49,7 +51,7 @@ export function ProjectSuggestInput({
         }}
         onFocus={() => setIsOpen(true)}
         onKeyDown={(e) => e.key === "Escape" && setIsOpen(false)}
-        className="w-full appearance-none rounded-none border-b border-border bg-transparent py-2.5 font-sans text-body text-ink placeholder:text-ink-muted/60 focus:border-gold focus:outline-none"
+        className={deskFieldFull}
       />
       <AnimatePresence>
         {isOpen && matches.length > 0 && (
@@ -59,7 +61,7 @@ export function ProjectSuggestInput({
             exit={{ opacity: 0, y: 6 }}
             transition={{ duration: 0.25, ease: EASE }}
            
-            className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto border border-border bg-white shadow-[0_18px_44px_-18px_rgba(20,20,20,0.3)]"
+            className={`absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto ${cardChrome}`}
           >
             {matches.map((name) => (
               <li key={name}>
@@ -69,7 +71,7 @@ export function ProjectSuggestInput({
                     setValue(name);
                     setIsOpen(false);
                   }}
-                  className="w-full cursor-pointer px-4 py-2.5 text-left font-sans text-meta text-ink transition-colors duration-150 hover:bg-cream"
+                  className="w-full cursor-pointer px-4 py-2.5 text-left text-[13px] text-ink transition-colors duration-150 hover:bg-raise"
                 >
                   {name}
                 </button>

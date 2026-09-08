@@ -2,10 +2,11 @@
 
 import { useActionState, useState } from "react";
 import { Select } from "@/components/ui/Select";
+import { deskButtonPrimary } from "@/components/admin/desk";
 import { ChecklistField } from "./ChecklistField";
-import { FIELD, LABEL } from "@/components/form-classes";
+import { FormSection, deskFieldFull, deskLabel } from "./FormSection";
 import { Req } from "@/components/ui/RequiredMark";
-import { FormSection } from "./FormSection";
+
 import { AMENITIES, AREA_UNITS, POSSESSION_STATUSES, withEmptyOption } from "@/lib/attributes";
 import { CITY_NAMES, localitiesIn } from "@/lib/locations";
 import type { ProjectFormState } from "@/app/admin/(panel)/projects/actions";
@@ -40,7 +41,7 @@ export type ProjectWithFields = {
 /**
  * The project form — Group C of the CFF (R-26). Far fewer fields than a
  * property, so this stays a handful of open cards rather than twenty
- * collapsible sections; the pattern (FIELD/LABEL, FormSection, Select,
+ * collapsible sections; the pattern (deskFieldFull/deskLabel, FormSection, Select,
  * ChecklistField) is deliberately the same as `PropertyForm.tsx` so the two
  * screens feel like one product.
  */
@@ -69,7 +70,7 @@ export function ProjectForm({
 
       <FormSection title="Basics" defaultOpen>
         <div className="flex flex-col gap-2">
-          <label htmlFor="name" className={LABEL}>
+          <label htmlFor="name" className={deskLabel}>
             Name
             <Req />
           </label>
@@ -81,12 +82,12 @@ export function ProjectForm({
             maxLength={200}
             defaultValue={project?.name ?? ""}
             placeholder="Green Lotus Saksham"
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="description" className={LABEL}>
+          <label htmlFor="description" className={deskLabel}>
             Description
           </label>
           <textarea
@@ -95,12 +96,12 @@ export function ProjectForm({
             rows={3}
             maxLength={2000}
             defaultValue={project?.description ?? ""}
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="builderId" className={LABEL}>
+          <label htmlFor="builderId" className={deskLabel}>
             Builder (&ldquo;Builder Linked With Project&rdquo;)
           </label>
           <Select
@@ -112,7 +113,7 @@ export function ProjectForm({
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="reraNumber" className={LABEL}>
+          <label htmlFor="reraNumber" className={deskLabel}>
             RERA number
           </label>
           <input
@@ -121,7 +122,7 @@ export function ProjectForm({
             type="text"
             maxLength={60}
             defaultValue={project?.reraNumber ?? ""}
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
       </FormSection>
@@ -129,7 +130,7 @@ export function ProjectForm({
       <FormSection title="Possession &amp; dates">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           <div className="flex flex-col gap-2">
-            <label htmlFor="possessionStatus" className={LABEL}>
+            <label htmlFor="possessionStatus" className={deskLabel}>
               Possession status
             </label>
             <Select
@@ -140,7 +141,7 @@ export function ProjectForm({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="launchDate" className={LABEL}>
+            <label htmlFor="launchDate" className={deskLabel}>
               Launch date
             </label>
             <input
@@ -148,11 +149,11 @@ export function ProjectForm({
               name="launchDate"
               type="date"
               defaultValue={project?.launchDate ?? ""}
-              className={FIELD}
+              className={deskFieldFull}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="possessionDate" className={LABEL}>
+            <label htmlFor="possessionDate" className={deskLabel}>
               Possession date
             </label>
             <input
@@ -160,15 +161,15 @@ export function ProjectForm({
               name="possessionDate"
               type="date"
               defaultValue={project?.possessionDate ?? ""}
-              className={FIELD}
+              className={deskFieldFull}
             />
           </div>
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="priceAppreciation" className={LABEL}>
+          <label htmlFor="priceAppreciation" className={deskLabel}>
             Price appreciation notes{" "}
-            <span className="normal-case text-ink-muted">(internal — a projection, not published)</span>
+            <span className="normal-case text-muted">(internal — a projection, not published)</span>
           </label>
           <textarea
             id="priceAppreciation"
@@ -176,7 +177,7 @@ export function ProjectForm({
             rows={3}
             maxLength={2000}
             defaultValue={project?.priceAppreciation ?? ""}
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
       </FormSection>
@@ -184,7 +185,7 @@ export function ProjectForm({
       <FormSection title="Scale &amp; green area">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
           <div className="flex flex-col gap-2">
-            <label htmlFor="totalTowers" className={LABEL}>
+            <label htmlFor="totalTowers" className={deskLabel}>
               Number of towers
             </label>
             <input
@@ -194,11 +195,11 @@ export function ProjectForm({
               min={0}
               inputMode="numeric"
               defaultValue={project?.totalTowers ?? ""}
-              className={FIELD}
+              className={deskFieldFull}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="totalUnits" className={LABEL}>
+            <label htmlFor="totalUnits" className={deskLabel}>
               Total units
             </label>
             <input
@@ -208,11 +209,11 @@ export function ProjectForm({
               min={0}
               inputMode="numeric"
               defaultValue={project?.totalUnits ?? ""}
-              className={FIELD}
+              className={deskFieldFull}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="numberOfFloors" className={LABEL}>
+            <label htmlFor="numberOfFloors" className={deskLabel}>
               Number of floors
             </label>
             <input
@@ -222,14 +223,14 @@ export function ProjectForm({
               min={0}
               inputMode="numeric"
               defaultValue={project?.numberOfFloors ?? ""}
-              className={FIELD}
+              className={deskFieldFull}
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label htmlFor="greenAreaValue" className={LABEL}>
+            <label htmlFor="greenAreaValue" className={deskLabel}>
               Green area
             </label>
             <input
@@ -239,11 +240,11 @@ export function ProjectForm({
               min={0}
               inputMode="numeric"
               defaultValue={project?.greenAreaValue ?? ""}
-              className={FIELD}
+              className={deskFieldFull}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="greenAreaUnit" className={LABEL}>
+            <label htmlFor="greenAreaUnit" className={deskLabel}>
               Green area unit
             </label>
             <Select
@@ -271,7 +272,7 @@ export function ProjectForm({
 
       <FormSection title="Location">
         <div className="flex flex-col gap-2">
-          <label htmlFor="country" className={LABEL}>
+          <label htmlFor="country" className={deskLabel}>
             Country
           </label>
           <input
@@ -280,13 +281,13 @@ export function ProjectForm({
             type="text"
             maxLength={60}
             defaultValue={project?.country ?? "India"}
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <label htmlFor="city" className={LABEL}>
+            <label htmlFor="city" className={deskLabel}>
               City
             </label>
             <Select
@@ -301,7 +302,7 @@ export function ProjectForm({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="locality" className={LABEL}>
+            <label htmlFor="locality" className={deskLabel}>
               Locality
             </label>
             {localities.length > 0 ? (
@@ -321,7 +322,7 @@ export function ProjectForm({
                 <input
                   disabled
                   placeholder="Choose a city first"
-                  className={`${FIELD} cursor-not-allowed opacity-50`}
+                  className={`${deskFieldFull} cursor-not-allowed opacity-50`}
                 />
                 <input type="hidden" name="locality" value="" />
               </>
@@ -330,7 +331,7 @@ export function ProjectForm({
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="sector" className={LABEL}>
+          <label htmlFor="sector" className={deskLabel}>
             Sector
           </label>
           <input
@@ -339,12 +340,12 @@ export function ProjectForm({
             type="text"
             maxLength={120}
             defaultValue={project?.sector ?? ""}
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="coverImage" className={LABEL}>
+          <label htmlFor="coverImage" className={deskLabel}>
             Cover image URL
           </label>
           <input
@@ -354,21 +355,21 @@ export function ProjectForm({
             maxLength={2000}
             defaultValue={project?.coverImage ?? ""}
             placeholder="https://…"
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
       </FormSection>
 
-      <div className="sticky bottom-0 flex flex-col gap-2 border-t border-border bg-cream/95 py-4 backdrop-blur-sm">
+      <div className="sticky bottom-0 flex flex-col gap-2 border-t border-line bg-paper/95 py-4 backdrop-blur-sm">
         <button
           type="submit"
           disabled={isPending}
-          className="w-full cursor-pointer bg-ink px-8 py-3.5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60 sm:w-fit"
+          className={`${deskButtonPrimary} w-full justify-center disabled:cursor-wait disabled:opacity-60 sm:w-fit`}
         >
           {isPending ? "Saving..." : project ? "Save changes" : "Add project"}
         </button>
         {state.error && (
-          <p role="alert" className="font-sans text-meta text-error">
+          <p role="alert" className="text-[12px] text-error">
             {state.error}
           </p>
         )}

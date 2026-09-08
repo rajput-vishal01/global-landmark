@@ -9,6 +9,18 @@ import { useModalLock } from "@/lib/hooks";
 import { EASE } from "@/lib/motion";
 import { StatusBadge } from "@/components/admin/BasicDetailsSection";
 import { DeleteButton } from "@/components/admin/DeleteButton";
+import {
+  Chip,
+  Table,
+  TableWrap,
+  cardChrome,
+  deskButton,
+  deskButtonDanger,
+  deskFace,
+  deskRowLink,
+  numericCell,
+  type ChipTone,
+} from "@/components/admin/desk";
 import { daysOnMarket } from "@/lib/taxonomy/status";
 import type { DeleteState } from "@/app/admin/(panel)/properties/actions";
 import { formatDate } from "@/lib/dates";
@@ -30,9 +42,19 @@ type Row = {
 
 type BulkAction = (prev: DeleteState, formData: FormData) => Promise<DeleteState>;
 
+/**
+ * Publication state as a step of the gold ramp: live for what the public can
+ * see, then down the ramp as it recedes from them. Not a red/amber/green set —
+ * the brand has one accent (ADMIN_DESK section 7).
+ */
+const PUBLICATION_TONE: Record<string, ChipTone> = {
+  published: "live",
+  draft: "neutral",
+  archived: "quiet",
+};
 
-const TH =
-  "text-eyebrow whitespace-nowrap px-4 py-3 text-left font-sans font-medium uppercase tracking-[0.15em] text-ink-muted";
+/** Right-aligned in both the heading and the cell, so the column reads straight. */
+const NUMERIC_HEADS = new Set(["Reference", "Days"]);
 
 /**
  * The properties list table, plus multi-select + bulk delete. Selection
@@ -45,6 +67,11 @@ const TH =
  * terminal to run scripts/dedupe-properties.mjs from. Select, confirm,
  * gone — same safe row-then-files delete order the single Delete button
  * already uses, just loopable.
+ *
+ * Cell chrome comes from `Table`, which styles `thead th` and `tbody td`
+ * itself. The local per-cell padding/size classes this used to carry are
+ * gone: a table that dresses its own cells drifts away from every other
+ * list on the desk one class at a time.
  */
 export function PropertiesTable({
   rows,
@@ -90,11 +117,11 @@ export function PropertiesTable({
         />
       )}
 
-      <div className="overflow-x-auto border border-border bg-white">
-        <table className="w-full min-w-[900px] text-left">
+      <TableWrap>
+        <Table className="min-w-[900px]">
           <thead>
-            <tr className="border-b border-border">
-              <th className={TH}>
+            <tr>
+              <th scope="col">
                 <input
                   type="checkbox"
                   checked={allSelected}
@@ -104,7 +131,11 @@ export function PropertiesTable({
                 />
               </th>
               {["Reference", "Property", "Status", "City", "Updated", "Days", ""].map((h, i) => (
-                <th key={i} className={TH}>
+                <th
+                  key={i}
+                  scope="col"
+                  className={NUMERIC_HEADS.has(h) ? numericCell : undefined}
+                >
                   {h}
                 </th>
               ))}
@@ -114,8 +145,8 @@ export function PropertiesTable({
             {rows.map((p) => {
               const days = daysOnMarket(new Date(p.listedAt), p.listingStatus);
               return (
-                <tr key={p.id} className="border-b border-border last:border-b-0">
-                  <td className="px-4 py-3">
+                <tr key={p.id}>
+                  <td>
                     <input
                       type="checkbox"
                       checked={selected.has(p.id)}
@@ -124,7 +155,7 @@ export function PropertiesTable({
                       className="h-4 w-4 accent-gold"
                     />
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-meta font-sans tabular-nums text-ink-muted">
+                  <td className={`whitespace-nowrap text-muted ${numericCell}`}>
                     {p.refCode ?? "—"}
                   </td>
                   {/* Fixed-width, single-line. A title that wraps turns a
@@ -132,61 +163,46 @@ export function PropertiesTable({
                       height stops being uniform, which is the thing that
                       makes a table readable at a glance. Full text stays
                       available on hover via the title attribute. */}
-                  <td className="max-w-[24rem] px-4 py-2.5">
+                  <td className="max-w-[24rem]">
                     <div className="flex items-center gap-2.5">
-                      <div className="h-10 w-14 shrink-0 overflow-hidden bg-ink/5">
+                      <div className="h-10 w-14 shrink-0 overflow-hidden rounded-[4px] bg-raise">
                         {p.coverUrl && (
                           // eslint-disable-next-line @next/next/no-img-element -- arbitrary admin-entered hosts
                           <img src={p.coverUrl} alt="" className="h-full w-full object-cover" />
                         )}
                       </div>
                       <div className="min-w-0">
-                        <p
-                          title={p.title}
-                          className="truncate font-sans text-body font-medium text-ink"
-                        >
+                        <p title={p.title} className="truncate font-medium text-ink">
                           {p.title}
                         </p>
-                        <p className="truncate text-meta font-sans text-ink-muted">
+                        <p className="truncate text-[12px] text-muted">
                           {[p.locality, p.projectName, p.addedBy].filter(Boolean).join(" · ")}
                         </p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td>
                     <div className="flex flex-col items-start gap-1.5">
                       <StatusBadge status={p.listingStatus} />
-                      {p.publicationState !== "published" && (
-                        <span className="text-meta font-sans capitalize text-ink-muted">
-                          {p.publicationState}
-                        </span>
-                      )}
+                      <Chip tone={PUBLICATION_TONE[p.publicationState] ?? "neutral"}>
+                        <span className="capitalize">{p.publicationState}</span>
+                      </Chip>
                     </div>
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-meta font-sans text-ink">
-                    {p.city ?? "—"}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-meta font-sans text-ink-muted">
-                    {formatDate(p.updatedAt)}
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-meta font-sans tabular-nums text-ink-muted">
+                  <td className="whitespace-nowrap text-soft">{p.city ?? "—"}</td>
+                  <td className="whitespace-nowrap text-muted">{formatDate(p.updatedAt)}</td>
+                  <td className={`whitespace-nowrap text-muted ${numericCell}`}>
                     {days === null ? "—" : days}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-5">
-                      <Link
-                        href={`/admin/properties/${p.id}/edit`}
-                        className="text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                      >
+                  <td>
+                    <div className="flex items-center justify-end gap-4">
+                      <Link href={`/admin/properties/${p.id}/edit`} className={deskRowLink}>
                         Edit
                       </Link>
                       {/* R-12: the 2nd-10th flat in a tower starts from a clone, not a blank form. */}
                       <form action={duplicateAction}>
                         <input type="hidden" name="id" value={p.id} />
-                        <button
-                          type="submit"
-                          className="cursor-pointer text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                        >
+                        <button type="submit" className={`cursor-pointer ${deskRowLink}`}>
                           Duplicate
                         </button>
                       </form>
@@ -201,13 +217,13 @@ export function PropertiesTable({
               );
             })}
           </tbody>
-        </table>
-      </div>
+        </Table>
+      </TableWrap>
     </div>
   );
 }
 
-/** Sticky bar above the table once anything is selected — count, a preview of what's selected, and the delete trigger. */
+/** The bar above the table once anything is selected — count, a preview of what's selected, and the delete trigger. */
 function BulkDeleteBar({
   count,
   titles,
@@ -234,9 +250,9 @@ function BulkDeleteBar({
   );
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 border border-gold bg-gold/10 px-5 py-3.5">
-      <p className="font-sans text-meta text-ink">
-        <span className="font-medium">{count}</span> selected — {preview}
+    <div className="flex flex-wrap items-center justify-between gap-4 rounded-[10px] border border-gold bg-gold/10 px-4 py-3">
+      <p className="text-[13px] text-ink">
+        <span className="font-semibold">{count}</span> selected — {preview}
       </p>
       <form
         ref={formRef}
@@ -252,13 +268,13 @@ function BulkDeleteBar({
           type="button"
           onClick={() => setOpen(true)}
           disabled={isPending}
-          className="cursor-pointer bg-error px-5 py-2.5 text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-50"
+          className={`${deskButtonDanger} disabled:cursor-wait disabled:opacity-50`}
         >
           {isPending ? "Removing..." : `Delete ${count} selected`}
         </button>
       </form>
       {state.error && (
-        <p role="alert" className="w-full text-meta font-sans text-error">
+        <p role="alert" className="w-full text-[12px] text-error">
           {state.error}
         </p>
       )}
@@ -284,19 +300,22 @@ function BulkDeleteBar({
                   exit={{ opacity: 0, y: 8, scale: 0.98 }}
                   transition={{ duration: 0.3, ease: EASE }}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-full max-w-md border border-border bg-white p-8"
+                  className={`w-full max-w-md ${cardChrome} p-7`}
                 >
                   <span aria-hidden className="block h-px w-10 bg-gold" />
-                  <h2 className="mt-5 font-serif text-h4 text-ink">Delete {count} properties?</h2>
-                  <p className="mt-3 text-body font-sans text-ink-muted">
-                    {preview}. Every image on each of these listings is removed too. This cannot be undone.
+                  <h2 className={`${deskFace} mt-5 text-[17px] font-bold text-ink`}>
+                    Delete {count} properties?
+                  </h2>
+                  <p className="mt-3 text-[13px] text-soft">
+                    {preview}. Every image on each of these listings is removed too. This cannot be
+                    undone.
                   </p>
-                  <div className="mt-8 flex justify-end gap-3">
+                  <div className="mt-7 flex justify-end gap-3">
                     <button
                       type="button"
                       autoFocus
                       onClick={() => setOpen(false)}
-                      className="cursor-pointer border border-ink/25 px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:border-gold"
+                      className={deskButton}
                     >
                       Cancel
                     </button>
@@ -306,7 +325,7 @@ function BulkDeleteBar({
                         setOpen(false);
                         formRef.current?.requestSubmit();
                       }}
-                      className="cursor-pointer bg-error px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+                      className={deskButtonDanger}
                     >
                       Delete {count}
                     </button>

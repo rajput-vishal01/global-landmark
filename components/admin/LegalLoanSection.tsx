@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { FIELD, LABEL } from "@/components/form-classes";
-import { FormSection, countFilled } from "./FormSection";
+import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+
 import { ChecklistField } from "./ChecklistField";
 import {
   DOCUMENTATION_FLAGS,
@@ -93,7 +93,7 @@ export function LegalLoanSection({
       total={hasRera ? 5 : 4}
     >
       <div className="flex flex-col gap-2" onChange={onLegalToggle}>
-        <span className={LABEL}>Legal</span>
+        <span className={deskLabel}>Legal</span>
         {/* Public, and deliberately short. A RERA registration number is
             expected in Indian property advertising — an ad claiming RERA
             registration without quoting the number is the thing buyers have
@@ -118,7 +118,7 @@ export function LegalLoanSection({
 
       {hasRera ? (
         <div className="flex flex-col gap-2">
-          <label htmlFor="reraNumber" className={LABEL}>
+          <label htmlFor="reraNumber" className={deskLabel}>
             RERA number
           </label>
           <input
@@ -129,9 +129,9 @@ export function LegalLoanSection({
             value={reraNumber}
             onChange={(e) => setReraNumber(e.target.value)}
             placeholder="PBRERA-SAS79-PR0123"
-            className={FIELD}
+            className={deskFieldFull}
           />
-          <p className="font-sans text-meta text-ink-muted">
+          <p className="text-[11.5px] text-muted">
             Shown publicly beside the RERA badge. Quote it exactly as
             registered.
           </p>
@@ -144,7 +144,7 @@ export function LegalLoanSection({
       )}
 
       <div className="flex flex-col gap-2">
-        <span className={LABEL}>Loan</span>
+        <span className={deskLabel}>Loan</span>
         <ChecklistField
           name="loanFlagsJson"
           options={LOAN_FLAGS}
@@ -155,7 +155,7 @@ export function LegalLoanSection({
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className={LABEL}>Banks on panel</span>
+        <span className={deskLabel}>Banks on panel</span>
         <ChecklistField
           name="banksOnPanelJson"
           options={NO_FIXED_OPTIONS}
@@ -166,11 +166,11 @@ export function LegalLoanSection({
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className={LABEL}>Documentation</span>
+        <span className={deskLabel}>Documentation</span>
         {/* Internal by default. The count of ticks here is what an agent
             answers a buyer's paperwork question from; publishing the gaps
             would advertise exactly which certificate a seller is missing. */}
-        <p className="border border-border bg-cream px-4 py-3 font-sans text-meta text-ink-muted">
+        <p className="rounded-lg border border-line-soft bg-raise px-4 py-3 text-[11.5px] text-muted">
           Internal only — this checklist is not shown on the public listing.
         </p>
         <ChecklistField

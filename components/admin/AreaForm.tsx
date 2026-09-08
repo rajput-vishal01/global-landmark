@@ -2,7 +2,8 @@
 
 import { useActionState, useState } from "react";
 import type { Area } from "@/lib/db/schema";
-import { FIELD, LABEL } from "@/components/form-classes";
+import { cardChrome, deskButtonPrimary } from "@/components/admin/desk";
+import { deskFieldFull, deskLabel } from "./FormSection";
 import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
 import { CoverImageInput } from "@/components/admin/CoverImageInput";
@@ -14,11 +15,11 @@ type Action = (prev: AreaFormState, formData: FormData) => Promise<AreaFormState
 
 const initialState: AreaFormState = {};
 
-const HINT = "text-meta font-sans text-ink-muted";
+const HINT = "text-[11.5px] text-muted";
 
 /** The checkbox shape ChecklistField already uses across the admin. */
 const CHECKBOX =
-  "h-4 w-4 shrink-0 cursor-pointer appearance-none border border-border bg-white transition-colors checked:border-gold checked:bg-gold";
+  "h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-[3px] border border-line bg-surface transition-colors checked:border-gold checked:bg-gold";
 
 /**
  * Create + edit area form (R-46).
@@ -35,11 +36,11 @@ export function AreaForm({ area, action }: { area?: Area; action: Action }) {
   const localities = localitiesIn(matchCity);
 
   return (
-    <form action={formAction} className="flex flex-col gap-6 border border-border bg-white p-6">
+    <form action={formAction} className={`${cardChrome} flex flex-col gap-6 p-5`}>
       {area && <input type="hidden" name="id" value={area.id} />}
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="name" className={LABEL}>
+        <label htmlFor="name" className={deskLabel}>
           Name
           <Req />
         </label>
@@ -51,7 +52,7 @@ export function AreaForm({ area, action }: { area?: Area; action: Action }) {
           maxLength={120}
           defaultValue={area?.name}
           placeholder="e.g. Sector 66, Mohali"
-          className={FIELD}
+          className={deskFieldFull}
         />
         <p className={HINT}>
           The page address is built from this. Renaming an area changes its
@@ -60,7 +61,7 @@ export function AreaForm({ area, action }: { area?: Area; action: Action }) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="city" className={LABEL}>
+        <label htmlFor="city" className={deskLabel}>
           City
         </label>
         <Select
@@ -72,8 +73,8 @@ export function AreaForm({ area, action }: { area?: Area; action: Action }) {
         <p className={HINT}>Groups the area on the public index.</p>
       </div>
 
-      <fieldset className="flex flex-col gap-6 border border-border p-5">
-        <legend className={`px-2 ${LABEL}`}>Which listings it claims</legend>
+      <fieldset className="flex flex-col gap-6 rounded-lg border border-line-soft p-4">
+        <legend className={`px-2 ${deskLabel}`}>Which listings it claims</legend>
         <p className={HINT}>
           A listing belongs to this area when its city or its locality matches
           below. Counts are worked out live, so nothing needs re-saving when a
@@ -82,7 +83,7 @@ export function AreaForm({ area, action }: { area?: Area; action: Action }) {
 
         <div className="grid gap-6 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="matchCity" className={LABEL}>
+            <label htmlFor="matchCity" className={deskLabel}>
               Matches city
             </label>
             <Select
@@ -95,7 +96,7 @@ export function AreaForm({ area, action }: { area?: Area; action: Action }) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="matchLocality" className={LABEL}>
+            <label htmlFor="matchLocality" className={deskLabel}>
               Matches locality
             </label>
             <Select
@@ -121,13 +122,13 @@ export function AreaForm({ area, action }: { area?: Area; action: Action }) {
       </fieldset>
 
       <div className="flex flex-col gap-1.5">
-        <span className={LABEL}>Cover image</span>
+        <span className={deskLabel}>Cover image</span>
         <CoverImageInput name="coverImage" initial={area?.coverImage ?? null} />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="blurb" className={LABEL}>
-          Blurb <span className="normal-case text-ink-muted">(optional)</span>
+        <label htmlFor="blurb" className={deskLabel}>
+          Blurb <span className="normal-case text-muted">(optional)</span>
         </label>
         <textarea
           id="blurb"
@@ -136,13 +137,13 @@ export function AreaForm({ area, action }: { area?: Area; action: Action }) {
           maxLength={1000}
           defaultValue={area?.blurb ?? ""}
           placeholder="What makes this area worth buying into."
-          className={FIELD}
+          className={deskFieldFull}
         />
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="sortOrder" className={LABEL}>
+          <label htmlFor="sortOrder" className={deskLabel}>
             Sort order
           </label>
           <input
@@ -151,7 +152,7 @@ export function AreaForm({ area, action }: { area?: Area; action: Action }) {
             type="number"
             inputMode="numeric"
             defaultValue={area?.sortOrder ?? 0}
-            className={FIELD}
+            className={deskFieldFull}
           />
           <p className={HINT}>Lowest first; ties fall back to the name.</p>
         </div>
@@ -161,7 +162,7 @@ export function AreaForm({ area, action }: { area?: Area; action: Action }) {
               guarantees the field is present; the server reads the LAST
               value for the name. Same shape as every other admin boolean. */}
           <input type="hidden" name="isPublished" value="false" />
-          <label className="flex cursor-pointer items-center gap-2.5 font-sans text-body text-ink">
+          <label className="flex cursor-pointer items-center gap-2.5 text-[13px] text-ink">
             <input
               type="checkbox"
               name="isPublished"
@@ -179,12 +180,12 @@ export function AreaForm({ area, action }: { area?: Area; action: Action }) {
         <button
           type="submit"
           disabled={isPending}
-          className="cursor-pointer bg-ink px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+          className={`${deskButtonPrimary} disabled:cursor-wait disabled:opacity-60`}
         >
           {isPending ? "Saving..." : area ? "Save area" : "Add area"}
         </button>
         {state.error && (
-          <p role="alert" className="text-meta font-sans text-error">{state.error}</p>
+          <p role="alert" className="text-[12px] text-error">{state.error}</p>
         )}
       </div>
     </form>

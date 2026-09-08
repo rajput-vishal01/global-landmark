@@ -1,11 +1,15 @@
 "use client";
 
 import { useActionState } from "react";
-import { FIELD, LABEL } from "@/components/form-classes";
+import { LABEL } from "@/components/form-classes";
+import { cardChrome, deskButton, deskField } from "@/components/admin/desk";
 import { Req } from "@/components/ui/RequiredMark";
 import { addPayment, type PaymentFormState } from "@/app/admin/(panel)/crm/deal-actions";
 
 const initialState: PaymentFormState = {};
+
+/** Desk field chrome plus the full width the inline payment fields want. */
+const FIELD = `${deskField} w-full`;
 
 /** Inline add-payment row under a deal's payments list (R-31 — partial receipts add up). */
 export function PaymentForm({ dealId }: { dealId: number }) {
@@ -14,7 +18,7 @@ export function PaymentForm({ dealId }: { dealId: number }) {
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-3 border border-border bg-white p-4 sm:flex-row sm:items-end sm:flex-wrap"
+      className={`${cardChrome} flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-end`}
     >
       <input type="hidden" name="dealId" value={dealId} />
 
@@ -67,13 +71,13 @@ export function PaymentForm({ dealId }: { dealId: number }) {
       <button
         type="submit"
         disabled={isPending}
-        className="shrink-0 cursor-pointer whitespace-nowrap border border-ink/25 px-5 py-2.5 text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:border-gold disabled:cursor-wait disabled:opacity-50"
+        className={`${deskButton} shrink-0 whitespace-nowrap disabled:cursor-wait disabled:opacity-50`}
       >
         {isPending ? "Saving..." : "Add payment"}
       </button>
 
       {state.error && (
-        <span role="alert" className="w-full text-meta font-sans text-error">
+        <span role="alert" className="w-full text-[13px] text-error">
           {state.error}
         </span>
       )}

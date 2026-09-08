@@ -1,5 +1,6 @@
 import { getContactOverride, getCredibilityOverride } from "@/lib/site-settings";
 import { ContactSettingsForm, CredibilitySettingsForm } from "./SettingsForms";
+import { PageHead } from "@/components/admin/desk";
 
 export const metadata = { title: "Settings" };
 
@@ -15,15 +16,18 @@ export default async function AdminSettingsPage() {
   ]);
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="font-serif text-h2 text-ink">Settings</h1>
-        <p className="mt-2 text-body font-sans text-ink-muted">
-          A blank field keeps the current default from{" "}
-          <code className="font-sans text-meta">lib/data.ts</code> — fill in only
-          what should override it.
-        </p>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Settings"
+        sub="The phone numbers, address and headline figures the public site shows, changed without a deploy."
+      />
+
+      <p className="max-w-2xl text-[13px] text-soft">
+        A blank field keeps the current default from{" "}
+        <code className="text-[12px] text-muted">lib/data.ts</code> — fill in only
+        what should override it.
+      </p>
+
       <ContactSettingsForm initial={contact} />
       <CredibilitySettingsForm initial={credibility} />
     </div>

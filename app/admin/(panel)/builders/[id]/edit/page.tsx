@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { builders } from "@/lib/db/schema";
 import { BuilderForm } from "@/components/admin/BuilderForm";
 import { updateBuilder } from "../../actions";
+import Link from "next/link";
+import { PageHead, deskButton } from "@/components/admin/desk";
 
 export const metadata = { title: "Edit builder" };
 
@@ -22,8 +24,16 @@ export default async function EditBuilderPage({
   if (!builder) notFound();
 
   return (
-    <div className="flex flex-col gap-8">
-      <h1 className="font-serif text-h2 text-ink">Edit builder</h1>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Edit builder"
+        sub="A developer profile. The contact and track-record fields are internal and never reach the public site."
+        actions={
+          <Link href="/admin/builders" className={deskButton}>
+            Cancel
+          </Link>
+        }
+      />
       <BuilderForm action={updateBuilder} builder={builder} />
     </div>
   );

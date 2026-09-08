@@ -3,6 +3,16 @@ import { count, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { projects, properties } from "@/lib/db/schema";
 import { DeleteButton } from "@/components/admin/DeleteButton";
+import {
+  EmptyState,
+  PageHead,
+  Table,
+  TableWrap,
+  deskButton,
+  deskButtonPrimary,
+  deskRowLink,
+  numericCell,
+} from "@/components/admin/desk";
 import { deleteProject } from "./actions";
 
 export const metadata = { title: "Projects" };
@@ -33,65 +43,72 @@ export default async function AdminProjectsPage() {
   const rows = await listWithCounts();
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-h2 text-ink">Projects &amp; societies</h1>
-          <p className="mt-2 text-body font-sans text-ink-muted">
-            Named developments a listing can belong to — a whole society, or the
-            parent of an individual unit.
-          </p>
-        </div>
-        <Link
-          href="/admin/projects/new"
-          className="bg-ink px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
-        >
-          Add project
-        </Link>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Projects & societies"
+        sub="Named developments a listing can sit inside — a whole society, or the parent of a single unit."
+        actions={
+          <Link href="/admin/projects/new" className={deskButtonPrimary}>
+            Add project
+          </Link>
+        }
+      />
 
       {rows.length === 0 ? (
-        <p className="text-body font-sans text-ink-muted">No projects yet.</p>
+        <EmptyState
+          title="No projects yet"
+          note="A project is the society or development a unit belongs to. Add one and its towers, units and RERA number hang off it."
+          action={
+            <Link href="/admin/projects/new" className={deskButton}>
+              Add the first project
+            </Link>
+          }
+        />
       ) : (
-        <ul className="border border-border bg-white">
-          {rows.map((p) => (
-            <li
-              key={p.id}
-              className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-4 py-3 last:border-b-0"
-            >
-              <div className="min-w-0">
-                <Link
-                  href={`/admin/projects/${p.id}`}
-                  className="font-sans text-body font-medium text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                >
-                  {p.name}
-                </Link>
-                <p className="text-meta font-sans text-ink-muted">
-                  {[p.builderName, p.reraNumber && `RERA ${p.reraNumber}`]
-                    .filter(Boolean)
-                    .join(" · ") || "No builder linked"}
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-5">
-                <span className="text-meta font-sans tabular-nums text-ink-muted">
-                  {p.propertyCount} unit{p.propertyCount === 1 ? "" : "s"}
-                  {p.totalUnits ? ` of ${p.totalUnits}` : ""}
-                </span>
-                <Link
-                  href={`/admin/projects/${p.id}/edit`}
-                  className="text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                >
-                  Edit
-                </Link>
-                <DeleteButton
-                  action={deleteProject}
-                  id={p.id}
-                  confirmText={`Delete project "${p.name}"?`}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <TableWrap>
+          <Table className="min-w-[720px]">
+            <thead>
+              <tr>
+                <th scope="col">Project</th>
+                <th scope="col">Builder</th>
+                <th scope="col">RERA</th>
+                <th scope="col" className={numericCell}>
+                  Units
+                </th>
+                <th scope="col" />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((p) => (
+                <tr key={p.id}>
+                  <td>
+                    <Link href={`/admin/projects/${p.id}`} className={deskRowLink}>
+                      {p.name}
+                    </Link>
+                  </td>
+                  <td className="text-soft">{p.builderName || "No builder linked"}</td>
+                  <td className="whitespace-nowrap text-soft">{p.reraNumber || "—"}</td>
+                  <td className={`${numericCell} whitespace-nowrap text-soft`}>
+                    {p.propertyCount}
+                    {p.totalUnits ? ` of ${p.totalUnits}` : ""}
+                  </td>
+                  <td>
+                    <div className="flex items-center justify-end gap-4">
+                      <Link href={`/admin/projects/${p.id}/edit`} className={deskRowLink}>
+                        Edit
+                      </Link>
+                      <DeleteButton
+                        action={deleteProject}
+                        id={p.id}
+                        confirmText={`Delete project "${p.name}"?`}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </TableWrap>
       )}
     </div>
   );

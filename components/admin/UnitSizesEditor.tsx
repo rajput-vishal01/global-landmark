@@ -2,8 +2,9 @@
 
 import { useRef, useState } from "react";
 import { Select } from "@/components/ui/Select";
-import { FIELD, LABEL } from "@/components/form-classes";
-import { FormSection, countFilled } from "./FormSection";
+import { deskButton } from "@/components/admin/desk";
+import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+
 import { AREA_UNITS, formatRupees, withEmptyOption } from "@/lib/attributes";
 
 /**
@@ -108,7 +109,7 @@ export function UnitSizesEditor({ initial }: { initial: UnitSizeInput[] }) {
         )}
       />
 
-      <p className="font-sans text-meta text-ink-muted">
+      <p className="text-[11.5px] text-muted">
         Published as written. This is the advertised starting price per unit
         type, not the demand price on this listing — that one stays behind the
         price section&apos;s own publish toggle.
@@ -117,10 +118,10 @@ export function UnitSizesEditor({ initial }: { initial: UnitSizeInput[] }) {
       {rows.map((row, i) => (
         <div
           key={row.id}
-          className="flex flex-col gap-4 border border-border bg-white p-4"
+          className="flex flex-col gap-4 rounded-lg border border-line-soft bg-raise p-4"
         >
           <div className="flex items-center justify-between gap-4">
-            <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
               Unit {i + 1}
             </span>
             <button
@@ -135,7 +136,7 @@ export function UnitSizesEditor({ initial }: { initial: UnitSizeInput[] }) {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <label htmlFor={`unit-${row.id}-label`} className={LABEL}>
+              <label htmlFor={`unit-${row.id}-label`} className={deskLabel}>
                 Unit
               </label>
               <input
@@ -145,11 +146,11 @@ export function UnitSizesEditor({ initial }: { initial: UnitSizeInput[] }) {
                 value={row.unitLabel}
                 onChange={(e) => update(row.id, { unitLabel: e.target.value })}
                 placeholder="3 + S BHK"
-                className={FIELD}
+                className={deskFieldFull}
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label htmlFor={`unit-${row.id}-price`} className={LABEL}>
+              <label htmlFor={`unit-${row.id}-price`} className={deskLabel}>
                 Price
               </label>
               <input
@@ -160,11 +161,11 @@ export function UnitSizesEditor({ initial }: { initial: UnitSizeInput[] }) {
                 value={row.price}
                 onChange={(e) => update(row.id, { price: e.target.value })}
                 placeholder="32000000"
-                className={FIELD}
+                className={deskFieldFull}
               />
               {/* Rupees are entered in full — the readout is what catches a
                   stray zero before it reaches the public page. */}
-              <p className="font-sans text-meta text-ink-muted">
+              <p className="text-[11.5px] text-muted">
                 {toNumber(row.price) != null
                   ? formatRupees(toNumber(row.price) as number)
                   : "Blank shows “On request” on the public table."}
@@ -174,7 +175,7 @@ export function UnitSizesEditor({ initial }: { initial: UnitSizeInput[] }) {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <label htmlFor={`unit-${row.id}-area`} className={LABEL}>
+              <label htmlFor={`unit-${row.id}-area`} className={deskLabel}>
                 Area
               </label>
               <input
@@ -185,11 +186,11 @@ export function UnitSizesEditor({ initial }: { initial: UnitSizeInput[] }) {
                 value={row.areaValue}
                 onChange={(e) => update(row.id, { areaValue: e.target.value })}
                 placeholder="1750"
-                className={FIELD}
+                className={deskFieldFull}
               />
             </div>
             <div className="flex flex-col gap-2">
-              <label htmlFor={`unit-${row.id}-unit`} className={LABEL}>
+              <label htmlFor={`unit-${row.id}-unit`} className={deskLabel}>
                 Area unit
               </label>
               <Select
@@ -211,13 +212,13 @@ export function UnitSizesEditor({ initial }: { initial: UnitSizeInput[] }) {
         <button
           type="button"
           onClick={() => setRows((prev) => [...prev, toRow({}, nextId.current++)])}
-          className="w-fit cursor-pointer border border-border bg-white px-4 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
+          className={`${deskButton} w-fit`}
         >
           + Add another unit
         </button>
       )}
 
-      <p className="font-sans text-meta text-ink-muted">
+      <p className="text-[11.5px] text-muted">
         Rows without a unit label are discarded on save.
       </p>
     </FormSection>

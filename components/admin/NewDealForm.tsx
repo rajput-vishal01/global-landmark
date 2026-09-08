@@ -2,10 +2,14 @@
 
 import { useActionState } from "react";
 import { Select } from "@/components/ui/Select";
-import { FIELD, LABEL } from "@/components/form-classes";
+import { LABEL } from "@/components/form-classes";
+import { cardChrome, deskButtonPrimary, deskField } from "@/components/admin/desk";
 import { createDeal, type DealFormState } from "@/app/admin/(panel)/crm/deal-actions";
 
 const initialState: DealFormState = {};
+
+/** Desk field chrome plus the full width every field in this form wants. */
+const FIELD = `${deskField} w-full`;
 
 /** Create-deal form (R-30). Stage always starts at "Enquiry" — no stage picker on create. */
 export function NewDealForm({
@@ -32,7 +36,7 @@ export function NewDealForm({
   ];
 
   return (
-    <form action={formAction} className="flex flex-col gap-6">
+    <form action={formAction} className={`${cardChrome} flex flex-col gap-6 p-5`}>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor="clientId" className={LABEL}>
@@ -57,7 +61,7 @@ export function NewDealForm({
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor="dealValue" className={LABEL}>
-            Deal value <span className="normal-case text-ink-muted">(rupees)</span>
+            Deal value <span className="normal-case text-muted">(rupees)</span>
           </label>
           <input
             id="dealValue"
@@ -73,7 +77,7 @@ export function NewDealForm({
 
         <div className="flex flex-col gap-2">
           <label htmlFor="brokeragePercent" className={LABEL}>
-            Brokerage % <span className="normal-case text-ink-muted">(e.g. 2 or 2.5)</span>
+            Brokerage % <span className="normal-case text-muted">(e.g. 2 or 2.5)</span>
           </label>
           <input
             id="brokeragePercent"
@@ -91,14 +95,14 @@ export function NewDealForm({
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor="sharedWithName" className={LABEL}>
-            Shared with <span className="normal-case text-ink-muted">(name, if any)</span>
+            Shared with <span className="normal-case text-muted">(name, if any)</span>
           </label>
           <input id="sharedWithName" name="sharedWithName" type="text" maxLength={200} className={FIELD} />
         </div>
 
         <div className="flex flex-col gap-2">
           <label htmlFor="sharedAmount" className={LABEL}>
-            Shared amount <span className="normal-case text-ink-muted">(rupees)</span>
+            Shared amount <span className="normal-case text-muted">(rupees)</span>
           </label>
           <input
             id="sharedAmount"
@@ -130,12 +134,12 @@ export function NewDealForm({
         <button
           type="submit"
           disabled={isPending}
-          className="w-full cursor-pointer bg-ink px-8 py-3.5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60 sm:w-fit"
+          className={`${deskButtonPrimary} w-full justify-center disabled:cursor-wait disabled:opacity-60 sm:w-fit`}
         >
           {isPending ? "Creating..." : "Create deal"}
         </button>
         {state.error && (
-          <p role="alert" className="font-sans text-meta text-error">
+          <p role="alert" className="text-[13px] text-error">
             {state.error}
           </p>
         )}

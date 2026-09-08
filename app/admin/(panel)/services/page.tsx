@@ -6,6 +6,15 @@ import { DeleteButton } from "@/components/admin/DeleteButton";
 import { AddRecordDialog } from "@/components/admin/AddRecordDialog";
 import { ServiceForm } from "@/components/admin/ServiceForm";
 import { SERVICE_ICONS, SERVICE_ICON_FALLBACK } from "@/components/service-icons";
+import {
+  Chip,
+  EmptyState,
+  PageHead,
+  Table,
+  TableWrap,
+  deskRowLink,
+  numericCell,
+} from "@/components/admin/desk";
 import { createService, deleteService } from "./actions";
 
 export const metadata = { title: "Services" };
@@ -31,72 +40,77 @@ export default async function AdminServicesPage() {
   const rows = await listAll();
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-h2 text-ink">Services</h1>
-          <p className="mt-2 max-w-2xl text-body font-sans text-ink-muted">
-            The &ldquo;Our Services&rdquo; grid on the landing page — buying
-            and selling, legal advice, investment, vastu, home loan,
-            interiors. Lowest sort order appears first.
-          </p>
-        </div>
-        <AddRecordDialog
-          label="Add service"
-          title="Add a service"
-          description="Appears in the “Our Services” grid on the landing page."
-        >
-          <ServiceForm action={createService} />
-        </AddRecordDialog>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Services"
+        sub="The cards in the “Our Services” grid on the landing page, in the order they appear — lowest number first."
+        actions={
+          <AddRecordDialog
+            label="Add service"
+            title="Add a service"
+            description="Appears in the “Our Services” grid on the landing page."
+          >
+            <ServiceForm action={createService} />
+          </AddRecordDialog>
+        }
+      />
 
       {rows.length === 0 ? (
-        <p className="text-body font-sans text-ink-muted">
-          No services yet — the section stays hidden on the landing page
-          until the first one is added.
-        </p>
+        <EmptyState
+          title="No services yet"
+          note="The services section stays hidden on the landing page until the first card is added."
+        />
       ) : (
-        <ul className="border border-border bg-white">
-          {rows.map((s) => (
-            <li
-              key={s.id}
-              className="flex items-center justify-between gap-4 border-b border-border px-4 py-3 last:border-b-0"
-            >
-              <div className="flex min-w-0 items-center gap-4">
-                <span className="shrink-0 text-ink-muted">
-                  {SERVICE_ICONS[s.icon ?? ""] ?? SERVICE_ICON_FALLBACK}
-                </span>
-                <div className="min-w-0">
-                  <p className="font-sans text-body font-medium text-ink">{s.title}</p>
-                  {s.description && (
-                    <p className="truncate text-meta font-sans text-ink-muted">
-                      {s.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="flex shrink-0 items-center gap-5">
-                <span className="text-meta font-sans tabular-nums text-ink-muted">
-                  #{s.sortOrder}
-                </span>
-                <span className="text-meta font-sans text-ink-muted">
-                  {s.isPublished ? "Published" : "Draft"}
-                </span>
-                <Link
-                  href={`/admin/services/${s.id}/edit`}
-                  className="text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                >
-                  Edit
-                </Link>
-                <DeleteButton
-                  action={deleteService}
-                  id={s.id}
-                  confirmText={`Delete service "${s.title}"?`}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <TableWrap>
+          <Table className="min-w-[680px]">
+            <thead>
+              <tr>
+                <th scope="col" className={numericCell}>
+                  Order
+                </th>
+                <th scope="col">Service</th>
+                <th scope="col">Description</th>
+                <th scope="col">State</th>
+                <th scope="col" />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((s) => (
+                <tr key={s.id}>
+                  <td className={`${numericCell} text-soft`}>{s.sortOrder}</td>
+                  <td>
+                    <span className="flex items-center gap-3">
+                      <span aria-hidden className="shrink-0 text-muted">
+                        {SERVICE_ICONS[s.icon ?? ""] ?? SERVICE_ICON_FALLBACK}
+                      </span>
+                      <Link href={`/admin/services/${s.id}/edit`} className={deskRowLink}>
+                        {s.title}
+                      </Link>
+                    </span>
+                  </td>
+                  <td className="max-w-md truncate text-soft">{s.description || "—"}</td>
+                  <td>
+                    <Chip tone={s.isPublished ? "live" : "neutral"}>
+                      {s.isPublished ? "Published" : "Draft"}
+                    </Chip>
+                  </td>
+                  <td>
+                    <div className="flex items-center justify-end gap-4">
+                      <Link href={`/admin/services/${s.id}/edit`} className={deskRowLink}>
+                        Edit
+                      </Link>
+                      <DeleteButton
+                        action={deleteService}
+                        id={s.id}
+                        confirmText={`Delete service "${s.title}"?`}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </TableWrap>
       )}
     </div>
   );

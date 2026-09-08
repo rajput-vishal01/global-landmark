@@ -1,5 +1,7 @@
 "use client";
 
+import { deskButtonPrimary } from "@/components/admin/desk";
+
 /**
  * Sticky submit bar. With twenty CFF sections the real submit button is
  * otherwise thousands of pixels below the fold — on a phone at a site
@@ -29,14 +31,14 @@ export function SaveBar({
   autosave: AutosaveStatus;
 }) {
   return (
-    <div className="sticky bottom-0 flex flex-col gap-2 border-t border-border bg-cream/95 py-4 backdrop-blur-sm">
-      <p aria-live="polite" className="min-h-[1.25em] font-sans text-meta text-ink-muted">
+    <div className="sticky bottom-0 flex flex-col gap-2 border-t border-line bg-paper/95 py-4 backdrop-blur-sm">
+      <p aria-live="polite" className="min-h-[1.25em] text-[11.5px] text-muted">
         {autosaveMessage(autosave)}
       </p>
       <button
         type="submit"
         disabled={isPending || isUploading}
-        className="w-full cursor-pointer bg-ink px-8 py-3.5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60 sm:w-fit"
+        className={`${deskButtonPrimary} w-full justify-center disabled:cursor-wait disabled:opacity-60 sm:w-fit`}
       >
         {isUploading
           ? "Uploading images..."

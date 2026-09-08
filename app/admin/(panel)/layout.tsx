@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { ADMIN_COOKIE, verifyAdminToken } from "@/lib/admin/auth";
 import { COMPANY } from "@/lib/data";
 import { AdminSidebar, type NavGroup } from "@/components/admin/AdminSidebar";
-import { PanelContainer } from "@/components/admin/PanelContainer";
 
 /**
  * Panel information architecture (R-33), grouped.
@@ -81,10 +80,13 @@ export default async function AdminPanelLayout({
     // `admin-panel` scopes the dense type scale in globals.css. Without it
     // every screen here inherits the public site's editorial sizing, which
     // is what made the panel read as oversized.
-    <div className="admin-panel min-h-screen md:flex">
+    // `desk-body` is what puts cream behind the cards. The old panel was white
+    // cards on a white page, which is most of why it read as flat — a card
+    // with nothing behind it is just a region with a shadow nobody can see.
+    <div className="admin-panel desk-body min-h-screen md:flex">
       <AdminSidebar companyName={COMPANY.name} nav={NAV} />
-      <main className="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
-        <PanelContainer>{children}</PanelContainer>
+      <main className="desk-main min-w-0 flex-1">
+        {children}
       </main>
     </div>
   );

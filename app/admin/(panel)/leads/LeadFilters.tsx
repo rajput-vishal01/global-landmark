@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LEAD_STATUSES } from "@/lib/taxonomy/leads";
-import { FIELD } from "@/components/form-classes";
+import { Select } from "@/components/ui/Select";
+import { Card, deskButton, deskField, deskLinkButton } from "@/components/admin/desk";
 
 /**
  * GET form, URL as state — same reasoning as PropertyFilters: survives
@@ -19,10 +20,18 @@ export type LeadFilterValues = {
   assignedTo: string;
 };
 
-const LABEL_CLS =
-  "text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted";
-const CONTROL = `${FIELD} min-h-11`;
+/** 44px tap target on a phone, desk density from `sm` — same as PropertyFilters. */
+const CONTROL = `${deskField} w-full min-h-11 sm:min-h-0`;
 
+/**
+ * `Select` rather than a native `<select>`: the OS draws a native dropdown's
+ * list itself and no stylesheet reaches it. Same `name`, same option `value`s,
+ * submitted through the hidden input Select owns — the query string is
+ * unchanged.
+ *
+ * The label is a real `<label htmlFor>`: `Select` renders a `<button
+ * role="combobox">`, which is a labelable element, so the association holds.
+ */
 function FilterSelect({
   name,
   label,
@@ -36,32 +45,20 @@ function FilterSelect({
   options: readonly string[];
   value: string;
 }) {
+  // Same shape the native <select> had: the "any" row first, value "".
+  const items = [
+    { value: "", label: anyLabel },
+    ...options.map((o) => ({ value: o, label: o })),
+  ];
+  const id = `lead-filter-${name}`;
+
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className={LABEL_CLS}>{label}</span>
-      <span className="relative block">
-        <select name={name} defaultValue={value} className={`${CONTROL} pr-6`}>
-          <option value="">{anyLabel}</option>
-          {options.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </select>
-        <svg
-          aria-hidden
-          width="11"
-          height="7"
-          viewBox="0 0 12 8"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-ink-muted"
-        >
-          <path d="M1 1.5l5 5 5-5" />
-        </svg>
-      </span>
-    </label>
+    <div className="flex flex-col">
+      <label htmlFor={id} className="desk-eyebrow">
+        {label}
+      </label>
+      <Select id={id} name={name} options={items} defaultValue={value} />
+    </div>
   );
 }
 
@@ -77,62 +74,57 @@ export function LeadFilters({
   isFiltered: boolean;
 }) {
   return (
-    <form
-      method="get"
-      action="/admin/leads"
-      className="flex flex-col gap-5 border border-border bg-white p-4 sm:p-5"
-    >
-      <label className="flex flex-col gap-1.5">
-        <span className={LABEL_CLS}>Search</span>
-        <input
-          type="search"
-          name="q"
-          defaultValue={values.q}
-          placeholder="Name, email, phone or interest"
-          className={CONTROL}
-        />
-      </label>
+    <Card>
+      <form method="get" action="/admin/leads" className="flex flex-col gap-4">
+        <div className="flex flex-col">
+          <label htmlFor="lead-filter-q" className="desk-eyebrow">
+            Search
+          </label>
+          <input
+            id="lead-filter-q"
+            type="search"
+            name="q"
+            defaultValue={values.q}
+            placeholder="Name, email, phone or interest"
+            className={CONTROL}
+          />
+        </div>
 
-      <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-3">
-        <FilterSelect
-          name="status"
-          label="Status"
-          anyLabel="Any status"
-          options={LEAD_STATUSES}
-          value={values.status}
-        />
-        <FilterSelect
-          name="source"
-          label="Source"
-          anyLabel="Any source"
-          options={sources}
-          value={values.source}
-        />
-        <FilterSelect
-          name="assignedTo"
-          label="Assigned to"
-          anyLabel="Anyone"
-          options={agents}
-          value={values.assignedTo}
-        />
-      </div>
+        <div className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-3">
+          <FilterSelect
+            name="status"
+            label="Status"
+            anyLabel="Any status"
+            options={LEAD_STATUSES}
+            value={values.status}
+          />
+          <FilterSelect
+            name="source"
+            label="Source"
+            anyLabel="Any source"
+            options={sources}
+            value={values.source}
+          />
+          <FilterSelect
+            name="assignedTo"
+            label="Assigned to"
+            anyLabel="Anyone"
+            options={agents}
+            value={values.assignedTo}
+          />
+        </div>
 
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <button
-          type="submit"
-          className="bg-ink px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
-        >
-          Apply
-        </button>
-        {isFiltered && (
-          <Link
-            href="/admin/leads"
-            className="text-meta font-sans text-ink-muted underline decoration-border underline-offset-4 transition-colors hover:text-ink hover:decoration-gold"
-          >
-            Clear filters
-          </Link>
-        )}
-      </div>
-    </form>
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+          <button type="submit" className={deskButton}>
+            Apply
+          </button>
+          {isFiltered && (
+            <Link href="/admin/leads" className={deskLinkButton}>
+              Clear filters
+            </Link>
+          )}
+        </div>
+      </form>
+    </Card>
   );
 }

@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { projects } from "@/lib/db/schema";
 import { ProjectForm } from "@/components/admin/ProjectForm";
 import { updateProject, listBuildersForSelect } from "../../actions";
+import Link from "next/link";
+import { PageHead, deskButton } from "@/components/admin/desk";
 
 export const metadata = { title: "Edit project" };
 
@@ -23,8 +25,16 @@ export default async function EditProjectPage({
   if (!project) notFound();
 
   return (
-    <div className="flex flex-col gap-8">
-      <h1 className="font-serif text-h2 text-ink">Edit project</h1>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Edit project"
+        sub="A society or township. Listings link to it by name and inherit its amenities instead of re-entering them."
+        actions={
+          <Link href="/admin/projects" className={deskButton}>
+            Cancel
+          </Link>
+        }
+      />
       <ProjectForm action={updateProject} builders={builders} project={project} />
     </div>
   );

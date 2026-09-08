@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 import type { textTestimonials } from "@/lib/db/schema";
-import { FIELD, LABEL } from "@/components/form-classes";
+import { cardChrome, deskButtonPrimary } from "@/components/admin/desk";
+import { deskFieldFull, deskLabel } from "./FormSection";
 import { Req } from "@/components/ui/RequiredMark";
 import { CoverImageInput } from "@/components/admin/CoverImageInput";
 import type { TextTestimonialFormState } from "@/app/admin/(panel)/text-testimonials/actions";
@@ -28,11 +29,11 @@ export function TextTestimonialForm({
   const isEditing = Boolean(testimonial);
 
   return (
-    <form action={formAction} className="flex flex-col gap-6 border border-border bg-white p-6">
+    <form action={formAction} className={`${cardChrome} flex flex-col gap-6 p-5`}>
       {testimonial && <input type="hidden" name="id" value={testimonial.id} />}
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="quote" className={LABEL}>
+        <label htmlFor="quote" className={deskLabel}>
           Quote
           <Req />
         </label>
@@ -44,13 +45,13 @@ export function TextTestimonialForm({
           maxLength={1000}
           defaultValue={testimonial?.quote}
           placeholder="What the client said — quotation marks are added automatically."
-          className={FIELD}
+          className={deskFieldFull}
         />
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="author" className={LABEL}>
+          <label htmlFor="author" className={deskLabel}>
             Author
             <Req />
           </label>
@@ -62,13 +63,13 @@ export function TextTestimonialForm({
             maxLength={200}
             defaultValue={testimonial?.author}
             placeholder="e.g. Rakesh Sharma"
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="context" className={LABEL}>
-            Context <span className="normal-case text-ink-muted">(optional)</span>
+          <label htmlFor="context" className={deskLabel}>
+            Context <span className="normal-case text-muted">(optional)</span>
           </label>
           <input
             id="context"
@@ -77,17 +78,17 @@ export function TextTestimonialForm({
             maxLength={200}
             defaultValue={testimonial?.context ?? ""}
             placeholder="e.g. Bought in Sector 71"
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <span className={LABEL}>
-          Photo <span className="normal-case text-ink-muted">(optional)</span>
+        <span className={deskLabel}>
+          Photo <span className="normal-case text-muted">(optional)</span>
         </span>
         <CoverImageInput name="avatarUrl" initial={testimonial?.avatarUrl ?? null} />
-        <p className="text-meta font-sans text-ink-muted">
+        <p className="text-[11.5px] text-muted">
           Shown as a round portrait on the card. Without one the card falls
           back to the author&rsquo;s initials, so a quote never waits on a
           headshot.
@@ -96,7 +97,7 @@ export function TextTestimonialForm({
 
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="sortOrder" className={LABEL}>
+          <label htmlFor="sortOrder" className={deskLabel}>
             Sort order
           </label>
           <input
@@ -105,9 +106,9 @@ export function TextTestimonialForm({
             type="number"
             step={1}
             defaultValue={testimonial?.sortOrder ?? 0}
-            className={FIELD}
+            className={deskFieldFull}
           />
-          <p className="text-meta font-sans text-ink-muted">
+          <p className="text-[11.5px] text-muted">
             Lowest first on the landing page.
           </p>
         </div>
@@ -120,7 +121,7 @@ export function TextTestimonialForm({
             defaultChecked={testimonial?.isPublished ?? true}
             className="h-4 w-4 accent-gold"
           />
-          <span className={LABEL}>Published</span>
+          <span className={deskLabel}>Published</span>
         </label>
       </div>
 
@@ -128,12 +129,12 @@ export function TextTestimonialForm({
         <button
           type="submit"
           disabled={isPending}
-          className="cursor-pointer bg-ink px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+          className={`${deskButtonPrimary} disabled:cursor-wait disabled:opacity-60`}
         >
           {isPending ? "Saving..." : isEditing ? "Save testimonial" : "Add testimonial"}
         </button>
         {state.error && (
-          <p role="alert" className="text-meta font-sans text-error">{state.error}</p>
+          <p role="alert" className="text-[12px] text-error">{state.error}</p>
         )}
       </div>
     </form>

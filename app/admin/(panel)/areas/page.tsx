@@ -2,6 +2,15 @@ import Link from "next/link";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { AddRecordDialog } from "@/components/admin/AddRecordDialog";
 import { AreaForm } from "@/components/admin/AreaForm";
+import {
+  Chip,
+  EmptyState,
+  PageHead,
+  Table,
+  TableWrap,
+  deskRowLink,
+  numericCell,
+} from "@/components/admin/desk";
 import { listAllAreasWithCounts } from "@/lib/db/areas";
 import { createArea, deleteArea } from "./actions";
 
@@ -26,64 +35,72 @@ export default async function AdminAreasPage() {
   const rows = await listAllAreasWithCounts();
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-h2 text-ink">Areas</h1>
-          <p className="mt-2 text-body font-sans text-ink-muted">
-            The locality landing pages buyers browse by. Each claims listings
-            from their own address, so the counts below are live — adding a
-            property never means re-saving an area.
-          </p>
-        </div>
-        <AddRecordDialog
-          label="Add area"
-          title="Add an area"
-          description="A locality landing page. It claims listings by their own address."
-        >
-          <AreaForm action={createArea} />
-        </AddRecordDialog>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Areas"
+        sub="The locality landing pages buyers browse by. Each claims listings from their own address, so the counts stay live on their own."
+        actions={
+          <AddRecordDialog
+            label="Add area"
+            title="Add an area"
+            description="A locality landing page. It claims listings by their own address."
+          >
+            <AreaForm action={createArea} />
+          </AddRecordDialog>
+        }
+      />
 
       {rows.length === 0 ? (
-        <p className="text-body font-sans text-ink-muted">No areas yet.</p>
+        <EmptyState
+          title="No areas yet"
+          note="Without an area page there is nothing for buyers to browse by locality. Add one and it picks up every listing at that address."
+        />
       ) : (
-        <ul className="border border-border bg-white">
-          {rows.map((a) => (
-            <li
-              key={a.id}
-              className="flex items-center justify-between gap-4 border-b border-border px-4 py-3 last:border-b-0"
-            >
-              <div className="min-w-0">
-                <p className="font-sans text-body font-medium text-ink">
-                  {a.name}
-                  {!a.isPublished && (
-                    <span className="ml-3 border border-border px-2 py-0.5 text-meta font-normal uppercase tracking-[0.14em] text-ink-muted">
-                      Draft
-                    </span>
-                  )}
-                </p>
-                <p className="text-meta font-sans text-ink-muted">{scopeLine(a)}</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-5">
-                <span className="text-meta font-sans text-ink-muted">
-                  {a.propertyCount} propert{a.propertyCount === 1 ? "y" : "ies"}
-                </span>
-                <Link
-                  href={`/admin/areas/${a.id}/edit`}
-                  className="text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                >
-                  Edit
-                </Link>
-                <DeleteButton
-                  action={deleteArea}
-                  id={a.id}
-                  confirmText={`Delete area "${a.name}"? The listings it claims are not affected.`}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <TableWrap>
+          <Table className="min-w-[640px]">
+            <thead>
+              <tr>
+                <th scope="col">Area</th>
+                <th scope="col">Claims</th>
+                <th scope="col">State</th>
+                <th scope="col" className={numericCell}>
+                  Listings
+                </th>
+                <th scope="col" />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((a) => (
+                <tr key={a.id}>
+                  <td>
+                    <Link href={`/admin/areas/${a.id}/edit`} className={deskRowLink}>
+                      {a.name}
+                    </Link>
+                  </td>
+                  <td className="text-soft">{scopeLine(a)}</td>
+                  <td>
+                    <Chip tone={a.isPublished ? "live" : "neutral"}>
+                      {a.isPublished ? "Published" : "Draft"}
+                    </Chip>
+                  </td>
+                  <td className={`${numericCell} text-soft`}>{a.propertyCount}</td>
+                  <td>
+                    <div className="flex items-center justify-end gap-4">
+                      <Link href={`/admin/areas/${a.id}/edit`} className={deskRowLink}>
+                        Edit
+                      </Link>
+                      <DeleteButton
+                        action={deleteArea}
+                        id={a.id}
+                        confirmText={`Delete area "${a.name}"? The listings it claims are not affected.`}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </TableWrap>
       )}
     </div>
   );

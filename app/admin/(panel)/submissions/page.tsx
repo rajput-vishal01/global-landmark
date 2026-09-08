@@ -5,6 +5,13 @@ import { properties, propertyOwners } from "@/lib/db/schema";
 import { formatDateTime } from "@/lib/dates";
 import { formatIndianShort, formatArea } from "@/lib/attributes";
 import { SubmissionActions } from "./SubmissionActions";
+import {
+  Card,
+  Chip,
+  EmptyState,
+  PageHead,
+  deskButton,
+} from "@/components/admin/desk";
 
 export const metadata = { title: "Property submissions" };
 
@@ -77,15 +84,13 @@ async function listSubmissions(): Promise<SubmissionRow[]> {
   }
 }
 
-const META = "text-meta font-sans text-ink-muted";
-
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted/70">
+      <span className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-muted">
         {label}
       </span>
-      <span className="font-sans text-meta text-ink">{value}</span>
+      <span className="text-[13px] text-ink">{value}</span>
     </div>
   );
 }
@@ -94,46 +99,53 @@ export default async function SubmissionsPage() {
   const rows = await listSubmissions();
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-2">
-        <h1 className="font-serif text-h2 text-heading">Property submissions</h1>
-        <p className={`max-w-2xl ${META}`}>
-          Sent by owners through the public{" "}
-          <Link href="/sell" className="underline decoration-border underline-offset-4 hover:decoration-gold">
-            Sell your property
-          </Link>{" "}
-          form. Nothing here is on the website yet. Open one to fix the wording
-          and add photographs before you publish it — approving puts it live
-          exactly as written.
-        </p>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Property submissions"
+        sub="Listings owners sent through the public sell form, waiting to be checked before anything goes live."
+        actions={
+          <Link href="/sell" className={deskButton}>
+            Open the sell form
+          </Link>
+        }
+      />
+
+      <p className="max-w-2xl text-[13px] text-soft">
+        Nothing here is on the website yet. Open one to fix the wording and add
+        photographs before you publish it — approving puts it live exactly as
+        written.
+      </p>
 
       {rows.length === 0 ? (
-        <p className={META}>
-          Nothing waiting. New submissions appear here the moment they arrive.
-        </p>
+        <EmptyState
+          title="Nothing waiting"
+          note="Every submission has been dealt with. New ones appear here the moment an owner sends the sell form."
+        />
       ) : (
         <div className="flex flex-col gap-4">
           {rows.map((row) => (
-            <article key={row.id} className="flex flex-col gap-5 border border-border bg-white p-5">
+            <Card key={row.id} className="flex flex-col gap-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex flex-col gap-1">
-                  <h2 className="font-serif text-h4 text-ink">{row.title}</h2>
-                  <p className={META}>
-                    {[row.locality, row.city].filter(Boolean).join(", ") || "Location not given"}
-                    {row.refCode ? ` · ${row.refCode}` : ""}
-                    {row.submittedAt ? ` · ${formatDateTime(row.submittedAt)}` : ""}
-                  </p>
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  <h2 className="text-[17px] font-bold text-ink">{row.title}</h2>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Chip tone="quiet">Awaiting review</Chip>
+                    <span className="text-[12px] text-muted">
+                      {[row.locality, row.city].filter(Boolean).join(", ") || "Location not given"}
+                      {row.refCode ? ` · ${row.refCode}` : ""}
+                      {row.submittedAt ? ` · ${formatDateTime(row.submittedAt)}` : ""}
+                    </span>
+                  </div>
                 </div>
                 <Link
                   href={`/admin/properties/${row.id}/edit`}
-                  className="whitespace-nowrap border border-ink/25 px-3 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
+                  className={`whitespace-nowrap ${deskButton}`}
                 >
                   Review &amp; edit
                 </Link>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-4 border-t border-line-soft pt-4 sm:grid-cols-4">
                 <Fact label="Seller" value={row.sellerName ?? "—"} />
                 <Fact label="Phone" value={row.sellerMobile ?? "—"} />
                 <Fact
@@ -151,16 +163,16 @@ export default async function SubmissionsPage() {
               </div>
 
               {row.description && (
-                <p className={`whitespace-pre-line border-t border-border pt-4 ${META}`}>
+                <p className="whitespace-pre-line border-t border-line-soft pt-4 text-[13px] text-soft">
                   {row.description}
                 </p>
               )}
-              {row.sellerNotes && <p className={META}>{row.sellerNotes}</p>}
+              {row.sellerNotes && <p className="text-[13px] text-muted">{row.sellerNotes}</p>}
 
-              <div className="border-t border-border pt-4">
+              <div className="border-t border-line-soft pt-4">
                 <SubmissionActions id={row.id} />
               </div>
-            </article>
+            </Card>
           ))}
         </div>
       )}

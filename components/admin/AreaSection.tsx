@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Select } from "@/components/ui/Select";
-import { FIELD, LABEL } from "@/components/form-classes";
-import { FormSection, countFilled } from "./FormSection";
+import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+
 import { ChecklistField } from "./ChecklistField";
 import {
   AREA_MEASURES,
@@ -97,7 +97,7 @@ export function AreaSection({
 
           return (
             <div key={measure.key} className="flex flex-col gap-2">
-              <label htmlFor={measure.key} className={LABEL}>
+              <label htmlFor={measure.key} className={deskLabel}>
                 {measure.label}
               </label>
 
@@ -112,7 +112,7 @@ export function AreaSection({
                   onChange={(e) =>
                     editMeasure(measure.key, { value: e.target.value })
                   }
-                  className={`${FIELD} min-w-0 flex-1`}
+                  className={`${deskFieldFull} min-w-0 flex-1`}
                 />
                 {/* No visible label — the field label above already names the
                     measure — but the combobox still needs an accessible name
@@ -140,7 +140,7 @@ export function AreaSection({
                   while the box is empty or the unit is one toSqft cannot
                   convert, because a blank line is better than a wrong one. */}
               {normalised && (
-                <p className="font-sans text-meta text-ink-muted">
+                <p className="text-[11.5px] text-muted">
                   = {normalised}
                 </p>
               )}
@@ -151,9 +151,9 @@ export function AreaSection({
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <label htmlFor="frontFeet" className={LABEL}>
+          <label htmlFor="frontFeet" className={deskLabel}>
             Front{" "}
-            <span className="normal-case text-ink-muted">(running feet)</span>
+            <span className="normal-case text-muted">(running feet)</span>
           </label>
           {/* Front and depth are running feet whatever unit the areas above
               are quoted in — "30x60" is the shorthand every Tricity buyer
@@ -168,14 +168,14 @@ export function AreaSection({
             inputMode="numeric"
             value={frontFeet}
             onChange={(e) => setFrontFeet(e.target.value)}
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="depthFeet" className={LABEL}>
+          <label htmlFor="depthFeet" className={deskLabel}>
             Depth{" "}
-            <span className="normal-case text-ink-muted">(running feet)</span>
+            <span className="normal-case text-muted">(running feet)</span>
           </label>
           <input
             id="depthFeet"
@@ -185,13 +185,13 @@ export function AreaSection({
             inputMode="numeric"
             value={depthFeet}
             onChange={(e) => setDepthFeet(e.target.value)}
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className={LABEL}>PLC attributes</span>
+        <span className={deskLabel}>PLC attributes</span>
         {/* Preferential-location charges are precisely what a buyer pays a
             premium for — park facing, corner, golf course facing — so these
             are public and render on the card rather than sitting in internal

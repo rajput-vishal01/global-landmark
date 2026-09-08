@@ -6,11 +6,24 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, m } from "framer-motion";
 import { useModalLock } from "@/lib/hooks";
 import { EASE } from "@/lib/motion";
+import {
+  cardChrome,
+  deskButton,
+  deskButtonDanger,
+  deskButtonSmall,
+  deskFace,
+} from "@/components/admin/desk";
 import type { DeleteState } from "@/app/admin/(panel)/properties/actions";
 
 type Action = (prev: DeleteState, formData: FormData) => Promise<DeleteState>;
 
-/** Delete used across admin tables, guarded by a branded confirm dialog. */
+/**
+ * Delete used across admin tables, guarded by a confirm dialog.
+ *
+ * The confirm is the point of the component, not decoration: the trigger only
+ * opens the dialog, and the form is submitted from inside it. Re-skinning the
+ * chrome does not change that flow.
+ */
 export function DeleteButton({
   action,
   id,
@@ -39,12 +52,12 @@ export function DeleteButton({
           type="button"
           onClick={() => setOpen(true)}
           disabled={isPending}
-          className="cursor-pointer text-meta font-sans text-error underline decoration-transparent underline-offset-4 transition-colors hover:decoration-current disabled:cursor-wait disabled:opacity-50"
+          className={`${deskButtonSmall} disabled:cursor-wait disabled:opacity-50`}
         >
           {isPending ? "Removing..." : label}
         </button>
         {state.error && (
-          <span role="alert" className="text-meta font-sans text-error">
+          <span role="alert" className="text-[12px] text-error">
             {state.error}
           </span>
         )}
@@ -71,17 +84,19 @@ export function DeleteButton({
                   exit={{ opacity: 0, y: 8, scale: 0.98 }}
                   transition={{ duration: 0.3, ease: EASE }}
                   onClick={(e) => e.stopPropagation()}
-                  className="w-full max-w-md border border-border bg-white p-8"
+                  className={`w-full max-w-md ${cardChrome} p-7`}
                 >
                   <span aria-hidden className="block h-px w-10 bg-gold" />
-                  <h2 className="mt-5 font-serif text-h4 text-ink">Are you sure?</h2>
-                  <p className="mt-3 text-body font-sans text-ink-muted">{confirmText}</p>
-                  <div className="mt-8 flex justify-end gap-3">
+                  <h2 className={`${deskFace} mt-5 text-[17px] font-bold text-ink`}>
+                    Are you sure?
+                  </h2>
+                  <p className="mt-3 text-[13px] text-soft">{confirmText}</p>
+                  <div className="mt-7 flex justify-end gap-3">
                     <button
                       type="button"
                       autoFocus
                       onClick={() => setOpen(false)}
-                      className="cursor-pointer border border-ink/25 px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:border-gold"
+                      className={deskButton}
                     >
                       Cancel
                     </button>
@@ -91,7 +106,7 @@ export function DeleteButton({
                         setOpen(false);
                         formRef.current?.requestSubmit();
                       }}
-                      className="cursor-pointer bg-error px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+                      className={deskButtonDanger}
                     >
                       {label}
                     </button>

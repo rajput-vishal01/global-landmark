@@ -10,9 +10,23 @@ import {
   properties,
 } from "@/lib/db/schema";
 import { getActiveDeal, todayIST } from "@/lib/db/queries";
-import { LISTING_STATUSES, STATUS_BADGE } from "@/lib/taxonomy/status";
+import { LISTING_STATUSES } from "@/lib/taxonomy/status";
 import { brokerageAmount, brokeragePending, isClosedStage } from "@/lib/taxonomy/brokerage";
 import { formatIndianShort } from "@/lib/attributes";
+import {
+  Chip,
+  EmptyState,
+  KpiRow,
+  KpiTile,
+  PageHead,
+  Table,
+  TableWrap,
+  deskButton,
+  deskButtonPrimary,
+  deskRowLink,
+  focusRing,
+  numericCell,
+} from "@/components/admin/desk";
 
 const STALE_DAYS = 30;
 
@@ -120,6 +134,14 @@ async function staleListingCount(): Promise<number> {
   }
 }
 
+type Tile = {
+  href: string;
+  label: string;
+  value: string;
+  note: string;
+  highlight?: boolean;
+};
+
 export default async function AdminDashboard() {
   const [stats, activeDeal, byStatus, leadStats, brokeragePendingTotal, staleCount] =
     await Promise.all([
@@ -131,98 +153,129 @@ export default async function AdminDashboard() {
       staleListingCount(),
     ]);
 
-  const cards = [
-    { label: "Properties", value: stats.properties, href: "/admin/properties" },
-    { label: "Projects", value: stats.projects, href: "/admin/projects" },
-    { label: "Featured deals queued", value: stats.deals, href: "/admin/deals" },
+  // KpiTile does no arithmetic and no rounding, so every figure is turned
+  // into its final string here.
+  const tiles: Tile[] = [
+    {
+      href: "/admin/properties",
+      label: "Properties",
+      value: String(stats.properties),
+      note: "Listings on the book",
+    },
+    {
+      href: "/admin/projects",
+      label: "Projects",
+      value: String(stats.projects),
+      note: "Builder projects listed",
+    },
+    {
+      href: "/admin/deals",
+      label: "Featured deals",
+      value: String(stats.deals),
+      note: activeDeal
+        ? `Live now: ${activeDeal.property.title}`
+        : "Nothing live on the homepage",
+    },
+    {
+      href: "/admin/leads",
+      label: "New leads today",
+      value: String(leadStats.today),
+      note: `${leadStats.week} in the last 7 days`,
+    },
+    {
+      href: "/admin/crm/deals",
+      label: "Brokerage pending",
+      value: formatIndianShort(brokeragePendingTotal),
+      note: "Across every open deal",
+      highlight: true,
+    },
   ];
 
-  return (
-    <div className="flex flex-col gap-10">
-      <div>
-        <h1 className="font-serif text-h2 text-ink">Portfolio</h1>
-        <p className="mt-2 text-body font-sans text-ink-muted">
-          {activeDeal
-            ? `Featured Deal is live: ${activeDeal.property.title} (through ${activeDeal.endsAt}).`
-            : "No Featured Deal is currently live."}
-        </p>
-      </div>
+  const withListings = byStatus.filter(({ n }) => n > 0);
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {cards.map((card) => (
-          <Link
-            key={card.href}
-            href={card.href}
-            className="group border border-border bg-white p-6 transition-colors hover:border-gold"
-          >
-            <p className="font-serif text-h2 text-ink">{card.value}</p>
-            <p className="text-eyebrow mt-1 font-sans font-medium uppercase tracking-[0.18em] text-ink-muted group-hover:text-gold-deep">
-              {card.label}
-            </p>
+  return (
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Portfolio"
+        sub="The whole book at a glance — what is listed, what came in today, and what is still owed."
+        actions={
+          <Link href="/admin/properties/new" className={deskButtonPrimary}>
+            Add a property
+          </Link>
+        }
+      />
+
+      {/* Each tile links to the list its figure was counted from — a number on
+          a dashboard is almost always the start of a question about the rows
+          behind it. */}
+      <KpiRow>
+        {tiles.map((tile) => (
+          <Link key={tile.href} href={tile.href} className={`rounded-[10px] ${focusRing}`}>
+            <KpiTile
+              label={tile.label}
+              value={tile.value}
+              note={tile.note}
+              highlight={tile.highlight}
+            />
           </Link>
         ))}
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Link
-          href="/admin/leads"
-          className="group border border-border bg-white p-6 transition-colors hover:border-gold"
-        >
-          <p className="font-serif text-h2 text-ink">
-            {leadStats.today} <span className="text-body text-ink-muted">today</span>
-          </p>
-          <p className="mt-1 text-meta font-sans text-ink-muted">{leadStats.week} in the last 7 days</p>
-          <p className="text-eyebrow mt-2 font-sans font-medium uppercase tracking-[0.18em] text-ink-muted group-hover:text-gold-deep">
-            New leads
-          </p>
-        </Link>
-
-        <Link
-          href="/admin/crm/deals"
-          className="group border border-border bg-white p-6 transition-colors hover:border-gold"
-        >
-          <p className="font-serif text-h2 text-ink">{formatIndianShort(brokeragePendingTotal)}</p>
-          <p className="text-eyebrow mt-2 font-sans font-medium uppercase tracking-[0.18em] text-ink-muted group-hover:text-gold-deep">
-            Brokerage pending
-          </p>
-        </Link>
-      </div>
+      </KpiRow>
 
       <div>
-        <p className="text-eyebrow mb-3 font-sans font-medium uppercase tracking-[0.18em] text-ink-muted">
-          Listings by status
-        </p>
-        <div className="flex flex-wrap gap-2.5">
-          {byStatus
-            .filter(({ n }) => n > 0)
-            .map(({ status, n }) => (
-            <Link
-              key={status}
-              href={`/admin/properties?status=${encodeURIComponent(status)}`}
-              className={`inline-flex items-center gap-2 whitespace-nowrap border px-3 py-1.5 text-eyebrow font-sans font-medium uppercase tracking-[0.12em] transition-opacity hover:opacity-80 ${STATUS_BADGE[status as keyof typeof STATUS_BADGE] ?? "border-border bg-ink/5 text-ink-muted"}`}
-            >
-              {status}
-              <span className="tabular-nums">{n}</span>
-            </Link>
-          ))}
-        </div>
+        <p className="desk-eyebrow">Listings by status</p>
+        {withListings.length === 0 ? (
+          <EmptyState
+            title="No listings yet"
+            note="Nothing is on the book at all, so there is no breakdown to draw. Add the first property and this table fills itself in."
+            action={
+              <Link href="/admin/properties/new" className={deskButton}>
+                Add a property
+              </Link>
+            }
+          />
+        ) : (
+          <TableWrap>
+            <Table>
+              <thead>
+                <tr>
+                  <th scope="col">Status</th>
+                  <th scope="col" className={numericCell}>
+                    Listings
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {withListings.map(({ status, n }) => (
+                  <tr key={status}>
+                    <td>
+                      <Link
+                        href={`/admin/properties?status=${encodeURIComponent(status)}`}
+                        className={deskRowLink}
+                      >
+                        {status}
+                      </Link>
+                    </td>
+                    <td className={numericCell}>{n}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </TableWrap>
+        )}
+
+        {/* An available listing nobody has touched in a month is genuinely
+            wrong, which is the one thing `alert` is for. */}
         {staleCount > 0 && (
           <Link
             href="/admin/properties?status=Available"
-            className="mt-3 inline-block text-meta font-sans text-error underline decoration-error/40 underline-offset-4 hover:decoration-error"
+            className={`mt-3 inline-block ${focusRing}`}
           >
-            {staleCount} available listing{staleCount === 1 ? "" : "s"} not updated in {STALE_DAYS}+ days
+            <Chip tone="alert">
+              {staleCount} available listing{staleCount === 1 ? "" : "s"} not updated in{" "}
+              {STALE_DAYS}+ days
+            </Chip>
           </Link>
         )}
-      </div>
-
-      <div>
-        <Link
-          href="/admin/properties/new"
-          className="inline-block bg-ink px-8 py-3.5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
-        >
-          Add a property
-        </Link>
       </div>
     </div>
   );

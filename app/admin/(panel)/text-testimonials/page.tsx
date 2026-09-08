@@ -5,6 +5,15 @@ import { textTestimonials } from "@/lib/db/schema";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { AddRecordDialog } from "@/components/admin/AddRecordDialog";
 import { TextTestimonialForm } from "@/components/admin/TextTestimonialForm";
+import {
+  Chip,
+  EmptyState,
+  PageHead,
+  Table,
+  TableWrap,
+  deskRowLink,
+  numericCell,
+} from "@/components/admin/desk";
 import { createTextTestimonial, deleteTextTestimonial } from "./actions";
 
 export const metadata = { title: "Written testimonials" };
@@ -26,68 +35,78 @@ export default async function AdminTextTestimonialsPage() {
   const rows = await listAll();
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-h2 text-ink">Written testimonials</h1>
-          <p className="mt-2 max-w-2xl text-body font-sans text-ink-muted">
-            Quotes shown in the &ldquo;What our clients say&rdquo; strip on the
-            landing page. Video reels are managed separately under
-            Testimonials.
-          </p>
-        </div>
-        <AddRecordDialog
-          label="Add client quote"
-          title="Add a client quote"
-          description="Appears in the “What our clients say” wall on the landing page."
-        >
-          <TextTestimonialForm action={createTextTestimonial} />
-        </AddRecordDialog>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Written testimonials"
+        sub="Client quotes for the “What our clients say” strip. Video reels live under Testimonials, not here."
+        actions={
+          <AddRecordDialog
+            label="Add client quote"
+            title="Add a client quote"
+            description="Appears in the “What our clients say” wall on the landing page."
+          >
+            <TextTestimonialForm action={createTextTestimonial} />
+          </AddRecordDialog>
+        }
+      />
 
       {rows.length === 0 ? (
-        <p className="text-body font-sans text-ink-muted">
-          No written testimonials yet — the section stays hidden until the
-          first one is added.
-        </p>
+        <EmptyState
+          title="No quotes yet"
+          note="The quote wall stays hidden on the landing page until the first written testimonial is added."
+        />
       ) : (
-        <ul className="border border-border bg-white">
-          {rows.map((t) => (
-            <li
-              key={t.id}
-              className="flex items-start justify-between gap-4 border-b border-border px-4 py-3 last:border-b-0"
-            >
-              <div className="min-w-0">
-                <p className="line-clamp-2 font-sans text-body text-ink">
-                  &ldquo;{t.quote}&rdquo;
-                </p>
-                <p className="mt-1 text-meta font-sans text-ink-muted">
-                  by {t.author}
-                  {t.context ? ` · ${t.context}` : ""}
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-5">
-                <span className="text-meta font-sans tabular-nums text-ink-muted">
-                  #{t.sortOrder}
-                </span>
-                <span className="text-meta font-sans text-ink-muted">
-                  {t.isPublished ? "Published" : "Draft"}
-                </span>
-                <Link
-                  href={`/admin/text-testimonials/${t.id}/edit`}
-                  className="text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                >
-                  Edit
-                </Link>
-                <DeleteButton
-                  action={deleteTextTestimonial}
-                  id={t.id}
-                  confirmText={`Delete the testimonial by ${t.author}?`}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <TableWrap>
+          <Table className="min-w-[680px]">
+            <thead>
+              <tr>
+                <th scope="col" className={numericCell}>
+                  Order
+                </th>
+                <th scope="col">Quote</th>
+                <th scope="col">Client</th>
+                <th scope="col">State</th>
+                <th scope="col" />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((t) => (
+                <tr key={t.id}>
+                  <td className={`${numericCell} text-soft`}>{t.sortOrder}</td>
+                  <td>
+                    <span className="line-clamp-2 max-w-lg text-ink">
+                      &ldquo;{t.quote}&rdquo;
+                    </span>
+                  </td>
+                  <td className="text-soft">
+                    {t.author}
+                    {t.context ? ` · ${t.context}` : ""}
+                  </td>
+                  <td>
+                    <Chip tone={t.isPublished ? "live" : "neutral"}>
+                      {t.isPublished ? "Published" : "Draft"}
+                    </Chip>
+                  </td>
+                  <td>
+                    <div className="flex items-center justify-end gap-4">
+                      <Link
+                        href={`/admin/text-testimonials/${t.id}/edit`}
+                        className={deskRowLink}
+                      >
+                        Edit
+                      </Link>
+                      <DeleteButton
+                        action={deleteTextTestimonial}
+                        id={t.id}
+                        confirmText={`Delete the testimonial by ${t.author}?`}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </TableWrap>
       )}
     </div>
   );

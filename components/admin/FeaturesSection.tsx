@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Select } from "@/components/ui/Select";
-import { FIELD, LABEL } from "@/components/form-classes";
-import { FormSection, countFilled } from "./FormSection";
+import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+
 import { ChecklistField } from "./ChecklistField";
 import {
   AMENITIES,
@@ -105,7 +105,7 @@ export function FeaturesSection({
     >
       {showFurnishing && (
       <div className="flex flex-col gap-2">
-        <label htmlFor="furnishing" className={LABEL}>
+        <label htmlFor="furnishing" className={deskLabel}>
           Furnishing
         </label>
         {/* Clearable. A broker who picked a level on a guess must be able to
@@ -123,7 +123,7 @@ export function FeaturesSection({
 
       {showFurnishing && showInventory ? (
         <div className="flex flex-col gap-2">
-          <span className={LABEL}>What is included</span>
+          <span className={deskLabel}>What is included</span>
           {/* Free text is on here: every flat has some item the fixed list
               never anticipated ("piano", "modular kitchen"), and furnishing
               inventory is one of the lists the server keeps free-typed values
@@ -146,7 +146,7 @@ export function FeaturesSection({
 
       {showAmenities ? (
         <div className="flex flex-col gap-2">
-          <span className={LABEL}>Amenities</span>
+          <span className={deskLabel}>Amenities</span>
           <ChecklistField
             name="amenitiesJson"
             options={AMENITIES}
@@ -165,7 +165,7 @@ export function FeaturesSection({
       {showParking && (
         <>
           <div className="flex flex-col gap-2">
-            <span className={LABEL}>Parking</span>
+            <span className={deskLabel}>Parking</span>
             {/* Fixed taxonomy, so no free text — the public filters read the same
                 list, and a free-typed "covered car parking" would create a
                 listing no parking filter could find. */}
@@ -179,7 +179,7 @@ export function FeaturesSection({
           </div>
 
           <div className="flex flex-col gap-2 sm:max-w-xs">
-            <label htmlFor="parkingSlots" className={LABEL}>
+            <label htmlFor="parkingSlots" className={deskLabel}>
               Parking slots
             </label>
             {/* Kind and count are separate questions: "Covered Parking" says what
@@ -194,7 +194,7 @@ export function FeaturesSection({
               inputMode="numeric"
               value={parkingSlots}
               onChange={(e) => setParkingSlots(e.target.value)}
-              className={FIELD}
+              className={deskFieldFull}
             />
           </div>
         </>

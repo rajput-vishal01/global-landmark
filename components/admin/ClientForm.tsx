@@ -2,16 +2,20 @@
 
 import { useActionState } from "react";
 import type { CrmClient } from "@/lib/db/schema";
-import { FIELD, LABEL } from "@/components/form-classes";
+import { LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
 import { PROPERTY_TYPES } from "@/lib/attributes";
 import { CITY_NAMES } from "@/lib/locations";
 import { ChecklistField } from "@/components/admin/ChecklistField";
+import { cardChrome, deskButtonPrimary, deskField } from "@/components/admin/desk";
 import type { ClientFormState } from "@/app/admin/(panel)/crm/client-actions";
 
 type Action = (prev: ClientFormState, formData: FormData) => Promise<ClientFormState>;
 
 const initialState: ClientFormState = {};
+
+/** Desk field chrome plus the full width every field in this form wants. */
+const FIELD = `${deskField} w-full`;
 
 /** Create + edit client profile form (R-30) — reused as the always-editable
  * profile section on the client detail page, the same way BuilderForm is
@@ -21,7 +25,7 @@ export function ClientForm({ client, action }: { client?: CrmClient; action: Act
   const isEditing = Boolean(client);
 
   return (
-    <form action={formAction} className="flex flex-col gap-6 border border-border bg-white p-6">
+    <form action={formAction} className={`${cardChrome} flex flex-col gap-6 p-5`}>
       {client && <input type="hidden" name="id" value={client.id} />}
 
       <div className="grid gap-6 sm:grid-cols-3">
@@ -42,7 +46,7 @@ export function ClientForm({ client, action }: { client?: CrmClient; action: Act
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="phone" className={LABEL}>
-            Phone <span className="normal-case text-ink-muted">(optional)</span>
+            Phone <span className="normal-case text-muted">(optional)</span>
           </label>
           <input
             id="phone"
@@ -55,7 +59,7 @@ export function ClientForm({ client, action }: { client?: CrmClient; action: Act
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="email" className={LABEL}>
-            Email <span className="normal-case text-ink-muted">(optional)</span>
+            Email <span className="normal-case text-muted">(optional)</span>
           </label>
           <input
             id="email"
@@ -70,7 +74,7 @@ export function ClientForm({ client, action }: { client?: CrmClient; action: Act
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="requirementNotes" className={LABEL}>
-          Requirement notes <span className="normal-case text-ink-muted">(optional)</span>
+          Requirement notes <span className="normal-case text-muted">(optional)</span>
         </label>
         <textarea
           id="requirementNotes"
@@ -86,7 +90,7 @@ export function ClientForm({ client, action }: { client?: CrmClient; action: Act
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="budgetMin" className={LABEL}>
-            Budget min (₹) <span className="normal-case text-ink-muted">(optional)</span>
+            Budget min (₹) <span className="normal-case text-muted">(optional)</span>
           </label>
           <input
             id="budgetMin"
@@ -100,7 +104,7 @@ export function ClientForm({ client, action }: { client?: CrmClient; action: Act
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="budgetMax" className={LABEL}>
-            Budget max (₹) <span className="normal-case text-ink-muted">(optional)</span>
+            Budget max (₹) <span className="normal-case text-muted">(optional)</span>
           </label>
           <input
             id="budgetMax"
@@ -116,7 +120,7 @@ export function ClientForm({ client, action }: { client?: CrmClient; action: Act
 
       <div className="flex flex-col gap-2">
         <label className={LABEL}>
-          Preferred locations <span className="normal-case text-ink-muted">(optional)</span>
+          Preferred locations <span className="normal-case text-muted">(optional)</span>
         </label>
         <ChecklistField
           name="preferredLocationsJson"
@@ -129,7 +133,7 @@ export function ClientForm({ client, action }: { client?: CrmClient; action: Act
 
       <div className="flex flex-col gap-2">
         <label className={LABEL}>
-          Preferred types <span className="normal-case text-ink-muted">(optional)</span>
+          Preferred types <span className="normal-case text-muted">(optional)</span>
         </label>
         <ChecklistField
           name="preferredTypesJson"
@@ -140,15 +144,11 @@ export function ClientForm({ client, action }: { client?: CrmClient; action: Act
       </div>
 
       <div className="flex items-center gap-4">
-        <button
-          type="submit"
-          disabled={isPending}
-          className="cursor-pointer bg-ink px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
-        >
+        <button type="submit" disabled={isPending} className={`${deskButtonPrimary} disabled:cursor-wait disabled:opacity-60`}>
           {isPending ? "Saving..." : isEditing ? "Save client" : "Add client"}
         </button>
         {state.error && (
-          <p role="alert" className="text-meta font-sans text-error">
+          <p role="alert" className="text-[13px] text-error">
             {state.error}
           </p>
         )}

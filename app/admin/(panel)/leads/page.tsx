@@ -2,15 +2,38 @@ import Link from "next/link";
 import { and, count, desc, eq, like, inArray, isNotNull, or, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { leads, properties } from "@/lib/db/schema";
-import { LEAD_STATUS_BADGE, isLeadStatus } from "@/lib/taxonomy/leads";
+import { isLeadStatus } from "@/lib/taxonomy/leads";
 import { LeadFilters, type LeadFilterValues } from "./LeadFilters";
 import { LeadEditForm } from "./LeadEditForm";
 import { convertLead } from "./actions";
 import { formatDateTime } from "@/lib/dates";
+import {
+  Chip,
+  type ChipTone,
+  EmptyState,
+  PageHead,
+  Table,
+  TableWrap,
+  deskButton,
+  deskButtonSmall,
+  deskRowLink,
+} from "@/components/admin/desk";
 
 export const metadata = { title: "Leads" };
 
 const PAGE_SIZE = 25;
+
+/**
+ * Lead status on the gold ramp. `dropped` is `neutral`, not `alert`: a lead
+ * that went nowhere is a normal end to the list, and `alert` is reserved for
+ * states that are actually wrong.
+ */
+const LEAD_TONE: Record<string, ChipTone> = {
+  new: "live",
+  contacted: "quiet",
+  converted: "strong",
+  dropped: "neutral",
+};
 
 /** Same LIKE-metacharacter escape as the properties list — parameterised by
  * drizzle, this is about matching what was typed, not injection. */
@@ -143,9 +166,6 @@ function pageHref(values: LeadFilterValues, page: number): string {
   return `/admin/leads${params.size ? `?${params}` : ""}`;
 }
 
-const TH =
-  "text-eyebrow whitespace-nowrap px-4 py-3 text-left font-sans font-medium uppercase tracking-[0.15em] text-ink-muted";
-
 export default async function AdminLeadsPage({
   searchParams,
 }: {
@@ -180,50 +200,60 @@ export default async function AdminLeadsPage({
   const firstRow = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-serif text-h2 text-ink">Leads</h1>
-        {newCount > 0 && (
-          <span className="inline-flex items-center gap-2 border border-gold bg-gold/10 px-4 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-gold-deep">
-            <span aria-hidden className="h-2 w-2 rounded-full bg-gold-deep" />
-            {newCount} new
-          </span>
-        )}
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Leads"
+        sub="Every enquiry the public site has sent in, who it belongs to, and how far it got."
+        actions={
+          <a href="/api/admin/leads/export" className={deskButton}>
+            Export CSV
+          </a>
+        }
+      />
 
       <LeadFilters values={values} sources={sources} agents={agents} isFiltered={isFiltered} />
 
+      {/* The unread count, then the count of what came back, on one line.
+          Reading "1–4 of 4" beside the filters is what tells you they did
+          something. */}
+      <div className="flex flex-wrap items-center gap-2">
+        {newCount > 0 && (
+          <Chip tone="live" title="Leads nobody has touched yet">
+            {newCount} new
+          </Chip>
+        )}
+        <span className="ml-auto text-[12px] tabular-nums text-muted">
+          {firstRow}–{Math.min(page * PAGE_SIZE, total)} of {total}
+          {isFiltered ? " matching" : ""} lead{total === 1 ? "" : "s"}
+        </span>
+      </div>
+
       {rows.length === 0 ? (
-        <p className="text-body font-sans text-ink-muted">
-          {isFiltered ? (
-            <>
-              No leads match these filters.{" "}
-              <Link
-                href="/admin/leads"
-                className="text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-              >
+        isFiltered ? (
+          <EmptyState
+            title="Nothing matches those filters"
+            note="No lead answers to this combination of search, status, source and owner. Widening one of them — usually the status — brings the most back."
+            action={
+              <Link href="/admin/leads" className={deskButton}>
                 Clear filters
-              </Link>{" "}
-              to see the whole inbox.
-            </>
-          ) : (
-            "No leads yet."
-          )}
-        </p>
+              </Link>
+            }
+          />
+        ) : (
+          <EmptyState
+            title="No leads yet"
+            note="Enquiries from the contact form, the WhatsApp buttons and the enquiry cart land here on their own. There is nothing to set up."
+          />
+        )
       ) : (
         <div className="flex flex-col gap-4">
-          <p className="text-meta font-sans tabular-nums text-ink-muted">
-            {firstRow}–{Math.min(page * PAGE_SIZE, total)} of {total}
-            {isFiltered ? " matching" : ""} lead{total === 1 ? "" : "s"}
-          </p>
-
-          <div className="overflow-x-auto border border-border bg-white">
-            <table className="w-full min-w-[1000px] text-left">
+          <TableWrap>
+            <Table className="min-w-[1000px]">
               <thead>
-                <tr className="border-b border-border">
+                <tr>
                   {["Lead", "Contact", "Interest", "Properties", "Status / assigned", "Received", ""].map(
                     (h, i) => (
-                      <th key={i} className={TH}>
+                      <th key={i} scope="col">
                         {h}
                       </th>
                     )
@@ -237,53 +267,43 @@ export default async function AdminLeadsPage({
                     .map((id) => propertyMap.get(id))
                     .filter((p): p is PropertyRef => Boolean(p));
                   return (
-                    <tr
-                      key={lead.id}
-                      className={`border-b border-border align-top last:border-b-0 ${isUnread ? "bg-gold/5" : ""}`}
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-start gap-2">
-                          {isUnread && (
-                            <span
-                              aria-label="Unread"
-                              className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gold-deep"
-                            />
-                          )}
-                          <div className="min-w-0">
+                    /* Untouched leads carry a faint gold wash, and their
+                       status chip carries the gold spine. The old separate
+                       unread dot said the same thing a third time. */
+                    <tr key={lead.id} className={isUnread ? "bg-gold/5" : ""}>
+                      <td>
+                        <div className="min-w-0">
+                          <p className={isUnread ? "font-semibold text-ink" : "font-medium text-ink"}>
+                            {lead.name}
+                          </p>
+                          {lead.message && (
                             <p
-                              className={`font-sans text-body text-ink ${isUnread ? "font-semibold" : "font-medium"}`}
+                              className="mt-0.5 max-w-xs truncate text-[12px] text-muted"
+                              title={lead.message}
                             >
-                              {lead.name}
+                              {lead.message}
                             </p>
-                            {lead.message && (
-                              <p
-                                className="mt-0.5 max-w-xs truncate font-sans text-meta text-ink-muted"
-                                title={lead.message}
-                              >
-                                {lead.message}
-                              </p>
-                            )}
-                          </div>
+                          )}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 font-sans text-meta text-ink">
+                      <td className="whitespace-nowrap text-soft">
                         <div className="flex flex-col gap-0.5">
                           {lead.email && <span>{lead.email}</span>}
                           {lead.phone && <span>{lead.phone}</span>}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 font-sans text-meta capitalize text-ink">
+                      <td className="whitespace-nowrap capitalize text-soft">
                         {lead.interest ?? "—"}
                       </td>
-                      <td className="px-4 py-3 font-sans text-meta text-ink">
+                      <td className="text-soft">
                         {shortlisted.length === 0 ? (
                           "—"
                         ) : (
                           <details>
-                            <summary className="cursor-pointer text-ink underline decoration-border underline-offset-4 hover:decoration-gold">
+                            <summary className={`cursor-pointer ${deskRowLink}`}>
                               {shortlisted.length} propert{shortlisted.length === 1 ? "y" : "ies"}
                             </summary>
-                            <ul className="mt-1.5 flex flex-col gap-0.5 text-ink-muted">
+                            <ul className="mt-1.5 flex flex-col gap-0.5 text-muted">
                               {shortlisted.map((p, i) => (
                                 <li key={i}>{p.refCode ?? p.title}</li>
                               ))}
@@ -291,35 +311,27 @@ export default async function AdminLeadsPage({
                           </details>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td>
                         <div className="flex flex-col items-start gap-2">
-                          <span
-                            className={`inline-flex whitespace-nowrap border px-2.5 py-1 text-eyebrow font-sans font-medium uppercase tracking-[0.12em] ${
-                              LEAD_STATUS_BADGE[lead.status as keyof typeof LEAD_STATUS_BADGE] ??
-                              "border-border bg-ink/5 text-ink-muted"
-                            }`}
-                          >
+                          <Chip tone={LEAD_TONE[lead.status] ?? "neutral"}>
                             {lead.status}
                             {lead.assignedTo ? ` · ${lead.assignedTo}` : ""}
-                          </span>
+                          </Chip>
                           <LeadEditForm id={lead.id} status={lead.status} assignedTo={lead.assignedTo} />
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-meta font-sans text-ink-muted">
+                      <td className="whitespace-nowrap text-muted">
                         {formatDateTime(lead.createdAt)}
-                        {lead.source && <div className="text-ink-muted/70">{lead.source}</div>}
+                        {lead.source && <div>{lead.source}</div>}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3">
+                      <td className="whitespace-nowrap">
                         {/* R-30: one-click convert; a lead already converted
                             still shows the action — re-running it would just
                             create a second client, so leave that judgment to
                             the admin rather than tracking a boolean here. */}
                         <form action={convertLead}>
                           <input type="hidden" name="id" value={lead.id} />
-                          <button
-                            type="submit"
-                            className="cursor-pointer text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                          >
+                          <button type="submit" className={deskButtonSmall}>
                             Convert to client
                           </button>
                         </form>
@@ -328,8 +340,8 @@ export default async function AdminLeadsPage({
                   );
                 })}
               </tbody>
-            </table>
-          </div>
+            </Table>
+          </TableWrap>
 
           {lastPage > 1 && (
             <nav
@@ -337,19 +349,12 @@ export default async function AdminLeadsPage({
               className="flex flex-wrap items-center justify-between gap-4"
             >
               <PageLink href={pageHref(values, page - 1)} disabled={page <= 1} label="Previous" />
-              <span className="text-meta font-sans tabular-nums text-ink-muted">
+              <span className="text-[12px] tabular-nums text-muted">
                 Page {page} of {lastPage}
               </span>
               <PageLink href={pageHref(values, page + 1)} disabled={page >= lastPage} label="Next" />
             </nav>
           )}
-
-          <a
-            href="/api/admin/leads/export"
-            className="self-start text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-          >
-            Export all leads to CSV
-          </a>
         </div>
       )}
     </div>
@@ -357,17 +362,17 @@ export default async function AdminLeadsPage({
 }
 
 function PageLink({ href, disabled, label }: { href: string; disabled: boolean; label: string }) {
-  const base =
-    "text-eyebrow font-sans font-medium uppercase tracking-[0.18em] border border-border px-5 py-2.5";
+  // The same outline button as everywhere else, with a disabled twin that
+  // keeps the row from reflowing when Previous greys out at page 1.
   if (disabled) {
     return (
-      <span aria-disabled className={`${base} text-ink-muted/40`}>
+      <span aria-disabled className={`${deskButton} pointer-events-none opacity-40`}>
         {label}
       </span>
     );
   }
   return (
-    <Link href={href} className={`${base} text-ink transition-colors hover:border-gold hover:text-gold-deep`}>
+    <Link href={href} className={deskButton}>
       {label}
     </Link>
   );

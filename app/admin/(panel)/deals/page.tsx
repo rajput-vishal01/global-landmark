@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { deals, properties } from "@/lib/db/schema";
 import { todayIST } from "@/lib/db/queries";
 import { DeleteButton } from "@/components/admin/DeleteButton";
+import { Card, Chip, EmptyState, PageHead, type ChipTone } from "@/components/admin/desk";
 import { DealCreateForm } from "./DealCreateForm";
 import { deleteDeal } from "./actions";
 
@@ -16,10 +17,12 @@ function statusOf(startsAt: string, endsAt: string, today: string): Status {
   return "Live";
 }
 
-const STATUS_STYLE: Record<Status, string> = {
-  Live: "bg-gold/15 text-gold-deep",
-  Queued: "bg-ink/5 text-ink",
-  Expired: "bg-ink/5 text-ink-muted line-through",
+/** Live is the one on the site right now, so it takes the accent; a window
+ *  that has simply run out is spent, not broken, so it never reads as alert. */
+const STATUS_TONE: Record<Status, ChipTone> = {
+  Live: "live",
+  Queued: "quiet",
+  Expired: "neutral",
 };
 
 async function loadData() {
@@ -51,50 +54,40 @@ export default async function AdminDealsPage() {
   const today = todayIST();
 
   return (
-    <div className="flex flex-col gap-8">
-      <div>
-        <h1 className="font-serif text-h2 text-ink">Deal of the Week</h1>
-        <p className="mt-2 max-w-2xl text-body font-sans text-ink-muted">
-          The deal whose window covers today is shown on the landing page.
-          Queue future windows and the next one goes live automatically when
-          the current one expires.
-        </p>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Deal of the Week"
+        sub="Whichever window covers today is the deal on the landing page — queue the next one and the handover happens on its own."
+      />
 
       <DealCreateForm items={propertyRows} />
 
       {dealRows.length === 0 ? (
-        <p className="text-body font-sans text-ink-muted">No deals scheduled.</p>
+        <EmptyState
+          title="Nothing scheduled"
+          note="With no deal window open, the landing page leaves the Deal of the Week strip out entirely."
+        />
       ) : (
-        <ul className="border border-border bg-white">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {dealRows.map((deal) => {
             const status = statusOf(deal.startsAt, deal.endsAt, today);
             return (
-              <li
-                key={deal.id}
-                className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-4 py-3 last:border-b-0"
-              >
-                <div className="flex items-center gap-4">
-                  <span
-                    className={`text-eyebrow px-2.5 py-1 font-sans font-medium uppercase tracking-[0.15em] ${STATUS_STYLE[status]}`}
-                  >
-                    {status}
-                  </span>
-                  <div>
-                    <p className="font-sans text-body font-medium text-ink">
-                      {deal.property.title}
-                    </p>
-                    <p className="text-meta font-sans text-ink-muted">
-                      {deal.startsAt} → {deal.endsAt}
-                    </p>
+              <li key={deal.id}>
+                <Card className="flex h-full flex-col gap-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <Chip tone={STATUS_TONE[status]}>{status}</Chip>
+                    <DeleteButton
+                      action={deleteDeal}
+                      id={deal.id}
+                      label="Remove"
+                      confirmText={`Remove this deal for "${deal.property.title}"?`}
+                    />
                   </div>
-                </div>
-                <DeleteButton
-                  action={deleteDeal}
-                  id={deal.id}
-                  label="Remove"
-                  confirmText={`Remove this deal for "${deal.property.title}"?`}
-                />
+                  <p className="text-[13px] font-medium text-ink">{deal.property.title}</p>
+                  <p className="text-[11.5px] tabular-nums text-muted">
+                    {deal.startsAt} → {deal.endsAt}
+                  </p>
+                </Card>
               </li>
             );
           })}

@@ -2,8 +2,8 @@
 
 import { useRef, useState } from "react";
 import { Select } from "@/components/ui/Select";
-import { FIELD, LABEL } from "@/components/form-classes";
-import { FormSection, countFilled } from "./FormSection";
+import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+
 import { ChecklistField } from "./ChecklistField";
 import {
   CONFIGURATIONS,
@@ -170,7 +170,7 @@ export function ConfigurationSection({
       total={4}
     >
       <div className="flex flex-col gap-2">
-        <span className={LABEL}>
+        <span className={deskLabel}>
           {isProject ? "Configurations on offer" : "Configuration"}
         </span>
 
@@ -193,7 +193,7 @@ export function ConfigurationSection({
           />
         )}
 
-        <p className="font-sans text-meta text-ink-muted">
+        <p className="text-[11.5px] text-muted">
           &ldquo;+1&rdquo; is a servant room on top of the bedroom count, not an
           extra bedroom — a 3+1 is a 3-bedroom with servant quarters.
         </p>
@@ -212,8 +212,8 @@ export function ConfigurationSection({
         />
       </div>
 
-      <div ref={roomsRef} className="flex flex-col gap-3 border-t border-border pt-5">
-        <span className={LABEL}>Rooms</span>
+      <div ref={roomsRef} className="flex flex-col gap-3 border-t border-line-soft pt-5">
+        <span className={deskLabel}>Rooms</span>
         <ChecklistField
           // Remounting is what lets a picked configuration add to this list;
           // the key changes only when mergeRooms() found something new, so a
@@ -247,7 +247,7 @@ function CountField({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={id} className={LABEL}>
+      <label htmlFor={id} className={deskLabel}>
         {label}
       </label>
       <input
@@ -260,7 +260,7 @@ function CountField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="—"
-        className={FIELD}
+        className={deskFieldFull}
       />
     </div>
   );

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { deskButton } from "@/components/admin/desk";
+import { deskFieldFull } from "./FormSection";
 
 type UploaderImage = { url: string; storageKey: string | null; alt: string };
 
@@ -136,9 +138,9 @@ export function ImageUploader({
           {images.map((img, i) => (
             <li
               key={`${img.url}-${i}`}
-              className="flex items-center gap-3 border border-border bg-white p-2"
+              className="flex items-center gap-3 rounded-lg border border-line-soft bg-raise p-2"
             >
-              <div className="relative h-14 w-20 shrink-0 overflow-hidden bg-ink/5">
+              <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-md bg-raise">
                 {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary admin-entered hosts */}
                 <img
                   src={img.url}
@@ -155,18 +157,18 @@ export function ImageUploader({
                   )
                 }
                 placeholder="Alt text"
-                className="min-w-0 flex-1 border-b border-border bg-transparent py-1 font-sans text-meta text-ink focus:border-gold focus:outline-none"
+                className={`${deskFieldFull} flex-1`}
               />
-              <span className="text-meta font-sans text-ink-muted">
+              <span className="text-[11.5px] text-muted">
                 {i === 0 ? "Cover" : `#${i + 1}`}
               </span>
               <div className="flex items-center gap-1">
                 <button type="button" onClick={() => move(i, -1)} disabled={i === 0}
                   aria-label="Move up"
-                  className="cursor-pointer px-1.5 py-1 text-ink-muted hover:text-ink disabled:opacity-30">↑</button>
+                  className="cursor-pointer px-1.5 py-1 text-muted hover:text-ink disabled:opacity-30">↑</button>
                 <button type="button" onClick={() => move(i, 1)} disabled={i === images.length - 1}
                   aria-label="Move down"
-                  className="cursor-pointer px-1.5 py-1 text-ink-muted hover:text-ink disabled:opacity-30">↓</button>
+                  className="cursor-pointer px-1.5 py-1 text-muted hover:text-ink disabled:opacity-30">↓</button>
                 <button type="button"
                   onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
                   aria-label="Remove image"
@@ -177,7 +179,7 @@ export function ImageUploader({
         </ul>
       )}
 
-      <label className="flex w-fit cursor-pointer items-center gap-3 border border-border bg-white px-5 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold">
+      <label className={`${deskButton} w-fit`}>
         {busy ? "Uploading..." : `Upload images (${images.length}/${MAX_IMAGES})`}
         <input
           type="file"
@@ -188,7 +190,7 @@ export function ImageUploader({
           className="hidden"
         />
       </label>
-      <p className="text-meta font-sans text-ink-muted">
+      <p className="text-[11.5px] text-muted">
         JPEG, PNG, WebP or AVIF, up to {MAX_MB} MB each. The first image is the
         cover.
       </p>
@@ -199,19 +201,19 @@ export function ImageUploader({
           value={pasteUrl}
           onChange={(e) => setPasteUrl(e.target.value)}
           placeholder="or paste an images.unsplash.com URL"
-          className="flex-1 border-b border-border bg-transparent py-2 font-sans text-meta text-ink focus:border-gold focus:outline-none"
+          className={`${deskFieldFull} flex-1`}
         />
         <button
           type="button"
           onClick={addPastedUrl}
-          className="cursor-pointer border border-border bg-white px-4 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
+          className={deskButton}
         >
           Add
         </button>
       </div>
 
       {error && (
-        <p role="alert" className="text-meta font-sans text-error">{error}</p>
+        <p role="alert" className="text-[12px] text-error">{error}</p>
       )}
     </div>
   );

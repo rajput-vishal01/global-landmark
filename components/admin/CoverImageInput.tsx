@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { deskButton } from "@/components/admin/desk";
+import { deskFieldFull } from "./FormSection";
 
 /** Kept in step with IMAGE_MIME_TYPES / MAX_UPLOAD_BYTES in lib/storage.ts. */
 const ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
@@ -87,12 +89,12 @@ export function CoverImageInput({
       <input type="hidden" name={name} value={url} />
 
       {url && (
-        <div className="flex items-center gap-3 border border-border bg-white p-2">
-          <div className="relative h-16 w-24 shrink-0 overflow-hidden bg-ink/5">
+        <div className="flex items-center gap-3 rounded-lg border border-line-soft bg-raise p-2">
+          <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-md bg-raise">
             {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary admin-entered hosts */}
             <img src={url} alt="" className="h-full w-full object-cover" />
           </div>
-          <span className="min-w-0 flex-1 truncate font-sans text-meta text-ink-muted">
+          <span className="min-w-0 flex-1 truncate text-[11.5px] text-muted">
             {url}
           </span>
           <button
@@ -106,7 +108,7 @@ export function CoverImageInput({
         </div>
       )}
 
-      <label className="flex w-fit cursor-pointer items-center gap-3 border border-border bg-white px-5 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold">
+      <label className={`${deskButton} w-fit`}>
         {busy ? "Uploading..." : url ? "Replace image" : "Upload image"}
         <input
           type="file"
@@ -116,7 +118,7 @@ export function CoverImageInput({
           className="hidden"
         />
       </label>
-      <p className="text-meta font-sans text-ink-muted">
+      <p className="text-[11.5px] text-muted">
         JPEG, PNG, WebP or AVIF, up to {MAX_MB} MB. Landscape crops best.
       </p>
 
@@ -126,19 +128,19 @@ export function CoverImageInput({
           value={pasteUrl}
           onChange={(e) => setPasteUrl(e.target.value)}
           placeholder="or paste an images.unsplash.com URL"
-          className="flex-1 border-b border-border bg-transparent py-2 font-sans text-meta text-ink focus:border-gold focus:outline-none"
+          className={`${deskFieldFull} flex-1`}
         />
         <button
           type="button"
           onClick={addPastedUrl}
-          className="cursor-pointer border border-border bg-white px-4 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
+          className={deskButton}
         >
           Add
         </button>
       </div>
 
       {error && (
-        <p role="alert" className="text-meta font-sans text-error">{error}</p>
+        <p role="alert" className="text-[12px] text-error">{error}</p>
       )}
     </div>
   );

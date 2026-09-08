@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Select } from "@/components/ui/Select";
-import { LABEL } from "@/components/form-classes";
-import { FormSection, countFilled } from "./FormSection";
+import { FormSection, countFilled, deskLabel } from "./FormSection";
+
 import { ChecklistField } from "./ChecklistField";
 import {
   DEAL_ATTRIBUTES,
@@ -65,7 +65,7 @@ export function ClassificationSection({
       defaultOpen
     >
       <div className="flex flex-col gap-2">
-        <span className={LABEL}>Deal attributes</span>
+        <span className={deskLabel}>Deal attributes</span>
         {/* Pre-Leased and Investment describe the DEAL, not the building — a
             pre-leased shop is still a Shop — so they are a separate checklist
             that combines with any physical type above rather than two more
@@ -83,7 +83,7 @@ export function ClassificationSection({
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
         <div className="flex flex-col gap-2">
-          <label htmlFor="facing" className={LABEL}>
+          <label htmlFor="facing" className={deskLabel}>
             Facing
           </label>
           {/* Every one of these three is clearable. A broker who picked a
@@ -100,7 +100,7 @@ export function ClassificationSection({
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="possessionStatus" className={LABEL}>
+          <label htmlFor="possessionStatus" className={deskLabel}>
             Possession
           </label>
           <Select
@@ -113,7 +113,7 @@ export function ClassificationSection({
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="propertyAge" className={LABEL}>
+          <label htmlFor="propertyAge" className={deskLabel}>
             Age
           </label>
           <Select

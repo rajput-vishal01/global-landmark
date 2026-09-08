@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Select } from "@/components/ui/Select";
-import { FIELD, LABEL } from "@/components/form-classes";
+import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
 import { Req } from "@/components/ui/RequiredMark";
-import { FormSection, countFilled } from "./FormSection";
+
 import { CITY_NAMES, localitiesIn } from "@/lib/locations";
 import { withEmptyOption } from "@/lib/attributes";
 
@@ -28,7 +28,7 @@ import { withEmptyOption } from "@/lib/attributes";
 
 /** The checkbox shape ChecklistField already uses across the admin. */
 const CHECKBOX =
-  "h-4 w-4 shrink-0 cursor-pointer appearance-none border border-border bg-white transition-colors checked:border-gold checked:bg-gold";
+  "h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-[3px] border border-line bg-surface transition-colors checked:border-gold checked:bg-gold";
 
 export function LocationSection({
   location: initialLocation,
@@ -96,7 +96,7 @@ export function LocationSection({
       defaultOpen
     >
       <div className="flex flex-col gap-2">
-        <label htmlFor="location" className={LABEL}>
+        <label htmlFor="location" className={deskLabel}>
           Address line
           <Req />
         </label>
@@ -109,16 +109,16 @@ export function LocationSection({
           value={location}
           onChange={(e) => setLocation(e.target.value)}
           placeholder="Sector 62, Mohali (Phase 8)"
-          className={FIELD}
+          className={deskFieldFull}
         />
-        <p className="font-sans text-meta text-ink-muted">
+        <p className="text-[11.5px] text-muted">
           Shown on the card and the property page, exactly as written.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <label htmlFor="city" className={LABEL}>
+          <label htmlFor="city" className={deskLabel}>
             City
           </label>
           <Select
@@ -131,7 +131,7 @@ export function LocationSection({
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="locality" className={LABEL}>
+          <label htmlFor="locality" className={deskLabel}>
             Locality
           </label>
           {localities.length > 0 ? (
@@ -155,7 +155,7 @@ export function LocationSection({
                 type="text"
                 disabled
                 placeholder="Choose a city first"
-                className={`${FIELD} cursor-not-allowed opacity-50`}
+                className={`${deskFieldFull} cursor-not-allowed opacity-50`}
               />
               {/* Still submit an empty value so clearing the city clears the
                   stored locality instead of leaving a stale one behind. */}
@@ -167,7 +167,7 @@ export function LocationSection({
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <label htmlFor="sector" className={LABEL}>
+          <label htmlFor="sector" className={deskLabel}>
             Sector
           </label>
           <input
@@ -177,11 +177,11 @@ export function LocationSection({
             maxLength={120}
             defaultValue={initialSector ?? ""}
             placeholder="Sector 20"
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
         <div className="flex flex-col gap-2">
-          <label htmlFor="block" className={LABEL}>
+          <label htmlFor="block" className={deskLabel}>
             Block
           </label>
           <input
@@ -191,13 +191,13 @@ export function LocationSection({
             maxLength={120}
             defaultValue={initialBlock ?? ""}
             placeholder="Block C"
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
       </div>
 
       <div className="flex flex-col gap-2">
-        <label htmlFor="society" className={LABEL}>
+        <label htmlFor="society" className={deskLabel}>
           Society / project
         </label>
         <input
@@ -207,12 +207,12 @@ export function LocationSection({
           maxLength={200}
           defaultValue={initialSociety ?? ""}
           placeholder="Green Lotus Saksham"
-          className={FIELD}
+          className={deskFieldFull}
         />
       </div>
 
       <div className="flex flex-col gap-2">
-        <label htmlFor="towerName" className={LABEL}>
+        <label htmlFor="towerName" className={deskLabel}>
           Tower
         </label>
         <input
@@ -222,9 +222,9 @@ export function LocationSection({
           maxLength={200}
           defaultValue={initialTower ?? ""}
           placeholder="Tower A (leave empty for a single listing)"
-          className={FIELD}
+          className={deskFieldFull}
         />
-        <p className="font-sans text-meta text-ink-muted">
+        <p className="text-[11.5px] text-muted">
           An unknown name creates the tower under the selected project — the
           same way an unknown project name creates the project.
         </p>
@@ -232,7 +232,7 @@ export function LocationSection({
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
         <div className="flex flex-col gap-2">
-          <label htmlFor="floorNumber" className={LABEL}>
+          <label htmlFor="floorNumber" className={deskLabel}>
             Floor number
           </label>
           <input
@@ -243,11 +243,11 @@ export function LocationSection({
             inputMode="numeric"
             defaultValue={initialFloorNumber ?? ""}
             placeholder="4"
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
         <div className="flex flex-col gap-2">
-          <label htmlFor="totalFloors" className={LABEL}>
+          <label htmlFor="totalFloors" className={deskLabel}>
             Total floors
           </label>
           <input
@@ -258,11 +258,11 @@ export function LocationSection({
             inputMode="numeric"
             defaultValue={initialTotalFloors ?? ""}
             placeholder="12"
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
         <div className="flex flex-col gap-2">
-          <label htmlFor="unitNumber" className={LABEL}>
+          <label htmlFor="unitNumber" className={deskLabel}>
             Unit number
           </label>
           <input
@@ -272,14 +272,14 @@ export function LocationSection({
             maxLength={60}
             defaultValue={initialUnitNumber ?? ""}
             placeholder="404"
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <label htmlFor="latitude" className={LABEL}>
+          <label htmlFor="latitude" className={deskLabel}>
             Latitude
           </label>
           <input
@@ -291,11 +291,11 @@ export function LocationSection({
             value={latitude}
             onChange={(e) => setLatitude(e.target.value)}
             placeholder="30.6942"
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
         <div className="flex flex-col gap-2">
-          <label htmlFor="longitude" className={LABEL}>
+          <label htmlFor="longitude" className={deskLabel}>
             Longitude
           </label>
           <input
@@ -307,11 +307,11 @@ export function LocationSection({
             value={longitude}
             onChange={(e) => setLongitude(e.target.value)}
             placeholder="76.8606"
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
       </div>
-      <p className="font-sans text-meta text-ink-muted">
+      <p className="text-[11.5px] text-muted">
         Right-click the spot in Google Maps and copy the two numbers it shows.
         Storing them does nothing on its own — the box below is what puts a
         pin on the public page.
@@ -323,9 +323,9 @@ export function LocationSection({
           pairing as showPricePublicly, and it matters for the same reason —
           a stuck true here keeps publishing a location the client asked to
           keep off the map. */}
-      <div className="flex flex-col gap-2 border border-border bg-white p-4">
+      <div className="flex flex-col gap-2 rounded-lg border border-line-soft bg-raise p-4">
         <input type="hidden" name="showMapPublicly" value="false" />
-        <label className="flex cursor-pointer items-start gap-2.5 font-sans text-body text-ink">
+        <label className="flex cursor-pointer items-start gap-2.5 text-[13px] text-ink">
           <input
             type="checkbox"
             name="showMapPublicly"
@@ -337,8 +337,8 @@ export function LocationSection({
           Show this property on a map on the public site
         </label>
         <p
-          className={`font-sans text-meta ${
-            showMapPublicly && hasPin ? "text-gold-deep" : "text-ink-muted"
+          className={`text-[12.5px] ${
+            showMapPublicly && hasPin ? "text-gold-deep" : "text-muted"
           }`}
         >
           {showMapPublicly

@@ -9,7 +9,7 @@
  * compiles them to a temp dir with the already-installed tsc first.
  */
 import { execSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createRequire } from "node:module";
@@ -109,11 +109,22 @@ try {
   assert.equal(status.isPubliclyVisible("published", "Sold"), false, "sold never public");
   assert.equal(status.isPubliclyVisible("published", "Hold"), false);
   assert.equal(status.isPubliclyVisible("archived", "Available"), false);
+  const toneSource = readFileSync("lib/admin/status-tone.ts", "utf8");
   for (const s of status.LISTING_STATUSES) {
     if (s !== "Available") {
       assert.equal(status.isPubliclyVisible("published", s), false, `${s} is not public`);
     }
-    assert.ok(status.STATUS_BADGE[s], `${s} has a badge style`);
+    // Every status needs a visual treatment, or a listing shows its state as
+    // bare text in a column of chips. The map moved to lib/admin/status-tone.ts
+    // because it imports a React type, and this script compiles lib/taxonomy
+    // standalone with no path aliases on purpose — a taxonomy is data and
+    // should not need a component to compile. So the invariant is asserted
+    // against the source text: cruder, but it still fails the moment someone
+    // adds a status without a tone, which is the whole point of the check.
+    assert.ok(
+      toneSource.includes(`${s}:`) || toneSource.includes(`"${s}":`),
+      `${s} has a chip tone in lib/admin/status-tone.ts`
+    );
   }
 
   // --- Reference code (R-07) -----------------------------------------------

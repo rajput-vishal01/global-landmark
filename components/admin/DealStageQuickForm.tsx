@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Select } from "@/components/ui/Select";
+import { deskButtonSmall } from "@/components/admin/desk";
 import { DEAL_STAGES } from "@/lib/taxonomy/brokerage";
 import { updateDealStage, type DealFormState } from "@/app/admin/(panel)/crm/deal-actions";
 
@@ -20,13 +21,13 @@ export function DealStageQuickForm({ id, stage }: { id: number; stage: string })
         <button
           type="submit"
           disabled={isPending}
-          className="shrink-0 cursor-pointer whitespace-nowrap border border-ink/25 px-3 py-2.5 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold disabled:cursor-wait disabled:opacity-50"
+          className={`${deskButtonSmall} shrink-0 whitespace-nowrap disabled:cursor-wait disabled:opacity-50`}
         >
           {isPending ? "..." : "Move"}
         </button>
       </div>
       {state.error && (
-        <span role="alert" className="text-meta font-sans text-error">
+        <span role="alert" className="text-[12px] text-error">
           {state.error}
         </span>
       )}

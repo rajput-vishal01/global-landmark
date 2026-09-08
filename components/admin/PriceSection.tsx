@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { FIELD, LABEL } from "@/components/form-classes";
-import { FormSection, countFilled } from "./FormSection";
+import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+
 import { ChargesEditor } from "./ChargesEditor";
 import {
   allInPrice,
@@ -25,7 +25,7 @@ import {
 
 /** The checkbox shape ChecklistField already uses across the admin. */
 const CHECKBOX =
-  "h-4 w-4 shrink-0 cursor-pointer appearance-none border border-border bg-white transition-colors checked:border-gold checked:bg-gold";
+  "h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-[3px] border border-line bg-surface transition-colors checked:border-gold checked:bg-gold";
 
 export function PriceSection({
   demandPrice: initialDemandPrice,
@@ -90,9 +90,9 @@ export function PriceSection({
     >
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <label htmlFor="demandPrice" className={LABEL}>
+          <label htmlFor="demandPrice" className={deskLabel}>
             Demand price{" "}
-            <span className="normal-case text-ink-muted">(rupees)</span>
+            <span className="normal-case text-muted">(rupees)</span>
           </label>
           <input
             id="demandPrice"
@@ -103,7 +103,7 @@ export function PriceSection({
             inputMode="numeric"
             value={demandPrice}
             onChange={(e) => setDemandPrice(e.target.value)}
-            className={FIELD}
+            className={deskFieldFull}
           />
           {/* Live lakh/crore echo of what was actually typed. The failure it
               prevents is concrete and common: a demand price entered in
@@ -112,8 +112,8 @@ export function PriceSection({
               misreads as wrong in a box full of zeros, but both read as
               obviously wrong here, before the listing goes out. */}
           <p
-            className={`font-sans text-meta ${
-              demandValue == null ? "text-ink-muted" : "text-gold-deep"
+            className={`text-[12.5px] ${
+              demandValue == null ? "text-muted" : "text-gold-deep"
             }`}
           >
             {demandValue == null
@@ -123,9 +123,9 @@ export function PriceSection({
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="perSqftRate" className={LABEL}>
+          <label htmlFor="perSqftRate" className={deskLabel}>
             Rate{" "}
-            <span className="normal-case text-ink-muted">(rupees per sq.ft)</span>
+            <span className="normal-case text-muted">(rupees per sq.ft)</span>
           </label>
           <input
             id="perSqftRate"
@@ -136,7 +136,7 @@ export function PriceSection({
             inputMode="numeric"
             value={perSqftRate}
             onChange={(e) => setPerSqftRate(e.target.value)}
-            className={FIELD}
+            className={deskFieldFull}
           />
         </div>
       </div>
@@ -152,7 +152,7 @@ export function PriceSection({
           always see false. */}
       <div className="flex flex-col gap-2">
         <input type="hidden" name="isNegotiable" value="false" />
-        <label className="flex cursor-pointer items-center gap-2.5 font-sans text-body text-ink">
+        <label className="flex cursor-pointer items-center gap-2.5 text-[13px] text-ink">
           <input
             type="checkbox"
             name="isNegotiable"
@@ -166,23 +166,23 @@ export function PriceSection({
       </div>
 
       <div className="flex flex-col gap-3">
-        <span className={LABEL}>Other charges</span>
+        <span className={deskLabel}>Other charges</span>
         <ChargesEditor initial={initialCharges ?? []} onChange={setCharges} />
 
-        <div className="flex flex-col gap-1 border border-border bg-cream px-4 py-3">
-          <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
+        <div className="flex flex-col gap-1 rounded-lg border border-line-soft bg-raise px-4 py-3">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
             All-in total
           </span>
-          <span className="font-sans text-body tabular-nums text-ink">
+          <span className="text-[15px] tabular-nums text-ink">
             {allIn == null ? "—" : formatRupees(allIn)}
           </span>
-          <span className="font-sans text-meta text-ink-muted">
+          <span className="text-[11.5px] text-muted">
             {allIn == null
               ? "An all-in total needs a demand price to build on. Enter one above and this fills in."
               : `${formatIndianShort(allIn)} — demand price plus every charge not already included in it.`}
           </span>
           {missingArea && (
-            <span className="font-sans text-meta text-error">
+            <span className="text-[12px] text-error">
               A per-sq.ft charge is counting as zero because this listing has
               no area yet. Fill in the Area section for a true total.
             </span>
@@ -200,9 +200,9 @@ export function PriceSection({
           true — so an unpublished price is never serialised into the page
           and never reaches the browser at all. It is not a CSS hide, and it
           does not sit in a payload waiting to be read out of devtools. */}
-      <div className="flex flex-col gap-2 border border-border bg-white p-4">
+      <div className="flex flex-col gap-2 rounded-lg border border-line-soft bg-raise p-4">
         <input type="hidden" name="showPricePublicly" value="false" />
-        <label className="flex cursor-pointer items-start gap-2.5 font-sans text-body text-ink">
+        <label className="flex cursor-pointer items-start gap-2.5 text-[13px] text-ink">
           <input
             type="checkbox"
             name="showPricePublicly"
@@ -214,8 +214,8 @@ export function PriceSection({
           Show the exact price on the public site
         </label>
         <p
-          className={`font-sans text-meta ${
-            showPricePublicly ? "text-gold-deep" : "text-ink-muted"
+          className={`text-[12.5px] ${
+            showPricePublicly ? "text-gold-deep" : "text-muted"
           }`}
         >
           {showPricePublicly
@@ -234,10 +234,10 @@ export function PriceSection({
           SELECT anywhere on the site that could return this column, whatever
           a future component asks for. Kept in its own block so it never
           reads as one more field in the price list above. */}
-      <div className="flex flex-col gap-2 border border-border bg-cream p-4">
-        <label htmlFor="circleRate" className={LABEL}>
+      <div className="flex flex-col gap-2 rounded-lg border border-line-soft bg-raise p-4">
+        <label htmlFor="circleRate" className={deskLabel}>
           Circle rate{" "}
-          <span className="normal-case text-ink-muted">(rupees per sq.ft)</span>
+          <span className="normal-case text-muted">(rupees per sq.ft)</span>
         </label>
         <input
           id="circleRate"
@@ -248,9 +248,9 @@ export function PriceSection({
           inputMode="numeric"
           value={circleRate}
           onChange={(e) => setCircleRate(e.target.value)}
-          className={FIELD}
+          className={deskFieldFull}
         />
-        <p className="font-sans text-meta text-ink-muted">
+        <p className="text-[11.5px] text-muted">
           Internal only — never shown on the public site, never sent to the
           browser, and not included in the all-in total above.
         </p>

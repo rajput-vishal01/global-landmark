@@ -24,12 +24,7 @@ export const TOUR_STATUSES = ["new", "scheduled", "completed", "cancelled"] as c
 
 export type TourStatus = (typeof TOUR_STATUSES)[number];
 
-export const TOUR_STATUS_BADGE: Record<TourStatus, string> = {
-  new: "border-gold bg-gold/10 text-gold-deep",
-  scheduled: "border-ink-muted/40 bg-ink/5 text-ink-muted",
-  completed: "border-gold-deep/40 bg-gold-deep/10 text-gold-deep",
-  cancelled: "border-error/40 bg-error/5 text-error",
-};
+
 
 export const isTourStatus = (v: string): v is TourStatus =>
   (TOUR_STATUSES as readonly string[]).includes(v);

@@ -55,6 +55,25 @@
      which is what stops a white page of serif headings reading as harsh. */
   --color-heading: #262838;
 
+  /* ── Admin desk tokens ───────────────────────────────────────────────
+     The admin is a working tool and needs a denser vocabulary than the
+     marketing site: a page ground distinct from the card it holds, a
+     raised tone for table headers, and two rule weights instead of one
+     --border for everything.
+
+     These are ADDITIONS, not redefinitions. Nothing the public site uses
+     changes value. Gold is deliberately absent from the fill roles below:
+     BRAND_GUIDELINES makes it a rule/hover/emphasis colour and never a
+     fill, and #c9992e behind white text measures ~2.5:1 anyway. The one
+     filled action per screen stays ink on cream, which is what the panel
+     already did and what actually passes AA. */
+  --color-paper: #faf9f6;
+  --color-raise: #f2f1ec;
+  --color-soft: #43423e;
+  --color-muted: #6a6862;
+  --color-line: rgb(20 20 20 / 0.14);
+  --color-line-soft: rgb(20 20 20 / 0.07);
+
   /* Fluid type scale */
   --text-eyebrow: clamp(0.6875rem, 0.6vw + 0.55rem, 0.875rem);
   --text-eyebrow--line-height: 1.2;
@@ -134,13 +153,14 @@
   text-transform: uppercase;
 }
 
-/* Table density. Admin tables are for scanning many rows, so cells get the
-   tighter padding a dashboard expects and long cell text stops wrapping
-   into three-line rows. */
-.admin-panel table :is(th, td) {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-}
+/* Table density lives in components/admin/desk/Table.tsx now.
+
+   The rule that used to sit here — `.admin-panel table :is(th, td)` with a
+   vertical padding — was specificity 0,2,0, the same as the `[&_thead_th]:py-0`
+   utility the Table component emits. Two declarations of equal specificity are
+   settled by which one Tailwind writes into the stylesheet last, which is not
+   something a reader of either file can see. It made the 30px header row
+   depend on emission order. Deleted rather than reconciled: one owner. */
 
 body {
   background: var(--color-surface);
@@ -231,4 +251,254 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Admin desk chrome.
+
+   Ported from the g7x admin desk, which is the reference the client picked.
+   What comes across is the STRUCTURE — a 216px rail with grouped rows and a
+   3px active edge, a 26px page title over a muted sub, cards that are a
+   shadow rather than a border, and spreadsheet-density tables. What does not
+   come across is g7x's plum: every colour below resolves through the Global
+   Landmark tokens above, and gold stays a rule/mark colour per
+   BRAND_GUIDELINES rather than becoming a fill.
+
+   Everything is scoped to `.admin-panel`, the class the panel layout puts on
+   its root, so the public site is untouched by all of it.
+   ─────────────────────────────────────────────────────────────────────── */
+
+.admin-panel {
+  /* No new webfont. g7x sets its desk face to Anton; here that would be a
+     third typeface bolted onto a brand that already has two, so the desk
+     face is the body sans and weight does the work. One variable, so
+     switching it to var(--font-serif) later is a one-line change. */
+  --font-desk: var(--font-sans);
+
+  --desk-rail: 216px;
+  --desk-pad: 26px 30px 60px;
+  --desk-r-control: 8px;
+
+  --desk-title: 26px;
+  --desk-sub: 13px;
+  --desk-nav-text: 13.5px;
+  --desk-label: 10.5px;
+  --desk-foot: 11px;
+}
+
+@media (max-width: 760px) {
+  .admin-panel {
+    --desk-pad: 18px 14px 60px;
+  }
+}
+
+/* ---------- rail ---------- */
+
+.admin-panel .desk-rail {
+  width: var(--desk-rail);
+  min-width: var(--desk-rail);
+}
+
+.admin-panel .desk-wordmark {
+  padding: 22px 18px 18px;
+  border-bottom: 1px solid var(--color-line-soft);
+}
+
+.admin-panel .desk-wordmark-title {
+  font-family: var(--font-desk);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.01em;
+  color: var(--color-ink);
+}
+
+.admin-panel .desk-wordmark-sub {
+  margin-top: 3px;
+  font-size: var(--desk-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.admin-panel .desk-nav {
+  padding: 12px 10px;
+}
+
+.admin-panel .desk-navgroup + .desk-navgroup {
+  margin-top: 18px;
+}
+
+.admin-panel .desk-navlist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-panel .desk-navitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--desk-r-control);
+  font-size: var(--desk-nav-text);
+  color: var(--color-soft);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.admin-panel .desk-navitem:hover {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+/* The active marker is a 3px INSET rule, not a border: a border would shove
+   the label sideways by 3px every time the route changed. Gold here is doing
+   exactly the job the brand reserves it for — a rule that marks, not a fill. */
+.admin-panel .desk-navitem.is-active {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--color-gold);
+}
+
+.admin-panel .desk-dot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.4;
+}
+
+.admin-panel .desk-navitem.is-active .desk-dot {
+  background: var(--color-gold);
+  opacity: 1;
+}
+
+.admin-panel .desk-foot {
+  margin-top: auto;
+  padding: 14px 18px;
+  font-size: var(--desk-foot);
+  color: var(--color-muted);
+  border-top: 1px solid var(--color-line-soft);
+}
+
+/* ---------- page shell ---------- */
+
+.admin-panel .desk-main {
+  padding: var(--desk-pad);
+}
+
+.admin-panel .pagehead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+/* 26px, not the 28px the h1 utility gives, and not the public site's 88px.
+   This is the title of a CRUD screen. */
+.admin-panel .pagehead h1 {
+  font-family: var(--font-desk);
+  font-weight: 700;
+  font-size: var(--desk-title);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+}
+
+.admin-panel .pagehead .sub {
+  margin-top: 3px;
+  font-size: var(--desk-sub);
+  color: var(--color-muted);
+}
+
+.admin-panel .pagehead .actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-panel .desk-eyebrow {
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+/* The panel's ground. Cream, so the white cards on top of it read as cards
+   at all — the old panel was white cards on a white page, which is most of
+   why it looked flat. */
+.admin-panel .desk-body {
+  background: var(--color-paper);
+}
+
+/* Scrollbars inside the panel are hidden, and the elements still scroll.
+   The rail and the wide tables both overflow by design, and a chunky native
+   bar down the middle of the desk is chrome nobody asked for. Scoped to
+   .admin-panel so the public site keeps ordinary scrollbars, and it cannot
+   reach the window's own bar — that lives on <html>, outside this subtree.
+
+   All three properties are needed: the standard one, the Firefox one, and
+   the WebKit pseudo-element that ignores both. */
+.admin-panel .desk-nav,
+.admin-panel .desk-scroll,
+.admin-panel [class*="overflow-x-auto"],
+.admin-panel [class*="overflow-y-auto"] {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.admin-panel .desk-nav::-webkit-scrollbar,
+.admin-panel .desk-scroll::-webkit-scrollbar,
+.admin-panel [class*="overflow-x-auto"]::-webkit-scrollbar,
+.admin-panel [class*="overflow-y-auto"]::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* The shared Select, wearing desk chrome inside the panel.
+
+   components/ui/Select.tsx is a public-site component first: its trigger is a
+   bottom rule on a transparent ground, which is right in the hero search bar
+   and wrong beside a boxed `deskField`. Roughly fifteen admin call sites use
+   it, so this is restyled once here rather than by passing a className to
+   every one of them — and doing it in CSS scoped to .admin-panel means the
+   public site cannot be affected by it at all.
+
+   Specificity 0,2,0 against a utility's 0,1,0, so these win outright rather
+   than depending on Tailwind's emission order — which is the trap that the
+   old table-density rule fell into two sections up. */
+.admin-panel [role="combobox"] {
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  background: var(--color-surface);
+  padding: 7px 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.admin-panel [role="combobox"]:focus {
+  border-color: var(--color-gold);
+  outline: 2px solid var(--color-gold);
+  outline-offset: 0;
+}
+
+.admin-panel [role="listbox"] {
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--color-ink) 5%, transparent),
+    0 10px 28px color-mix(in srgb, var(--color-ink) 12%, transparent);
+}
+
+.admin-panel [role="listbox"] button {
+  padding: 7px 10px;
+  font-size: 13px;
 }

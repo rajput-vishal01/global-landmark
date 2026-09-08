@@ -2,8 +2,9 @@
 
 import { useRef, useState } from "react";
 import { Select } from "@/components/ui/Select";
-import { FIELD, LABEL } from "@/components/form-classes";
-import { FormSection, countFilled } from "./FormSection";
+import { deskButton } from "@/components/admin/desk";
+import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+
 import { DOCUMENTATION_FLAGS } from "@/lib/taxonomy/features";
 
 /**
@@ -32,7 +33,7 @@ type DocumentInput = {
 
 /** The checkbox shape ChecklistField already uses across the admin. */
 const CHECKBOX =
-  "h-4 w-4 shrink-0 cursor-pointer appearance-none border border-border bg-white transition-colors checked:border-gold checked:bg-gold";
+  "h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-[3px] border border-line bg-surface transition-colors checked:border-gold checked:bg-gold";
 
 /**
  * Must match DOCUMENT_TYPES in lib/storage.ts — the upload route rejects
@@ -181,7 +182,7 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
         )}
       />
 
-      <p className="border border-gold-deep/30 bg-cream px-4 py-3 font-sans text-meta text-ink">
+      <p className="rounded-lg border border-line-soft border-l-[3px] border-l-gold bg-raise px-4 py-3 text-[13px] text-ink">
         Private by default. A file here can be downloaded solely by a
         logged-in admin, and is never indexed by search engines, unless you
         tick “Visible publicly” on that specific file.
@@ -192,14 +193,14 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
           {rows.map((row) => (
             <li
               key={row.id}
-              className="flex flex-col gap-4 border border-border bg-white p-4"
+              className="flex flex-col gap-4 rounded-lg border border-line-soft bg-raise p-4"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex min-w-0 flex-col">
-                  <span className="truncate font-sans text-body text-ink">
+                  <span className="truncate text-[13px] text-ink">
                     {row.fileName}
                   </span>
-                  <span className="font-sans text-meta text-ink-muted">
+                  <span className="text-[11.5px] text-muted">
                     {formatSize(row.sizeBytes)}
                   </span>
                 </div>
@@ -210,7 +211,7 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
                     href={`/api/admin/documents/${row.storageKey}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-gold-deep hover:underline"
+                    className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gold-deep hover:underline"
                   >
                     View
                   </a>
@@ -226,7 +227,7 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label htmlFor={`doc-${row.id}-type`} className={LABEL}>
+                <label htmlFor={`doc-${row.id}-type`} className={deskLabel}>
                   Document type
                 </label>
                 <Select
@@ -242,7 +243,7 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label htmlFor={`doc-${row.id}-note`} className={LABEL}>
+                <label htmlFor={`doc-${row.id}-note`} className={deskLabel}>
                   Note
                 </label>
                 <input
@@ -252,12 +253,12 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
                   value={row.note}
                   onChange={(e) => update(row.id, { note: e.target.value })}
                   placeholder="Optional — e.g. Awaiting registrar stamp"
-                  className={FIELD}
+                  className={deskFieldFull}
                 />
               </div>
 
               <div className="flex flex-col gap-2">
-                <label htmlFor={`doc-${row.id}-uploader`} className={LABEL}>
+                <label htmlFor={`doc-${row.id}-uploader`} className={deskLabel}>
                   Uploaded by
                 </label>
                 {/* Free text, not a session user id — there is no admin
@@ -270,7 +271,7 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
                   value={row.uploadedBy}
                   onChange={(e) => update(row.id, { uploadedBy: e.target.value })}
                   placeholder="Name of the admin who uploaded this"
-                  className={FIELD}
+                  className={deskFieldFull}
                 />
               </div>
 
@@ -279,11 +280,11 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
                   server accepts it only as a literal `true` — see
                   parseDocuments() in lib/admin/property-parse.ts. */}
               <div
-                className={`flex flex-col gap-2 border p-3 ${
-                  row.isPublic ? "border-error bg-error/5" : "border-border"
+                className={`flex flex-col gap-2 rounded-lg border p-3 ${
+                  row.isPublic ? "border-error bg-error/5" : "border-line"
                 }`}
               >
-                <label className="flex cursor-pointer items-start gap-2.5 font-sans text-meta text-ink">
+                <label className="flex cursor-pointer items-start gap-2.5 text-[13px] text-ink">
                   <input
                     type="checkbox"
                     checked={row.isPublic}
@@ -293,8 +294,8 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
                   Visible publicly — anyone can download this file
                 </label>
                 <p
-                  className={`font-sans text-meta ${
-                    row.isPublic ? "text-error" : "text-ink-muted"
+                  className={`text-[12.5px] ${
+                    row.isPublic ? "text-error" : "text-muted"
                   }`}
                 >
                   {row.isPublic
@@ -308,7 +309,7 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
       )}
 
       {rows.length < MAX_DOCS ? (
-        <label className="flex w-fit cursor-pointer items-center gap-3 border border-border bg-white px-5 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold">
+        <label className={`${deskButton} w-fit`}>
           {busy ? "Uploading..." : "Upload document"}
           <input
             type="file"
@@ -319,18 +320,18 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
           />
         </label>
       ) : (
-        <p className="font-sans text-meta text-ink-muted">
+        <p className="text-[11.5px] text-muted">
           {MAX_DOCS} documents attached — the maximum this form accepts.
           Remove one before uploading another.
         </p>
       )}
 
-      <p className="font-sans text-meta text-ink-muted">
+      <p className="text-[11.5px] text-muted">
         PDF, JPEG or PNG.
       </p>
 
       {error && (
-        <p role="alert" className="font-sans text-meta text-error">
+        <p role="alert" className="text-[12px] text-error">
           {error}
         </p>
       )}

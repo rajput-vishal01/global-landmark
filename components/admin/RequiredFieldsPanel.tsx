@@ -1,6 +1,7 @@
 "use client";
 
 import { requiredFieldsFor } from "@/lib/taxonomy/sections";
+import { cardChrome } from "@/components/admin/desk";
 
 /** Plain-English names for the publish-gate fields. */
 const FIELD_LABELS: Record<string, string> = {
@@ -26,11 +27,13 @@ export function RequiredFieldsPanel({ propertyType }: { propertyType: string }) 
   const toPublish = requiredFieldsFor(propertyType);
 
   return (
-    <aside className="border border-gold/40 bg-gold/5 px-5 py-4">
-      <p className="text-eyebrow font-sans font-semibold uppercase tracking-[0.18em] text-gold-deep">
+    // A card with a gold spine rather than the gold wash it used to be: gold
+    // marks, it does not fill (docs/ADMIN_DESK.md §2).
+    <aside className={`${cardChrome} border-l-[3px] border-l-gold px-4 py-3.5`}>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gold-deep">
         What you actually have to fill in
       </p>
-      <ul className="mt-3 flex flex-col gap-2 font-sans text-meta text-ink">
+      <ul className="mt-3 flex flex-col gap-2 text-[13px] text-ink">
         <li>
           <span className="font-semibold">To save a draft:</span> a title. That
           is the only field the form refuses to save without.
@@ -54,7 +57,7 @@ export function RequiredFieldsPanel({ propertyType }: { propertyType: string }) 
             <>choose a property type above and this line will tell you.</>
           )}
         </li>
-        <li className="text-ink-muted">
+        <li className="text-muted">
           Everything else is optional. Fields marked{" "}
           <span className="text-error">*</span> are required; sections show a
           filled/total count so you can come back and finish later.

@@ -5,6 +5,14 @@ import { builders, projects } from "@/lib/db/schema";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { AddRecordDialog } from "@/components/admin/AddRecordDialog";
 import { BuilderForm } from "@/components/admin/BuilderForm";
+import {
+  EmptyState,
+  PageHead,
+  Table,
+  TableWrap,
+  deskRowLink,
+  numericCell,
+} from "@/components/admin/desk";
 import { createBuilder, deleteBuilder } from "./actions";
 
 export const metadata = { title: "Builders" };
@@ -33,58 +41,66 @@ export default async function AdminBuildersPage() {
   const rows = await listWithCounts();
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-h2 text-ink">Builders</h1>
-          <p className="mt-2 text-body font-sans text-ink-muted">
-            Developers a project can belong to, plus the internal CRM contact
-            used when pitching.
-          </p>
-        </div>
-        <AddRecordDialog
-          label="Add builder"
-          title="Add a builder"
-          description="Developers a project can belong to. Contact details stay internal."
-        >
-          <BuilderForm action={createBuilder} />
-        </AddRecordDialog>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Builders"
+        sub="The developers behind your projects, with the internal contact you pitch through."
+        actions={
+          <AddRecordDialog
+            label="Add builder"
+            title="Add a builder"
+            description="Developers a project can belong to. Contact details stay internal."
+          >
+            <BuilderForm action={createBuilder} />
+          </AddRecordDialog>
+        }
+      />
 
       {rows.length === 0 ? (
-        <p className="text-body font-sans text-ink-muted">No builders yet.</p>
+        <EmptyState
+          title="No builders yet"
+          note="Add a developer here first, then projects can be linked to it and the pitch view fills in on its own."
+        />
       ) : (
-        <ul className="border border-border bg-white">
-          {rows.map((b) => (
-            <li
-              key={b.id}
-              className="flex items-center justify-between gap-4 border-b border-border px-4 py-3 last:border-b-0"
-            >
-              <div>
-                <p className="font-sans text-body font-medium text-ink">{b.name}</p>
-                {b.belongsTo && (
-                  <p className="text-meta font-sans text-ink-muted">{b.belongsTo}</p>
-                )}
-              </div>
-              <div className="flex shrink-0 items-center gap-5">
-                <span className="text-meta font-sans text-ink-muted">
-                  {b.projectCount} project{b.projectCount === 1 ? "" : "s"}
-                </span>
-                <Link
-                  href={`/admin/builders/${b.id}/edit`}
-                  className="text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                >
-                  Edit
-                </Link>
-                <DeleteButton
-                  action={deleteBuilder}
-                  id={b.id}
-                  confirmText={`Delete builder "${b.name}"?`}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <TableWrap>
+          <Table className="min-w-[620px]">
+            <thead>
+              <tr>
+                <th scope="col">Builder</th>
+                <th scope="col">Belongs to</th>
+                <th scope="col" className={numericCell}>
+                  Projects
+                </th>
+                <th scope="col" />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((b) => (
+                <tr key={b.id}>
+                  <td>
+                    <Link href={`/admin/builders/${b.id}/edit`} className={deskRowLink}>
+                      {b.name}
+                    </Link>
+                  </td>
+                  <td className="text-soft">{b.belongsTo || "—"}</td>
+                  <td className={`${numericCell} text-soft`}>{b.projectCount}</td>
+                  <td>
+                    <div className="flex items-center justify-end gap-4">
+                      <Link href={`/admin/builders/${b.id}/edit`} className={deskRowLink}>
+                        Edit
+                      </Link>
+                      <DeleteButton
+                        action={deleteBuilder}
+                        id={b.id}
+                        confirmText={`Delete builder "${b.name}"?`}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </TableWrap>
       )}
     </div>
   );

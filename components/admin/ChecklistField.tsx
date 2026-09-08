@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { deskButton } from "@/components/admin/desk";
+import { deskFieldFull } from "./FormSection";
 
 /**
  * Checkbox list with optional free-typed additions, emitted as a hidden
@@ -67,13 +69,13 @@ export function ChecklistField({
         {options.map((option) => (
           <label
             key={option}
-            className="flex cursor-pointer items-center gap-2.5 font-sans text-meta text-ink"
+            className="flex cursor-pointer items-center gap-2.5 text-[13px] text-ink"
           >
             <input
               type="checkbox"
               checked={selected.includes(option)}
               onChange={() => toggle(option)}
-              className="h-4 w-4 shrink-0 cursor-pointer appearance-none border border-border bg-white transition-colors checked:border-gold checked:bg-gold"
+              className="h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-[3px] border border-line bg-surface transition-colors checked:border-gold checked:bg-gold"
             />
             {option}
           </label>
@@ -85,7 +87,7 @@ export function ChecklistField({
           {customOnly.map((value) => (
             <span
               key={value}
-              className="flex items-center gap-2 border border-border bg-white px-3 py-1.5 font-sans text-meta text-ink"
+              className="flex items-center gap-2 rounded-lg border border-line-soft bg-raise px-3 py-1.5 text-[13px] text-ink"
             >
               {value}
               <button
@@ -116,12 +118,12 @@ export function ChecklistField({
               }
             }}
             placeholder={customPlaceholder}
-            className="flex-1 border-b border-border bg-transparent py-2 font-sans text-meta text-ink placeholder:text-ink-muted/60 focus:border-gold focus:outline-none"
+            className={`${deskFieldFull} flex-1`}
           />
           <button
             type="button"
             onClick={addCustom}
-            className="cursor-pointer border border-border bg-white px-4 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
+            className={deskButton}
           >
             Add
           </button>

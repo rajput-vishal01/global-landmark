@@ -1,17 +1,34 @@
 import Link from "next/link";
+import { STATUS_TONE } from "@/lib/admin/status-tone";
+import type { ListingStatus } from "@/lib/taxonomy/status";
 import { notFound } from "next/navigation";
 import { and, eq, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { projects } from "@/lib/db/schema";
-import { StatusBadge } from "@/components/admin/BasicDetailsSection";
 import { DeleteButton } from "@/components/admin/DeleteButton";
-import { FIELD, LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
 import { formatIndianShort } from "@/lib/attributes";
+import {
+  Card,
+  Chip,
+  EmptyState,
+  PageHead,
+  Table,
+  TableWrap,
+  deskButton,
+  deskButtonPrimary,
+  deskField,
+  deskLinkButton,
+  deskRowLink,
+  numericCell,
+} from "@/components/admin/desk";
 import { createTower, deleteTower } from "../actions";
 import { duplicateProperty } from "../../properties/actions";
 
 export const metadata = { title: "Project" };
+
+/** The one label style the desk gives a field or a group of them. */
+const fieldLabel = "text-[11px] font-semibold uppercase tracking-[0.1em] text-muted";
 
 async function loadProject(id: number) {
   return db.query.projects.findFirst({
@@ -53,54 +70,42 @@ export default async function ProjectPitchViewPage({
   const ungroupedUnits = project.properties.filter((u) => !u.towerId);
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-h2 text-ink">{project.name}</h1>
-          {project.description && (
-            <p className="mt-2 max-w-2xl text-body font-sans text-ink-muted">
-              {project.description}
-            </p>
-          )}
-        </div>
-        <Link
-          href={`/admin/projects/${project.id}/edit`}
-          className="border border-border px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:border-gold hover:text-gold-deep"
-        >
-          Edit project
-        </Link>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title={project.name}
+        sub="Everything you need to pitch this development — the builder behind it, its RERA and dates, and the inventory tower by tower."
+        actions={
+          <Link href={`/admin/projects/${project.id}/edit`} className={deskButtonPrimary}>
+            Edit project
+          </Link>
+        }
+      />
 
       {/* Builder pitch card — the payoff screen. */}
       {project.builder ? (
-        <section className="border border-border bg-white p-6">
-          <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
-            Builder
-          </p>
-          <h2 className="mt-1 font-serif text-h3 text-ink">{project.builder.name}</h2>
-          <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-meta font-sans text-ink-muted">
+        <Card>
+          <p className="desk-eyebrow">Builder</p>
+          <h2 className="text-[17px] font-semibold text-ink">{project.builder.name}</h2>
+          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-[13px] text-muted">
             {project.builder.belongsTo && <span>{project.builder.belongsTo}</span>}
             {project.builder.website && <span>{project.builder.website}</span>}
           </div>
           {project.builder.about && (
-            <p className="mt-3 max-w-2xl text-body font-sans text-ink">{project.builder.about}</p>
+            <p className="mt-3 max-w-2xl text-[13px] text-soft">{project.builder.about}</p>
           )}
           {project.builder.priceAppreciation && (
-            <p className="mt-3 text-meta font-sans text-ink-muted">
-              <span className={LABEL}>Track record: </span>
+            <p className="mt-3 text-[13px] text-soft">
+              <span className={fieldLabel}>Track record </span>
               {project.builder.priceAppreciation}
             </p>
           )}
           {siblingProjects.length > 0 && (
             <div className="mt-4">
-              <p className={LABEL}>Other projects by this builder</p>
+              <p className={fieldLabel}>Other projects by this builder</p>
               <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
                 {siblingProjects.map((s) => (
                   <li key={s.id}>
-                    <Link
-                      href={`/admin/projects/${s.id}`}
-                      className="text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                    >
+                    <Link href={`/admin/projects/${s.id}`} className={deskRowLink}>
                       {s.name}
                     </Link>
                   </li>
@@ -108,26 +113,26 @@ export default async function ProjectPitchViewPage({
               </ul>
             </div>
           )}
-        </section>
+        </Card>
       ) : (
-        <p className="text-meta font-sans text-ink-muted">
-          No builder linked.{" "}
-          <Link
-            href={`/admin/projects/${project.id}/edit`}
-            className="underline decoration-border underline-offset-4 hover:decoration-gold"
-          >
-            Link one
-          </Link>
-          .
-        </p>
+        <EmptyState
+          title="No builder linked"
+          note="Link a developer and their track record, website and other projects fill this pitch view in on their own."
+          action={
+            <Link href={`/admin/projects/${project.id}/edit`} className={deskButton}>
+              Link a builder
+            </Link>
+          }
+        />
       )}
 
       {/* Project facts. */}
-      <section className="border border-border bg-white p-6">
-        <p className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
-          Project facts
-        </p>
-        <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
+      <Card>
+        <p className="desk-eyebrow">Project facts</p>
+        {project.description && (
+          <p className="mb-4 max-w-2xl text-[13px] text-soft">{project.description}</p>
+        )}
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
           <Fact label="RERA" value={project.reraNumber} />
           <Fact label="Possession" value={project.possessionStatus} />
           <Fact
@@ -152,26 +157,29 @@ export default async function ProjectPitchViewPage({
         </dl>
         {project.amenities && project.amenities.length > 0 && (
           <div className="mt-4">
-            <p className={LABEL}>Amenities</p>
-            <p className="mt-1 text-meta font-sans text-ink-muted">
-              {project.amenities.join(" · ")}
-            </p>
+            <p className={fieldLabel}>Amenities</p>
+            <p className="mt-1 text-[13px] text-soft">{project.amenities.join(" · ")}</p>
           </div>
         )}
-      </section>
+      </Card>
 
       {/* Tower inventory (R-12). */}
       <section className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-h3 text-ink">Tower inventory</h2>
-        </div>
+        <h2 className="text-[17px] font-semibold text-ink">Tower inventory</h2>
+
+        {project.towers.length === 0 && ungroupedUnits.length === 0 && (
+          <EmptyState
+            title="No towers yet"
+            note="Name the towers below and every unit you file against one shows up here, floor by floor."
+          />
+        )}
 
         {project.towers.map((tower) => (
-          <div key={tower.id} className="border border-border bg-white p-5">
+          <div key={tower.id} className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="font-sans text-body font-medium text-ink">{tower.name}</p>
-                <p className="text-meta font-sans text-ink-muted">
+                <p className="text-[13px] font-medium text-ink">{tower.name}</p>
+                <p className="text-[11.5px] text-muted">
                   {[
                     tower.totalFloors && `${tower.totalFloors} floors`,
                     tower.unitsPerFloor && `${tower.unitsPerFloor}/floor`,
@@ -192,77 +200,73 @@ export default async function ProjectPitchViewPage({
             {tower.units.length > 0 ? (
               <UnitTable units={tower.units} />
             ) : (
-              <p className="mt-3 text-meta font-sans text-ink-muted">
-                No units linked to this tower yet.
-              </p>
+              <EmptyState
+                title="No units here"
+                note={`Nothing is filed under ${tower.name} yet. Open a listing and set its tower to move it in.`}
+              />
             )}
           </div>
         ))}
 
         {ungroupedUnits.length > 0 && (
-          <div className="border border-border bg-white p-5">
-            <p className="font-sans text-body font-medium text-ink">
-              Not assigned to a tower
-            </p>
+          <div className="flex flex-col gap-2">
+            <p className="text-[13px] font-medium text-ink">Not assigned to a tower</p>
             <UnitTable units={ungroupedUnits} />
           </div>
         )}
 
         {/* Add tower — a plain field-set form, not the full ProjectForm
             treatment: a tower is four numbers and a name. */}
-        <form
-          action={createTower}
-          className="flex flex-wrap items-end gap-4 border border-border bg-white p-4"
-        >
-          <input type="hidden" name="projectId" value={project.id} />
-          <div className="flex min-w-40 flex-col gap-1.5">
-            <label htmlFor="towerName" className={LABEL}>
-              New tower name
-              <Req />
-            </label>
-            <input
-              id="towerName"
-              name="name"
-              type="text"
-              required
-              maxLength={200}
-              placeholder="Tower B"
-              className={FIELD}
-            />
-          </div>
-          <div className="flex w-28 flex-col gap-1.5">
-            <label htmlFor="totalFloors" className={LABEL}>
-              Floors
-            </label>
-            <input
-              id="totalFloors"
-              name="totalFloors"
-              type="number"
-              min={0}
-              inputMode="numeric"
-              className={FIELD}
-            />
-          </div>
-          <div className="flex w-28 flex-col gap-1.5">
-            <label htmlFor="unitsPerFloor" className={LABEL}>
-              Units/floor
-            </label>
-            <input
-              id="unitsPerFloor"
-              name="unitsPerFloor"
-              type="number"
-              min={0}
-              inputMode="numeric"
-              className={FIELD}
-            />
-          </div>
-          <button
-            type="submit"
-            className="cursor-pointer bg-ink px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
-          >
-            Add tower
-          </button>
-        </form>
+        <Card>
+          <p className="desk-eyebrow">Add a tower</p>
+          <form action={createTower} className="flex flex-wrap items-end gap-3">
+            <input type="hidden" name="projectId" value={project.id} />
+            <div className="flex min-w-40 flex-col gap-1.5">
+              <label htmlFor="towerName" className={fieldLabel}>
+                Tower name
+                <Req />
+              </label>
+              <input
+                id="towerName"
+                name="name"
+                type="text"
+                required
+                maxLength={200}
+                placeholder="Tower B"
+                className={deskField}
+              />
+            </div>
+            <div className="flex w-28 flex-col gap-1.5">
+              <label htmlFor="totalFloors" className={fieldLabel}>
+                Floors
+              </label>
+              <input
+                id="totalFloors"
+                name="totalFloors"
+                type="number"
+                min={0}
+                inputMode="numeric"
+                className={deskField}
+              />
+            </div>
+            <div className="flex w-28 flex-col gap-1.5">
+              <label htmlFor="unitsPerFloor" className={fieldLabel}>
+                Units/floor
+              </label>
+              <input
+                id="unitsPerFloor"
+                name="unitsPerFloor"
+                type="number"
+                min={0}
+                inputMode="numeric"
+                className={deskField}
+              />
+            </div>
+            <button type="submit" className={deskButton}>
+              Add tower
+            </button>
+          </form>
+        </Card>
       </section>
     </div>
   );
@@ -271,10 +275,8 @@ export default async function ProjectPitchViewPage({
 function Fact({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
-      <dt className="text-eyebrow font-sans font-medium uppercase tracking-[0.12em] text-ink-muted">
-        {label}
-      </dt>
-      <dd className="mt-0.5 font-sans text-meta text-ink">{value ?? "—"}</dd>
+      <dt className={fieldLabel}>{label}</dt>
+      <dd className="mt-0.5 text-[13px] text-ink">{value ?? "—"}</dd>
     </div>
   );
 }
@@ -295,58 +297,57 @@ type UnitRow = {
 /** Config · area · floor · price/on-request · status — the R-12 spec's table shape. */
 function UnitTable({ units }: { units: UnitRow[] }) {
   return (
-    <div className="mt-3 overflow-x-auto">
-      <table className="w-full min-w-[640px] text-left">
+    <TableWrap>
+      <Table className="min-w-[640px]">
         <thead>
-          <tr className="border-b border-border">
-            {["Unit", "Config", "Area", "Floor", "Price", "Status", ""].map((h) => (
-              <th
-                key={h}
-                className="whitespace-nowrap px-3 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.12em] text-ink-muted"
-              >
-                {h}
-              </th>
-            ))}
+          <tr>
+            <th scope="col">Unit</th>
+            <th scope="col">Config</th>
+            <th scope="col" className={numericCell}>
+              Area
+            </th>
+            <th scope="col" className={numericCell}>
+              Floor
+            </th>
+            <th scope="col" className={numericCell}>
+              Price
+            </th>
+            <th scope="col">Status</th>
+            <th scope="col" />
           </tr>
         </thead>
         <tbody>
           {units.map((u) => (
-            <tr key={u.id} className="border-b border-border last:border-b-0">
-              <td className="whitespace-nowrap px-3 py-2 text-meta font-sans text-ink">
-                <Link
-                  href={`/admin/properties/${u.id}/edit`}
-                  className="underline decoration-border underline-offset-4 hover:decoration-gold"
-                >
+            <tr key={u.id}>
+              <td className="whitespace-nowrap">
+                <Link href={`/admin/properties/${u.id}/edit`} className={deskRowLink}>
                   {u.title}
                 </Link>
               </td>
-              <td className="whitespace-nowrap px-3 py-2 text-meta font-sans text-ink-muted">
-                {u.configuration ?? "—"}
-              </td>
-              <td className="whitespace-nowrap px-3 py-2 text-meta font-sans tabular-nums text-ink-muted">
+              <td className="whitespace-nowrap text-soft">{u.configuration ?? "—"}</td>
+              <td className={`${numericCell} whitespace-nowrap text-soft`}>
                 {u.areaValue ? `${u.areaValue} ${u.areaUnit}` : "—"}
               </td>
-              <td className="whitespace-nowrap px-3 py-2 text-meta font-sans tabular-nums text-ink-muted">
+              <td className={`${numericCell} whitespace-nowrap text-soft`}>
                 {u.floorNumber ?? "—"}
                 {u.unitNumber ? ` / ${u.unitNumber}` : ""}
               </td>
-              <td className="whitespace-nowrap px-3 py-2 text-meta font-sans tabular-nums text-ink-muted">
+              <td className={`${numericCell} whitespace-nowrap text-soft`}>
                 {u.demandPrice
                   ? u.showPricePublicly
                     ? formatIndianShort(u.demandPrice)
                     : `${formatIndianShort(u.demandPrice)} (hidden)`
                   : "On request"}
               </td>
-              <td className="whitespace-nowrap px-3 py-2">
-                <StatusBadge status={u.listingStatus} />
+              <td className="whitespace-nowrap">
+                <Chip tone={STATUS_TONE[u.listingStatus as ListingStatus] ?? "neutral"}>
+                  {u.listingStatus}
+                </Chip>
               </td>
-              <td className="whitespace-nowrap px-3 py-2">
+              <td className="whitespace-nowrap text-right">
                 <form action={duplicateProperty}>
                   <input type="hidden" name="id" value={u.id} />
-                  <button
-                    type="submit"
-                    className="cursor-pointer text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                  >
+                  <button type="submit" className={deskLinkButton}>
                     Duplicate
                   </button>
                 </form>
@@ -354,7 +355,7 @@ function UnitTable({ units }: { units: UnitRow[] }) {
             </tr>
           ))}
         </tbody>
-      </table>
-    </div>
+      </Table>
+    </TableWrap>
   );
 }

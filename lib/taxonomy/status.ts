@@ -21,15 +21,7 @@ export const LISTING_STATUSES = [
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
 
 /** Admin badge colours, using the existing @theme tokens only. */
-export const STATUS_BADGE: Record<ListingStatus, string> = {
-  Available: "border-gold bg-gold/10 text-gold-deep",
-  Reserved: "border-gold-deep/40 bg-gold-deep/5 text-gold-deep",
-  "Token Received": "border-gold-deep/40 bg-gold-deep/5 text-gold-deep",
-  "Under Agreement": "border-ink-muted/40 bg-ink/5 text-ink-muted",
-  Sold: "border-ink/30 bg-ink/10 text-ink",
-  Rented: "border-ink/30 bg-ink/10 text-ink",
-  Hold: "border-error/40 bg-error/5 text-error",
-};
+
 
 /** A listing is only ever public while it is genuinely available. */
 export const PUBLIC_STATUSES: readonly ListingStatus[] = ["Available"];

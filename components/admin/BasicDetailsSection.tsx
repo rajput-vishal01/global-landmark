@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { Select } from "@/components/ui/Select";
-import { FIELD, LABEL } from "@/components/form-classes";
-import { FormSection, countFilled } from "./FormSection";
+import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+import { Chip } from "@/components/admin/desk";
+import { STATUS_TONE } from "@/lib/admin/status-tone";
+
 import {
   ADDED_BY,
   LISTING_STATUSES,
   PUBLICATION_STATES,
-  STATUS_BADGE,
   type ListingStatus,
 } from "@/lib/attributes";
 import { formatDate } from "@/lib/dates";
@@ -74,7 +75,7 @@ export function BasicDetailsSection({
       {/* Read-only provenance. Assigned by the server; shown so a broker can
           quote a reference on a call. */}
       {refCode && (
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 border-b border-border pb-5 sm:grid-cols-3">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 border-b border-line-soft pb-5 sm:grid-cols-3">
           <Fact label="Reference" value={refCode} mono />
           <Fact label="Listed" value={formatDate(listedAt)} />
           <Fact label="Last updated" value={formatDate(updatedAt)} />
@@ -83,7 +84,7 @@ export function BasicDetailsSection({
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <label htmlFor="publicationState" className={LABEL}>
+          <label htmlFor="publicationState" className={deskLabel}>
             Publication
           </label>
           <Select
@@ -99,7 +100,7 @@ export function BasicDetailsSection({
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="listingStatus" className={LABEL}>
+          <label htmlFor="listingStatus" className={deskLabel}>
             Status
           </label>
           <Select
@@ -113,10 +114,10 @@ export function BasicDetailsSection({
       </div>
 
       <p
-        className={`flex items-center gap-2.5 border px-4 py-3 font-sans text-meta ${
-          isLive
-            ? "border-gold bg-gold/10 text-gold-deep"
-            : "border-border bg-ink/[0.03] text-ink-muted"
+        // Gold marks the live state with a spine and the text colour, never a
+        // fill (docs/ADMIN_DESK.md §2).
+        className={`flex items-center gap-2.5 rounded-lg border border-line-soft bg-raise px-4 py-3 text-[12.5px] ${
+          isLive ? "border-l-[3px] border-l-gold text-gold-deep" : "text-muted"
         }`}
       >
         <span aria-hidden>{isLive ? "●" : "○"}</span>
@@ -127,7 +128,7 @@ export function BasicDetailsSection({
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
-          <label htmlFor="addedBy" className={LABEL}>
+          <label htmlFor="addedBy" className={deskLabel}>
             Added by
           </label>
           <Select
@@ -143,7 +144,7 @@ export function BasicDetailsSection({
             listing is a field a broker would rightly skip. */}
         {needsSource && (
           <div className="flex flex-col gap-2">
-            <label htmlFor="sourceName" className={LABEL}>
+            <label htmlFor="sourceName" className={deskLabel}>
               {addedBy} name
             </label>
             <input
@@ -154,7 +155,7 @@ export function BasicDetailsSection({
               value={sourceName}
               onChange={(e) => setSourceName(e.target.value)}
               placeholder={addedBy === "Dealer" ? "Dealer or firm name" : "Owner name"}
-              className={FIELD}
+              className={deskFieldFull}
             />
           </div>
         )}
@@ -179,10 +180,10 @@ function Fact({
 }) {
   return (
     <div className="flex flex-col gap-1">
-      <dt className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
+      <dt className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
         {label}
       </dt>
-      <dd className={`font-sans text-meta text-ink ${mono ? "tabular-nums" : ""}`}>
+      <dd className={`text-[13px] text-ink ${mono ? "tabular-nums" : ""}`}>
         {value}
       </dd>
     </div>
@@ -191,15 +192,19 @@ function Fact({
 
 
 /** Status pill for the admin list. Colours come from the taxonomy. */
+/**
+ * Listing status, as the desk draws a state.
+ *
+ * Was a square uppercase badge with its own border/background/text triple per
+ * status. It is a Chip now so the properties table and the status legend above
+ * it stop disagreeing — they were two different shapes for the same value.
+ *
+ * An unknown status still renders rather than throwing: the column is data
+ * from the database, and a row whose status predates the taxonomy should show
+ * what it holds, not vanish.
+ */
 export function StatusBadge({ status }: { status: string }) {
-  const style =
-    STATUS_BADGE[status as ListingStatus] ??
-    "border-border bg-ink/5 text-ink-muted";
   return (
-    <span
-      className={`inline-flex whitespace-nowrap border px-2.5 py-1 text-eyebrow font-sans font-medium uppercase tracking-[0.12em] ${style}`}
-    >
-      {status}
-    </span>
+    <Chip tone={STATUS_TONE[status as ListingStatus] ?? "neutral"}>{status}</Chip>
   );
 }

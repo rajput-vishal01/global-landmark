@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, m } from "framer-motion";
 import { useModalLock, useMounted } from "@/lib/hooks";
 import { EASE } from "@/lib/motion";
+import { cardChrome, deskFace, focusRing } from "@/components/admin/desk";
 
 /**
  * Panel dialog for short create/edit forms.
@@ -14,6 +15,10 @@ import { EASE } from "@/lib/motion";
  * looking at again. Same portal/lock/animation vocabulary as
  * DeleteButton's confirm, so the panel has one modal treatment rather
  * than two.
+ *
+ * The panel wears `cardChrome` — the same radius and two-layer shadow as
+ * every Card on the desk behind it. A dialog with a hard border on a desk
+ * of borderless cards reads as a different product.
  */
 export function Dialog({
   open,
@@ -59,13 +64,13 @@ export function Dialog({
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
             transition={{ duration: 0.3, ease: EASE }}
             onClick={(e) => e.stopPropagation()}
-            className="relative my-6 w-full max-w-xl border border-border bg-cream p-6 md:p-8"
+            className={`relative my-6 w-full max-w-xl ${cardChrome} p-6 md:p-8`}
           >
             <button
               type="button"
               onClick={onClose}
               aria-label="Close"
-              className="absolute right-4 top-4 cursor-pointer p-1 text-ink-muted transition-colors hover:text-ink"
+              className={`absolute right-4 top-4 cursor-pointer rounded-md p-1 text-muted transition-colors hover:text-ink ${focusRing}`}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
                 <path d="M4 4l16 16M20 4L4 20" />
@@ -73,10 +78,8 @@ export function Dialog({
             </button>
 
             <span aria-hidden className="block h-px w-10 bg-gold" />
-            <h2 className="mt-4 font-serif text-h4 text-ink">{title}</h2>
-            {description && (
-              <p className="mt-2 text-meta font-sans text-ink-muted">{description}</p>
-            )}
+            <h2 className={`${deskFace} mt-4 text-[17px] font-bold text-ink`}>{title}</h2>
+            {description && <p className="mt-2 text-[13px] text-muted">{description}</p>}
 
             <div className="mt-6">{children}</div>
           </m.div>

@@ -2,8 +2,9 @@
 
 import { useRef, useState } from "react";
 import { Select } from "@/components/ui/Select";
-import { FIELD, LABEL } from "@/components/form-classes";
-import { FormSection, countFilled } from "./FormSection";
+import { deskButton, deskButtonSmall } from "@/components/admin/desk";
+import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+
 import { SELLER_CATEGORIES, OWNER_TYPES, withEmptyOption } from "@/lib/attributes";
 
 /**
@@ -157,7 +158,7 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
       {/* Deliberately loud. This is the one section where a mistaken
           assumption about visibility would publish a private person's phone
           number, so the warning is not a muted hint like the other groups. */}
-      <p className="flex items-start gap-3 border-2 border-error bg-error/5 px-4 py-3 font-sans text-meta text-error">
+      <p className="flex items-start gap-3 rounded-lg border border-error bg-error/5 px-4 py-3 text-[12px] text-error">
         <span aria-hidden className="shrink-0">
           ▲
         </span>
@@ -181,10 +182,10 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
       {rows.map((row, i) => (
         <div
           key={row.id}
-          className="flex flex-col gap-4 border border-border bg-white p-4"
+          className="flex flex-col gap-4 rounded-lg border border-line-soft bg-raise p-4"
         >
           <div className="flex items-center justify-between gap-4">
-            <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
               Owner {i + 1}
             </span>
             <button
@@ -198,7 +199,7 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor={`owner-${row.id}-name`} className={LABEL}>
+            <label htmlFor={`owner-${row.id}-name`} className={deskLabel}>
               Name
             </label>
             <input
@@ -208,13 +209,13 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
               value={row.name}
               onChange={(e) => update(row.id, { name: e.target.value })}
               placeholder="Full name as on the deed"
-              className={FIELD}
+              className={deskFieldFull}
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <label htmlFor={`owner-${row.id}-seller`} className={LABEL}>
+              <label htmlFor={`owner-${row.id}-seller`} className={deskLabel}>
                 Seller category
               </label>
               {/* The Select's own hidden input is namespaced per row so it
@@ -232,7 +233,7 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor={`owner-${row.id}-type`} className={LABEL}>
+              <label htmlFor={`owner-${row.id}-type`} className={deskLabel}>
                 Owner type
               </label>
               <Select
@@ -247,7 +248,7 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="flex flex-col gap-2">
-              <label htmlFor={`owner-${row.id}-count`} className={LABEL}>
+              <label htmlFor={`owner-${row.id}-count`} className={deskLabel}>
                 Owners on deed
               </label>
               <input
@@ -259,7 +260,7 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
                 value={row.ownerCount}
                 onChange={(e) => update(row.id, { ownerCount: e.target.value })}
                 placeholder="e.g. 3"
-                className={FIELD}
+                className={deskFieldFull}
               />
             </div>
 
@@ -267,7 +268,7 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
                 pad, not the alphabet. Brokers fill this one-handed standing
                 at a site visit; every extra keyboard switch is a typo. */}
             <div className="flex flex-col gap-2">
-              <label htmlFor={`owner-${row.id}-mobile`} className={LABEL}>
+              <label htmlFor={`owner-${row.id}-mobile`} className={deskLabel}>
                 Mobile
               </label>
               <input
@@ -279,12 +280,12 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
                 value={row.mobile}
                 onChange={(e) => update(row.id, { mobile: e.target.value })}
                 placeholder="98765 43210"
-                className={FIELD}
+                className={deskFieldFull}
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor={`owner-${row.id}-alt`} className={LABEL}>
+              <label htmlFor={`owner-${row.id}-alt`} className={deskLabel}>
                 Alternate mobile
               </label>
               <input
@@ -296,7 +297,7 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
                 value={row.altMobile}
                 onChange={(e) => update(row.id, { altMobile: e.target.value })}
                 placeholder="Optional"
-                className={FIELD}
+                className={deskFieldFull}
               />
             </div>
           </div>
@@ -307,7 +308,7 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
             <div className="flex flex-wrap items-center gap-3">
               <a
                 href={telHref(row.mobile)}
-                className="border border-border px-3 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
+                className={deskButtonSmall}
               >
                 Call
               </a>
@@ -315,7 +316,7 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
                 href={whatsappHref(row.mobile)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="border border-border px-3 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
+                className={deskButtonSmall}
               >
                 WhatsApp
               </a>
@@ -323,7 +324,7 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
           )}
 
           <div className="flex flex-col gap-2">
-            <label htmlFor={`owner-${row.id}-address`} className={LABEL}>
+            <label htmlFor={`owner-${row.id}-address`} className={deskLabel}>
               Address
             </label>
             <input
@@ -333,12 +334,12 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
               value={row.address}
               onChange={(e) => update(row.id, { address: e.target.value })}
               placeholder="Correspondence address"
-              className={FIELD}
+              className={deskFieldFull}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor={`owner-${row.id}-notes`} className={LABEL}>
+            <label htmlFor={`owner-${row.id}-notes`} className={deskLabel}>
               Notes
             </label>
             <textarea
@@ -348,7 +349,7 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
               value={row.notes}
               onChange={(e) => update(row.id, { notes: e.target.value })}
               placeholder="Availability, who to call first, negotiating position"
-              className={FIELD}
+              className={deskFieldFull}
             />
           </div>
         </div>
@@ -360,13 +361,13 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
           onClick={() =>
             setRows((prev) => [...prev, toRow({}, nextId.current++)])
           }
-          className="w-fit cursor-pointer border border-border bg-white px-4 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
+          className={`${deskButton} w-fit`}
         >
           + Add another owner
         </button>
       )}
 
-      <p className="font-sans text-meta text-ink-muted">
+      <p className="text-[11.5px] text-muted">
         Rows without a name are discarded on save.
       </p>
     </FormSection>

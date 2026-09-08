@@ -4,6 +4,17 @@ import { Select } from "@/components/ui/Select";
 import { formatIndianShort } from "@/lib/attributes";
 import { formatDate } from "@/lib/dates";
 import { DEAL_STAGES } from "@/lib/taxonomy/brokerage";
+import {
+  Card,
+  EmptyState,
+  Table,
+  TableWrap,
+  deskButton,
+  deskField,
+  deskLinkButton,
+  deskRowLink,
+  numericCell,
+} from "@/components/admin/desk";
 
 /**
  * The two ways to read the pipeline. Split out of page.tsx because that file
@@ -44,26 +55,24 @@ export function BoardView({ rows }: { rows: Row[] }) {
     <div className="grid grid-cols-1 gap-4 overflow-x-auto sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
       {columns.map(({ stage, deals }) => (
         <div key={stage} className="flex min-w-[220px] flex-col gap-3 xl:min-w-0">
-          <h2 className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink">
-            {stage} <span className="tabular-nums text-ink-muted">({deals.length})</span>
+          <h2 className="desk-eyebrow">
+            {stage} <span className="tabular-nums">({deals.length})</span>
           </h2>
           <div className="flex flex-col gap-3">
             {deals.length === 0 ? (
-              <p className="font-sans text-meta text-ink-muted">No deals.</p>
+              <p className="text-[13px] text-muted">No deals.</p>
             ) : (
               deals.map(({ deal, amount, pending }) => (
-                <div key={deal.id} className="flex flex-col gap-2 border border-border bg-white p-4">
-                  <Link
-                    href={`/admin/crm/deals/${deal.id}`}
-                    className="font-sans text-body font-medium text-ink underline decoration-transparent underline-offset-4 hover:decoration-gold"
-                  >
+                // p-3!, not p-3: Card carries its own p-4 and Tailwind settles
+                // two paddings of equal specificity by emission order, which
+                // p-4 wins. A board column is too narrow for 16px of it.
+                <Card key={deal.id} className="flex flex-col gap-2 p-3!">
+                  <Link href={`/admin/crm/deals/${deal.id}`} className={deskRowLink}>
                     {deal.client?.name ?? "Unknown client"}
                   </Link>
-                  <p className="font-sans text-meta text-ink-muted">
-                    {propertyLabel(deal.property)}
-                  </p>
-                  <div className="flex items-center justify-between gap-3 font-sans text-meta">
-                    <span className="text-ink-muted">
+                  <p className="text-[12px] text-muted">{propertyLabel(deal.property)}</p>
+                  <div className="flex items-center justify-between gap-3 text-[12px]">
+                    <span className="text-muted">
                       Value {deal.dealValue != null ? formatIndianShort(deal.dealValue) : "—"}
                     </span>
                     <span className="text-gold-deep">
@@ -71,15 +80,13 @@ export function BoardView({ rows }: { rows: Row[] }) {
                     </span>
                   </div>
                   {amount != null && (
-                    <p className="font-sans text-meta text-ink-muted">
+                    <p className="text-[12px] text-muted">
                       Brokerage {formatIndianShort(amount)}
                     </p>
                   )}
-                  {deal.assignedTo && (
-                    <p className="font-sans text-meta text-ink-muted">{deal.assignedTo}</p>
-                  )}
+                  {deal.assignedTo && <p className="text-[12px] text-muted">{deal.assignedTo}</p>}
                   <DealStageQuickForm id={deal.id} stage={deal.stage} />
-                </div>
+                </Card>
               ))
             )}
           </div>
@@ -89,18 +96,30 @@ export function BoardView({ rows }: { rows: Row[] }) {
   );
 }
 
-const TH =
-  "whitespace-nowrap px-3 py-2 text-left text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted";
-const TD = "px-3 py-3 align-top font-sans text-meta text-ink";
-
 export function ListView({ rows, filtered }: { rows: Row[]; filtered?: boolean }) {
   if (rows.length === 0) {
     // Two different situations that must not read the same: an empty pipeline
     // is a prompt to add a deal, an empty filter is a prompt to widen it.
-    return (
-      <p className="font-sans text-meta text-ink-muted">
-        {filtered ? "No deals match these filters." : "No deals yet."}
-      </p>
+    return filtered ? (
+      <EmptyState
+        title="Nothing matches these filters"
+        note="No deal has that stage, agent and search term all at once. Clear one of them and try again."
+        action={
+          <Link href="/admin/crm/deals?view=list" className={deskButton}>
+            Clear filters
+          </Link>
+        }
+      />
+    ) : (
+      <EmptyState
+        title="No deals yet"
+        note="A deal tracks one client and property through the pipeline, with the brokerage owed against it."
+        action={
+          <Link href="/admin/crm/deals/new" className={deskButton}>
+            Add the first deal
+          </Link>
+        }
+      />
     );
   }
 
@@ -115,55 +134,56 @@ export function ListView({ rows, filtered }: { rows: Row[]; filtered?: boolean }
   const ordered = [...rows].sort((a, b) => rank(a.deal.stage) - rank(b.deal.stage));
 
   return (
-    <div className="overflow-x-auto border border-border bg-white">
-      <table className="w-full border-collapse">
-        <thead className="border-b border-border">
+    <TableWrap>
+      <Table className="min-w-[960px]">
+        <thead>
           <tr>
-            <th scope="col" className={TH}>Client</th>
-            <th scope="col" className={TH}>Property</th>
-            <th scope="col" className={TH}>Stage</th>
-            <th scope="col" className={`${TH} text-right`}>Value</th>
-            <th scope="col" className={`${TH} text-right`}>Brokerage</th>
-            <th scope="col" className={`${TH} text-right`}>Pending</th>
-            <th scope="col" className={TH}>Agent</th>
-            <th scope="col" className={TH}>Updated</th>
+            <th scope="col">Client</th>
+            <th scope="col">Property</th>
+            <th scope="col">Stage</th>
+            <th scope="col" className={numericCell}>
+              Value
+            </th>
+            <th scope="col" className={numericCell}>
+              Brokerage
+            </th>
+            <th scope="col" className={numericCell}>
+              Pending
+            </th>
+            <th scope="col">Agent</th>
+            <th scope="col">Updated</th>
           </tr>
         </thead>
         <tbody>
           {ordered.map(({ deal, amount, pending }) => (
-            <tr key={deal.id} className="border-b border-border last:border-b-0">
-              <td className={TD}>
-                <Link
-                  href={`/admin/crm/deals/${deal.id}`}
-                  className="font-medium text-ink underline decoration-transparent underline-offset-4 hover:decoration-gold"
-                >
+            <tr key={deal.id}>
+              <td>
+                <Link href={`/admin/crm/deals/${deal.id}`} className={deskRowLink}>
                   {deal.client?.name ?? "Unknown client"}
                 </Link>
               </td>
-              <td className={`${TD} text-ink-muted`}>{propertyLabel(deal.property)}</td>
-              <td className={`${TD} min-w-[220px]`}>
+              <td className="text-soft">{propertyLabel(deal.property)}</td>
+              <td className="min-w-[220px]">
                 <DealStageQuickForm id={deal.id} stage={deal.stage} />
               </td>
-              <td className={`${TD} whitespace-nowrap text-right tabular-nums`}>
+              <td className={`${numericCell} whitespace-nowrap`}>
                 {deal.dealValue != null ? formatIndianShort(deal.dealValue) : "—"}
               </td>
-              <td className={`${TD} whitespace-nowrap text-right tabular-nums text-ink-muted`}>
+              <td className={`${numericCell} whitespace-nowrap text-soft`}>
                 {amount != null ? formatIndianShort(amount) : "—"}
               </td>
-              <td className={`${TD} whitespace-nowrap text-right tabular-nums text-gold-deep`}>
+              <td className={`${numericCell} whitespace-nowrap text-gold-deep`}>
                 {pending != null ? formatIndianShort(pending) : "—"}
               </td>
-              <td className={`${TD} whitespace-nowrap text-ink-muted`}>
+              <td className="whitespace-nowrap text-soft">
                 {deal.assignedTo?.trim() || "Unassigned"}
               </td>
-              <td className={`${TD} whitespace-nowrap text-ink-muted`}>
-                {formatDate(deal.updatedAt)}
-              </td>
+              <td className="whitespace-nowrap text-soft">{formatDate(deal.updatedAt)}</td>
             </tr>
           ))}
         </tbody>
-      </table>
-    </div>
+      </Table>
+    </TableWrap>
   );
 }
 
@@ -178,7 +198,15 @@ export type DealFilters = {
   openOnly: boolean;
 };
 
-/** Stages that mean the deal is no longer in play. */
+/**
+ * Stages that mean the deal is no longer in play.
+ *
+ * Note this is NOT the same set the "Brokerage pending" figure above the
+ * board counts: that one excludes only Lost, because brokerage unpaid on a
+ * Closed deal is still owed. The two answer different questions, so the
+ * checkbox says "Still in play" and the tile says "Everything not lost"
+ * rather than both claiming the word "open".
+ */
 const SETTLED: readonly string[] = ["Closed", "Lost"];
 
 /** The agent label used everywhere — a blank assignee is one bucket, not many. */
@@ -219,8 +247,7 @@ export function filterRows(rows: Row[], f: DealFilters): Row[] {
   });
 }
 
-const FIELD_LABEL =
-  "text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted";
+const FIELD_LABEL = "text-[11px] font-semibold uppercase tracking-[0.1em] text-muted";
 
 /**
  * A plain GET form. The filters end up in the URL, which means the back
@@ -251,66 +278,72 @@ export function ListFilters({
     Boolean(filters.stage || filters.agent || filters.q.trim()) || filters.openOnly;
 
   return (
-    <form method="get" className="flex flex-col gap-4 border border-border bg-white p-5">
-      <input type="hidden" name="view" value="list" />
+    <Card>
+      <form method="get" className="flex flex-col gap-4">
+        <input type="hidden" name="view" value="list" />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <label className="flex flex-col gap-1.5">
-          <span className={FIELD_LABEL}>Search</span>
-          <input
-            type="search"
-            name="q"
-            defaultValue={filters.q}
-            placeholder="Client, property or ref code"
-            className="border-b border-border bg-transparent py-2 font-sans text-meta text-ink focus:border-gold focus:outline-none"
-          />
-        </label>
-
-        <div className="flex flex-col gap-1.5">
-          <span className={FIELD_LABEL}>Stage</span>
-          <Select name="stage" options={stageOptions} defaultValue={filters.stage} aria-label="Filter by stage" />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <span className={FIELD_LABEL}>Agent</span>
-          <Select name="agent" options={agentOptions} defaultValue={filters.agent} aria-label="Filter by agent" />
-        </div>
-
-        <div className="flex flex-col justify-end gap-2">
-          <label className="flex cursor-pointer items-center gap-2 font-sans text-meta text-ink">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="flex flex-col gap-1.5">
+            <span className={FIELD_LABEL}>Search</span>
             <input
-              type="checkbox"
-              name="open"
-              value="1"
-              defaultChecked={filters.openOnly}
-              className="size-4 accent-ink"
+              type="search"
+              name="q"
+              defaultValue={filters.q}
+              placeholder="Client, property or ref code"
+              className={`${deskField} w-full`}
             />
-            Open deals only
           </label>
-          <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              className="cursor-pointer bg-ink px-5 py-2.5 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-cream transition-opacity hover:opacity-90"
-            >
-              Apply
-            </button>
-            {isFiltered && (
-              <Link
-                href="/admin/crm/deals?view=list"
-                className="px-3 py-2.5 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted underline decoration-transparent underline-offset-4 transition-colors hover:text-ink hover:decoration-gold"
-              >
-                Clear
-              </Link>
-            )}
+
+          <div className="flex flex-col gap-1.5">
+            <span className={FIELD_LABEL}>Stage</span>
+            <Select
+              name="stage"
+              options={stageOptions}
+              defaultValue={filters.stage}
+              aria-label="Filter by stage"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className={FIELD_LABEL}>Agent</span>
+            <Select
+              name="agent"
+              options={agentOptions}
+              defaultValue={filters.agent}
+              aria-label="Filter by agent"
+            />
+          </div>
+
+          <div className="flex flex-col justify-end gap-2">
+            <label className="flex cursor-pointer items-center gap-2 text-[13px] text-ink">
+              <input
+                type="checkbox"
+                name="open"
+                value="1"
+                defaultChecked={filters.openOnly}
+                className="size-4 accent-ink"
+              />
+              Still in play
+            </label>
+            <div className="flex items-center gap-3">
+              <button type="submit" className={deskButton}>
+                Apply
+              </button>
+              {isFiltered && (
+                <Link href="/admin/crm/deals?view=list" className={deskLinkButton}>
+                  Clear
+                </Link>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      <p className="font-sans text-meta text-ink-muted" aria-live="polite">
-        {isFiltered
-          ? `Showing ${shown} of ${total} deal${total === 1 ? "" : "s"}.`
-          : `${total} deal${total === 1 ? "" : "s"}.`}
-      </p>
-    </form>
+        <p className="text-[12px] text-muted" aria-live="polite">
+          {isFiltered
+            ? `Showing ${shown} of ${total} deal${total === 1 ? "" : "s"}.`
+            : `${total} deal${total === 1 ? "" : "s"}.`}
+        </p>
+      </form>
+    </Card>
   );
 }

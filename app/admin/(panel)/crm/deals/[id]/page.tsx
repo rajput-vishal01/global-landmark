@@ -8,6 +8,17 @@ import { PaymentForm } from "@/components/admin/PaymentForm";
 import { formatRupees } from "@/lib/attributes";
 import { brokerageAmount, brokeragePending, bpToPercent } from "@/lib/taxonomy/brokerage";
 import { formatDate } from "@/lib/dates";
+import {
+  Card,
+  Chip,
+  KpiRow,
+  KpiTile,
+  PageHead,
+  Table,
+  TableWrap,
+  deskButton,
+  numericCell,
+} from "@/components/admin/desk";
 
 export const metadata = { title: "Deal" };
 
@@ -22,11 +33,6 @@ async function loadDeal(id: number) {
     },
   });
 }
-
-
-const STAT = "flex flex-col gap-1 border border-border bg-white p-5";
-const STAT_LABEL = "text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted";
-const STAT_VALUE = "font-serif text-h3 text-ink";
 
 export default async function DealDetailPage({
   params,
@@ -45,67 +51,57 @@ export default async function DealDetailPage({
   const paidSoFar =
     totalAmount != null && pending != null ? totalAmount - pending : null;
 
+  // The note under "Brokerage amount": how the figure was arrived at, which is
+  // the first thing anybody questioning it wants to know.
+  const amountNote =
+    deal.brokerageAmountOverride != null
+      ? "Manual override"
+      : deal.brokeragePercent != null
+        ? `${bpToPercent(deal.brokeragePercent)}% of deal value`
+        : undefined;
+
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-serif text-h2 text-ink">
-            {deal.client ? (
-              <Link
-                href={`/admin/crm/${deal.client.id}`}
-                className="underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-              >
-                {deal.client.name}
+    <div className="flex flex-col gap-6">
+      <PageHead
+        title={deal.client?.name ?? "Deal"}
+        sub={
+          deal.property
+            ? `${deal.property.title}${deal.property.refCode ? ` · ${deal.property.refCode}` : ""}`
+            : "No property linked."
+        }
+        actions={
+          <>
+            {deal.client && (
+              <Link href={`/admin/crm/${deal.client.id}`} className={deskButton}>
+                Open client
               </Link>
-            ) : (
-              "Deal"
             )}
-          </h1>
-          <p className="mt-1 font-sans text-body text-ink-muted">
-            {deal.property
-              ? `${deal.property.title}${deal.property.refCode ? ` · ${deal.property.refCode}` : ""}`
-              : "No property linked"}
-          </p>
-        </div>
-        <Link
-          href="/admin/crm/deals"
-          className="text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-ink-muted underline decoration-border underline-offset-4 hover:decoration-gold"
-        >
-          ← Pipeline
-        </Link>
-      </div>
+            <Link href="/admin/crm/deals" className={deskButton}>
+              Pipeline
+            </Link>
+          </>
+        }
+      />
 
       {/* Prominent computed figures — R-31's whole point: pending is never
           stored, always recomputed from amount minus every payment row. */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className={STAT}>
-          <span className={STAT_LABEL}>Brokerage amount</span>
-          <span className={STAT_VALUE}>
-            {totalAmount != null ? formatRupees(totalAmount) : "—"}
-          </span>
-          {deal.brokeragePercent != null && deal.brokerageAmountOverride == null && (
-            <span className="font-sans text-meta text-ink-muted">
-              {bpToPercent(deal.brokeragePercent)}% of deal value
-            </span>
-          )}
-          {deal.brokerageAmountOverride != null && (
-            <span className="font-sans text-meta text-ink-muted">Manual override</span>
-          )}
-        </div>
-        <div className={STAT}>
-          <span className={STAT_LABEL}>Received so far</span>
-          <span className={STAT_VALUE}>{paidSoFar != null ? formatRupees(paidSoFar) : "—"}</span>
-          <span className="font-sans text-meta text-ink-muted">
-            {deal.payments.length} payment{deal.payments.length === 1 ? "" : "s"}
-          </span>
-        </div>
-        <div className={STAT}>
-          <span className={STAT_LABEL}>Pending</span>
-          <span className={`${STAT_VALUE} ${pending && pending > 0 ? "text-gold-deep" : ""}`}>
-            {pending != null ? formatRupees(pending) : "—"}
-          </span>
-        </div>
-      </div>
+      <KpiRow>
+        <KpiTile
+          label="Brokerage amount"
+          value={totalAmount != null ? formatRupees(totalAmount) : "—"}
+          note={amountNote}
+        />
+        <KpiTile
+          label="Received so far"
+          value={paidSoFar != null ? formatRupees(paidSoFar) : "—"}
+          note={`${deal.payments.length} payment${deal.payments.length === 1 ? "" : "s"}`}
+        />
+        <KpiTile
+          label="Pending"
+          value={pending != null ? formatRupees(pending) : "—"}
+          highlight={pending != null && pending > 0}
+        />
+      </KpiRow>
 
       <DealEditForm
         deal={{
@@ -121,65 +117,66 @@ export default async function DealDetailPage({
         }}
       />
 
-      <section className="flex flex-col gap-4">
-        <h2 className="font-serif text-h4 text-ink">Payments</h2>
-        {deal.payments.length === 0 ? (
-          <p className="font-sans text-body text-ink-muted">No payments recorded yet.</p>
-        ) : (
-          <div className="overflow-x-auto border border-border bg-white">
-            <table className="w-full min-w-[480px] text-left">
-              <thead>
-                <tr className="border-b border-border">
-                  {["Date", "Amount", "Mode", "Note"].map((h) => (
-                    <th
-                      key={h}
-                      className="whitespace-nowrap px-4 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted"
-                    >
-                      {h}
+      <section>
+        <h2 className="desk-eyebrow">Payments</h2>
+        <div className="flex flex-col gap-3">
+          {deal.payments.length === 0 ? (
+            <p className="text-[13px] text-soft">
+              Nothing received yet — record the first instalment below and the pending figure
+              above follows it.
+            </p>
+          ) : (
+            <TableWrap>
+              <Table className="min-w-[480px]">
+                <thead>
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col" className={numericCell}>
+                      Amount
                     </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {deal.payments.map((p) => (
-                  <tr key={p.id} className="border-b border-border last:border-b-0">
-                    <td className="whitespace-nowrap px-4 py-3 text-meta font-sans text-ink">
-                      {formatDate(p.paidAt)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-meta font-sans tabular-nums text-ink">
-                      {formatRupees(p.amount)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-meta font-sans text-ink-muted">
-                      {p.mode ?? "—"}
-                    </td>
-                    <td className="px-4 py-3 text-meta font-sans text-ink-muted">{p.note ?? "—"}</td>
+                    <th scope="col">Mode</th>
+                    <th scope="col">Note</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        <PaymentForm dealId={deal.id} />
+                </thead>
+                <tbody>
+                  {deal.payments.map((p) => (
+                    <tr key={p.id}>
+                      <td className="whitespace-nowrap">{formatDate(p.paidAt)}</td>
+                      <td className={`${numericCell} whitespace-nowrap`}>
+                        {formatRupees(p.amount)}
+                      </td>
+                      <td className="whitespace-nowrap text-soft">{p.mode ?? "—"}</td>
+                      <td className="text-soft">{p.note ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </TableWrap>
+          )}
+          <PaymentForm dealId={deal.id} />
+        </div>
       </section>
 
-      <section className="flex flex-col gap-4">
-        <h2 className="font-serif text-h4 text-ink">Activity</h2>
+      <section>
+        <h2 className="desk-eyebrow">Activity</h2>
         {deal.activities.length === 0 ? (
-          <p className="font-sans text-body text-ink-muted">No activity logged for this deal yet.</p>
+          <p className="text-[13px] text-soft">
+            Nothing logged against this deal yet — activity is recorded on the client&apos;s page.
+          </p>
         ) : (
           <ul className="flex flex-col gap-3">
             {deal.activities.map((a) => (
-              <li key={a.id} className="border border-border bg-white p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink">
-                    {a.kind}
-                  </span>
-                  <span className="font-sans text-meta text-ink-muted">
-                    {formatDate(a.occurredAt)}
-                    {a.author ? ` · ${a.author}` : ""}
-                  </span>
-                </div>
-                {a.note && <p className="mt-2 font-sans text-body text-ink">{a.note}</p>}
+              <li key={a.id}>
+                <Card>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <Chip>{a.kind}</Chip>
+                    <span className="text-[12px] tabular-nums text-muted">
+                      {formatDate(a.occurredAt)}
+                      {a.author ? ` · ${a.author}` : ""}
+                    </span>
+                  </div>
+                  {a.note && <p className="mt-2 text-[13px] text-ink">{a.note}</p>}
+                </Card>
               </li>
             ))}
           </ul>

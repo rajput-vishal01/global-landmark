@@ -5,6 +5,8 @@ import { properties, propertyUnitSizes } from "@/lib/db/schema";
 import { IMAGE_ORDER, listProjectsForAdmin } from "@/lib/db/queries";
 import { PropertyForm } from "@/components/admin/PropertyForm";
 import { updateProperty } from "../../actions";
+import Link from "next/link";
+import { PageHead, deskButton } from "@/components/admin/desk";
 
 export const metadata = { title: "Edit property" };
 
@@ -47,8 +49,16 @@ export default async function EditPropertyPage({
   if (!property) notFound();
 
   return (
-    <div className="flex flex-col gap-8">
-      <h1 className="font-serif text-h2 text-ink">Edit property</h1>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Edit property"
+        sub="The full listing form. Changes autosave as a draft every twenty seconds."
+        actions={
+          <Link href="/admin/properties" className={deskButton}>
+            Cancel
+          </Link>
+        }
+      />
       <PropertyForm
         action={updateProperty}
         projects={projects}

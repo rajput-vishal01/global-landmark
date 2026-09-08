@@ -2,7 +2,8 @@
 
 import { useId, useState } from "react";
 import { Select } from "@/components/ui/Select";
-import { FIELD } from "@/components/form-classes";
+import { deskButton } from "@/components/admin/desk";
+import { deskFieldFull } from "./FormSection";
 import {
   CHARGE_BASES,
   CHARGE_TYPES,
@@ -82,7 +83,7 @@ const blankRow = (): Row => ({
 
 /** The checkbox shape ChecklistField already uses across the admin. */
 const CHECKBOX =
-  "h-4 w-4 shrink-0 cursor-pointer appearance-none border border-border bg-white transition-colors checked:border-gold checked:bg-gold";
+  "h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-[3px] border border-line bg-surface transition-colors checked:border-gold checked:bg-gold";
 
 export function ChargesEditor({
   initial,
@@ -128,7 +129,7 @@ export function ChargesEditor({
         return (
           <div
             key={row.uid}
-            className="flex flex-col gap-3 border border-border bg-white p-3"
+            className="flex flex-col gap-3 rounded-lg border border-line-soft bg-raise p-3"
           >
             {/* Stacked on a phone, one line from sm up. Four controls side by
                 side at 360px would leave every one of them unreadable. */}
@@ -167,7 +168,7 @@ export function ChargesEditor({
                   }
                   placeholder={AMOUNT_PLACEHOLDER[row.basis] ?? "Amount in Rs"}
                   aria-label={`Charge ${i + 1} amount`}
-                  className={`${FIELD} min-w-0 flex-1`}
+                  className={`${deskFieldFull} min-w-0 flex-1`}
                 />
 
                 <label htmlFor={basisId} className="sr-only">
@@ -201,7 +202,7 @@ export function ChargesEditor({
               </button>
             </div>
 
-            <label className="flex cursor-pointer items-center gap-2.5 font-sans text-meta text-ink">
+            <label className="flex cursor-pointer items-center gap-2.5 text-[13px] text-ink">
               <input
                 type="checkbox"
                 checked={row.isIncludedInDemand}
@@ -223,7 +224,7 @@ export function ChargesEditor({
       <button
         type="button"
         onClick={() => commit([...rows, blankRow()])}
-        className="w-fit cursor-pointer border border-border bg-white px-4 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
+        className={`${deskButton} w-fit`}
       >
         + Add another charge
       </button>

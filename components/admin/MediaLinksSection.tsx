@@ -2,8 +2,9 @@
 
 import { useRef, useState } from "react";
 import { Select } from "@/components/ui/Select";
-import { FIELD, LABEL } from "@/components/form-classes";
-import { FormSection, countFilled } from "./FormSection";
+import { deskButton } from "@/components/admin/desk";
+import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+
 
 /**
  * CFF group 19 — the LINK half of media. Photographs are uploaded elsewhere
@@ -139,10 +140,10 @@ export function MediaLinksSection({ initial }: { initial: MediaInput[] }) {
         return (
           <div
             key={row.id}
-            className="flex flex-col gap-4 border border-border bg-white p-4"
+            className="flex flex-col gap-4 rounded-lg border border-line-soft bg-raise p-4"
           >
             <div className="flex items-center justify-between gap-4">
-              <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
                 Link {i + 1}
               </span>
               <button
@@ -156,7 +157,7 @@ export function MediaLinksSection({ initial }: { initial: MediaInput[] }) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor={`media-${row.id}-kind`} className={LABEL}>
+              <label htmlFor={`media-${row.id}-kind`} className={deskLabel}>
                 Type
               </label>
               {/* Namespaced name: the value that saves travels in mediaJson,
@@ -175,7 +176,7 @@ export function MediaLinksSection({ initial }: { initial: MediaInput[] }) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor={`media-${row.id}-url`} className={LABEL}>
+              <label htmlFor={`media-${row.id}-url`} className={deskLabel}>
                 Link
               </label>
               <input
@@ -188,17 +189,17 @@ export function MediaLinksSection({ initial }: { initial: MediaInput[] }) {
                 placeholder="https://www.youtube.com/watch?v=..."
                 aria-invalid={error ? true : undefined}
                 aria-describedby={error ? errorId : undefined}
-                className={`${FIELD} ${error ? "border-error" : ""}`}
+                className={`${deskFieldFull} ${error ? "border-error" : ""}`}
               />
               {error && (
-                <p id={errorId} className="font-sans text-meta text-error">
+                <p id={errorId} className="text-[12px] text-error">
                   {error}
                 </p>
               )}
             </div>
 
             <div className="flex flex-col gap-2">
-              <label htmlFor={`media-${row.id}-label`} className={LABEL}>
+              <label htmlFor={`media-${row.id}-label`} className={deskLabel}>
                 Label
               </label>
               <input
@@ -208,7 +209,7 @@ export function MediaLinksSection({ initial }: { initial: MediaInput[] }) {
                 value={row.label}
                 onChange={(e) => update(row.id, { label: e.target.value })}
                 placeholder="Optional — e.g. Terrace walkthrough"
-                className={FIELD}
+                className={deskFieldFull}
               />
             </div>
           </div>
@@ -221,13 +222,13 @@ export function MediaLinksSection({ initial }: { initial: MediaInput[] }) {
           onClick={() =>
             setRows((prev) => [...prev, toRow({}, nextId.current++)])
           }
-          className="w-fit cursor-pointer border border-border bg-white px-4 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
+          className={`${deskButton} w-fit`}
         >
           + Add another link
         </button>
       )}
 
-      <p className="font-sans text-meta text-ink-muted">
+      <p className="text-[11.5px] text-muted">
         Rows without a link are discarded on save.
       </p>
     </FormSection>

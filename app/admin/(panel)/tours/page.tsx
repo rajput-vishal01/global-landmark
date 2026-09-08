@@ -2,13 +2,34 @@ import Link from "next/link";
 import { count, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { properties, tourRequests } from "@/lib/db/schema";
-import { TOUR_STATUS_BADGE } from "@/lib/taxonomy/tours";
 import { TourEditForm } from "./TourEditForm";
 import { formatDateTime } from "@/lib/dates";
+import {
+  Chip,
+  type ChipTone,
+  EmptyState,
+  PageHead,
+  Table,
+  TableWrap,
+  deskButton,
+  deskRowLink,
+} from "@/components/admin/desk";
 
 export const metadata = { title: "Tour requests" };
 
 const PAGE_SIZE = 25;
+
+/**
+ * Mirrors the lead statuses on the same gold ramp, so the two inboxes read
+ * the same way. `cancelled` is `neutral`, not `alert` — a visitor calling off
+ * a viewing is a normal end to the row, not a fault.
+ */
+const TOUR_TONE: Record<string, ChipTone> = {
+  new: "live",
+  scheduled: "quiet",
+  completed: "strong",
+  cancelled: "neutral",
+};
 
 type TourRow = {
   id: number;
@@ -107,9 +128,6 @@ function formatDay(value: string): string {
   }).format(new Date(y, m - 1, d));
 }
 
-const TH =
-  "text-eyebrow whitespace-nowrap px-4 py-3 text-left font-sans font-medium uppercase tracking-[0.15em] text-ink-muted";
-
 export default async function AdminToursPage({
   searchParams,
 }: {
@@ -125,37 +143,44 @@ export default async function AdminToursPage({
   const firstRow = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-serif text-h2 text-ink">Tour requests</h1>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Tour requests"
+        sub="Visitors who asked to see a property in person or over video, and whether anyone has booked them in."
+      />
+
+      {/* The unread count, then the count of what came back, on one line. */}
+      <div className="flex flex-wrap items-center gap-2">
         {newCount > 0 && (
-          <span className="inline-flex items-center gap-2 border border-gold bg-gold/10 px-4 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-gold-deep">
-            <span aria-hidden className="h-2 w-2 rounded-full bg-gold-deep" />
+          <Chip tone="live" title="Requests nobody has answered yet">
             {newCount} new
-          </span>
+          </Chip>
         )}
+        <span className="ml-auto text-[12px] tabular-nums text-muted">
+          {firstRow}–{Math.min(page * PAGE_SIZE, total)} of {total} request
+          {total === 1 ? "" : "s"}
+        </span>
       </div>
 
       {rows.length === 0 ? (
-        <p className="text-body font-sans text-ink-muted">
-          No tour requests yet. These arrive on their own when a visitor uses
-          the &ldquo;Request a tour&rdquo; form on a property page — there is
-          nothing to set up here.
-        </p>
+        <EmptyState
+          title="No tour requests yet"
+          note="These arrive on their own when a visitor uses the Request a tour form on a property page. There is nothing to set up here."
+          action={
+            <Link href="/admin/properties" className={deskButton}>
+              See the listings they come from
+            </Link>
+          }
+        />
       ) : (
         <div className="flex flex-col gap-4">
-          <p className="text-meta font-sans tabular-nums text-ink-muted">
-            {firstRow}–{Math.min(page * PAGE_SIZE, total)} of {total} request
-            {total === 1 ? "" : "s"}
-          </p>
-
-          <div className="overflow-x-auto border border-border bg-white">
-            <table className="w-full min-w-[1000px] text-left">
+          <TableWrap>
+            <Table className="min-w-[1000px]">
               <thead>
-                <tr className="border-b border-border">
+                <tr>
                   {["Visitor", "Contact", "Property", "Requested slot", "Status", "Received"].map(
                     (h) => (
-                      <th key={h} className={TH}>
+                      <th key={h} scope="col">
                         {h}
                       </th>
                     )
@@ -168,46 +193,35 @@ export default async function AdminToursPage({
                   const property =
                     row.propertyId != null ? propertyMap.get(row.propertyId) : undefined;
                   return (
-                    <tr
-                      key={row.id}
-                      className={`border-b border-border align-top last:border-b-0 ${isUnread ? "bg-gold/5" : ""}`}
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-start gap-2">
-                          {isUnread && (
-                            <span
-                              aria-label="Unread"
-                              className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-gold-deep"
-                            />
-                          )}
-                          <div className="min-w-0">
+                    /* Unanswered requests carry a faint gold wash; their status
+                       chip carries the gold spine down the column. */
+                    <tr key={row.id} className={isUnread ? "bg-gold/5" : ""}>
+                      <td>
+                        <div className="min-w-0">
+                          <p className={isUnread ? "font-semibold text-ink" : "font-medium text-ink"}>
+                            {row.name}
+                          </p>
+                          {row.message && (
                             <p
-                              className={`font-sans text-body text-ink ${isUnread ? "font-semibold" : "font-medium"}`}
+                              className="mt-0.5 max-w-xs truncate text-[12px] text-muted"
+                              title={row.message}
                             >
-                              {row.name}
+                              {row.message}
                             </p>
-                            {row.message && (
-                              <p
-                                className="mt-0.5 max-w-xs truncate font-sans text-meta text-ink-muted"
-                                title={row.message}
-                              >
-                                {row.message}
-                              </p>
-                            )}
-                          </div>
+                          )}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 font-sans text-meta text-ink">
+                      <td className="whitespace-nowrap text-soft">
                         <div className="flex flex-col gap-0.5">
                           {row.phone && <span>{row.phone}</span>}
                           {row.email && <span>{row.email}</span>}
                         </div>
                       </td>
-                      <td className="px-4 py-3 font-sans text-meta text-ink">
+                      <td className="text-soft">
                         {property ? (
                           <Link
                             href={`/admin/properties/${row.propertyId}/edit`}
-                            className="text-ink underline decoration-border underline-offset-4 hover:decoration-gold"
+                            className={deskRowLink}
                           >
                             {property.refCode ?? property.title}
                           </Link>
@@ -215,37 +229,30 @@ export default async function AdminToursPage({
                           "—"
                         )}
                       </td>
-                      <td className="px-4 py-3 font-sans text-meta text-ink">
+                      <td className="text-soft">
                         <div className="flex flex-col gap-0.5">
-                          <span>{row.tourType ?? "Not specified"}</span>
-                          <span className="text-ink-muted">
+                          <span className="text-ink">{row.tourType ?? "Not specified"}</span>
+                          <span className="text-muted">
                             {row.preferredDate ? formatDay(row.preferredDate) : "Any day"}
                             {row.preferredTime ? ` · ${row.preferredTime}` : ""}
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td>
                         <div className="flex flex-col items-start gap-2">
-                          <span
-                            className={`inline-flex whitespace-nowrap border px-2.5 py-1 text-eyebrow font-sans font-medium uppercase tracking-[0.12em] ${
-                              TOUR_STATUS_BADGE[row.status as keyof typeof TOUR_STATUS_BADGE] ??
-                              "border-border bg-ink/5 text-ink-muted"
-                            }`}
-                          >
-                            {row.status}
-                          </span>
+                          <Chip tone={TOUR_TONE[row.status] ?? "neutral"}>{row.status}</Chip>
                           <TourEditForm id={row.id} status={row.status} />
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-meta font-sans text-ink-muted">
+                      <td className="whitespace-nowrap text-muted">
                         {formatDateTime(row.createdAt)}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
-            </table>
-          </div>
+            </Table>
+          </TableWrap>
 
           {lastPage > 1 && (
             <nav
@@ -253,7 +260,7 @@ export default async function AdminToursPage({
               className="flex flex-wrap items-center justify-between gap-4"
             >
               <PageLink page={page - 1} disabled={page <= 1} label="Previous" />
-              <span className="text-meta font-sans tabular-nums text-ink-muted">
+              <span className="text-[12px] tabular-nums text-muted">
                 Page {page} of {lastPage}
               </span>
               <PageLink page={page + 1} disabled={page >= lastPage} label="Next" />
@@ -274,20 +281,17 @@ function PageLink({
   disabled: boolean;
   label: string;
 }) {
-  const base =
-    "text-eyebrow font-sans font-medium uppercase tracking-[0.18em] border border-border px-5 py-2.5";
+  // The same outline button as everywhere else, with a disabled twin that
+  // keeps the row from reflowing when Previous greys out at page 1.
   if (disabled) {
     return (
-      <span aria-disabled className={`${base} text-ink-muted/40`}>
+      <span aria-disabled className={`${deskButton} pointer-events-none opacity-40`}>
         {label}
       </span>
     );
   }
   return (
-    <Link
-      href={page > 1 ? `/admin/tours?page=${page}` : "/admin/tours"}
-      className={`${base} text-ink transition-colors hover:border-gold hover:text-gold-deep`}
-    >
+    <Link href={page > 1 ? `/admin/tours?page=${page}` : "/admin/tours"} className={deskButton}>
       {label}
     </Link>
   );

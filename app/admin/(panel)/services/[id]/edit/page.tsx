@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { services } from "@/lib/db/schema";
 import { ServiceForm } from "@/components/admin/ServiceForm";
 import { updateService } from "../../actions";
+import Link from "next/link";
+import { PageHead, deskButton } from "@/components/admin/desk";
 
 export const metadata = { title: "Edit service" };
 
@@ -23,8 +25,16 @@ export default async function EditServicePage({
   if (!service) notFound();
 
   return (
-    <div className="flex flex-col gap-8">
-      <h1 className="font-serif text-h2 text-ink">Edit service</h1>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Edit service"
+        sub="One card in the Our Services row on the landing page."
+        actions={
+          <Link href="/admin/services" className={deskButton}>
+            Cancel
+          </Link>
+        }
+      />
       <ServiceForm action={updateService} service={service} />
     </div>
   );

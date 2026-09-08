@@ -5,6 +5,17 @@ import { crmClients, crmDeals } from "@/lib/db/schema";
 import { formatIndianShort } from "@/lib/attributes";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { deleteClient } from "./client-actions";
+import {
+  Chip,
+  EmptyState,
+  PageHead,
+  Table,
+  TableWrap,
+  deskButton,
+  deskButtonPrimary,
+  deskField,
+  deskRowLink,
+} from "@/components/admin/desk";
 
 function formatShortDate(value: Date | string): string {
   return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short" }).format(
@@ -156,9 +167,6 @@ function pageHref(q: string, page: number): string {
   return `/admin/crm${params.size ? `?${params}` : ""}`;
 }
 
-const TH =
-  "text-eyebrow whitespace-nowrap px-4 py-3 text-left font-sans font-medium uppercase tracking-[0.15em] text-ink-muted";
-
 export default async function AdminCrmPage({
   searchParams,
 }: {
@@ -173,76 +181,76 @@ export default async function AdminCrmPage({
   const firstRow = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="font-serif text-h2 text-ink">CRM · Clients</h1>
-        <Link
-          href="/admin/crm/new"
-          className="bg-ink px-6 py-3 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-cream transition-opacity hover:opacity-90"
-        >
-          Add client
-        </Link>
-      </div>
+    <div className="flex flex-col gap-4">
+      <PageHead
+        title="Clients"
+        sub="Everyone the brokerage is working with, and what is owed them next."
+        actions={
+          <Link href="/admin/crm/new" className={deskButtonPrimary}>
+            Add client
+          </Link>
+        }
+      />
 
-      <form method="get" className="flex max-w-md flex-col gap-1.5">
-        <label htmlFor="q" className="text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink-muted">
-          Search
+      {/* The toolbar sits on the card, not above it: search, then the count of
+          what came back, on one line. Reading "1–4 of 4" next to the box you
+          typed into is what tells you the search did something. */}
+      <form method="get" className="flex flex-wrap items-center gap-2">
+        <label htmlFor="q" className="sr-only">
+          Search clients
         </label>
-        <div className="flex gap-2">
-          <input
-            id="q"
-            name="q"
-            type="text"
-            defaultValue={q}
-            placeholder="Name, phone or email"
-            className="w-full appearance-none rounded-none border-b border-border bg-transparent py-2 font-sans text-body text-ink placeholder:text-ink-muted/60 focus:border-gold focus:outline-none"
-          />
-          <button
-            type="submit"
-            className="cursor-pointer border border-border px-5 py-2 text-eyebrow font-sans font-medium uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold"
-          >
-            Search
-          </button>
-        </div>
+        <input
+          id="q"
+          name="q"
+          type="search"
+          defaultValue={q}
+          placeholder="Name, phone or email"
+          className={`${deskField} w-full sm:w-72`}
+        />
+        <button type="submit" className={deskButton}>
+          Search
+        </button>
+        {q && (
+          <Link href="/admin/crm" className={deskButton}>
+            Clear
+          </Link>
+        )}
+        <span className="ml-auto text-[12px] tabular-nums text-muted">
+          {firstRow}–{Math.min(page * PAGE_SIZE, total)} of {total} client
+          {total === 1 ? "" : "s"}
+        </span>
       </form>
 
       {rows.length === 0 ? (
         q ? (
-          <p className="text-body font-sans text-ink-muted">
-            No clients match &quot;{q}&quot;.{" "}
-            <Link
-              href="/admin/crm"
-              className="text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-            >
-              Clear search
-            </Link>
-            .
-          </p>
+          <EmptyState
+            title="Nothing matches that"
+            note={`No client's name, phone or email contains "${q}". Try a shorter search — a surname or the last four digits.`}
+            action={
+              <Link href="/admin/crm" className={deskButton}>
+                Clear search
+              </Link>
+            }
+          />
         ) : (
-          <p className="text-body font-sans text-ink-muted">
-            No clients yet.{" "}
-            <Link
-              href="/admin/crm/new"
-              className="text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-            >
-              Add the first one
-            </Link>
-            .
-          </p>
+          <EmptyState
+            title="No clients yet"
+            note="A client is anyone you are actively working with. Add one and their calls, notes and deals collect against them."
+            action={
+              <Link href="/admin/crm/new" className={deskButtonPrimary}>
+                Add the first client
+              </Link>
+            }
+          />
         )
       ) : (
         <div className="flex flex-col gap-4">
-          <p className="text-meta font-sans tabular-nums text-ink-muted">
-            {firstRow}–{Math.min(page * PAGE_SIZE, total)} of {total} client
-            {total === 1 ? "" : "s"}
-          </p>
-
-          <div className="overflow-x-auto border border-border bg-white">
-            <table className="w-full min-w-[860px] text-left">
+          <TableWrap>
+            <Table className="min-w-[860px]">
               <thead>
-                <tr className="border-b border-border">
+                <tr>
                   {["Name", "Contact", "Budget", "Locations", "Types", "Next update", ""].map((h) => (
-                    <th key={h} className={TH}>
+                    <th key={h} scope="col">
                       {h}
                     </th>
                   ))}
@@ -250,31 +258,38 @@ export default async function AdminCrmPage({
               </thead>
               <tbody>
                 {rows.map((c) => (
-                  <tr key={c.id} className="border-b border-border last:border-b-0">
-                    <td className="px-4 py-3 font-sans text-body font-medium text-ink">
-                      {c.name}
+                  <tr key={c.id}>
+                    <td>
+                      <Link href={`/admin/crm/${c.id}`} className={deskRowLink}>
+                        {c.name}
+                      </Link>
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-meta font-sans text-ink-muted">
+                    <td className="whitespace-nowrap text-soft">
                       {[c.phone, c.email].filter(Boolean).join(" · ") || "—"}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-meta font-sans tabular-nums text-ink-muted">
+                    <td className="whitespace-nowrap tabular-nums text-soft">
                       {budgetRange(c.budgetMin, c.budgetMax)}
                     </td>
-                    <td className="px-4 py-3 text-meta font-sans text-ink-muted">
-                      {truncatedList(c.preferredLocations)}
+                    <td className="text-soft">{truncatedList(c.preferredLocations)}</td>
+                    <td className="text-soft">{truncatedList(c.preferredTypes)}</td>
+                    {/* A chip, so an overdue follow-up is visible down the column
+                        without reading a single word of it. */}
+                    <td className="whitespace-nowrap">
+                      <Chip
+                        tone={
+                          nextActionLabel(c).includes("(overdue)")
+                            ? "alert"
+                            : c.nextActionIsFollowUp
+                              ? "live"
+                              : "neutral"
+                        }
+                      >
+                        {nextActionLabel(c)}
+                      </Chip>
                     </td>
-                    <td className="px-4 py-3 text-meta font-sans text-ink-muted">
-                      {truncatedList(c.preferredTypes)}
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-meta font-sans text-ink-muted">
-                      {nextActionLabel(c)}
-                    </td>
-                    <td className="px-4 py-3">
+                    <td>
                       <div className="flex items-center justify-end gap-4">
-                        <Link
-                          href={`/admin/crm/${c.id}`}
-                          className="text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                        >
+                        <Link href={`/admin/crm/${c.id}`} className={deskRowLink}>
                           View
                         </Link>
                         <DeleteButton
@@ -287,8 +302,8 @@ export default async function AdminCrmPage({
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+            </Table>
+          </TableWrap>
 
           {lastPage > 1 && (
             <nav
@@ -309,17 +324,17 @@ export default async function AdminCrmPage({
 }
 
 function PageLink({ href, disabled, label }: { href: string; disabled: boolean; label: string }) {
-  const base =
-    "text-eyebrow font-sans font-medium uppercase tracking-[0.18em] border border-border px-5 py-2.5";
+  // The same outline button as everywhere else, with a disabled twin that
+  // keeps the row from reflowing when Previous greys out at page 1.
   if (disabled) {
     return (
-      <span aria-disabled className={`${base} text-ink-muted/40`}>
+      <span aria-disabled className={`${deskButton} pointer-events-none opacity-40`}>
         {label}
       </span>
     );
   }
   return (
-    <Link href={href} className={`${base} text-ink transition-colors hover:border-gold hover:text-gold-deep`}>
+    <Link href={href} className={deskButton}>
       {label}
     </Link>
   );

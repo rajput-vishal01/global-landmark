@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { deskLinkButton } from "@/components/admin/desk";
 import { logout } from "./login/actions";
 
 export function LogoutButton() {
@@ -11,7 +12,7 @@ export function LogoutButton() {
       <button
         type="submit"
         disabled={isPending}
-        className="text-eyebrow cursor-pointer font-sans font-medium uppercase tracking-[0.18em] text-gold-deep transition-colors hover:text-ink disabled:opacity-60"
+        className={`${deskLinkButton} disabled:cursor-wait disabled:opacity-60`}
       >
         {isPending ? "Logging out..." : "Log out"}
       </button>
