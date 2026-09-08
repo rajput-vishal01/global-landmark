@@ -1,10 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { count, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { crmActivities, crmClients, crmDeals, leads } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
+import type { DeleteState } from "@/app/admin/(panel)/properties/actions";
 import { DEAL_STAGES } from "@/lib/taxonomy/brokerage";
 import { ACTIVITY_KINDS } from "@/lib/taxonomy/activities";
 import { textField, moneyField } from "@/lib/admin/form-fields";
@@ -182,4 +184,45 @@ export async function convertLeadToClient(leadId: number): Promise<void> {
     redirect("/admin/leads");
   }
   redirect(`/admin/crm/${clientId}`);
+}
+
+/**
+ * Delete a client.
+ *
+ * Refused while any deal still points at them. crm_deals.client_id is
+ * `onDelete: "cascade"`, so without this guard removing a client would take
+ * their deals — and, through crm_deals, their payment history — with them.
+ * Brokerage records are the last thing that should disappear as a side
+ * effect of tidying a contact list. Same stance as deleteBuilder: refuse and
+ * name the count, rather than cascade and hope it was intended.
+ *
+ * Activities do cascade, deliberately. They are a log of calls and notes
+ * about this person; keeping them after the person is gone serves nobody.
+ */
+export async function deleteClient(
+  _prev: DeleteState,
+  formData: FormData
+): Promise<DeleteState> {
+  await requireAdmin();
+  const id = Number(formData.get("id"));
+  if (!Number.isInteger(id)) return { error: "Missing client id." };
+
+  try {
+    const [{ n }] = await db
+      .select({ n: count() })
+      .from(crmDeals)
+      .where(eq(crmDeals.clientId, id));
+    if (n > 0) {
+      return {
+        error: `${n} deal${n === 1 ? "" : "s"} still belong to this client. Delete those first — removing the client would take their payment history too.`,
+      };
+    }
+    await db.delete(crmClients).where(eq(crmClients.id, id));
+  } catch (err) {
+    console.error("deleteClient failed:", err);
+    return { error: "Delete failed. Try again." };
+  }
+
+  revalidatePath("/admin/crm");
+  return {};
 }

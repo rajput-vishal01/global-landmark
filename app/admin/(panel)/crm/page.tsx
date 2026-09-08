@@ -3,6 +3,8 @@ import { count, desc, like, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { crmClients, crmDeals } from "@/lib/db/schema";
 import { formatIndianShort } from "@/lib/attributes";
+import { DeleteButton } from "@/components/admin/DeleteButton";
+import { deleteClient } from "./client-actions";
 
 function formatShortDate(value: Date | string): string {
   return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short" }).format(
@@ -267,13 +269,20 @@ export default async function AdminCrmPage({
                     <td className="whitespace-nowrap px-4 py-3 text-meta font-sans text-ink-muted">
                       {nextActionLabel(c)}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <Link
-                        href={`/admin/crm/${c.id}`}
-                        className="text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                      >
-                        View
-                      </Link>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-4">
+                        <Link
+                          href={`/admin/crm/${c.id}`}
+                          className="text-meta font-sans text-ink underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
+                        >
+                          View
+                        </Link>
+                        <DeleteButton
+                          action={deleteClient}
+                          id={c.id}
+                          confirmText={`Delete client "${c.name}"? Their call and note history goes too.`}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}

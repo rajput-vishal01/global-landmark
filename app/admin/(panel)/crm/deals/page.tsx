@@ -2,7 +2,14 @@ import Link from "next/link";
 import { desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { crmDeals } from "@/lib/db/schema";
-import { BoardView, ListView } from "./_views";
+import {
+  BoardView,
+  ListFilters,
+  ListView,
+  agentLabel,
+  filterRows,
+  readFilters,
+} from "./_views";
 import { formatIndianShort } from "@/lib/attributes";
 import { DEAL_STAGES, brokerageAmount, brokeragePending } from "@/lib/taxonomy/brokerage";
 
@@ -40,11 +47,20 @@ function isSameMonth(a: Date, b: Date): boolean {
 export default async function DealsPipelinePage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{
+    view?: string;
+    stage?: string;
+    agent?: string;
+    q?: string;
+    open?: string;
+  }>;
 }) {
-  // The chosen view lives in the URL, not component state: it survives the
-  // reload a stage change triggers, and the table is bookmarkable.
-  const isList = (await searchParams).view === "list";
+  // View and filters both live in the URL, not component state: they survive
+  // the reload a stage change triggers, the back button works, and a filtered
+  // pipeline is a link someone can send.
+  const sp = await searchParams;
+  const isList = sp.view === "list";
+  const filters = readFilters(sp);
   const rows = (await loadDeals()).map(withFigures);
   const now = new Date();
 
@@ -73,6 +89,11 @@ export default async function DealsPipelinePage({
     { label: "Board", href: "/admin/crm/deals", active: !isList },
     { label: "List", href: "/admin/crm/deals?view=list", active: isList },
   ];
+
+  // Agent options come from the deals that exist, not a fixed list — an agent
+  // who has never been assigned a deal is not worth an empty filter option.
+  const agents = [...new Set(rows.map((r) => agentLabel(r.deal.assignedTo)))].sort();
+  const listRows = isList ? filterRows(rows, filters) : rows;
 
   return (
     <div className="flex flex-col gap-8">
@@ -156,7 +177,19 @@ export default async function DealsPipelinePage({
         </div>
       </div>
 
-      {isList ? <ListView rows={rows} /> : <BoardView rows={rows} />}
+      {isList ? (
+        <div className="flex flex-col gap-4">
+          <ListFilters
+            filters={filters}
+            agents={agents}
+            shown={listRows.length}
+            total={rows.length}
+          />
+          <ListView rows={listRows} filtered={listRows.length !== rows.length} />
+        </div>
+      ) : (
+        <BoardView rows={rows} />
+      )}
     </div>
   );
 }
