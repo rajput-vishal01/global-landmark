@@ -60,6 +60,22 @@ set -a; . "$ENV_FILE"; set +a
 : "${DATABASE_URL:?DATABASE_URL is not set in $ENV_FILE}"
 PORT="${PORT:-3000}"
 
+# Refuse to run if uploads live inside the directory this script replaces.
+# Next's standalone server chdir()s into .next/standalone, so an unset
+# UPLOAD_DIR used to resolve there — and the swap below deleted every
+# uploaded photo and legal document while the database kept pointing at
+# them. lib/storage.ts no longer defaults that way, but a hand-set
+# UPLOAD_DIR can still be wrong, and this is the last place to catch it.
+UPLOADS_ABS="$(cd "$(dirname "${UPLOAD_DIR:-./uploads}")" 2>/dev/null && pwd)/$(basename "${UPLOAD_DIR:-./uploads}")"
+case "$UPLOADS_ABS" in
+  */.next/*|*/.next)
+    echo "::error::UPLOAD_DIR resolves inside .next ($UPLOADS_ABS)."
+    echo "This deploy would delete every uploaded file. Set UPLOAD_DIR in"
+    echo "$ENV_FILE to a directory outside .next, then retry."
+    exit 1
+    ;;
+esac
+
 # Leave no half-unpacked directory behind on any failure.
 trap 'rm -rf .next.new' EXIT
 

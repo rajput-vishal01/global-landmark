@@ -80,6 +80,32 @@ try {
   assert.equal(existsSync(pub), false, "un-publishing removes the public copy");
   assert.ok(existsSync(priv), "but keeps the private original for the admin vault");
 
+  // --- the fallback upload directory ---------------------------------------
+  // Next's standalone server chdir()s into .next/standalone, so a plain
+  // cwd-relative default puts uploads inside the one directory a deploy
+  // replaces wholesale — every photo and legal document destroyed on the next
+  // push, with the database still pointing at them. This asserts the fallback
+  // climbs back out. It cost a production gallery to learn.
+  {
+    const sep = require("node:path").sep;
+    const app = `${sep}var${sep}www${sep}site`;
+    assert.equal(
+      storage.uploadDirFor(`${app}${sep}.next${sep}standalone`),
+      `${app}${sep}uploads`,
+      "standalone cwd resolves back to the app root, not inside .next"
+    );
+    assert.equal(
+      storage.uploadDirFor(app),
+      `${app}${sep}uploads`,
+      "a normal cwd is used as-is"
+    );
+    assert.equal(
+      storage.uploadDirFor(`${app}${sep}.next${sep}standalone${sep}nested`),
+      `${app}${sep}.next${sep}standalone${sep}nested${sep}uploads`,
+      "only an exact standalone cwd is rewritten"
+    );
+  }
+
   console.log("check-storage: all assertions passed");
 } finally {
   rmSync(out, { recursive: true, force: true });

@@ -31,7 +31,30 @@ import path from "node:path";
  * with tens of thousands of entries.
  */
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
+/**
+ * Where uploads live when UPLOAD_DIR is not set.
+ *
+ * This cannot simply be `process.cwd()/uploads`. Next's standalone server
+ * starts with `process.chdir(__dirname)` (.next/standalone/server.js), so in
+ * production the cwd is `<app>/.next/standalone` — and a deploy that ships a
+ * fresh `.next` therefore deletes every uploaded photo and legal document,
+ * leaving the database rows pointing at files that no longer exist. The
+ * symptom is images that upload fine and then render broken after the next
+ * deploy, which looks like an upload bug and is not one.
+ *
+ * So: if the cwd IS the standalone directory, climb back out of it. Setting
+ * UPLOAD_DIR explicitly is still the right thing on a real server; this only
+ * makes the fallback safe rather than quietly destructive.
+ */
+export function uploadDirFor(cwd: string): string {
+  const standalone = path.join(".next", "standalone");
+  const root = cwd.endsWith(path.sep + standalone)
+    ? cwd.slice(0, -(standalone.length + 1))
+    : cwd;
+  return path.join(root, "uploads");
+}
+
+const UPLOAD_DIR = process.env.UPLOAD_DIR || uploadDirFor(process.cwd());
 
 /** Extension per accepted type. The extension is ours, never the client's. */
 const IMAGE_TYPES: Record<string, string> = {
