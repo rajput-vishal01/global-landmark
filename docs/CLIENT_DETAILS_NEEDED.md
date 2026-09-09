@@ -6,7 +6,10 @@ the same four facts on official documents, and cross-checks them against what
 the public website says. Any of the three disagreeing is a rejection.
 
 This is the list. Filled rows are what we already publish; blank rows are what
-we need before resubmitting.
+we need.
+
+**Sections 1 to 3 are the ones that block resubmission.** Section 4 is Indian
+compliance we can add whenever, and nothing on the site waits for it.
 
 ---
 
@@ -47,11 +50,16 @@ rather than fail.
 Advertising property in India while claiming RERA compliance without showing
 the number is a compliance gap on its own, separate from Meta.
 
-## 4. Grievance Officer — legally required, currently missing
+## 4. Grievance Officer — later, not now
 
-The DPDP Act 2023 and the IT Rules 2011 both require a **named individual**,
-published on the site, who handles data requests and complaints. It cannot be
-an alias or a generic inbox.
+**Not a Meta requirement.** Meta does not look for this, and it is not part of
+why the application is failing. It is an Indian one: IT Rules 2011 Rule 5(9)
+has required a named officer published on the site since 2011, and the DPDP
+Act 2023 carries the duty forward with a 90-day resolution window.
+
+It blocks nothing today. The privacy policy falls back to the general contact
+details and still names the Data Protection Board, which is legal to publish.
+Fill these in whenever the client gets round to it:
 
 | Field | Needed |
 |---|---|
@@ -59,10 +67,6 @@ an alias or a generic inbox.
 | Designation | |
 | Email | |
 | Phone | |
-
-Until this is filled, the privacy policy falls back to the general contact
-details and still names the Data Protection Board — legal enough to publish,
-but not complete.
 
 ## 5. Documents to upload to Meta
 
@@ -77,11 +81,15 @@ At least two, and every detail on them must match sections 1–3 above:
 Scans must be fully legible, uncropped, and show the whole page. "Documents
 not viewable" is one of Meta's stated rejection reasons.
 
-## 6. The rejection email itself
+## 6. Working without the rejection notice
 
-**Ask the client to forward it.** Meta names the reason — "details do not
-match", "documents not viewable", "incomplete organization details" — and that
-turns this from a list of suspicions into one thing to fix.
+The client is not sharing Meta’s rejection email, so we do not have the
+stated reason and are working from what the site itself shows.
+
+That is survivable but it costs a cycle: sections 1–3 fix every mismatch we
+can see from the outside, and if Meta rejects again for something only the
+notice names, we find out on the second attempt rather than the first. If
+anyone can get even the one-line reason out of them, it is worth asking for.
 
 ---
 
