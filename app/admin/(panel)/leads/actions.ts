@@ -7,6 +7,7 @@ import { leads } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { isLeadStatus } from "@/lib/taxonomy/leads";
 import { convertLeadToClient } from "../crm/client-actions";
+import type { DeleteState } from "../properties/actions";
 
 export type LeadFormState = { error?: string };
 
@@ -52,4 +53,36 @@ export async function convertLead(formData: FormData): Promise<void> {
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id)) return;
   await convertLeadToClient(id);
+}
+
+/**
+ * Delete a lead.
+ *
+ * No reference guard, unlike deleteClient. The only foreign key pointing here
+ * is crm_clients.converted_from_lead_id, and it is ON DELETE SET NULL — so
+ * deleting a converted lead drops the "came from lead #N" provenance link and
+ * destroys nothing. That is a fair trade for clearing spam out of the inbox,
+ * which is what this is for.
+ *
+ * Contrast deleteClient, which refuses while deals exist: there the chain is
+ * CASCADE all the way down to crm_payments, so the same gesture would take
+ * the brokerage history with it.
+ */
+export async function deleteLead(
+  _prev: DeleteState,
+  formData: FormData
+): Promise<DeleteState> {
+  await requireAdmin();
+  const id = Number(formData.get("id"));
+  if (!Number.isInteger(id)) return { error: "Missing lead id." };
+
+  try {
+    await db.delete(leads).where(eq(leads.id, id));
+  } catch (err) {
+    console.error("deleteLead failed:", err);
+    return { error: "Delete failed. Try again." };
+  }
+
+  revalidatePath("/admin/leads");
+  return {};
 }

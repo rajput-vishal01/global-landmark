@@ -1,11 +1,12 @@
 import Link from "next/link";
+import { DeleteButton } from "@/components/admin/DeleteButton";
 import { and, count, desc, eq, like, inArray, isNotNull, or, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { leads, properties } from "@/lib/db/schema";
 import { isLeadStatus } from "@/lib/taxonomy/leads";
 import { LeadFilters, type LeadFilterValues } from "./LeadFilters";
 import { LeadEditForm } from "./LeadEditForm";
-import { convertLead } from "./actions";
+import { convertLead, deleteLead } from "./actions";
 import { formatDateTime } from "@/lib/dates";
 import {
   Chip,
@@ -325,16 +326,23 @@ export default async function AdminLeadsPage({
                         {lead.source && <div>{lead.source}</div>}
                       </td>
                       <td className="whitespace-nowrap">
-                        {/* R-30: one-click convert; a lead already converted
-                            still shows the action — re-running it would just
-                            create a second client, so leave that judgment to
-                            the admin rather than tracking a boolean here. */}
-                        <form action={convertLead}>
-                          <input type="hidden" name="id" value={lead.id} />
-                          <button type="submit" className={deskButtonSmall}>
-                            Convert to client
-                          </button>
-                        </form>
+                        <div className="flex items-center justify-end gap-3">
+                          {/* R-30: one-click convert; a lead already converted
+                              still shows the action — re-running it would just
+                              create a second client, so leave that judgment to
+                              the admin rather than tracking a boolean here. */}
+                          <form action={convertLead}>
+                            <input type="hidden" name="id" value={lead.id} />
+                            <button type="submit" className={deskButtonSmall}>
+                              Convert to client
+                            </button>
+                          </form>
+                          <DeleteButton
+                            action={deleteLead}
+                            id={lead.id}
+                            confirmText={`Delete the enquiry from ${lead.name}? Nothing else is removed — a client converted from it keeps their record.`}
+                          />
+                        </div>
                       </td>
                     </tr>
                   );

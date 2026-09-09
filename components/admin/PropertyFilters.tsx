@@ -1,9 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { LISTING_STATUSES, PUBLICATION_STATES } from "@/lib/taxonomy/status";
 import { PROPERTY_TYPES } from "@/lib/attributes";
 import { CITY_NAMES } from "@/lib/locations";
 import { Select } from "@/components/ui/Select";
-import { Card, deskButton, deskField, deskLinkButton } from "@/components/admin/desk";
+import { Card, deskField, deskLinkButton } from "@/components/admin/desk";
+import { useAutoSubmit } from "@/components/admin/use-auto-submit";
 
 /**
  * Admin search + filter bar (R-34). Sibling of the public
@@ -56,12 +59,14 @@ function FilterSelect({
   anyLabel,
   options,
   value,
+  onChange,
 }: {
   name: string;
   label: string;
   anyLabel: string;
   options: readonly string[] | { value: string; label: string }[];
   value: string;
+  onChange: () => void;
 }) {
   const items = options.map((o) => (typeof o === "string" ? { value: o, label: o } : o));
   // Same shape the native <select> had: the "any" row first, and omitted
@@ -74,7 +79,7 @@ function FilterSelect({
       <label htmlFor={id} className="desk-eyebrow">
         {label}
       </label>
-      <Select id={id} name={name} options={withAny} defaultValue={value} />
+      <Select id={id} name={name} options={withAny} defaultValue={value} onValueChange={onChange} />
     </div>
   );
 }
@@ -88,9 +93,11 @@ export function PropertyFilters({
   sortOptions: { value: string; label: string }[];
   isFiltered: boolean;
 }) {
+  const { formRef, submitNow, submitSoon } = useAutoSubmit();
+
   return (
     <Card>
-      <form method="get" action="/admin/properties" className="flex flex-col gap-3">
+      <form ref={formRef} method="get" action="/admin/properties" className="flex flex-col gap-3">
         <div className="flex flex-col">
           <label htmlFor="filter-q" className="desk-eyebrow">
             Search
@@ -102,6 +109,7 @@ export function PropertyFilters({
             defaultValue={values.q}
             placeholder="Ref code, title, locality or project"
             className={CONTROL}
+            onChange={submitSoon}
           />
         </div>
 
@@ -113,6 +121,7 @@ export function PropertyFilters({
             anyLabel="Any status"
             options={LISTING_STATUSES}
             value={values.status}
+            onChange={submitNow}
           />
           <FilterSelect
             name="publication"
@@ -123,6 +132,7 @@ export function PropertyFilters({
               label: s[0].toUpperCase() + s.slice(1),
             }))}
             value={values.publication}
+            onChange={submitNow}
           />
           <FilterSelect
             name="type"
@@ -130,6 +140,7 @@ export function PropertyFilters({
             anyLabel="Any type"
             options={PROPERTY_TYPES}
             value={values.type}
+            onChange={submitNow}
           />
           <FilterSelect
             name="city"
@@ -137,6 +148,7 @@ export function PropertyFilters({
             anyLabel="Any city"
             options={CITY_NAMES}
             value={values.city}
+            onChange={submitNow}
           />
           <FilterSelect
             name="sort"
@@ -144,12 +156,16 @@ export function PropertyFilters({
             anyLabel=""
             options={sortOptions}
             value={values.sort}
+            onChange={submitNow}
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-          <button type="submit" className={deskButton}>
-            Apply
+          {/* No Apply button: the form submits itself on every change. This
+              stays so Enter in the search box still submits, and so the
+              filters work before the JavaScript loads. */}
+          <button type="submit" className="sr-only">
+            Apply filters
           </button>
           {isFiltered && (
             <Link href="/admin/properties" className={deskLinkButton}>

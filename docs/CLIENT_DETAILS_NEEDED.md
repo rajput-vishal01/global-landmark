@@ -1,105 +1,92 @@
-# Details needed from the client — Meta / WhatsApp Business API
+# Meta / WhatsApp Business API — what the site publishes, and what is left
 
 Meta's business verification is a **document-matching exercise**. It compares
 the legal name, address, phone and website in Meta Business Manager against
-the same four facts on official documents, and cross-checks them against what
-the public website says. Any of the three disagreeing is a rejection.
+official documents, and cross-checks them against the public website. Any of
+the three disagreeing is a rejection.
 
-This is the list. Filled rows are what we already publish; blank rows are what
-we need.
-
-**Sections 1 to 3 are the ones that block resubmission.** Section 4 is Indian
-compliance we can add whenever, and nothing on the site waits for it.
+The client supplied the **Udyam Registration Certificate
+(UDYAM-PB-20-0137589, issued 20/08/2026)**, and the site now matches it.
 
 ---
 
-## 1. Identity — the rejection risk
+## 1. Resolved — the site matches the certificate
 
-| Field | What we publish today | What we need | Where it goes |
-|---|---|---|---|
-| Legal name | `Global Landmark Realty Group` | **The exact name on the GST / incorporation certificate**, character for character. If the entity is a proprietorship in a person's name, or carries a "Pvt Ltd" suffix, what we publish is wrong. | `COMPANY.legalName` |
-| Registered address | `Based in Panchkula · Tricity, India` | **Full postal address with PIN code**, as printed on the certificate or a utility bill. | `COMPANY.addressLines` + `LEGAL_DETAILS.registeredAddress` |
-| Phone | `+91 98820-84786`, `+91 70090-00164` | Confirm which is the registered business line. | already set |
-| Website | `globallandmarkrealty.com` | — | already set |
-
-**The address is the single most likely reason the application is failing.**
-"Based in Panchkula" cannot be matched against any document — there is no
-building, street, sector or PIN code for a reviewer to compare.
-
-## 2. Email — second most likely reason
-
-| Field | Today | Needed |
+| Field | Certificate | Site now publishes |
 |---|---|---|
-| Public email | `inquiries@globallandmark.com` | **An inbox on `@globallandmarkrealty.com`** that someone actually reads. |
+| Legal name | GLOBAL LANDMARK REALTY GROUP | `Global Landmark Realty Group` — already matched |
+| Registered address | Shop No 102, TLI Business Square, Adj. Sector 20 Panchkula, Peermushlla, Zirakpur, SAS Nagar, Punjab 160104 | the same, in the footer, contact page, both legal pages and the structured data |
+| Mobile | 9882084786 | `+91 98820-84786` — already matched |
+| Email | globallandmarkrealty@gmail.com | the same |
+| Udyam number | UDYAM-PB-20-0137589 | shown on `/terms` |
+| Organisation | Proprietary — proprietor Ashu Goyal | — |
 
-Two separate problems with the current value. The domain (`globallandmark.com`)
-is not the website's domain (`globallandmarkrealty.com`), which reads to Meta
-as a different organisation. And the code comment says it was a placeholder
-that was never replaced — so if that mailbox does not exist, any verification
-mail Meta sends is going nowhere, and the application would appear to stall
-rather than fail.
+### The correction this surfaced
 
-## 3. Registration numbers
+The site said the business was **"Based in Panchkula"**, and the structured
+data claimed `addressLocality: Panchkula, addressRegion: Haryana`. Both were
+wrong. The certificate puts the office in **Zirakpur, SAS Nagar district,
+Punjab** — "Adj. Sector 20 Panchkula" is the *road name*, which the old copy
+had mistaken for the city.
 
-| Field | Today | Needed | Where |
-|---|---|---|---|
-| RERA / HRERA agent registration | Claimed as "RERA-Compliant", **no number** | The registration number | `LEGAL_DETAILS.reraNumber`, and append to `COMPANY.license` |
-| GSTIN | not published | The GST number | `LEGAL_DETAILS.gstin` |
-| CIN | not published | Only if the entity is a company | `LEGAL_DETAILS.cin` |
+That is not cosmetic. A reviewer comparing a Punjab certificate against a
+website claiming Haryana sees two different businesses. Corrected everywhere,
+including the governing-law clause in the terms.
 
-Advertising property in India while claiming RERA compliance without showing
-the number is a compliance gap on its own, separate from Meta.
+## 2. Set Meta Business Manager to exactly this
 
-## 4. Grievance Officer — later, not now
+Copy-paste it, do not retype it:
 
-**Not a Meta requirement.** Meta does not look for this, and it is not part of
-why the application is failing. It is an Indian one: IT Rules 2011 Rule 5(9)
-has required a named officer published on the site since 2011, and the DPDP
-Act 2023 carries the duty forward with a 90-day resolution window.
+```
+Legal name:  GLOBAL LANDMARK REALTY GROUP
+Address:     Shop No 102, TLI Business Square,
+             Adj. Sector 20 Panchkula, Peermushlla
+City:        Zirakpur
+District:    SAS Nagar
+State:       Punjab
+PIN:         160104
+Phone:       +91 9882084786
+Email:       globallandmarkrealty@gmail.com
+Website:     https://globallandmarkrealty.com
+```
 
-It blocks nothing today. The privacy policy falls back to the general contact
-details and still names the Data Protection Board, which is legal to publish.
-Fill these in whenever the client gets round to it:
+Upload the **Udyam certificate** as the supporting document — full page,
+legible, uncropped. "Documents not viewable" is one of Meta's stated rejection
+reasons.
 
-| Field | Needed |
-|---|---|
-| Name | |
-| Designation | |
-| Email | |
-| Phone | |
+## 3. Still outstanding
 
-## 5. Documents to upload to Meta
+| Item | Why it matters | Blocking? |
+|---|---|---|
+| **RERA / HRERA agent registration number** | The site claims "RERA-Compliant Real Estate Brokers" with no number behind it. Udyam is an MSME registration, not RERA, and does not substitute. | Not for Meta. Yes for Indian property advertising. |
+| **Grievance Officer** — name, designation, email, phone | The DPDP Act 2023 and IT Rules 2011 require a named individual published on the site. The certificate names Ashu Goyal as proprietor, but accepting a statutory role is his decision, not something to infer from a registration document. | No. The policy falls back to the general contact. |
 
-At least two, and every detail on them must match sections 1–3 above:
+## 4. One judgement call, made consciously
 
-- [ ] GST registration certificate
-- [ ] Certificate of Incorporation / partnership deed / proprietorship proof
-- [ ] Business PAN
-- [ ] A utility bill or bank statement in the business name showing the address
-- [ ] RERA/HRERA registration certificate
+The published email is a **Gmail address**, not one on
+`@globallandmarkrealty.com`.
 
-Scans must be fully legible, uncropped, and show the whole page. "Documents
-not viewable" is one of Meta's stated rejection reasons.
+Keep it. It is the email **on the certificate**, and matching the document is
+what verification actually tests — a domain mailbox appearing on no paperwork
+would be a new mismatch, not an improvement. Worth moving to a domain address
+later for how it reads to a client, but only by updating the Udyam record at
+the same time.
 
-## 6. Working without the rejection notice
+## 5. Never publish these
 
-The client is not sharing Meta’s rejection email, so we do not have the
-stated reason and are working from what the site itself shows.
-
-That is survivable but it costs a cycle: sections 1–3 fix every mismatch we
-can see from the outside, and if Meta rejects again for something only the
-notice names, we find out on the second attempt rather than the first. If
-anyone can get even the one-line reason out of them, it is worth asking for.
+The certificate also carries the proprietor's **PAN** and the **bank account
+number and IFSC**. None of it is on the site and none of it is in the
+repository — verified by grep. PAN is a personal identifier, and the bank
+details are precisely what an impersonation attempt would want. Meta asks for
+neither during business verification.
 
 ---
 
-## Where these get entered
+## Where these live in the code
 
-Most of it is one file: `lib/legal.ts` (`LEGAL_DETAILS`) and `lib/data.ts`
-(`COMPANY`). The privacy policy, terms, footer and contact page all read from
-those, so filling them in updates every page at once.
+`COMPANY` in `lib/data.ts` and `LEGAL_DETAILS` in `lib/legal.ts`. The footer,
+contact page, privacy policy, terms and the JSON-LD all read from those, so
+there is one place to change and no way for two pages to disagree.
 
-The address, phone, email and socials can alternatively be set without a
-deploy through **Admin → Settings**, which overrides `COMPANY` at runtime. The
-legal pages read the overridden values too, so the site cannot end up saying
-one address in the footer and another in the policy.
+The address, phone, email and socials can also be set through **Admin →
+Settings** without a deploy, and the legal pages read those overrides too.

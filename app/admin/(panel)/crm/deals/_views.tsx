@@ -1,17 +1,13 @@
 import Link from "next/link";
 import { DealStageQuickForm } from "@/components/admin/DealStageQuickForm";
-import { Select } from "@/components/ui/Select";
 import { formatIndianShort } from "@/lib/attributes";
 import { formatDate } from "@/lib/dates";
 import { DEAL_STAGES } from "@/lib/taxonomy/brokerage";
 import {
-  Card,
   EmptyState,
   Table,
   TableWrap,
   deskButton,
-  deskField,
-  deskLinkButton,
   deskRowLink,
   numericCell,
 } from "@/components/admin/desk";
@@ -197,103 +193,3 @@ export function filterRows(rows: Row[], f: DealFilters): Row[] {
   });
 }
 
-const FIELD_LABEL = "text-[11px] font-semibold uppercase tracking-[0.1em] text-muted";
-
-/**
- * A plain GET form. The filters end up in the URL, which means the back
- * button works, a filtered pipeline can be sent to someone, and the view
- * survives the reload that a stage change triggers — none of which a
- * client-side filter would give for free.
- */
-export function ListFilters({
-  filters,
-  agents,
-  shown,
-  total,
-}: {
-  filters: DealFilters;
-  agents: string[];
-  shown: number;
-  total: number;
-}) {
-  const stageOptions = [
-    { value: "", label: "All stages" },
-    ...DEAL_STAGES.map((s) => ({ value: s, label: s })),
-  ];
-  const agentOptions = [
-    { value: "", label: "All agents" },
-    ...agents.map((a) => ({ value: a, label: a })),
-  ];
-  const isFiltered =
-    Boolean(filters.stage || filters.agent || filters.q.trim()) || filters.openOnly;
-
-  return (
-    <Card>
-      <form method="get" className="flex flex-col gap-4">
-        <input type="hidden" name="view" value="list" />
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="flex flex-col gap-1.5">
-            <span className={FIELD_LABEL}>Search</span>
-            <input
-              type="search"
-              name="q"
-              defaultValue={filters.q}
-              placeholder="Client, property or ref code"
-              className={`${deskField} w-full`}
-            />
-          </label>
-
-          <div className="flex flex-col gap-1.5">
-            <span className={FIELD_LABEL}>Stage</span>
-            <Select
-              name="stage"
-              options={stageOptions}
-              defaultValue={filters.stage}
-              aria-label="Filter by stage"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <span className={FIELD_LABEL}>Agent</span>
-            <Select
-              name="agent"
-              options={agentOptions}
-              defaultValue={filters.agent}
-              aria-label="Filter by agent"
-            />
-          </div>
-
-          <div className="flex flex-col justify-end gap-2">
-            <label className="flex cursor-pointer items-center gap-2 text-[13px] text-ink">
-              <input
-                type="checkbox"
-                name="open"
-                value="1"
-                defaultChecked={filters.openOnly}
-                className="size-4 accent-ink"
-              />
-              Still in play
-            </label>
-            <div className="flex items-center gap-3">
-              <button type="submit" className={deskButton}>
-                Apply
-              </button>
-              {isFiltered && (
-                <Link href="/admin/crm/deals?view=list" className={deskLinkButton}>
-                  Clear
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <p className="text-[12px] text-muted" aria-live="polite">
-          {isFiltered
-            ? `Showing ${shown} of ${total} deal${total === 1 ? "" : "s"}.`
-            : `${total} deal${total === 1 ? "" : "s"}.`}
-        </p>
-      </form>
-    </Card>
-  );
-}

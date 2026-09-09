@@ -48,8 +48,13 @@ export async function organizationJsonLd() {
     areaServed: COMPANY.markets,
     address: {
       "@type": "PostalAddress",
-      addressLocality: "Panchkula",
-      addressRegion: "Haryana",
+      // From the Udyam certificate. The office is in Zirakpur, Punjab —
+      // the old "Panchkula, Haryana" came from the road name and was wrong,
+      // which also made the structured data disagree with the certificate.
+      streetAddress: "Shop No 102, TLI Business Square, Adj. Sector 20 Panchkula, Peermushlla",
+      addressLocality: "Zirakpur",
+      addressRegion: "Punjab",
+      postalCode: "160104",
       addressCountry: "IN",
     },
     sameAs: COMPANY.socials

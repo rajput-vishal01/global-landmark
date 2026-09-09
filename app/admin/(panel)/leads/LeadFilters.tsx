@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { LEAD_STATUSES } from "@/lib/taxonomy/leads";
 import { Select } from "@/components/ui/Select";
-import { Card, deskButton, deskField, deskLinkButton } from "@/components/admin/desk";
+import { Card, deskField, deskLinkButton } from "@/components/admin/desk";
+import { useAutoSubmit } from "@/components/admin/use-auto-submit";
 
 /**
  * GET form, URL as state — same reasoning as PropertyFilters: survives
@@ -38,12 +41,14 @@ function FilterSelect({
   anyLabel,
   options,
   value,
+  onChange,
 }: {
   name: string;
   label: string;
   anyLabel: string;
   options: readonly string[];
   value: string;
+  onChange: () => void;
 }) {
   // Same shape the native <select> had: the "any" row first, value "".
   const items = [
@@ -57,7 +62,7 @@ function FilterSelect({
       <label htmlFor={id} className="desk-eyebrow">
         {label}
       </label>
-      <Select id={id} name={name} options={items} defaultValue={value} />
+      <Select id={id} name={name} options={items} defaultValue={value} onValueChange={onChange} />
     </div>
   );
 }
@@ -73,9 +78,11 @@ export function LeadFilters({
   agents: string[];
   isFiltered: boolean;
 }) {
+  const { formRef, submitNow, submitSoon } = useAutoSubmit();
+
   return (
     <Card>
-      <form method="get" action="/admin/leads" className="flex flex-col gap-4">
+      <form ref={formRef} method="get" action="/admin/leads" className="flex flex-col gap-4">
         <div className="flex flex-col">
           <label htmlFor="lead-filter-q" className="desk-eyebrow">
             Search
@@ -87,6 +94,7 @@ export function LeadFilters({
             defaultValue={values.q}
             placeholder="Name, email, phone or interest"
             className={CONTROL}
+            onChange={submitSoon}
           />
         </div>
 
@@ -97,6 +105,7 @@ export function LeadFilters({
             anyLabel="Any status"
             options={LEAD_STATUSES}
             value={values.status}
+            onChange={submitNow}
           />
           <FilterSelect
             name="source"
@@ -104,6 +113,7 @@ export function LeadFilters({
             anyLabel="Any source"
             options={sources}
             value={values.source}
+            onChange={submitNow}
           />
           <FilterSelect
             name="assignedTo"
@@ -111,12 +121,16 @@ export function LeadFilters({
             anyLabel="Anyone"
             options={agents}
             value={values.assignedTo}
+            onChange={submitNow}
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-          <button type="submit" className={deskButton}>
-            Apply
+          {/* No Apply button: the form submits itself. This stays so that
+              pressing Enter in the search box still works, and so the
+              filters are not dead before the JavaScript loads. */}
+          <button type="submit" className="sr-only">
+            Apply filters
           </button>
           {isFiltered && (
             <Link href="/admin/leads" className={deskLinkButton}>

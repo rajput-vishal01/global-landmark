@@ -52,21 +52,31 @@ export type LegalDocument = {
  * false statement on a public compliance page.
  */
 export const LEGAL_DETAILS = {
-  /** Exact legal name as printed on the GST / incorporation certificate. */
-  registeredName: "",
+  /** Exact name on the Udyam certificate. Matches COMPANY.legalName. */
+  registeredName: "Global Landmark Realty Group",
   /** Registered address, one line per row, ending with the PIN code. */
-  registeredAddress: [] as string[],
-  /** Corporate Identification Number, if the entity is a company. */
+  registeredAddress: [
+    "Shop No 102, TLI Business Square",
+    "Adj. Sector 20 Panchkula, Peermushlla",
+    "Zirakpur, SAS Nagar, Punjab 160104",
+  ],
+  /** MSME / Udyam registration — a public registration number, safe to show. */
+  udyam: "UDYAM-PB-20-0137589",
+  /** Proprietorship, so there is no CIN. */
   cin: "",
-  /** GSTIN. */
+  /** The certificate records "Do you have GSTIN: No". Nothing to publish. */
   gstin: "",
-  /** HRERA / RERA agent registration number. */
+  /** HRERA / RERA agent registration. Still not supplied — Udyam is not RERA. */
   reraNumber: "",
 
   /**
    * Required by the DPDP Act 2023 and the IT Rules 2011: a named person,
    * published on the site, who answers data requests and complaints.
-   * This is a statutory role — it has to be a real individual, not an alias.
+   *
+   * The certificate names Ashu Goyal as proprietor, but being the owner is
+   * not the same as accepting a statutory role — that is his call to make,
+   * not ours to infer from a registration document. Left blank until he says
+   * so; the policy falls back to the general contact meanwhile.
    */
   grievanceOfficer: {
     name: "",
@@ -78,7 +88,7 @@ export const LEGAL_DETAILS = {
 
 /** Whether we have enough to publish the registration block at all. */
 const hasRegistration = (d: typeof LEGAL_DETAILS) =>
-  Boolean(d.cin || d.gstin || d.reraNumber || d.registeredName);
+  Boolean(d.udyam || d.cin || d.gstin || d.reraNumber || d.registeredName);
 
 type Company = typeof COMPANY;
 
@@ -253,6 +263,7 @@ export function termsOfUse(COMPANY: Company): LegalDocument {
               LEGAL_DETAILS.registeredName && `Registered name: ${LEGAL_DETAILS.registeredName}`,
               LEGAL_DETAILS.registeredAddress.length &&
                 `Registered address: ${LEGAL_DETAILS.registeredAddress.join(", ")}`,
+              LEGAL_DETAILS.udyam && `Udyam registration: ${LEGAL_DETAILS.udyam}`,
               LEGAL_DETAILS.cin && `CIN: ${LEGAL_DETAILS.cin}`,
               LEGAL_DETAILS.gstin && `GSTIN: ${LEGAL_DETAILS.gstin}`,
               LEGAL_DETAILS.reraNumber && `RERA registration: ${LEGAL_DETAILS.reraNumber}`,
@@ -315,7 +326,7 @@ export function termsOfUse(COMPANY: Company): LegalDocument {
     {
       heading: "Governing law",
       body: [
-        "These terms are governed by the laws of India, and the courts at Panchkula, Haryana have jurisdiction over any dispute arising from them.",
+        "These terms are governed by the laws of India. The registered office is at Zirakpur, SAS Nagar district, Punjab, and the courts there have jurisdiction over any dispute arising from them.",
       ],
     },
     {

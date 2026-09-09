@@ -22,13 +22,23 @@ export const COMPANY = {
   compliance:
     "RERA Compliant · All transactions closed over verified documentation",
 
-  // Email not listed publicly — replace with the agency's real inbox.
-  email: "inquiries@globallandmark.com",
+  // The address and email on the Udyam certificate (UDYAM-PB-20-0137589),
+  // which is what Meta compares the website against. Do not "tidy" either:
+  // a website that says something the certificate does not is the whole
+  // reason the verification was failing.
+  email: "globallandmarkrealty@gmail.com",
   phone: "+91 98820-84786",
   phoneHref: "tel:+919882084786",
   phoneAlt: "+91 70090-00164",
   phoneAltHref: "tel:+917009000164",
-  addressLines: ["Based in Panchkula", "Tricity, India"],
+  // Zirakpur, Punjab — NOT Panchkula, Haryana. The road is named "Adj.
+  // Sec 20 Panchkula", which is what the old copy had mistaken for the
+  // city. The registered office is in SAS Nagar district, Punjab.
+  addressLines: [
+    "Shop No 102, TLI Business Square",
+    "Adj. Sector 20 Panchkula, Peermushlla",
+    "Zirakpur, SAS Nagar, Punjab 160104",
+  ],
   markets: ["Panchkula", "Chandigarh", "Mohali", "Zirakpur"],
 
   socials: [
