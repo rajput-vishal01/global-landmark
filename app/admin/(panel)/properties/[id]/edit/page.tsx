@@ -49,7 +49,7 @@ export default async function EditPropertyPage({
   if (!property) notFound();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <PageHead
         title="Edit property"
         sub="The full listing form. Changes autosave as a draft every twenty seconds."

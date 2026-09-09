@@ -54,16 +54,21 @@ const NAV: NavGroup[] = [
       { label: "Deal Pipeline", href: "/admin/crm/deals" },
     ],
   },
+  // Featured Deal, Video Reels, Client Quotes and Services now sit behind
+  // /admin/website. Four rows named after their tables told a broker nothing
+  // about which part of the public page each one moved; the hub says it, and
+  // carries the live count of what is on each strip. Their routes are
+  // unchanged — only the way in is.
+  //
+  // No heading over it, because a heading above a single row is a section
+  // label for a section that does not exist. It joins Settings in the loose
+  // run at the bottom, where the two site-wide rows belong.
   {
-    heading: "Website content",
     items: [
-      { label: "Featured Deal", href: "/admin/deals" },
-      { label: "Video Reels", href: "/admin/testimonials" },
-      { label: "Client Quotes", href: "/admin/text-testimonials" },
-      { label: "Services", href: "/admin/services" },
+      { label: "Website content", href: "/admin/website" },
+      { label: "Settings", href: "/admin/settings" },
     ],
   },
-  { items: [{ label: "Settings", href: "/admin/settings" }] },
 ];
 
 export default async function AdminPanelLayout({

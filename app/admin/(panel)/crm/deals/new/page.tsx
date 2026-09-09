@@ -40,7 +40,7 @@ export default async function NewDealPage({
   const defaultClientId = clientId ? Number(clientId) : undefined;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <PageHead
         title="New deal"
         sub="Starts at Enquiry. Deal value and brokerage can be filled in later."

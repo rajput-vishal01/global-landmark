@@ -7,7 +7,7 @@ export const metadata = { title: "Add builder" };
 
 export default function NewBuilderPage() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <PageHead
         title="Add builder"
         sub="A developer profile. The contact and track-record fields are internal and never reach the public site."

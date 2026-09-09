@@ -22,7 +22,7 @@ export default async function EditAreaPage({
   if (!area) notFound();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <PageHead
         title="Edit area"
         sub="Rename it, re-point which listings it claims, or take it off the site."

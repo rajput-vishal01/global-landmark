@@ -25,6 +25,28 @@ export const metadata = { title: "Properties" };
 
 const PAGE_SIZE = 25;
 
+/**
+ * The URL for the status chips: current filters, with `status` set or cleared.
+ *
+ * `page` is deliberately not carried over. Page 4 of the old result set is
+ * almost never page 4 of the new one, and landing past the end of a narrower
+ * list shows an empty table that looks like the filter matched nothing.
+ *
+ * Empty values are omitted rather than written as `?status=`, so the "no
+ * filters" URL is the bare path and `isFiltered` keeps agreeing with what the
+ * address bar says.
+ */
+function statusHref(values: PropertyFilterValues, status: string): string {
+  const params = new URLSearchParams();
+  const next = { ...values, status };
+  for (const [key, value] of Object.entries(next)) {
+    // "updated" is the default sort; writing it out adds noise to every link.
+    if (!value || (key === "sort" && value === "updated")) continue;
+    params.set(key, String(value));
+  }
+  return `/admin/properties${params.size ? `?${params}` : ""}`;
+}
+
 
 
 /**
@@ -240,15 +262,38 @@ export default async function AdminPropertiesPage({
       {/* Legend on the left, what came back on the right. Reading "1–25 of 60
           matching" next to the filters you just set is what tells you they
           did something. */}
+      {/* Not a legend any more — each chip filters to its own status.
+          It looked clickable and was not, which is the worst of both.
+
+          Links rather than a form, so the filter is in the URL and behaves
+          like every other filter on this screen: shareable, bookmarkable, and
+          undone by the back button. Every other active parameter is carried
+          through, so picking a status narrows what you are already looking at
+          instead of resetting it, and `page` is deliberately dropped — page 4
+          of the old result set is rarely page 4 of the new one. */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
         <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">
           Status
         </span>
-        {LISTING_STATUSES.map((status) => (
-          <Chip key={status} tone={STATUS_TONE[status]}>
-            {status}
-          </Chip>
-        ))}
+        {LISTING_STATUSES.map((status) => {
+          const active = values.status === status;
+          return (
+            <Link
+              key={status}
+              href={statusHref(values, active ? "" : status)}
+              aria-current={active ? "true" : undefined}
+              title={active ? `Clear the ${status} filter` : `Show only ${status}`}
+              className={`rounded-r-md transition-opacity hover:opacity-80 ${
+                // The unselected ones step back rather than the selected one
+                // shouting: with a filter on, this row should read as one
+                // chip with six ghosts beside it.
+                values.status && !active ? "opacity-40" : ""
+              }`}
+            >
+              <Chip tone={STATUS_TONE[status]}>{status}</Chip>
+            </Link>
+          );
+        })}
         <span className="ml-auto text-[12px] tabular-nums text-muted">
           {firstRow}–{Math.min(page * PAGE_SIZE, total)} of {total}
           {isFiltered ? " matching" : ""} propert{total === 1 ? "y" : "ies"}

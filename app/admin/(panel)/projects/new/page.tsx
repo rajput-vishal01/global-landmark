@@ -9,7 +9,7 @@ export default async function NewProjectPage() {
   const builders = await listBuildersForSelect();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <PageHead
         title="Add project"
         sub="A society or township. Listings link to it by name and inherit its amenities instead of re-entering them."

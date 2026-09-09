@@ -204,7 +204,7 @@ export function PropertyForm({
   }, [isPending, isUploading]);
 
   return (
-    <form ref={formRef} action={formAction} className="flex max-w-3xl flex-col gap-5">
+    <form ref={formRef} action={formAction} className="flex flex-col gap-5">
       {/* Uncontrolled (defaultValue, not value): autosave writes the id of a
           newly-created draft straight to this DOM node via idFieldRef, and
           a React-controlled value would overwrite that on the next render. */}

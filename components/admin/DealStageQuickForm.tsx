@@ -9,7 +9,15 @@ import { updateDealStage, type DealFormState } from "@/app/admin/(panel)/crm/dea
 const STAGE_OPTIONS = DEAL_STAGES.map((s) => ({ value: s, label: s }));
 const initialState: DealFormState = {};
 
-/** Per-card stage change on the pipeline board (R-30) — one Select, one Save, no drag-and-drop. */
+/**
+ * Per-card stage change (R-30) — one Select, one Move, on both the board card
+ * and the list row.
+ *
+ * The board also drags, but drag-and-drop is mouse-only and always will be, so
+ * this is the keyboard and screen-reader path to the same `updateDealStage`
+ * action rather than a duplicate of the drag. Do not drop it from the card to
+ * make the board look cleaner.
+ */
 export function DealStageQuickForm({ id, stage }: { id: number; stage: string }) {
   const [state, formAction, isPending] = useActionState(updateDealStage, initialState);
 

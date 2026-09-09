@@ -17,9 +17,13 @@ import {
 } from "@/components/admin/desk";
 
 /**
- * The two ways to read the pipeline. Split out of page.tsx because that file
- * already carries the loader and every derived figure, and a board plus a
- * table in the same file put it past 300 lines of mostly markup.
+ * The list half of the pipeline, plus the `Row` shape both halves are built
+ * on. Split out of page.tsx because that file already carries the loader and
+ * every derived figure.
+ *
+ * The board half lives in `components/admin/DealBoard.tsx` instead: it drags,
+ * so it is a client component, and it has no business pulling this file's
+ * table markup across the boundary with it.
  */
 
 export type Row = {
@@ -40,60 +44,6 @@ export type Row = {
 function propertyLabel(property: Row["deal"]["property"]): string {
   if (!property) return "No property linked";
   return property.refCode ? `${property.title} · ${property.refCode}` : property.title;
-}
-
-export function BoardView({ rows }: { rows: Row[] }) {
-  const columns = DEAL_STAGES.map((stage) => ({
-    stage,
-    deals: rows.filter((r) => r.deal.stage === stage),
-  }));
-
-  return (
-    // min-w on the columns keeps them readable while the board scrolls on a
-    // laptop; xl:min-w-0 lets all eight share the full width on a desktop
-    // instead of forcing a scrollbar the page is wide enough not to need.
-    <div className="grid grid-cols-1 gap-4 overflow-x-auto sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
-      {columns.map(({ stage, deals }) => (
-        <div key={stage} className="flex min-w-[220px] flex-col gap-3 xl:min-w-0">
-          <h2 className="desk-eyebrow">
-            {stage} <span className="tabular-nums">({deals.length})</span>
-          </h2>
-          <div className="flex flex-col gap-3">
-            {deals.length === 0 ? (
-              <p className="text-[13px] text-muted">No deals.</p>
-            ) : (
-              deals.map(({ deal, amount, pending }) => (
-                // p-3!, not p-3: Card carries its own p-4 and Tailwind settles
-                // two paddings of equal specificity by emission order, which
-                // p-4 wins. A board column is too narrow for 16px of it.
-                <Card key={deal.id} className="flex flex-col gap-2 p-3!">
-                  <Link href={`/admin/crm/deals/${deal.id}`} className={deskRowLink}>
-                    {deal.client?.name ?? "Unknown client"}
-                  </Link>
-                  <p className="text-[12px] text-muted">{propertyLabel(deal.property)}</p>
-                  <div className="flex items-center justify-between gap-3 text-[12px]">
-                    <span className="text-muted">
-                      Value {deal.dealValue != null ? formatIndianShort(deal.dealValue) : "—"}
-                    </span>
-                    <span className="text-gold-deep">
-                      Pending {pending != null ? formatIndianShort(pending) : "—"}
-                    </span>
-                  </div>
-                  {amount != null && (
-                    <p className="text-[12px] text-muted">
-                      Brokerage {formatIndianShort(amount)}
-                    </p>
-                  )}
-                  {deal.assignedTo && <p className="text-[12px] text-muted">{deal.assignedTo}</p>}
-                  <DealStageQuickForm id={deal.id} stage={deal.stage} />
-                </Card>
-              ))
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
 }
 
 export function ListView({ rows, filtered }: { rows: Row[]; filtered?: boolean }) {

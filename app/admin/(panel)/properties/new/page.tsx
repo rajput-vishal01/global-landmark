@@ -10,7 +10,7 @@ export default async function NewPropertyPage() {
   const projects = await listProjectsForAdmin();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <PageHead
         title="Add property"
         sub="The full listing form. Only a title is needed to save a draft; the rest can be finished later."

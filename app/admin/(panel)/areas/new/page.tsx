@@ -7,7 +7,7 @@ export const metadata = { title: "Add area" };
 
 export default function NewAreaPage() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <PageHead
         title="Add area"
         sub="A landing page for one city or locality. It claims listings by matching their city and locality, so nothing needs re-tagging."

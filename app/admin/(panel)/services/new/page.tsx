@@ -7,7 +7,7 @@ export const metadata = { title: "Add service" };
 
 export default function NewServicePage() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <PageHead
         title="Add service"
         sub="One card in the Our Services row on the landing page."

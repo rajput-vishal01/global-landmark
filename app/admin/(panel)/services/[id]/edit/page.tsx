@@ -25,7 +25,7 @@ export default async function EditServicePage({
   if (!service) notFound();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <PageHead
         title="Edit service"
         sub="One card in the Our Services row on the landing page."

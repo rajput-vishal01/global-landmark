@@ -24,7 +24,7 @@ export default async function EditBuilderPage({
   if (!builder) notFound();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <PageHead
         title="Edit builder"
         sub="A developer profile. The contact and track-record fields are internal and never reach the public site."

@@ -25,7 +25,7 @@ export default async function EditProjectPage({
   if (!project) notFound();
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <PageHead
         title="Edit project"
         sub="A society or township. Listings link to it by name and inherit its amenities instead of re-entering them."

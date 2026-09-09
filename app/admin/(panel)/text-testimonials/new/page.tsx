@@ -7,7 +7,7 @@ export const metadata = { title: "Add written testimonial" };
 
 export default function NewTextTestimonialPage() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <PageHead
         title="Add written testimonial"
         sub="A client quote and its author, shown on the landing page."

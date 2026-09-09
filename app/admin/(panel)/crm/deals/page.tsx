@@ -2,14 +2,8 @@ import Link from "next/link";
 import { desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { crmDeals } from "@/lib/db/schema";
-import {
-  BoardView,
-  ListFilters,
-  ListView,
-  agentLabel,
-  filterRows,
-  readFilters,
-} from "./_views";
+import { ListFilters, ListView, agentLabel, filterRows, readFilters } from "./_views";
+import { DealBoard } from "@/components/admin/DealBoard";
 import { formatIndianShort } from "@/lib/attributes";
 import { DEAL_STAGES, brokerageAmount, brokeragePending } from "@/lib/taxonomy/brokerage";
 import {
@@ -196,7 +190,7 @@ export default async function DealsPipelinePage({
           <ListView rows={listRows} filtered={listRows.length !== rows.length} />
         </div>
       ) : (
-        <BoardView rows={rows} />
+        <DealBoard rows={rows} />
       )}
     </div>
   );
