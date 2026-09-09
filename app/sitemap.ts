@@ -43,5 +43,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // signal that the business is what it says it is.
     { url: `${SITE_URL}/privacy`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE_URL}/terms`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${SITE_URL}/data-deletion`, changeFrequency: "yearly", priority: 0.3 },
   ];
 }

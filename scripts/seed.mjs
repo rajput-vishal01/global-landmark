@@ -643,12 +643,17 @@ await section("leads and settings", async () => {
     "insert ignore into site_settings (`key`, `value`) values ('company_contact', ?)",
     [
       JSON.stringify({
-        addressLines: ["Based in Panchkula", "Tricity, India"],
+        // No addressLines and no email on purpose. Those two are identity
+        // facts that have to match the Udyam certificate exactly, and they
+        // live in COMPANY (lib/data.ts) which resolveCompany() falls back to
+        // per field. Seeding them here created a row that silently overrode
+        // the code, so the site kept publishing a placeholder address long
+        // after the code had the real one — see
+        // drizzle/0001_clear_stale_contact_override.sql.
         phone: "+91 98820-84786",
         phoneHref: "tel:+919882084786",
         phoneAlt: "+91 70090-00164",
         phoneAltHref: "tel:+917009000164",
-        email: "inquiries@globallandmark.com",
         officeHours: "Mon-Sat, 10:00-19:00 IST",
         socials: [
           { label: "Instagram", href: "https://www.instagram.com/globallandmarkrealtygroup/" },

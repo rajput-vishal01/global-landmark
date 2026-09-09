@@ -172,6 +172,14 @@ export async function Footer() {
               >
                 Terms of use
               </Link>
+              {/* Its own link, not a section of the policy: Meta asks for a
+                  dedicated Data Deletion Instructions URL. */}
+              <Link
+                href="/data-deletion"
+                className="underline decoration-cream/25 underline-offset-4 transition-colors hover:text-cream hover:decoration-gold"
+              >
+                Data deletion
+              </Link>
               <span className="text-cream/45">{COMPANY.compliance}</span>
             </div>
           </div>

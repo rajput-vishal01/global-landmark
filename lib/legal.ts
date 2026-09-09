@@ -338,3 +338,68 @@ export function termsOfUse(COMPANY: Company): LegalDocument {
   ],
   };
 }
+
+/**
+ * Data deletion instructions.
+ *
+ * Its own page because Meta asks for a dedicated "Data Deletion Instructions
+ * URL" when an app touches user data — a privacy policy that mentions
+ * deletion somewhere in it does not satisfy that field, and the client's
+ * checklist lists it separately for the same reason.
+ *
+ * It is also the DPDP Act's erasure right, written as a procedure someone
+ * can actually follow rather than as a right they have to infer.
+ */
+export function dataDeletion(COMPANY: Company): LegalDocument {
+  const officer = LEGAL_DETAILS.grievanceOfficer;
+  return {
+    title: "Data deletion",
+    description:
+      "How to ask Global Landmark Realty Group to delete the personal information it holds about you, and what happens when you do.",
+    intro:
+      "You can ask us to delete what we hold about you. This page says how, and what we are able to remove.",
+    updated: UPDATED,
+    sections: [
+      {
+        heading: "How to ask",
+        body: [
+          `Send us a deletion request — email ${officer.email || COMPANY.email}, or WhatsApp or call ${COMPANY.phone}. Say that you want your data deleted, and give us the phone number or email address you originally contacted us on so we can find your record.`,
+          "You do not need to give a reason, and asking costs nothing.",
+        ],
+      },
+      {
+        heading: "What happens next",
+        body: [
+          "We acknowledge the request within 72 hours and complete it within 30 days. If anything stops us deleting a part of it, we tell you which part and why rather than quietly leaving it.",
+        ],
+      },
+      {
+        heading: "What gets deleted",
+        body: ["Everything we hold that identifies you:"],
+        list: [
+          "Your enquiry, viewing request or valuation request, with the name, phone number and email on it.",
+          "Your requirements — budget, localities, property type.",
+          "Notes and call logs recorded against you, and any WhatsApp or email correspondence we hold.",
+          "Details and documents for a property you offered us that we did not go on to transact.",
+        ],
+      },
+      {
+        heading: "What we may have to keep",
+        body: [
+          "If we completed a transaction for you, Indian property and tax law requires us to retain those records for a set period. We keep only what the law requires, use it for nothing else, and delete it when the period ends.",
+          "Where a listing you supplied is already published, deleting your personal details removes you from it; the listing itself is withdrawn separately, and you can ask for that at the same time.",
+        ],
+      },
+      {
+        heading: "Facebook and WhatsApp",
+        body: [
+          "If you reached us through a Meta service, deleting your data here removes it from our records. It does not delete anything held by Meta on their own systems — for that, use the data controls in your Facebook, Instagram or WhatsApp account.",
+        ],
+      },
+      {
+        heading: "If we get it wrong",
+        body: grievanceBody(COMPANY),
+      },
+    ],
+  };
+}
