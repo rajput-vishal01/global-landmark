@@ -38,5 +38,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // this page, so it is worth more than the contact page to a crawler.
     { url: `${SITE_URL}/sell`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${SITE_URL}/contact`, changeFrequency: "yearly", priority: 0.6 },
+    // Low priority, but present: a reachable privacy policy is a condition of
+    // the WhatsApp Business Platform, and a crawler finding it is one more
+    // signal that the business is what it says it is.
+    { url: `${SITE_URL}/privacy`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${SITE_URL}/terms`, changeFrequency: "yearly", priority: 0.3 },
   ];
 }

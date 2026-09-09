@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { resolveCompany } from "@/lib/site-settings";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import { whatsAppHref } from "@/lib/whatsapp";
@@ -150,12 +151,29 @@ export async function Footer() {
             through the admin contact override) and it appears here and in the
             masthead above at once. Never hardcode it at this call site. */}
         <div className="py-8">
-          <div className="flex flex-col gap-2 text-meta font-sans text-cream/55 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 text-meta font-sans text-cream/55 md:flex-row md:items-center md:justify-between">
             <span>
               &copy; {new Date().getFullYear()} {COMPANY.legalName}. All rights
               reserved.
             </span>
-            <span className="text-cream/45">{COMPANY.compliance}</span>
+            {/* The footer is where a reader — and a Meta reviewer checking the
+                business against its documents — looks for these. They sit next
+                to the legal name and the compliance line on purpose. */}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <Link
+                href="/privacy"
+                className="underline decoration-cream/25 underline-offset-4 transition-colors hover:text-cream hover:decoration-gold"
+              >
+                Privacy policy
+              </Link>
+              <Link
+                href="/terms"
+                className="underline decoration-cream/25 underline-offset-4 transition-colors hover:text-cream hover:decoration-gold"
+              >
+                Terms of use
+              </Link>
+              <span className="text-cream/45">{COMPANY.compliance}</span>
+            </div>
           </div>
         </div>
       </div>
