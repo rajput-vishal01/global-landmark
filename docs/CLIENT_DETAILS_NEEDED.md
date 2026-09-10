@@ -54,12 +54,31 @@ Upload the **Udyam certificate** as the supporting document — full page,
 legible, uncropped. "Documents not viewable" is one of Meta's stated rejection
 reasons.
 
-## 3. Still outstanding
+## 3. Still outstanding — one item, and it is not a Meta blocker
 
-| Item | Why it matters | Blocking? |
-|---|---|---|
-| **RERA / HRERA agent registration number** | The site claims "RERA-Compliant Real Estate Brokers" with no number behind it. Udyam is an MSME registration, not RERA, and does not substitute. | Not for Meta. Yes for Indian property advertising. |
-| **Grievance Officer** — name, designation, email, phone | The DPDP Act 2023 and IT Rules 2011 require a named individual published on the site. The certificate names Ashu Goyal as proprietor, but accepting a statutory role is his decision, not something to infer from a registration document. | No. The policy falls back to the general contact. |
+**RERA registration number.** Applied for; waiting on the number. The site
+claims "RERA-Compliant Real Estate Brokers", and Indian property advertising
+is expected to carry the registration behind that claim. Udyam is an MSME
+registration and does not substitute for it.
+
+Drop it into `LEGAL_DETAILS.reraNumber` when it arrives and it appears on
+`/terms`; append it to `COMPANY.license` and it appears in the footer and the
+masthead too.
+
+### Grievance Officer — closed, no action needed
+
+Not a Meta requirement and not something to chase. It is an Indian statutory
+role: the DPDP Act 2023 and the IT Rules 2011 both ask that a business
+publish a named contact for data complaints — the person someone writes to if
+they want their data corrected or deleted and are not getting anywhere.
+
+For a four-person proprietorship it is normally just the proprietor, and
+naming one is a decision rather than a lookup, which is why it was left blank
+rather than filled in from the certificate. Nothing waits on it: the privacy
+policy and the data-deletion page already route complaints to the general
+contact and name the Data Protection Board as the escalation. If Ashu ever
+wants his name on it, fill `LEGAL_DETAILS.grievanceOfficer` and both pages
+pick it up.
 
 ## 4. One judgement call, made consciously
 

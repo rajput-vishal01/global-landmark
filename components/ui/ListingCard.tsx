@@ -228,6 +228,10 @@ export function ListingCard({
             src={cover.url}
             alt={cover.alt || property.title}
             fill
+            // Above Next's default of 75. These are the photographs a buyer
+            // judges a listing on, and the default was visibly softening them.
+            // Allowed values are declared in next.config.ts's images.qualities.
+            quality={90}
             sizes={
               isList
                 ? "(min-width: 640px) 16rem, 100vw"

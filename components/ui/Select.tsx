@@ -1,9 +1,10 @@
 "use client";
 
 import { EASE } from "@/lib/motion";
-import { useCallback, useId, useRef, useState } from "react";
+import { useCallback, useId, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, m } from "framer-motion";
-import { useOutsideClick } from "@/lib/hooks";
+import { useMounted, useOutsideClick } from "@/lib/hooks";
 
 type SelectOption = { value: string; label: string };
 
@@ -38,14 +39,55 @@ export function Select({
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  /**
+   * Where to draw the open list, in viewport coordinates.
+   *
+   * The list is portalled to <body> rather than positioned inside this
+   * component. It used to be `absolute top-full`, which broke inside any
+   * scroll container: CSS computes `overflow-y: visible` to `auto` when the
+   * other axis is not visible, so the admin tables’ `overflow-x-auto`
+   * wrapper clipped the list and scrolled it instead of letting it overlay
+   * the rows. Every per-row dropdown in the panel sat in one of those.
+   */
+  const [rect, setRect] = useState<DOMRect | null>(null);
+
+  // document.body does not exist during the server render, and reaching for it
+  // there is a hydration error rather than a missing dropdown. useMounted is
+  // the repo's existing answer to this — Dialog portals the same way.
+  const mounted = useMounted();
   const listId = useId();
 
   const selected = options.find((o) => o.value === value);
 
+  // The list is no longer a descendant of rootRef, so a click on an option
+  // reads as "outside" and would close the control before choose() ran.
   useOutsideClick(
     rootRef,
-    useCallback(() => setIsOpen(false), [])
+    useCallback((event: PointerEvent) => {
+      if (listRef.current?.contains(event.target as Node)) return;
+      setIsOpen(false);
+    }, [])
   );
+
+  // Measured after paint, so the trigger has its final box, and re-measured
+  // while open: the page scrolling under an open list would otherwise strand
+  // it where the trigger used to be.
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const measure = () => {
+      const el = rootRef.current;
+      if (el) setRect(el.getBoundingClientRect());
+    };
+    measure();
+    window.addEventListener("scroll", measure, true);
+    window.addEventListener("resize", measure);
+    return () => {
+      window.removeEventListener("scroll", measure, true);
+      window.removeEventListener("resize", measure);
+    };
+  }, [isOpen]);
 
   function choose(index: number) {
     if (options[index]) {
@@ -109,18 +151,31 @@ export function Select({
         </svg>
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <m.ul
-            id={listId}
-            role="listbox"
-           
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 6 }}
-            transition={{ duration: 0.25, ease: EASE }}
-            className="absolute left-0 right-0 top-full z-30 mt-1 max-h-64 overflow-y-auto border border-border bg-white shadow-[0_18px_44px_-18px_rgba(20,20,20,0.3)]"
-          >
+      {/* Portalled to <body>, positioned against the trigger's measured box.
+          Inline styles rather than utilities because the numbers come from
+          getBoundingClientRect at runtime — a computed Tailwind class name is
+          one Tailwind never sees in the source and so never generates.
+          `mounted` guards the first server render, which has no document. */}
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {isOpen && rect && (
+              <m.ul
+                id={listId}
+                role="listbox"
+                ref={listRef}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.25, ease: EASE }}
+                style={{
+                  position: "fixed",
+                  left: rect.left,
+                  top: rect.bottom + 4,
+                  width: rect.width,
+                }}
+                className="z-50 max-h-64 overflow-y-auto border border-border bg-white shadow-[0_18px_44px_-18px_rgba(20,20,20,0.3)]"
+              >
             {options.map((option, i) => {
               const isSelected = option.value === value;
               return (
@@ -141,9 +196,11 @@ export function Select({
                 </li>
               );
             })}
-          </m.ul>
+              </m.ul>
+            )}
+          </AnimatePresence>,
+          document.body
         )}
-      </AnimatePresence>
     </div>
   );
 }

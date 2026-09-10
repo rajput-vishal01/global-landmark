@@ -14,11 +14,16 @@ export function useMounted(): boolean {
 /** Fires when a pointer goes down outside the ref'd element. */
 export function useOutsideClick(
   ref: RefObject<HTMLElement | null>,
-  onOutside: () => void
+  /**
+   * Receives the event, so a caller whose popup is portalled out of `ref` can
+   * check the target itself before treating the click as outside. Optional
+   * parameter, so the callers that ignore it are unchanged.
+   */
+  onOutside: (event: PointerEvent) => void
 ): void {
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onOutside();
+      if (ref.current && !ref.current.contains(e.target as Node)) onOutside(e);
     };
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
