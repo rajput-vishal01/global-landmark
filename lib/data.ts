@@ -46,6 +46,14 @@ export const COMPANY = {
       label: "Instagram",
       href: "https://www.instagram.com/globallandmarkrealtygroup/",
     },
+    // The Facebook Page the Meta verification is tied to. It belongs in this
+    // list rather than being special-cased anywhere: the footer, the
+    // fullscreen menu and the Organization JSON-LD's `sameAs` all read from
+    // here, and `sameAs` is one of the signals that ties the site to the Page.
+    {
+      label: "Facebook",
+      href: "https://www.facebook.com/globallandmarkrealtygroup",
+    },
     { label: "X", href: "#" },
     { label: "LinkedIn", href: "#" },
     { label: "YouTube", href: "#" },

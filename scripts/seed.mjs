@@ -655,9 +655,11 @@ await section("leads and settings", async () => {
         phoneAlt: "+91 70090-00164",
         phoneAltHref: "tel:+917009000164",
         officeHours: "Mon-Sat, 10:00-19:00 IST",
-        socials: [
-          { label: "Instagram", href: "https://www.instagram.com/globallandmarkrealtygroup/" },
-        ],
+        // No socials either, for the same reason as the address and email:
+        // resolveCompany() takes the override list WHOLE when it is non-empty,
+        // so seeding an Instagram-only list here silently hid the Facebook
+        // Page added to COMPANY.socials later. See
+        // drizzle/0002_clear_stale_socials_override.sql.
       }),
     ]
   );
@@ -792,6 +794,9 @@ await section("CRM demo data", async () => {
 });
 
 // Runnable check (ponytail).
+
+/** The slugs this script creates, quoted for an IN list. */
+const seededSlugList = PROPERTIES.map((p) => `'${p.slug}'`).join(", ");
 const check = await all(
   "select" +
     "\n     (select count(*) from projects) as projects," +
@@ -814,7 +819,13 @@ const check = await all(
     "\n     (select count(*) from site_settings where `key` = 'company_contact') as contact_setting," +
     "\n     (select count(*) from site_settings where `key` = 'credibility') as credibility_setting," +
     "\n     (select count(*) from properties where ref_code is null) as missing_ref_code," +
-    "\n     (select count(*) from properties where publication_state = 'published') as published," +
+    // Seeded rows only, matched by slug. The old form counted every property
+    // in the table, so this failed the moment the app was used the way it is
+    // meant to be: a broker saving a draft, or an owner submitting one through
+    // /sell, both make published < properties perfectly legitimately.
+    "\n     (select count(*) from properties where slug in (" +
+    seededSlugList +
+    ") and publication_state <> 'published') as seeded_unpublished," +
     "\n     (select count(*) from areas) as areas," +
     "\n     (select count(*) from services) as services," +
     "\n     (select count(*) from text_testimonials) as text_testimonials," +
@@ -845,7 +856,7 @@ const failures = Object.entries({
   "company_contact setting seeded": c.contact_setting >= 1,
   "credibility setting seeded": c.credibility_setting >= 1,
   "every property has a ref code": c.missing_ref_code === 0,
-  "every seeded property is published": c.published >= c.properties,
+  "every seeded property is published": c.seeded_unpublished === 0,
   "areas >= 6": c.areas >= 6,
   "services >= 6": c.services >= 6,
   "text testimonials >= 4": c.text_testimonials >= 4,
