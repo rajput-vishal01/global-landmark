@@ -75,11 +75,13 @@ export const LEGAL_DETAILS = {
   /** "Owner Name" on the certificate. The proprietor is the legal person
       behind the trading name, which is what a verifier is matching. */
   proprietor: "Ashu Goyal",
-  /** Date of Incorporation / Registration of Enterprise, and the date of
-      commencement of business — the same day on this certificate. */
-  incorporated: "1 April 2023",
-  /** Date of Udyam Registration on the certificate. */
-  udyamRegistered: "20 August 2026",
+  /*
+   * No date of incorporation and no date of Udyam registration, though the
+   * certificate carries both. The client does not want a founding year or
+   * any length-of-experience claim published anywhere on the site, and a
+   * date on the compliance page is still a date on the site. Meta does not
+   * ask for one.
+   */
   /**
    * National Industry Classification codes, which are the government's own
    * description of what this business does. Worth publishing: it is the
@@ -302,9 +304,7 @@ export function termsOfUse(COMPANY: Company): LegalDocument {
                 `Registered address: ${LEGAL_DETAILS.registeredAddress.join(", ")}`,
               LEGAL_DETAILS.organisationType &&
                 `Constitution: ${LEGAL_DETAILS.organisationType}${LEGAL_DETAILS.proprietor ? ` — proprietor ${LEGAL_DETAILS.proprietor}` : ""}`,
-              LEGAL_DETAILS.incorporated && `Established: ${LEGAL_DETAILS.incorporated}`,
-              LEGAL_DETAILS.udyam &&
-                `Udyam (MSME) registration: ${LEGAL_DETAILS.udyam}${LEGAL_DETAILS.udyamRegistered ? `, registered ${LEGAL_DETAILS.udyamRegistered}` : ""}`,
+              LEGAL_DETAILS.udyam && `Udyam (MSME) registration: ${LEGAL_DETAILS.udyam}`,
               LEGAL_DETAILS.enterpriseType && `Classification: ${LEGAL_DETAILS.enterpriseType}`,
               LEGAL_DETAILS.nicCodes.length &&
                 `Registered activity: ${LEGAL_DETAILS.nicCodes.join("; ")}`,

@@ -41,9 +41,8 @@ export default function AboutPage() {
           eyebrow="Who we are"
           title={ABOUT_PAGE.title}
           aside={
-            // Wraps: a fourth fact (Established) overflowed the row on a
-            // phone, where this is a horizontal strip rather than the
-            // right-hand column it becomes at md.
+            // Wraps rather than assuming three facts fit: this is a
+            // horizontal strip on a phone and a right-hand column at md.
             <dl className="flex flex-wrap gap-x-10 gap-y-5 md:flex-col md:gap-5 md:text-right">
               {ABOUT_PAGE.facts.map(([label, value]) => (
                 <div key={label}>

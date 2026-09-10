@@ -47,8 +47,11 @@ export async function organizationJsonLd() {
     email: COMPANY.email,
     telephone: COMPANY.phone,
     areaServed: COMPANY.markets,
-    // Date of incorporation on the Udyam certificate (01/04/2023).
-    foundingDate: "2023-04-01",
+    // No foundingDate. Schema.org offers the field and the certificate has
+    // the date, but the client does not want a founding year published, and
+    // structured data is published — Google reads it into the knowledge
+    // panel, which is the most visible place it could end up.
+    //
     // The MSME registration, as an identifier a machine can read rather
     // than only a line of footer text.
     identifier: {

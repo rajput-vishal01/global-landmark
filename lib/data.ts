@@ -77,11 +77,12 @@ export const COMPANY = {
     "Zirakpur, SAS Nagar, Punjab 160104",
   ],
 
-  /**
-   * Date of Incorporation / Registration of Enterprise on the certificate:
-   * 01/04/2023. Also the Date of Commencement of Business.
-   */
-  since: "2023",
+  // No founding year here, and none anywhere else on the site. The
+  // certificate records one (and the terms page briefly printed it), but
+  // the client does not want a founding date, a "years in the market" line,
+  // or any other length-of-experience claim published — restated Sept 2026.
+  // It is not needed for Meta verification either: Business Manager asks for
+  // name, address, phone and website, not an age.
 
   markets: ["Panchkula", "Chandigarh", "Mohali", "Zirakpur"],
 
@@ -265,13 +266,10 @@ export const ABOUT_PAGE = {
   // named "Adj. Sector 20 Panchkula", which is what the original copy had
   // mistaken for the city — the same error that put "Based in Panchkula" in
   // the footer. Panchkula is a market we work, not where we are.
-  // "Established 2023" is back, against the earlier "no founding year"
-  // instruction, because the objection then was that no figure on the site
-  // could be backed up if a buyer asked. This one can: 01/04/2023 is the
-  // date of incorporation printed on the Udyam certificate. Delete the row
-  // if the client still does not want it.
+  // No "Established" row. The client's instruction stands whether or not a
+  // certificate backs the date up: no founding year and no years-of-
+  // experience claim anywhere on the site.
   facts: [
-    ["Established", COMPANY.since],
     ["Home office", "Zirakpur, Punjab"],
     ["Markets", "Tricity"],
     ["Focus", "Residential & commercial"],
