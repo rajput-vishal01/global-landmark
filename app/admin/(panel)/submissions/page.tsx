@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { properties, propertyOwners } from "@/lib/db/schema";
+import { properties, propertyImages, propertyOwners } from "@/lib/db/schema";
 import { formatDateTime } from "@/lib/dates";
 import { formatIndianShort, formatArea } from "@/lib/attributes";
 import { SubmissionActions } from "./SubmissionActions";
@@ -46,6 +46,35 @@ type SubmissionRow = {
   sellerMobile: string | null;
   sellerNotes: string | null;
 };
+
+/**
+ * The submitted photographs, keyed by property.
+ *
+ * One query for the whole page rather than one per card: a submissions
+ * inbox is short, but N+1 on a page that already joins owners is the kind of
+ * thing that only shows up once the inbox is busy.
+ */
+async function listPhotos(ids: number[]): Promise<Map<number, string[]>> {
+  const byProperty = new Map<number, string[]>();
+  if (!ids.length) return byProperty;
+  try {
+    const rows = await db
+      .select({ propertyId: propertyImages.propertyId, url: propertyImages.url })
+      .from(propertyImages)
+      .where(inArray(propertyImages.propertyId, ids))
+      .orderBy(asc(propertyImages.sortOrder), asc(propertyImages.id));
+    for (const row of rows) {
+      const list = byProperty.get(row.propertyId) ?? [];
+      list.push(row.url);
+      byProperty.set(row.propertyId, list);
+    }
+  } catch (err) {
+    // Fail soft, like the list itself: a submission with no thumbnails is
+    // still reviewable, a 500 is not.
+    console.error("admin submission photos failed:", err);
+  }
+  return byProperty;
+}
 
 async function listSubmissions(): Promise<SubmissionRow[]> {
   try {
@@ -97,6 +126,7 @@ function Fact({ label, value }: { label: string; value: string }) {
 
 export default async function SubmissionsPage() {
   const rows = await listSubmissions();
+  const photos = await listPhotos(rows.map((row) => row.id));
 
   return (
     <div className="flex flex-col gap-4">
@@ -144,6 +174,31 @@ export default async function SubmissionsPage() {
                   Review &amp; edit
                 </Link>
               </div>
+
+              {/* The seller's own photographs, above the facts. A broker
+                  triaging this inbox decides "is this worth my time" from the
+                  pictures first — a row of specifications does not answer that
+                  and a photograph does. Absent for a submission sent before
+                  the form had an uploader, and for anyone who skipped it. */}
+              {(photos.get(row.id) ?? []).length > 0 && (
+                <ul className="flex flex-wrap gap-2">
+                  {(photos.get(row.id) ?? []).map((url, i) => (
+                    <li key={url} className="h-20 w-28 overflow-hidden bg-ink/5">
+                      <a href={url} target="_blank" rel="noopener noreferrer">
+                        {/* Plain img, not next/image: these are 112px
+                            thumbnails of same-origin uploads, so the optimiser
+                            would cost a round trip to save nothing. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={url}
+                          alt={`${row.title} — photo ${i + 1}`}
+                          className="h-full w-full object-cover transition-opacity hover:opacity-85"
+                        />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               <div className="grid grid-cols-2 gap-4 border-t border-line-soft pt-4 sm:grid-cols-4">
                 <Fact label="Seller" value={row.sellerName ?? "—"} />

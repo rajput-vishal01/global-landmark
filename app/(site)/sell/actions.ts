@@ -3,13 +3,15 @@
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { properties, propertyOwners } from "@/lib/db/schema";
+import { properties, propertyImages, propertyOwners } from "@/lib/db/schema";
 import { uniqueSlug } from "@/lib/db/unique-slug";
 import { clientIp, isRateLimited } from "@/lib/rate-limit";
 import { refCode as buildRefCode } from "@/lib/attributes";
 import { isAreaUnit } from "@/lib/taxonomy/area";
 import { isConfiguration, PROPERTY_TYPES } from "@/lib/taxonomy/property";
 import { CITY_NAMES } from "@/lib/locations";
+import { parseSellPhotos } from "@/lib/sell-photos";
+import { deleteStoredFiles, storageKeyFromUrl } from "@/lib/storage";
 
 /**
  * "List your property" — the public seller submission (R-56).
@@ -104,6 +106,11 @@ export async function submitProperty(
   const areaUnitRaw = field(formData, "areaUnit", 20);
   const configuration = field(formData, "configuration", 40);
 
+  // Dropped rather than rejected, and restricted to files this site stored
+  // itself — see parseSellPhotos. A bad list loses the photos, not the
+  // submission.
+  const photos = parseSellPhotos(formData.get("photosJson"));
+
   try {
     const slug = await uniqueSlug(title);
     await db.transaction(async (tx) => {
@@ -151,6 +158,23 @@ export async function submitProperty(
         .set({ refCode: buildRefCode(city, new Date().getFullYear(), row.id) })
         .where(eq(properties.id, row.id));
 
+      // The seller's photographs. Inside the transaction with the row they
+      // belong to, so a failure half way cannot leave a gallery pointing at
+      // a property that was never created.
+      if (photos.length) {
+        await tx.insert(propertyImages).values(
+          photos.map((url, i) => ({
+            propertyId: row.id,
+            url,
+            // No alt text from a public form: it is a free-text field on a
+            // page that renders it, and the broker writes a real one when
+            // they review the submission.
+            alt: "",
+            sortOrder: i,
+          }))
+        );
+      }
+
       // The seller's contact details live here and nowhere else. This table
       // is internal by construction — no public query reads it.
       await tx.insert(propertyOwners).values({
@@ -164,6 +188,24 @@ export async function submitProperty(
     });
   } catch (err) {
     console.error("submitProperty failed:", err);
+
+    // The photos were written to disk by /api/sell/upload before this action
+    // ran, so a failed transaction would strand them: files with no row that
+    // will ever point at them, on a public upload path anyone can reach.
+    // Sweep them here, where the keys are still in hand.
+    //
+    // Best-effort on purpose. If the sweep itself fails the seller still gets
+    // the error they need, and scripts/sweep-orphan-uploads.mjs is the
+    // backstop for anything this misses.
+    try {
+      await deleteStoredFiles(
+        photos.map(storageKeyFromUrl).filter((k): k is string => Boolean(k)),
+        "public"
+      );
+    } catch (sweepErr) {
+      console.error("submitProperty: orphaned photo sweep failed:", sweepErr);
+    }
+
     return { status: "error", message: "Something went wrong. Please try again." };
   }
 

@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { FIELD, LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
+import { SellPhotoUpload } from "@/components/SellPhotoUpload";
 import { submitProperty, type ListPropertyState } from "@/app/(site)/sell/actions";
 import { AREA_UNITS } from "@/lib/taxonomy/area";
 import { CONFIGURATIONS, PROPERTY_TYPES } from "@/lib/taxonomy/property";
@@ -203,6 +204,14 @@ export function SellPropertyForm() {
             Anything else {OPTIONAL}
           </label>
           <textarea id="description" name="description" rows={5} className={`${FIELD} resize-y`} />
+        </div>
+
+        {/* Last, and optional. Asking for photographs before the address
+            would make the form feel like work; by this point the seller has
+            already described the property and is most likely to add them. */}
+        <div className="flex flex-col gap-2">
+          <span className={LABEL}>Photos {OPTIONAL}</span>
+          <SellPhotoUpload />
         </div>
       </fieldset>
 

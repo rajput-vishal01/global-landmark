@@ -1,3 +1,9 @@
+// Re-exported so every existing `from "@/lib/storage"` import of these keeps
+// working. They live in their own module because they are pure string work
+// and a client component needs them without node:fs coming along.
+export { isStorageKey, imageUrl, isLocalImageUrl, storageKeyFromUrl } from "./storage-keys";
+import { isStorageKey, imageUrl } from "./storage-keys";
+
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { copyFile, mkdir, stat, unlink, writeFile } from "node:fs/promises";
@@ -87,7 +93,6 @@ const MIME_BY_EXT: Record<string, string> = {
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
 /** `<sha256>.<ext>` — the whole identity of a stored file. */
-const KEY_PATTERN = /^[a-f0-9]{64}\.(jpg|png|webp|avif|pdf)$/;
 
 export type StoredFile = {
   storageKey: string;
@@ -100,14 +105,7 @@ export type StoreResult =
   | { ok: true; file: StoredFile }
   | { ok: false; error: string };
 
-export function isStorageKey(key: string): boolean {
-  return KEY_PATTERN.test(key);
-}
 
-/** Public URL for an image. Same-origin, so next/image needs no allowlist. */
-export function imageUrl(storageKey: string): string {
-  return `/api/images/${storageKey}`;
-}
 
 /** Admin-gated URL for a document. Never rendered on a public page. */
 export function documentUrl(storageKey: string): string {
@@ -175,10 +173,6 @@ export async function syncPublicDocumentFile(
   }
 }
 
-export function isLocalImageUrl(url: string): boolean {
-  const key = url.startsWith("/api/images/") ? url.slice("/api/images/".length) : null;
-  return key !== null && isStorageKey(key);
-}
 
 /**
  * Imagery we ship in the repo under public/local — the Tricity project
@@ -195,10 +189,6 @@ export function isBundledImageUrl(url: string): boolean {
   return BUNDLED_IMAGE.test(url);
 }
 
-/** The storage key inside one of our own image URLs, or null. */
-export function storageKeyFromUrl(url: string): string | null {
-  return isLocalImageUrl(url) ? url.slice("/api/images/".length) : null;
-}
 
 export function mimeForKey(storageKey: string): string {
   return MIME_BY_EXT[storageKey.split(".").pop() ?? ""] ?? "application/octet-stream";
