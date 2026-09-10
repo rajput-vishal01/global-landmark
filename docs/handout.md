@@ -49,7 +49,7 @@ The doc's own header says "Status: nothing built yet" — **that line is stale**
 - Sidebar admin IA (R-33), admin property list with search/filter/sort (R-34).
 
 **4 partial, 2 missing** — and every single one of them is blocked on real client data, not code:
-- R-02/R-06 (real numbers, real address/phones/socials/RERA) — currently placeholders (`inquiries@globallandmark.com`, "Based in Panchkula" instead of a street address, X/LinkedIn/YouTube are `"#"`).
+- R-02/R-06 (real numbers, real address/phones/socials/RERA) — mostly resolved Sept 2026 from the client's Udyam certificate: real registered name, street address, `globallandmarkrealty@gmail.com`, and the Facebook Page are all live in `lib/data.ts`. Still outstanding: the RERA number (applied for, not issued), a domain email to replace the Gmail, and X/LinkedIn/YouTube, which are still `"#"`. See [CLIENT_DETAILS_NEEDED.md](CLIENT_DETAILS_NEEDED.md).
 - R-03 (imagery) — India Gate is gone; remaining stock photos are genuinely Indian-shot (see §7) but not the client's own property photos.
 - R-37 (missing) — office/team photos are still stock placeholders; Ashu/Divya's photos are stock, deliberately **not swapped for different fake photos** (see §8 below — this was a considered call, not an oversight).
 - R-38 (missing/unverified) — "3–4 live listings" the client wants first can't be confirmed from code review; 6 demo listings exist in seed data.
