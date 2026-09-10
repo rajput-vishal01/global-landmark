@@ -1,5 +1,5 @@
 import mysql from "mysql2/promise";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle, type MySql2Database } from "drizzle-orm/mysql2";
 import * as schema from "./schema";
 
 /**
@@ -17,15 +17,13 @@ import * as schema from "./schema";
  * needed for the same reason.
  */
 
-// One pool across dev HMR reloads.
 const globalForDb = globalThis as unknown as { __gldPool?: mysql.Pool };
 
 /**
- * Check the URL before handing it to mysql2, because this module is
- * evaluated by `app/layout.tsx` — so a malformed DATABASE_URL 500s EVERY
- * route, the public site included, and does it with `TypeError: Invalid URL`
- * pointing at `mysql.createPool`. That names the line, not the cause, and
- * the cause is always the env file.
+ * Check the URL before handing it to mysql2. Without this a malformed
+ * DATABASE_URL fails on the first query of every route with `TypeError:
+ * Invalid URL` pointing at `mysql.createPool` — which names the line, not
+ * the cause, and the cause is always the env file.
  *
  * The two that actually happen: the key pasted into its own value
  * (`DATABASE_URL=DATABASE_URL=mysql://…`), and a leftover `postgres://` URL
@@ -64,20 +62,63 @@ function checkedDatabaseUrl(): string {
   return raw;
 }
 
-const pool =
-  globalForDb.__gldPool ??
-  mysql.createPool({
-    uri: checkedDatabaseUrl(),
-    connectionLimit: 5,
-    // Cap the wait for a connection rather than letting a request hang
-    // until the platform timeout.
-    connectTimeout: 10_000,
-    dateStrings: ["DATE"],
-    // Names and addresses carry emoji and non-Latin scripts; three-byte
-    // utf8 truncates them.
-    charset: "utf8mb4",
-  });
+let instance: MySql2Database<typeof schema> | undefined;
 
-if (process.env.NODE_ENV !== "production") globalForDb.__gldPool = pool;
+/**
+ * The pool and the Drizzle client, built on the first query rather than on
+ * import.
+ *
+ * This used to run at module scope, and it broke CI. `app/layout.tsx`
+ * imports lib/seo, which imports resolveCompany, which imports this file —
+ * so `next build` evaluated it while collecting route configuration, hit
+ * `checkedDatabaseUrl()`, and died with "Failed to collect configuration for
+ * /_not-found · DATABASE_URL is not set". The build runner has no database
+ * and does not need one: nothing is queried at build time, and the pages
+ * that do read settings already fall back to lib/data.ts when the read
+ * fails.
+ *
+ * Deferring it also keeps the error where it is useful. A missing or
+ * malformed URL now surfaces on the first actual query, inside the caller's
+ * try/catch, with the same message naming the same cause — rather than
+ * taking down module evaluation for every route at once.
+ *
+ * The fix is NOT a placeholder DATABASE_URL in the workflow: that would make
+ * the build dial 127.0.0.1 and wait out the connect timeout once per static
+ * page, to reach the same fallback this reaches for free.
+ */
+function connection(): MySql2Database<typeof schema> {
+  if (instance) return instance;
 
-export const db = drizzle(pool, { schema, mode: "default" });
+  const pool =
+    globalForDb.__gldPool ??
+    mysql.createPool({
+      uri: checkedDatabaseUrl(),
+      connectionLimit: 5,
+      // Cap the wait for a connection rather than letting a request hang
+      // until the platform timeout.
+      connectTimeout: 10_000,
+      dateStrings: ["DATE"],
+      // Names and addresses carry emoji and non-Latin scripts; three-byte
+      // utf8 truncates them.
+      charset: "utf8mb4",
+    });
+
+  // One pool across dev HMR reloads.
+  if (process.env.NODE_ENV !== "production") globalForDb.__gldPool = pool;
+
+  instance = drizzle(pool, { schema, mode: "default" });
+  return instance;
+}
+
+/**
+ * Every call site keeps writing `db.select()`, so the laziness stays here
+ * rather than becoming a `getDb()` every caller has to remember. Methods are
+ * bound to the real client because Drizzle's builders rely on `this`.
+ */
+export const db = new Proxy({} as MySql2Database<typeof schema>, {
+  get(_target, property) {
+    const client = connection();
+    const value = Reflect.get(client, property) as unknown;
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+});
