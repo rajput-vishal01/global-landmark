@@ -98,8 +98,6 @@ type AdminRow = {
   updatedAt: Date;
   projectName: string | null;
   coverUrl: string | null;
-  /** Set only on rows an owner sent through the public /sell form. */
-  submittedAt: Date | null;
 };
 
 /**
@@ -175,7 +173,6 @@ async function listPage(
           updatedAt: properties.updatedAt,
           projectName: projects.name,
           coverUrl,
-          submittedAt: properties.submittedAt,
         })
         .from(properties)
         .leftJoin(projects, eq(properties.projectId, projects.id))
