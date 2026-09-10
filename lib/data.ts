@@ -18,9 +18,31 @@ export const COMPANY = {
   /** Wordmark line 2 / descriptor. */
   tagline: "Realty Group",
   legalName: "Global Landmark Realty Group",
-  license: "RERA-Compliant Real Estate Brokers", // append registration no. when the client provides it
-  compliance:
-    "RERA Compliant · All transactions closed over verified documentation",
+
+  /**
+   * The line under the wordmark in the footer, and the compliance line at
+   * the very bottom.
+   *
+   * Both used to claim "RERA Compliant". That claim is gone. RERA
+   * registration has been applied for and not issued, and in India
+   * "RERA-Compliant Real Estate Brokers" reads as a registration the agency
+   * holds — a regulator, a buyer, or a Meta reviewer asking for the number
+   * would find there isn't one. Udyam is the registration that does exist,
+   * it is on the certificate, and anyone can check it against
+   * udyamregistration.gov.in. State the true one, drop the other.
+   *
+   * When HRERA issues the number, add `rera` below and append it here.
+   */
+  license: "Real estate brokers across the Tricity · MSME (Udyam) registered",
+  compliance: "Every transaction closed over verified documentation",
+
+  /**
+   * MSME registration from the Udyam certificate. Public by design — the
+   * portal exposes it for exactly this kind of verification — so it belongs
+   * on the site rather than only in the legal pages. lib/legal.ts reads it
+   * from here so there is one copy of the number.
+   */
+  udyam: "UDYAM-PB-20-0137589",
 
   // The address and email on the Udyam certificate (UDYAM-PB-20-0137589),
   // which is what Meta compares the website against. Do not "tidy" either:
@@ -31,14 +53,36 @@ export const COMPANY = {
   phoneHref: "tel:+919882084786",
   phoneAlt: "+91 70090-00164",
   phoneAltHref: "tel:+917009000164",
-  // Zirakpur, Punjab — NOT Panchkula, Haryana. The road is named "Adj.
-  // Sec 20 Panchkula", which is what the old copy had mistaken for the
-  // city. The registered office is in SAS Nagar district, Punjab.
+  /**
+   * The "Official address of Enterprise" block on the Udyam certificate,
+   * transcribed field for field:
+   *
+   *   Flat/Door/Block No.  SHOP NO 102
+   *   Premises/Building    TLI BUSINESS SQUARE
+   *   Road/Street/Lane     ADJ. SEC 20, PANCHKULA
+   *   Village/Town, Block  PEERMUSHLLA
+   *   City                 ZIRAKPUR
+   *   District, Pin        SAS NAGAR, 160104
+   *   State                PUNJAB
+   *
+   * Zirakpur, Punjab — NOT Panchkula, Haryana. The road is *named* "Adj.
+   * Sec 20, Panchkula", which is what the original copy mistook for the
+   * city. "Sec" is left unexpanded on purpose: Meta verification compares
+   * the website against the document, and tidying the wording is exactly
+   * how the two stop matching.
+   */
   addressLines: [
     "Shop No 102, TLI Business Square",
-    "Adj. Sector 20 Panchkula, Peermushlla",
+    "Adj. Sec 20, Panchkula, Peermushlla",
     "Zirakpur, SAS Nagar, Punjab 160104",
   ],
+
+  /**
+   * Date of Incorporation / Registration of Enterprise on the certificate:
+   * 01/04/2023. Also the Date of Commencement of Business.
+   */
+  since: "2023",
+
   markets: ["Panchkula", "Chandigarh", "Mohali", "Zirakpur"],
 
   socials: [
@@ -165,43 +209,6 @@ export const CTA_BAND = {
   ctaLabel: "Request a Valuation",
 };
 
-/** Randomized placeholder activity for the bottom ticker (client request). */
-export const TICKER = {
-  names: [
-    "A. Mehra",
-    "S. Kapoor",
-    "R. Malhotra",
-    "N. Verma",
-    "K. Sandhu",
-    "P. Reddy",
-    "G. Bajwa",
-    "T. Chatterjee",
-    "V. Nair",
-    "D. Khurana",
-    "M. Gill",
-    "H. Sethi",
-    "J. Ahluwalia",
-    "C. Chopra",
-    "B. Saini",
-  ],
-  events: [
-    "booked a site visit to {p}",
-    "requested the brochure for {p}",
-    "scheduled a private viewing of {p}",
-    "inquired about {p}",
-    "requested a call about {p}",
-    "shortlisted {p}",
-  ],
-  properties: [
-    "a Zirakpur builder floor",
-    "a Panchkula penthouse",
-    "a Mohali corner plot",
-    "an Aerocity residence",
-    "a Peer Muchalla apartment",
-    "an off-market sector plot",
-  ],
-};
-
 export const WHATSAPP = {
   // Ends mid-sentence on purpose: the visitor lands in WhatsApp with the
   // greeting written and one blank to fill, which is a far easier first
@@ -253,8 +260,19 @@ export const ABOUT_PAGE = {
   // No founding year, no "N years in the market" and no dealt-value figure
   // anywhere on this page, at the client's instruction — the group is
   // described by how it works, not by how long or how much.
+  // "Home office: Panchkula" was wrong and had to go: the registered office
+  // on the Udyam certificate is in Zirakpur, SAS Nagar, Punjab. The road is
+  // named "Adj. Sector 20 Panchkula", which is what the original copy had
+  // mistaken for the city — the same error that put "Based in Panchkula" in
+  // the footer. Panchkula is a market we work, not where we are.
+  // "Established 2023" is back, against the earlier "no founding year"
+  // instruction, because the objection then was that no figure on the site
+  // could be backed up if a buyer asked. This one can: 01/04/2023 is the
+  // date of incorporation printed on the Udyam certificate. Delete the row
+  // if the client still does not want it.
   facts: [
-    ["Home office", "Panchkula"],
+    ["Established", COMPANY.since],
+    ["Home office", "Zirakpur, Punjab"],
     ["Markets", "Tricity"],
     ["Focus", "Residential & commercial"],
   ] as [string, string][],

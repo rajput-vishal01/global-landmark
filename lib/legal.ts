@@ -1,4 +1,9 @@
-import type { COMPANY } from "./data";
+// A value import as well as a type one: the registration number itself now
+// lives in lib/data.ts with the rest of the company's identity, so the
+// footer and these documents cannot drift apart. `COMPANY` stays the name
+// of the *parameter* each document takes (the resolved company, which may
+// carry admin overrides), hence the alias.
+import { COMPANY as COMPANY_DATA } from "./data";
 
 /**
  * The privacy policy and terms, as content rather than markup.
@@ -54,20 +59,52 @@ export type LegalDocument = {
 export const LEGAL_DETAILS = {
   /** Exact name on the Udyam certificate. Matches COMPANY.legalName. */
   registeredName: "Global Landmark Realty Group",
-  /** Registered address, one line per row, ending with the PIN code. */
-  registeredAddress: [
-    "Shop No 102, TLI Business Square",
-    "Adj. Sector 20 Panchkula, Peermushlla",
-    "Zirakpur, SAS Nagar, Punjab 160104",
+  /**
+   * Registered address, one line per row. Same three lines as
+   * COMPANY.addressLines, read from there so the compliance page and the
+   * footer cannot say two different things.
+   */
+  registeredAddress: COMPANY_DATA.addressLines,
+  /** MSME / Udyam registration. One copy, in lib/data.ts — it is on the
+      footer of every page as well as in the terms. */
+  udyam: COMPANY_DATA.udyam,
+  /** "Type of Enterprise: MICRO", classified 20/08/2026 for 2026-27. */
+  enterpriseType: "Micro enterprise (MSME)",
+  /** "Type of Organisation: Proprietary" — hence no CIN below. */
+  organisationType: "Proprietorship",
+  /** "Owner Name" on the certificate. The proprietor is the legal person
+      behind the trading name, which is what a verifier is matching. */
+  proprietor: "Ashu Goyal",
+  /** Date of Incorporation / Registration of Enterprise, and the date of
+      commencement of business — the same day on this certificate. */
+  incorporated: "1 April 2023",
+  /** Date of Udyam Registration on the certificate. */
+  udyamRegistered: "20 August 2026",
+  /**
+   * National Industry Classification codes, which are the government's own
+   * description of what this business does. Worth publishing: it is the
+   * least arguable answer to "what is this company", which is the question
+   * a verification review is actually asking.
+   */
+  nicCodes: [
+    "68200 — Real estate activities on a fee or contract basis",
+    "68100 — Real estate activities with own or leased property",
   ],
-  /** MSME / Udyam registration — a public registration number, safe to show. */
-  udyam: "UDYAM-PB-20-0137589",
   /** Proprietorship, so there is no CIN. */
   cin: "",
   /** The certificate records "Do you have GSTIN: No". Nothing to publish. */
   gstin: "",
   /** HRERA / RERA agent registration. Still not supplied — Udyam is not RERA. */
   reraNumber: "",
+
+  /*
+   * Deliberately absent, and must stay absent. The certificate also carries
+   * the proprietor's PAN, the State Bank account number and its IFSC, and
+   * the FY 2024-25 turnover. None of that is identity a customer
+   * or a platform reviewer needs, and all of it is fraud material. It is
+   * not in this file, and scripts/check-legal.mjs fails the build if any of
+   * it turns up anywhere in the repo.
+   */
 
   /**
    * Required by the DPDP Act 2023 and the IT Rules 2011: a named person,
@@ -90,7 +127,7 @@ export const LEGAL_DETAILS = {
 const hasRegistration = (d: typeof LEGAL_DETAILS) =>
   Boolean(d.udyam || d.cin || d.gstin || d.reraNumber || d.registeredName);
 
-type Company = typeof COMPANY;
+type Company = typeof COMPANY_DATA;
 
 /* Both documents carry the same date. They were written together, and two
    dates a day apart would only invite the question of which one moved. */
@@ -263,7 +300,14 @@ export function termsOfUse(COMPANY: Company): LegalDocument {
               LEGAL_DETAILS.registeredName && `Registered name: ${LEGAL_DETAILS.registeredName}`,
               LEGAL_DETAILS.registeredAddress.length &&
                 `Registered address: ${LEGAL_DETAILS.registeredAddress.join(", ")}`,
-              LEGAL_DETAILS.udyam && `Udyam registration: ${LEGAL_DETAILS.udyam}`,
+              LEGAL_DETAILS.organisationType &&
+                `Constitution: ${LEGAL_DETAILS.organisationType}${LEGAL_DETAILS.proprietor ? ` — proprietor ${LEGAL_DETAILS.proprietor}` : ""}`,
+              LEGAL_DETAILS.incorporated && `Established: ${LEGAL_DETAILS.incorporated}`,
+              LEGAL_DETAILS.udyam &&
+                `Udyam (MSME) registration: ${LEGAL_DETAILS.udyam}${LEGAL_DETAILS.udyamRegistered ? `, registered ${LEGAL_DETAILS.udyamRegistered}` : ""}`,
+              LEGAL_DETAILS.enterpriseType && `Classification: ${LEGAL_DETAILS.enterpriseType}`,
+              LEGAL_DETAILS.nicCodes.length &&
+                `Registered activity: ${LEGAL_DETAILS.nicCodes.join("; ")}`,
               LEGAL_DETAILS.cin && `CIN: ${LEGAL_DETAILS.cin}`,
               LEGAL_DETAILS.gstin && `GSTIN: ${LEGAL_DETAILS.gstin}`,
               LEGAL_DETAILS.reraNumber && `RERA registration: ${LEGAL_DETAILS.reraNumber}`,

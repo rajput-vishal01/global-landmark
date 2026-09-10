@@ -143,13 +143,12 @@ export async function Footer() {
           </div>
         </div>
 
-        {/* RERA line (R-71). Indian property advertising is expected to carry
-            the agency's registration number, and the client has not supplied
-            one yet — so this renders the generic compliance sentence only. Do
-            NOT write a number in here: when the client confirms it, append it
-            to COMPANY.license / COMPANY.compliance in lib/data.ts (or set it
-            through the admin contact override) and it appears here and in the
-            masthead above at once. Never hardcode it at this call site. */}
+        {/* Registration line (R-71). Indian property advertising is expected
+            to carry the agency's registration number. RERA has been applied
+            for and not issued, so what runs here is the Udyam/MSME number,
+            which is real and verifiable. When HRERA issues the RERA number,
+            add it to lib/data.ts — never hardcode a number at this call
+            site, or the footer and the terms page start disagreeing. */}
         <div className="py-8">
           <div className="flex flex-col gap-4 text-meta font-sans text-cream/55 md:flex-row md:items-center md:justify-between">
             <span>
@@ -180,7 +179,14 @@ export async function Footer() {
               >
                 Data deletion
               </Link>
-              <span className="text-cream/45">{COMPANY.compliance}</span>
+              {/* The registration number, on every page rather than buried
+                  in the terms. This is the line a Meta reviewer, a regulator
+                  or a cautious buyer looks for, and it is checkable against
+                  udyamregistration.gov.in — which is the whole point of
+                  printing it. */}
+              <span className="text-cream/45">
+                Udyam {COMPANY.udyam} · {COMPANY.compliance}
+              </span>
             </div>
           </div>
         </div>

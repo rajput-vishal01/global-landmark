@@ -41,7 +41,10 @@ export default function AboutPage() {
           eyebrow="Who we are"
           title={ABOUT_PAGE.title}
           aside={
-            <dl className="flex gap-10 md:flex-col md:gap-5 md:text-right">
+            // Wraps: a fourth fact (Established) overflowed the row on a
+            // phone, where this is a horizontal strip rather than the
+            // right-hand column it becomes at md.
+            <dl className="flex flex-wrap gap-x-10 gap-y-5 md:flex-col md:gap-5 md:text-right">
               {ABOUT_PAGE.facts.map(([label, value]) => (
                 <div key={label}>
                   <dt className="text-eyebrow font-sans uppercase tracking-[0.2em] text-cream/50">

@@ -42,16 +42,28 @@ export async function organizationJsonLd() {
     "@context": "https://schema.org",
     "@type": "RealEstateAgent",
     name: COMPANY.legalName,
+    legalName: COMPANY.legalName,
     url: SITE_URL,
     email: COMPANY.email,
     telephone: COMPANY.phone,
     areaServed: COMPANY.markets,
+    // Date of incorporation on the Udyam certificate (01/04/2023).
+    foundingDate: "2023-04-01",
+    // The MSME registration, as an identifier a machine can read rather
+    // than only a line of footer text.
+    identifier: {
+      "@type": "PropertyValue",
+      name: "Udyam Registration Number",
+      value: COMPANY.udyam,
+    },
     address: {
       "@type": "PostalAddress",
-      // From the Udyam certificate. The office is in Zirakpur, Punjab —
-      // the old "Panchkula, Haryana" came from the road name and was wrong,
-      // which also made the structured data disagree with the certificate.
-      streetAddress: "Shop No 102, TLI Business Square, Adj. Sector 20 Panchkula, Peermushlla",
+      // Built from COMPANY.addressLines rather than retyped, which is how
+      // this drifted from the certificate the first time. The office is in
+      // Zirakpur, Punjab — the old "Panchkula, Haryana" came from the road
+      // name and was wrong. Last line is locality/district/state/PIN, which
+      // the fields below carry, so only the first two make up the street.
+      streetAddress: COMPANY.addressLines.slice(0, 2).join(", "),
       addressLocality: "Zirakpur",
       addressRegion: "Punjab",
       postalCode: "160104",

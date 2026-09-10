@@ -18,8 +18,9 @@
     "check:features": "node scripts/check-features.mjs",
     "check:storage": "node scripts/check-storage.mjs",
     "check:news": "node scripts/check-news.mjs",
-    "check": "npm run check:sw && npm run check:taxonomy && npm run check:features && npm run check:storage && npm run check:news && tsc --noEmit && eslint .",
-    "sweep:uploads": "node scripts/sweep-orphan-uploads.mjs"
+    "check": "npm run check:sw && npm run check:taxonomy && npm run check:features && npm run check:storage && npm run check:news && npm run check:legal && tsc --noEmit && eslint .",
+    "sweep:uploads": "node scripts/sweep-orphan-uploads.mjs",
+    "check:legal": "node scripts/check-legal.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
