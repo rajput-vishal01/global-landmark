@@ -38,6 +38,12 @@ type Row = {
   updatedAt: Date;
   projectName: string | null;
   coverUrl: string | null;
+  /**
+   * When an owner sent this in through the public /sell form. `addedBy` says
+   * something similar but is free text a broker types, so it can say "Owner"
+   * about a listing we took on ourselves. This is the fact.
+   */
+  submittedAt: Date | null;
 };
 
 type BulkAction = (prev: DeleteState, formData: FormData) => Promise<DeleteState>;
@@ -187,6 +193,19 @@ export function PropertiesTable({
                       <Chip tone={PUBLICATION_TONE[p.publicationState] ?? "neutral"}>
                         <span className="capitalize">{p.publicationState}</span>
                       </Chip>
+                      {/* Ink, deliberately off the gold ramp the two chips
+                          above sit on: this is not another step of "how
+                          public is it", it is a different question — whose
+                          listing is this. The link goes where it can be
+                          managed or pulled down. */}
+                      {p.submittedAt && (
+                        <Link
+                          href="/admin/submissions"
+                          title="An owner sent this through the public sell form — it is not one of our own listings."
+                        >
+                          <Chip tone="strong">Owner submission</Chip>
+                        </Link>
+                      )}
                     </div>
                   </td>
                   <td className="whitespace-nowrap text-soft">{p.city ?? "—"}</td>

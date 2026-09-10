@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { and, asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
+import { asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { properties, propertyImages, propertyOwners } from "@/lib/db/schema";
 import { formatDateTime } from "@/lib/dates";
@@ -11,6 +11,7 @@ import {
   EmptyState,
   PageHead,
   deskButton,
+  type ChipTone,
 } from "@/components/admin/desk";
 
 export const metadata = { title: "Property submissions" };
@@ -18,12 +19,16 @@ export const metadata = { title: "Property submissions" };
 /**
  * The review queue for the public /sell form.
  *
- * A submission is an ordinary property row with `submittedAt` set and
- * `publication_state = 'draft'`, so this screen is a filtered view of the
- * portfolio rather than a separate inbox. Approving publishes the row;
- * declining archives it. Both leave it editable in the normal property
- * editor afterwards, which is where a broker will usually go first — a
- * seller's own wording is rarely publication-ready.
+ * A submission is an ordinary property row with `submittedAt` set, so this
+ * screen is a filtered view of the portfolio rather than a separate inbox.
+ * Approving publishes the row; declining archives it; a published one can be
+ * taken back down from here. All three leave it editable in the normal
+ * property editor afterwards, which is where a broker will usually go first —
+ * a seller's own wording is rarely publication-ready.
+ *
+ * It keeps showing published submissions on purpose: this is the one screen
+ * that says "these listings are not ours", and the place to pull one off the
+ * website without hunting for it among our own.
  *
  * Local to this route rather than lib/db/queries.ts: every row carries the
  * seller's name and phone number, which must never reach the public query
@@ -45,6 +50,7 @@ type SubmissionRow = {
   sellerName: string | null;
   sellerMobile: string | null;
   sellerNotes: string | null;
+  publicationState: string;
 };
 
 /**
@@ -92,18 +98,20 @@ async function listSubmissions(): Promise<SubmissionRow[]> {
         demandPrice: properties.demandPrice,
         description: properties.description,
         submittedAt: properties.submittedAt,
+        publicationState: properties.publicationState,
         sellerName: propertyOwners.name,
         sellerMobile: propertyOwners.mobile,
         sellerNotes: propertyOwners.notes,
       })
       .from(properties)
       .leftJoin(propertyOwners, eq(propertyOwners.propertyId, properties.id))
-      .where(
-        and(
-          isNotNull(properties.submittedAt),
-          eq(properties.publicationState, "draft")
-        )
-      )
+      // Every submission, not just the ones still waiting. A published one
+      // stays on this page on purpose: it is the screen that says "this
+      // listing came from an owner, not from us", and the place to take it
+      // back down without hunting for it in the full properties table.
+      // submittedAt is what makes a row a submission — publicationState is
+      // only what has happened to it since.
+      .where(isNotNull(properties.submittedAt))
       .orderBy(desc(properties.submittedAt));
   } catch (err) {
     // Fail soft, like every other panel screen: a database blip shows an
@@ -112,6 +120,20 @@ async function listSubmissions(): Promise<SubmissionRow[]> {
     return [];
   }
 }
+
+/**
+ * How a submission's publication state reads on this page.
+ *
+ * The words are about the website, not the database: an owner's submission
+ * that is live is "On the website" — the thing the broker wants to know is
+ * whether the public can see it, and the button beside it takes it down.
+ * Anything unrecognised falls back to review, which is the safe reading.
+ */
+const STATES: Record<string, { tone: ChipTone; label: string }> = {
+  draft: { tone: "quiet", label: "Awaiting review" },
+  published: { tone: "live", label: "On the website" },
+  archived: { tone: "neutral", label: "Declined" },
+};
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -132,7 +154,7 @@ export default async function SubmissionsPage() {
     <div className="flex flex-col gap-4">
       <PageHead
         title="Property submissions"
-        sub="Listings owners sent through the public sell form, waiting to be checked before anything goes live."
+        sub="Everything owners sent through the public sell form — waiting, live, or declined."
         actions={
           <Link href="/sell" className={deskButton}>
             Open the sell form
@@ -141,15 +163,16 @@ export default async function SubmissionsPage() {
       />
 
       <p className="max-w-2xl text-[13px] text-soft">
-        Nothing here is on the website yet. Open one to fix the wording and add
+        These are not our own listings. Open one to fix the wording and add
         photographs before you publish it — approving puts it live exactly as
-        written.
+        written. Anything already on the website stays on this page, so you can
+        take it back down from here.
       </p>
 
       {rows.length === 0 ? (
         <EmptyState
-          title="Nothing waiting"
-          note="Every submission has been dealt with. New ones appear here the moment an owner sends the sell form."
+          title="No submissions yet"
+          note="Nobody has sent the public sell form. Anything an owner submits appears here the moment they send it, and stays here after you publish it."
         />
       ) : (
         <div className="flex flex-col gap-4">
@@ -159,7 +182,9 @@ export default async function SubmissionsPage() {
                 <div className="flex min-w-0 flex-col gap-1.5">
                   <h2 className="text-[17px] font-bold text-ink">{row.title}</h2>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Chip tone="quiet">Awaiting review</Chip>
+                    <Chip tone={(STATES[row.publicationState] ?? STATES.draft).tone}>
+                      {(STATES[row.publicationState] ?? STATES.draft).label}
+                    </Chip>
                     <span className="text-[12px] text-muted">
                       {[row.locality, row.city].filter(Boolean).join(", ") || "Location not given"}
                       {row.refCode ? ` · ${row.refCode}` : ""}
@@ -225,7 +250,7 @@ export default async function SubmissionsPage() {
               {row.sellerNotes && <p className="text-[13px] text-muted">{row.sellerNotes}</p>}
 
               <div className="border-t border-line-soft pt-4">
-                <SubmissionActions id={row.id} />
+                <SubmissionActions id={row.id} publicationState={row.publicationState} />
               </div>
             </Card>
           ))}

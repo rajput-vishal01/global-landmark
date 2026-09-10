@@ -26,7 +26,11 @@ export type SubmissionActionState = { error?: string };
 
 async function setState(
   id: number,
-  publicationState: "published" | "archived"
+  // "draft" joined the set when a published submission became un-publishable
+  // from this screen. Still a closed union rather than a string: the WHERE
+  // below is what stops this reaching an ordinary listing, and the type is
+  // what stops it reaching a state the property form does not recognise.
+  publicationState: "published" | "archived" | "draft"
 ): Promise<SubmissionActionState> {
   await requireAdmin();
   if (!Number.isInteger(id) || id <= 0) return { error: "Missing submission id." };
@@ -63,4 +67,23 @@ export async function declineSubmission(
   formData: FormData
 ): Promise<SubmissionActionState> {
   return setState(Number(formData.get("id")), "archived");
+}
+
+/**
+ * Take a published submission back off the website.
+ *
+ * Back to `draft`, not `archived`. Archiving is the "we are not taking this
+ * on" answer to something never published; this is "it was live and now it
+ * is not", which leaves the listing in the queue where it can be reviewed
+ * and published again. The two decisions read the same in a database column
+ * and are completely different to whoever is looking at the screen.
+ *
+ * The row keeps its submittedAt either way, which is what keeps it visible
+ * on this page at all.
+ */
+export async function unpublishSubmission(
+  _prev: SubmissionActionState,
+  formData: FormData
+): Promise<SubmissionActionState> {
+  return setState(Number(formData.get("id")), "draft");
 }
