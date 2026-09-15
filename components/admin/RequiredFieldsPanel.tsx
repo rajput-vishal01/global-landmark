@@ -1,16 +1,7 @@
 "use client";
 
-import { requiredFieldsFor } from "@/lib/taxonomy/sections";
+import { FIELD_LABELS, requiredFieldsFor } from "@/lib/taxonomy/sections";
 import { cardChrome } from "@/components/admin/desk";
-
-/** Plain-English names for the publish-gate fields. */
-const FIELD_LABELS: Record<string, string> = {
-  floorNumber: "Floor number",
-  unitNumber: "Unit number",
-  plotArea: "Plot size",
-  superArea: "Super area",
-  configuration: "Configuration",
-};
 
 /**
  * What this form actually demands, said once at the top.
@@ -35,21 +26,23 @@ export function RequiredFieldsPanel({ propertyType }: { propertyType: string }) 
       </p>
       <ul className="mt-3 flex flex-col gap-2 text-[13px] text-ink">
         <li>
-          <span className="font-semibold">To save a draft:</span> a title. That
-          is the only field the form refuses to save without.
+          <span className="font-semibold">To save a draft:</span> a title and an
+          address line. Those are the only two fields the form refuses to save
+          without.
         </li>
         <li>
           <span className="font-semibold">To put it on the website:</span>{" "}
           {propertyType ? (
             toPublish.length > 0 ? (
               <>
-                a {propertyType.toLowerCase()} also needs{" "}
-                {toPublish.map((f) => FIELD_LABELS[f] ?? f).join(" and ")}, then
+                at least one photo, and a {propertyType.toLowerCase()} also needs{" "}
+                {toPublish.map((f) => FIELD_LABELS[f]).join(" and ")}, then
                 set Publication to “Published” in Basic details.
               </>
             ) : (
               <>
-                nothing more is required for a {propertyType.toLowerCase()} —
+                at least one photo; nothing more is required for a{" "}
+                {propertyType.toLowerCase()} —
                 set Publication to “Published” in Basic details.
               </>
             )

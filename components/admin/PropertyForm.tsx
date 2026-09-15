@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import type { AdminProperty, PropertyImage } from "@/lib/db/schema";
 import type { PublicProject } from "@/lib/db/public-columns";
 import {
@@ -9,7 +9,7 @@ import {
 } from "@/app/admin/(panel)/properties/actions";
 import { CATEGORIES } from "@/lib/categories";
 import { PROPERTY_TYPES, withEmptyOption } from "@/lib/attributes";
-import { sectionsFor } from "@/lib/taxonomy/sections";
+import { requiredFieldsFor, sectionsFor } from "@/lib/taxonomy/sections";
 import { FormSection, deskFieldFull, deskLabel } from "./FormSection";
 import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
@@ -132,6 +132,12 @@ export function PropertyForm({
   const [autosave, setAutosave] = useState<AutosaveStatus>({ kind: "idle" });
 
   const visible = useMemo(() => new Set(sectionsFor(propertyType)), [propertyType]);
+  // The same rule the server enforces on publish, so a * can only appear on a
+  // field that publishing will actually refuse without.
+  const requiredToPublish = useMemo(
+    () => new Set<string>(requiredFieldsFor(propertyType)),
+    [propertyType]
+  );
 
   const formRef = useRef<HTMLFormElement>(null);
   const idFieldRef = useRef<HTMLInputElement>(null);
@@ -148,6 +154,11 @@ export function PropertyForm({
   // widget going unwatched, at the cost of one string comparison per tick.
   const lastSavedRef = useRef<string | null>(null);
   const savingRef = useRef(false);
+  // The autosave request currently on the wire, if any. Submit waits on it:
+  // a brand-new listing's first autosave is what creates the row and hands
+  // back its id, and a submit that reads the form before that id lands
+  // carries an empty id and inserts a second row.
+  const inFlightRef = useRef<Promise<unknown> | null>(null);
 
   useEffect(() => {
     // ponytail: 20s fixed interval, per §4.5. No debounce-on-idle, no
@@ -172,7 +183,9 @@ export function PropertyForm({
       savingRef.current = true;
       setAutosave({ kind: "saving" });
       try {
-        const result = await saveDraft(fd);
+        const request = saveDraft(fd);
+        inFlightRef.current = request;
+        const result = await request;
         if (result.ok) {
           // Written directly to the DOM node, not through React state: the
           // hidden id field is uncontrolled (defaultValue), so this survives
@@ -195,6 +208,7 @@ export function PropertyForm({
         setAutosave({ kind: "error", message: "Autosave failed." });
       } finally {
         savingRef.current = false;
+        inFlightRef.current = null;
       }
     }
     // Refs are stable across renders and intentionally omitted; isPending
@@ -204,7 +218,39 @@ export function PropertyForm({
   }, [isPending, isUploading]);
 
   return (
-    <form ref={formRef} action={formAction} className="flex flex-col gap-5">
+    /*
+     * onSubmit + startTransition, NOT action={formAction}.
+     *
+     * React 19 resets a <form action={...}> to its default values whenever
+     * the action returns — including when it returns a validation error.
+     * On this form that did two kinds of damage. The broker lost everything
+     * they had typed. And the hidden id field went back to empty, although
+     * autosave had usually already created the draft row and written its id
+     * there. The next autosave tick or the next submit then had no id, so it
+     * INSERTED again: every round of validation errors could leave another
+     * orphaned copy of the listing in the database.
+     *
+     * Dispatching through startTransition skips that automatic reset, so the
+     * form, the Select widgets' own state and the id all survive an error.
+     * The browser's own `required` checks still run first: the submit
+     * event only fires once the form is natively valid.
+     */
+    <form
+      ref={formRef}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (isPending) return;
+        const form = event.currentTarget;
+        const submitter = (event.nativeEvent as SubmitEvent).submitter;
+        void (async () => {
+          // Let a running autosave land first, so its id is in the form.
+          await inFlightRef.current?.catch(() => undefined);
+          const formData = new FormData(form, submitter);
+          startTransition(() => formAction(formData));
+        })();
+      }}
+      className="flex flex-col gap-5"
+    >
       {/* Uncontrolled (defaultValue, not value): autosave writes the id of a
           newly-created draft straight to this DOM node via idFieldRef, and
           a React-controlled value would overwrite that on the next render. */}
@@ -281,6 +327,7 @@ export function PropertyForm({
           <div className="flex flex-col gap-2">
             <label htmlFor="category" className={deskLabel}>
               Category
+              <Req />
             </label>
             <Select
               id="category"
@@ -348,10 +395,12 @@ export function PropertyForm({
         latitude={property?.latitude}
         longitude={property?.longitude}
         showMapPublicly={property?.showMapPublicly ?? false}
+        requiredToPublish={requiredToPublish}
       />
 
       {visible.has("area") && (
         <AreaSection
+          requiredToPublish={requiredToPublish}
           plotArea={property?.plotArea}
           plotAreaUnit={property?.plotAreaUnit}
           builtUpArea={property?.builtUpArea}
@@ -426,7 +475,12 @@ export function PropertyForm({
         isParkFacing={property?.isParkFacing ?? false}
       />
 
-      <FormSection title="Photos" hint="The first image is the cover" defaultOpen>
+      <FormSection
+        title="Photos"
+        hint="At least one to publish · the first image is the cover"
+        required
+        defaultOpen
+      >
         <ImageUploader
           onBusyChange={setIsUploading}
           initial={

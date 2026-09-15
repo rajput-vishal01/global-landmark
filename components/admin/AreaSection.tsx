@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Select } from "@/components/ui/Select";
+import { Req } from "@/components/ui/RequiredMark";
 import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
 
 import { ChecklistField } from "./ChecklistField";
@@ -44,7 +45,10 @@ export function AreaSection({
   frontFeet: initialFrontFeet,
   depthFeet: initialDepthFeet,
   plcAttributes,
+  requiredToPublish,
 }: {
+  /** Publish-gate fields for the chosen property type (lib/taxonomy/sections). */
+  requiredToPublish?: ReadonlySet<string>;
   plotArea?: number | null;
   plotAreaUnit?: string | null;
   builtUpArea?: number | null;
@@ -99,6 +103,7 @@ export function AreaSection({
             <div key={measure.key} className="flex flex-col gap-2">
               <label htmlFor={measure.key} className={deskLabel}>
                 {measure.label}
+                {requiredToPublish?.has(measure.key) && <Req />}
               </label>
 
               <div className="flex gap-3">

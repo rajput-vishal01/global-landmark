@@ -44,7 +44,10 @@ export function LocationSection({
   latitude: initialLatitude,
   longitude: initialLongitude,
   showMapPublicly: initialShowMapPublicly,
+  requiredToPublish,
 }: {
+  /** Publish-gate fields for the chosen property type (lib/taxonomy/sections). */
+  requiredToPublish?: ReadonlySet<string>;
   location?: string | null;
   city?: string | null;
   locality?: string | null;
@@ -234,6 +237,7 @@ export function LocationSection({
         <div className="flex flex-col gap-2">
           <label htmlFor="floorNumber" className={deskLabel}>
             Floor number
+            {requiredToPublish?.has("floorNumber") && <Req />}
           </label>
           <input
             id="floorNumber"
@@ -264,6 +268,7 @@ export function LocationSection({
         <div className="flex flex-col gap-2">
           <label htmlFor="unitNumber" className={deskLabel}>
             Unit number
+            {requiredToPublish?.has("unitNumber") && <Req />}
           </label>
           <input
             id="unitNumber"

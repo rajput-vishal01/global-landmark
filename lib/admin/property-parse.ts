@@ -16,7 +16,7 @@ import {
   MAX_UPLOAD_BYTES,
   storageKeyFromUrl,
 } from "../storage";
-import { requiredFieldsFor } from "../taxonomy/sections";
+import { FIELD_LABELS, requiredFieldsFor } from "../taxonomy/sections";
 import {
   DOCUMENTATION_FLAGS,
   LEGAL_FLAGS,
@@ -630,7 +630,7 @@ export function parseProperty(
     if (missing.length) {
       return {
         ok: false,
-        error: `${propertyType} listings need ${missing.join(", ")} before publishing.`,
+        error: `A ${propertyType} needs ${missing.map((f) => FIELD_LABELS[f]).join(" and ")} before it can be published.`,
       };
     }
   }

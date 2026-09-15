@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { cardChrome, deskField } from "@/components/admin/desk";
+import { Req } from "@/components/ui/RequiredMark";
 
 /**
  * The field chrome every admin form wears, in one place.
@@ -45,9 +46,12 @@ export function FormSection({
   filled,
   total,
   defaultOpen = false,
+  required = false,
   children,
 }: {
   title: string;
+  /** Marks the section itself as mandatory, for a field with no label of its own (Photos). */
+  required?: boolean;
   hint?: string;
   /** How many of this section's fields currently carry a value. */
   filled?: number;
@@ -81,7 +85,10 @@ export function FormSection({
             wrapper cancels it instead, which is also what keeps a section
             with no hint from sitting 10px off-centre. */}
         <span className={`flex min-w-0 flex-col ${hint ? "" : "-mb-2.5"}`}>
-          <span className="desk-eyebrow">{title}</span>
+          <span className="desk-eyebrow">
+            {title}
+            {required && <Req />}
+          </span>
           {hint && <span className="-mt-1.5 text-[11.5px] text-muted">{hint}</span>}
         </span>
 

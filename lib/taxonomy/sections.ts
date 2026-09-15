@@ -146,6 +146,20 @@ export function sectionsFor(propertyType: string | null | undefined): SectionKey
 }
 
 /** Fields that must be filled before this type may leave draft. */
+/**
+ * Plain-English names for the publish-gate fields. Beside the rules so the
+ * form markers, the helper panel and the server's error message all name a
+ * field the same way — the server used to reply "listings need floorNumber,
+ * unitNumber", which is a column name, not something a broker can find.
+ */
+export const FIELD_LABELS: Record<FieldKey, string> = {
+  floorNumber: "Floor number",
+  unitNumber: "Unit number",
+  plotArea: "Plot area",
+  superArea: "Super area",
+  configuration: "Configuration",
+};
+
 export function requiredFieldsFor(
   propertyType: string | null | undefined
 ): FieldKey[] {
