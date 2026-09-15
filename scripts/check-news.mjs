@@ -56,7 +56,7 @@ const KEEP = [
 
 try {
   execSync(
-    `npx tsc lib/news-filter.ts --outDir "${out}" --rootDir lib ` +
+    `npx tsc lib/news-filter.ts lib/news-queries.ts --outDir "${out}" --rootDir lib ` +
       `--target es2022 --module commonjs --esModuleInterop --skipLibCheck`,
     { stdio: "pipe" }
   );
@@ -64,6 +64,18 @@ try {
 
   const require = createRequire(join(out, "noop.cjs"));
   const { isMarketStory } = require(join(out, "news-filter.js"));
+  const { PROPERTY_QUERIES, MARKET_QUERIES, MAX_QUERY_LENGTH } = require(
+    join(out, "news-queries.js")
+  );
+
+  // newsdata.io 422s any query over the limit, on every refresh, silently —
+  // the page just shows fewer stories. Two queries shipped that way.
+  for (const q of [...PROPERTY_QUERIES, ...MARKET_QUERIES]) {
+    assert.ok(
+      q.length <= MAX_QUERY_LENGTH,
+      `news query is ${q.length} chars, newsdata.io rejects over ${MAX_QUERY_LENGTH}: ${q}`
+    );
+  }
 
   for (const [title, description] of REJECT) {
     assert.equal(isMarketStory(title, description), false, `must reject: ${title}`);

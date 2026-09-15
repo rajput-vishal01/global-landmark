@@ -1,4 +1,5 @@
 import { isMarketStory } from "./news-filter";
+import { MARKET_QUERIES, PROPERTY_QUERIES } from "./news-queries";
 
 export type NewsArticle = {
   title: string;
@@ -44,44 +45,6 @@ type NewsdataResponse = {
 };
 
 const REVALIDATE_SECONDS = 12 * 60 * 60; // client-requested 12h refresh
-
-/**
- * Tricity property coverage from newsdata.io.
- *
- * Three things about the free plan shape this file, all verified against the
- * live API rather than assumed:
- *
- * 1. `q` is rejected over 100 characters ("UnsupportedQueryLength"), so the
- *    city list and the real-estate vocabulary cannot go in one query. They
- *    are split across several short ones and merged here instead.
- * 2. Boolean AND / OR and parentheses DO work, which is what makes each of
- *    those short queries worth issuing — `(cities) AND (property words)`
- *    returns an order of magnitude fewer, better rows than cities alone.
- * 3. The archive endpoint is paid; `latest` only reaches back 48 hours and
- *    returns 10 rows a page. Tricity property news is thin at that window,
- *    so we page a little deeper per query to have enough to show.
- *
- * `q` matches anywhere in the body, which alone lets through "a view of the
- * Residency Road in Srinagar" — hence the local relevance gate below: an
- * article has to name a Tricity place AND a property subject in its own
- * title or description to survive.
- */
-const PROPERTY_QUERIES = [
-  '(Chandigarh OR Panchkula OR Zirakpur) AND (property OR "real estate")',
-  '(Mohali OR Tricity OR "New Chandigarh") AND (housing OR realty OR property)',
-  '(Chandigarh OR Mohali OR Panchkula) AND (RERA OR GMADA OR township OR plots)',
-  '(Zirakpur OR Kharar OR Derabassi OR Mullanpur) AND (flats OR builder OR land)',
-];
-
-/**
- * Two more property angles, added when the general-Tricity tier was
- * removed. They widen coverage WITHIN the property subject rather than
- * outside it, which is the only kind of widening this page wants.
- */
-const MARKET_QUERIES = [
-  '(Chandigarh OR Mohali OR Panchkula) AND ("housing board" OR "land acquisition" OR "master plan" OR sector)',
-  '(Chandigarh OR Zirakpur OR Mohali OR Panchkula) AND ("property rates" OR "circle rate" OR "collector rate" OR "stamp duty" OR "home loan")',
-];
 
 /** Pages pulled per query. 10 rows a page, and the 48h window rarely holds more. */
 const PAGES_PER_QUERY = 2;
