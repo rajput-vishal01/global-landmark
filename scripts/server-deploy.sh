@@ -31,18 +31,28 @@ PM2_NAME="${GL_PM2_NAME:-globallandmarkrealty}"
 
 # --- make the toolchain findable -----------------------------------------
 # Node here is installed via nvm, and a non-interactive ssh shell does not
-# source .bashrc — so npm and pm2 are both "command not found" from CI, while
+# source .bashrc — so from CI, nvm's npm and pm2 are not on PATH, while
 # working perfectly when you ssh in and run this by hand. `set +u` around the
 # source because nvm.sh references unset variables.
-if ! command -v npm > /dev/null 2>&1; then
-  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
-  if [ -s "$NVM_DIR/nvm.sh" ]; then
-    set +u
-    # shellcheck disable=SC1091
-    . "$NVM_DIR/nvm.sh" > /dev/null 2>&1 || true
-    set -u
-  fi
+#
+# nvm is loaded UNCONDITIONALLY when it exists. This used to load it only when
+# `npm` was missing, which broke every deploy from Sep 2026 with "pm2 is not on
+# PATH": another site on this box got a system Node.js, so a system `npm`
+# appeared on the default PATH, the check passed, nvm was skipped, and pm2 —
+# which lives under nvm's Node — was never found.
+#
+# Preferring nvm is also the correct behaviour, not just the working one. pm2
+# runs the app on nvm's Node, so `npm ci` must use that same Node: a system npm
+# of a different version can install native modules the running app cannot
+# load. nvm.sh prepends its bin directory, so it wins over the system copy.
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  set +u
+  # shellcheck disable=SC1091
+  . "$NVM_DIR/nvm.sh" > /dev/null 2>&1 || true
+  set -u
 fi
+echo "toolchain: node $(node -v 2>/dev/null || echo missing) at $(command -v node || echo -), pm2 at $(command -v pm2 || echo missing)"
 for cmd in npm pm2 git tar curl flock sha256sum; do
   command -v "$cmd" > /dev/null 2>&1 || { echo "$cmd is not on PATH"; exit 1; }
 done
