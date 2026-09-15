@@ -8,7 +8,7 @@ import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
 import { slugify } from "@/lib/slugify";
 import type { DeleteState } from "../properties/actions";
-import { textField } from "@/lib/admin/form-fields";
+import { textField, idField } from "@/lib/admin/form-fields";
 
 export type BuilderFormState = { error?: string };
 
@@ -51,8 +51,8 @@ export async function updateBuilder(
   formData: FormData
 ): Promise<BuilderFormState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing builder id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing builder id." };
   const name = String(formData.get("name") ?? "").trim().slice(0, 200);
   if (!name) return { error: "A name is required." };
 
@@ -75,8 +75,8 @@ export async function deleteBuilder(
   formData: FormData
 ): Promise<DeleteState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing builder id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing builder id." };
 
   try {
     // Projects keep existing (builder_id set null at the DB level) — but the

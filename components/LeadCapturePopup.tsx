@@ -1,7 +1,8 @@
 "use client";
 
+import { useActionForm } from "@/lib/use-action-form";
 import { EASE } from "@/lib/motion";
-import { useActionState, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, m } from "framer-motion";
 import { usePathname } from "next/navigation";
@@ -35,7 +36,7 @@ const initialState: InquiryState = { status: "idle" };
  */
 export function LeadCapturePopup() {
   const [isOpen, setIsOpen] = useState(false);
-  const [state, formAction, isPending] = useActionState(submitInquiry, initialState);
+  const { state, isPending, formProps } = useActionForm(submitInquiry, initialState);
   const mounted = useMounted();
   const pathname = usePathname();
 
@@ -133,7 +134,7 @@ export function LeadCapturePopup() {
                   automated follow-ups.
                 </p>
 
-                <form action={formAction} className="mt-6 flex flex-col gap-5">
+                <form {...formProps} className="mt-6 flex flex-col gap-5">
                   {/* Honeypot — hidden from real users, tempting to bots. */}
                   <input
                     type="text"

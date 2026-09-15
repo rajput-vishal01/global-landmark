@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { Select } from "@/components/ui/Select";
 import { LABEL } from "@/components/form-classes";
 import { cardChrome, deskButtonPrimary, deskField } from "@/components/admin/desk";
@@ -26,10 +26,10 @@ export type EditableDeal = {
 
 /** Deal detail's editable fields (R-31) — client and property are fixed at creation, not here. */
 export function DealEditForm({ deal }: { deal: EditableDeal }) {
-  const [state, formAction, isPending] = useActionState(updateDeal, initialState);
+  const { state, isPending, formProps } = useActionForm(updateDeal, initialState);
 
   return (
-    <form action={formAction} className={`${cardChrome} flex flex-col gap-6 p-5`}>
+    <form {...formProps} className={`${cardChrome} flex flex-col gap-6 p-5`}>
       <input type="hidden" name="id" value={deal.id} />
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

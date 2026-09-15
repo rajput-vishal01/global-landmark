@@ -1,5 +1,6 @@
 "use server";
 
+import { idField } from "@/lib/admin/form-fields";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -66,8 +67,8 @@ export async function updateTextTestimonial(
   formData: FormData
 ): Promise<TextTestimonialFormState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing testimonial id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing testimonial id." };
   const { quote, author } = requiredFields(formData);
   if (!quote || !author) return { error: "A quote and an author are required." };
 
@@ -89,8 +90,8 @@ export async function deleteTextTestimonial(
   formData: FormData
 ): Promise<DeleteState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing testimonial id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing testimonial id." };
 
   try {
     await db.delete(textTestimonials).where(eq(textTestimonials.id, id));

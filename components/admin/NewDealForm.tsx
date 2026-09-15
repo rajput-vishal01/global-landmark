@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
+import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
 import { LABEL } from "@/components/form-classes";
 import { cardChrome, deskButtonPrimary, deskField } from "@/components/admin/desk";
@@ -21,7 +22,7 @@ export function NewDealForm({
   properties: { id: number; title: string; refCode: string | null }[];
   defaultClientId?: number;
 }) {
-  const [state, formAction, isPending] = useActionState(createDeal, initialState);
+  const { state, isPending, formProps } = useActionForm(createDeal, initialState);
 
   const clientOptions = [
     { value: "", label: "— Select a client —" },
@@ -36,11 +37,12 @@ export function NewDealForm({
   ];
 
   return (
-    <form action={formAction} className={`${cardChrome} flex flex-col gap-6 p-5`}>
+    <form {...formProps} className={`${cardChrome} flex flex-col gap-6 p-5`}>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor="clientId" className={LABEL}>
             Client
+            <Req />
           </label>
           <Select
             id="clientId"

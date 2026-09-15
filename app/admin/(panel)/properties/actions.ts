@@ -1,5 +1,6 @@
 "use server";
 
+import { idField } from "@/lib/admin/form-fields";
 import { redirect } from "next/navigation";
 import { and, asc, eq, like, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -227,8 +228,8 @@ export async function createProperty(
   // fired would insert a SECOND row and leave the autosaved one orphaned as
   // an untitled duplicate. Forward to the same update path updateProperty
   // uses whenever the id turns out to name a real row.
-  const existingId = Number(formData.get("id"));
-  if (Number.isInteger(existingId) && existingId > 0) {
+  const existingId = idField(formData);
+  if (existingId !== null) {
     const [row] = await db
       .select({ id: properties.id })
       .from(properties)
@@ -327,8 +328,8 @@ export async function updateProperty(
   formData: FormData
 ): Promise<PropertyFormState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing property id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing property id." };
   const parsed = parseProperty(formData, modeFor(formData));
   if (!parsed.ok) return { error: parsed.error };
   const {
@@ -607,8 +608,8 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
  */
 export async function duplicateProperty(formData: FormData): Promise<void> {
   await requireAdmin();
-  const sourceId = Number(formData.get("id"));
-  if (!Number.isInteger(sourceId)) {
+  const sourceId = idField(formData);
+  if (sourceId === null) {
     redirect("/admin/properties");
   }
 
@@ -704,8 +705,8 @@ export async function deleteProperty(
   formData: FormData
 ): Promise<DeleteState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing property id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing property id." };
 
   try {
     const images = await db

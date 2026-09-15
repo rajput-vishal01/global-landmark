@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { Card, deskButtonPrimary } from "@/components/admin/desk";
 import { deskErrorText, deskFieldFull, deskLabel } from "@/components/admin/FormSection";
 import {
@@ -28,11 +28,11 @@ function SaveButton({ isPending }: { isPending: boolean }) {
 }
 
 export function ContactSettingsForm({ initial }: { initial: ContactOverride | null }) {
-  const [state, formAction, isPending] = useActionState(saveContactSettings, initialState);
+  const { state, isPending, formProps } = useActionForm(saveContactSettings, initialState);
 
   return (
     <Card>
-      <form action={formAction} className="flex flex-col gap-5">
+      <form {...formProps} className="flex flex-col gap-5">
         <h2 className="desk-eyebrow">Contact details</h2>
         <div className={FIELD_ROW}>
           <label htmlFor="addressLines" className={deskLabel}>
@@ -167,11 +167,11 @@ export function ContactSettingsForm({ initial }: { initial: ContactOverride | nu
 }
 
 export function CredibilitySettingsForm({ initial }: { initial: CredibilityOverride | null }) {
-  const [state, formAction, isPending] = useActionState(saveCredibilitySettings, initialState);
+  const { state, isPending, formProps } = useActionForm(saveCredibilitySettings, initialState);
 
   return (
     <Card>
-      <form action={formAction} className="flex flex-col gap-5">
+      <form {...formProps} className="flex flex-col gap-5">
         <h2 className="desk-eyebrow">Landing page claim</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className={FIELD_ROW}>

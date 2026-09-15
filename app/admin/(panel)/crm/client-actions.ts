@@ -9,7 +9,7 @@ import { requireAdmin } from "@/lib/admin/session";
 import type { DeleteState } from "@/app/admin/(panel)/properties/actions";
 import { DEAL_STAGES } from "@/lib/taxonomy/brokerage";
 import { ACTIVITY_KINDS } from "@/lib/taxonomy/activities";
-import { textField, moneyField } from "@/lib/admin/form-fields";
+import { textField, moneyField, idField } from "@/lib/admin/form-fields";
 
 export type ClientFormState = { error?: string };
 
@@ -68,8 +68,8 @@ export async function updateClient(
   formData: FormData
 ): Promise<ClientFormState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing client id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing client id." };
   const name = String(formData.get("name") ?? "").trim().slice(0, 200);
   if (!name) return { error: "A name is required." };
 
@@ -107,46 +107,53 @@ function dateTimeField(formData: FormData, key: string): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export async function addActivity(formData: FormData): Promise<void> {
-  await requireAdmin();
-  const clientId = Number(formData.get("clientId"));
-  if (!Number.isInteger(clientId)) redirect("/admin/crm");
-
-  const kind = String(formData.get("kind") ?? "");
-  if ((ACTIVITY_KINDS as readonly string[]).includes(kind)) {
-    // A call log is written after the call, not during it — often hours or
-    // days later ("I called them on Tuesday"). Left blank this keeps the
-    // schema default (now), so the common same-moment case costs nothing;
-    // filled in, it records when the call actually happened. The list is
-    // ordered by occurredAt, so a backdated entry sorts into its real place
-    // rather than jumping to the top.
-    const occurredAt = dateTimeField(formData, "occurredAt");
-    try {
-      await db.insert(crmActivities).values({
-        clientId,
-        kind,
-        note: textField(formData, "note", 4000),
-        author: textField(formData, "author", 200),
-        followUpAt: dateField(formData, "followUpAt"),
-        ...(occurredAt ? { occurredAt } : {}),
-      });
-    } catch (err) {
-      console.error("addActivity failed:", err);
-    }
-  }
-  redirect(`/admin/crm/${clientId}`);
-}
+export type ActivityFormState = { error?: string };
 
 /**
- * Lead → client conversion (R-30): "website leads convert in one click,
- * carrying shortlisted property IDs." One `crm_deals` row per shortlisted
- * property id (R-30's confirmed default — one property, many deals per
- * client), each starting at the first pipeline stage.
+ * Logs a call, visit or note against a client from the inline form.
  *
- * Not wired into any UI from this file — the lead inbox
- * (app/admin/(panel)/leads/**) belongs to a different engineer. They call
- * this from a "Convert to client" button once one exists there.
+ * Returns a state rather than redirecting. It used to catch a failed insert,
+ * log it, and redirect back to the client exactly as if it had worked, and an
+ * unrecognised kind skipped the insert just as silently. Both now come back as
+ * an error the form shows.
  */
+export async function addActivity(
+  _prev: ActivityFormState,
+  formData: FormData
+): Promise<ActivityFormState> {
+  await requireAdmin();
+  const clientId = idField(formData, "clientId");
+  if (clientId === null) return { error: "Missing client id." };
+
+  const kind = String(formData.get("kind") ?? "");
+  if (!(ACTIVITY_KINDS as readonly string[]).includes(kind)) {
+    return { error: "Choose what kind of activity this was." };
+  }
+
+  // A call log is written after the call, not during it — often hours or
+  // days later ("I called them on Tuesday"). Left blank this keeps the
+  // schema default (now), so the common same-moment case costs nothing;
+  // filled in, it records when the call actually happened. The list is
+  // ordered by occurredAt, so a backdated entry sorts into its real place
+  // rather than jumping to the top.
+  const occurredAt = dateTimeField(formData, "occurredAt");
+  try {
+    await db.insert(crmActivities).values({
+      clientId,
+      kind,
+      note: textField(formData, "note", 4000),
+      author: textField(formData, "author", 200),
+      followUpAt: dateField(formData, "followUpAt"),
+      ...(occurredAt ? { occurredAt } : {}),
+    });
+  } catch (err) {
+    console.error("addActivity failed:", err);
+    return { error: "Could not log the activity. Try again." };
+  }
+  revalidatePath(`/admin/crm/${clientId}`);
+  return {};
+}
+
 export async function convertLeadToClient(leadId: number): Promise<void> {
   await requireAdmin();
 
@@ -204,8 +211,8 @@ export async function deleteClient(
   formData: FormData
 ): Promise<DeleteState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing client id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing client id." };
 
   try {
     const [{ n }] = await db

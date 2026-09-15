@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useActionState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { createPortal } from "react-dom";
 import { AnimatePresence, m } from "framer-motion";
 import Link from "next/link";
@@ -237,9 +237,13 @@ function BulkDeleteBar({
   action: BulkAction;
   onDone: () => void;
 }) {
-  const [state, formAction, isPending] = useActionState(action, {});
+  // Selection clears only once the delete has actually succeeded. It used to
+  // clear straight after dispatch, which unmounted this bar mid-request — so a
+  // failed bulk delete never showed its error and simply looked like it worked.
+  const { state, isPending, formRef, formProps } = useActionForm(action, {}, {
+    onSuccess: onDone,
+  });
   const [open, setOpen] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
   const previewTitles = [...new Set(titles)].slice(0, 3);
   const preview =
     previewTitles.join(", ") + (new Set(titles).size > previewTitles.length ? ", …" : "");
@@ -254,13 +258,7 @@ function BulkDeleteBar({
       <p className="text-[13px] text-ink">
         <span className="font-semibold">{count}</span> selected — {preview}
       </p>
-      <form
-        ref={formRef}
-        action={(fd) => {
-          formAction(fd);
-          onDone();
-        }}
-      >
+      <form {...formProps}>
         {ids.map((id) => (
           <input key={id} type="hidden" name="ids" value={id} />
         ))}

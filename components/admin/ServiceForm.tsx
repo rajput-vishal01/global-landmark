@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import type { services } from "@/lib/db/schema";
 import { cardChrome, deskButtonPrimary } from "@/components/admin/desk";
 import { deskFieldFull, deskLabel } from "./FormSection";
@@ -33,11 +33,11 @@ export function ServiceForm({
   service?: Service;
   action: Action;
 }) {
-  const [state, formAction, isPending] = useActionState(action, initialState);
+  const { state, isPending, formProps } = useActionForm(action, initialState);
   const isEditing = Boolean(service);
 
   return (
-    <form action={formAction} className={`${cardChrome} flex flex-col gap-6 p-5`}>
+    <form {...formProps} className={`${cardChrome} flex flex-col gap-6 p-5`}>
       {service && <input type="hidden" name="id" value={service.id} />}
 
       <div className="flex flex-col gap-1.5">

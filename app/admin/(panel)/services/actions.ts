@@ -8,7 +8,7 @@ import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
 import { SERVICE_ICON_KEYS } from "@/components/service-icons";
 import type { DeleteState } from "../properties/actions";
-import { textField } from "@/lib/admin/form-fields";
+import { textField, idField } from "@/lib/admin/form-fields";
 
 export type ServiceFormState = { error?: string };
 
@@ -62,8 +62,8 @@ export async function updateService(
   formData: FormData
 ): Promise<ServiceFormState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing service id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing service id." };
   const title = String(formData.get("title") ?? "").trim().slice(0, 200);
   if (!title) return { error: "A title is required." };
 
@@ -85,8 +85,8 @@ export async function deleteService(
   formData: FormData
 ): Promise<DeleteState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing service id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing service id." };
 
   try {
     await db.delete(services).where(eq(services.id, id));

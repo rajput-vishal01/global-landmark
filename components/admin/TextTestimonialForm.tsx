@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import type { textTestimonials } from "@/lib/db/schema";
 import { cardChrome, deskButtonPrimary } from "@/components/admin/desk";
 import { deskFieldFull, deskLabel } from "./FormSection";
@@ -25,11 +25,11 @@ export function TextTestimonialForm({
   testimonial?: TextTestimonial;
   action: Action;
 }) {
-  const [state, formAction, isPending] = useActionState(action, initialState);
+  const { state, isPending, formProps } = useActionForm(action, initialState);
   const isEditing = Boolean(testimonial);
 
   return (
-    <form action={formAction} className={`${cardChrome} flex flex-col gap-6 p-5`}>
+    <form {...formProps} className={`${cardChrome} flex flex-col gap-6 p-5`}>
       {testimonial && <input type="hidden" name="id" value={testimonial.id} />}
 
       <div className="flex flex-col gap-1.5">

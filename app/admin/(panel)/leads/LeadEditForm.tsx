@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { Select } from "@/components/ui/Select";
 import { deskButtonSmall, deskField } from "@/components/admin/desk";
 import { deskErrorText } from "@/components/admin/FormSection";
@@ -26,10 +26,10 @@ export function LeadEditForm({
   status: string;
   assignedTo: string | null;
 }) {
-  const [state, formAction, isPending] = useActionState(updateLead, initialState);
+  const { state, isPending, formProps } = useActionForm(updateLead, initialState);
 
   return (
-    <form action={formAction} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+    <form {...formProps} className="flex flex-col gap-2 sm:flex-row sm:items-end">
       <input type="hidden" name="id" value={id} />
       <div className="w-32">
         {/* The custom listbox, not a native <select>: the OS draws that popup

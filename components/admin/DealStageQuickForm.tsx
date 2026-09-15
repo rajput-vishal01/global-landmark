@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { Select } from "@/components/ui/Select";
 import { deskButtonSmall } from "@/components/admin/desk";
 import { DEAL_STAGES } from "@/lib/taxonomy/brokerage";
@@ -19,10 +19,10 @@ const initialState: DealFormState = {};
  * make the board look cleaner.
  */
 export function DealStageQuickForm({ id, stage }: { id: number; stage: string }) {
-  const [state, formAction, isPending] = useActionState(updateDealStage, initialState);
+  const { state, isPending, formProps } = useActionForm(updateDealStage, initialState);
 
   return (
-    <form action={formAction} className="flex flex-col gap-1.5">
+    <form {...formProps} className="flex flex-col gap-1.5">
       <input type="hidden" name="id" value={id} />
       <div className="flex items-center gap-2">
         <Select name="stage" options={STAGE_OPTIONS} defaultValue={stage} className="min-w-0" />

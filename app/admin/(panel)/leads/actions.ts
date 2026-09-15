@@ -1,5 +1,6 @@
 "use server";
 
+import { idField } from "@/lib/admin/form-fields";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -24,8 +25,8 @@ export async function updateLead(
 ): Promise<LeadFormState> {
   await requireAdmin();
 
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing lead id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing lead id." };
 
   const status = String(formData.get("status") ?? "");
   if (!isLeadStatus(status)) return { error: "Invalid status." };
@@ -50,8 +51,8 @@ export async function updateLead(
  */
 export async function convertLead(formData: FormData): Promise<void> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return;
+  const id = idField(formData);
+  if (id === null) return;
   await convertLeadToClient(id);
 }
 
@@ -73,8 +74,8 @@ export async function deleteLead(
   formData: FormData
 ): Promise<DeleteState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing lead id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing lead id." };
 
   try {
     await db.delete(leads).where(eq(leads.id, id));

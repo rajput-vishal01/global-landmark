@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { FIELD, LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
@@ -30,7 +30,7 @@ const OPTIONAL = <span className="normal-case text-ink-muted">(optional)</span>;
  * lose the seller before they finish it.
  */
 export function SellPropertyForm() {
-  const [state, formAction, isPending] = useActionState(submitProperty, initialState);
+  const { state, isPending, formProps } = useActionForm(submitProperty, initialState);
 
   if (state.status === "sent") {
     return (
@@ -47,7 +47,7 @@ export function SellPropertyForm() {
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-10">
+    <form {...formProps} className="flex flex-col gap-10">
       {/* Honeypot — hidden from real users, tempting to bots */}
       <input
         type="text"

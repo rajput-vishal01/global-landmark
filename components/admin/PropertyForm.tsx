@@ -1,6 +1,7 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import type { AdminProperty, PropertyImage } from "@/lib/db/schema";
 import type { PublicProject } from "@/lib/db/public-columns";
 import {
@@ -125,7 +126,14 @@ export function PropertyForm({
    */
   property?: PropertyWithChildren;
 }) {
-  const [state, formAction, isPending] = useActionState(action, {});
+  // The autosave request currently on the wire, if any. Submit waits on it: a
+  // brand-new listing's first autosave is what creates the row and hands back
+  // its id, and a submit that reads the form before that id lands carries an
+  // empty id and inserts a second row.
+  const inFlightRef = useRef<Promise<unknown> | null>(null);
+  const { state, isPending, formRef, formProps } = useActionForm(action, {}, {
+    beforeSubmit: () => inFlightRef.current,
+  });
   const [isUploading, setIsUploading] = useState(false);
   const [propertyType, setPropertyType] = useState(property?.propertyType ?? "");
   const [kind, setKind] = useState<string>(property?.kind ?? "unit");
@@ -139,7 +147,6 @@ export function PropertyForm({
     [propertyType]
   );
 
-  const formRef = useRef<HTMLFormElement>(null);
   const idFieldRef = useRef<HTMLInputElement>(null);
   // Last successfully-autosaved snapshot of the form's data, so a tick with
   // nothing new to say is a no-op rather than an identical round trip.
@@ -154,11 +161,6 @@ export function PropertyForm({
   // widget going unwatched, at the cost of one string comparison per tick.
   const lastSavedRef = useRef<string | null>(null);
   const savingRef = useRef(false);
-  // The autosave request currently on the wire, if any. Submit waits on it:
-  // a brand-new listing's first autosave is what creates the row and hands
-  // back its id, and a submit that reads the form before that id lands
-  // carries an empty id and inserts a second row.
-  const inFlightRef = useRef<Promise<unknown> | null>(null);
 
   useEffect(() => {
     // ponytail: 20s fixed interval, per §4.5. No debounce-on-idle, no
@@ -211,46 +213,19 @@ export function PropertyForm({
         inFlightRef.current = null;
       }
     }
-    // Refs are stable across renders and intentionally omitted; isPending
-    // and isUploading are the only reactive values the closure reads, and
-    // listing them means the interval restarts with a fresh closure the
-    // moment either changes, rather than holding a stale reference.
-  }, [isPending, isUploading]);
+    // isPending and isUploading are the reactive values the closure reads;
+    // listing them restarts the interval with a fresh closure when either
+    // changes. formRef comes from useActionForm, so the linter cannot see it
+    // is a ref — it is, and its identity never changes, so listing it never
+    // restarts anything. The locally declared refs are omitted as usual.
+  }, [isPending, isUploading, formRef]);
 
   return (
-    /*
-     * onSubmit + startTransition, NOT action={formAction}.
-     *
-     * React 19 resets a <form action={...}> to its default values whenever
-     * the action returns — including when it returns a validation error.
-     * On this form that did two kinds of damage. The broker lost everything
-     * they had typed. And the hidden id field went back to empty, although
-     * autosave had usually already created the draft row and written its id
-     * there. The next autosave tick or the next submit then had no id, so it
-     * INSERTED again: every round of validation errors could leave another
-     * orphaned copy of the listing in the database.
-     *
-     * Dispatching through startTransition skips that automatic reset, so the
-     * form, the Select widgets' own state and the id all survive an error.
-     * The browser's own `required` checks still run first: the submit
-     * event only fires once the form is natively valid.
-     */
-    <form
-      ref={formRef}
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (isPending) return;
-        const form = event.currentTarget;
-        const submitter = (event.nativeEvent as SubmitEvent).submitter;
-        void (async () => {
-          // Let a running autosave land first, so its id is in the form.
-          await inFlightRef.current?.catch(() => undefined);
-          const formData = new FormData(form, submitter);
-          startTransition(() => formAction(formData));
-        })();
-      }}
-      className="flex flex-col gap-5"
-    >
+    // Submits through useActionForm, never <form action={...}>: React would
+    // reset the form on a validation error, wiping the broker's input and the
+    // autosaved row id, which is what created duplicate listings. See
+    // lib/use-action-form.ts.
+    <form {...formProps} className="flex flex-col gap-5">
       {/* Uncontrolled (defaultValue, not value): autosave writes the id of a
           newly-created draft straight to this DOM node via idFieldRef, and
           a React-controlled value would overwrite that on the next render. */}

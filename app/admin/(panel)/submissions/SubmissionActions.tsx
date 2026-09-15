@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { deskButtonDanger, deskButtonPrimary } from "@/components/admin/desk";
 import { deskErrorText } from "@/components/admin/FormSection";
 import {
@@ -43,21 +43,21 @@ export function SubmissionActions({
   id: number;
   publicationState: string;
 }) {
-  const [approveState, approve, approving] = useActionState(approveSubmission, initialState);
-  const [declineState, decline, declining] = useActionState(declineSubmission, initialState);
-  const [unpublishState, unpublish, unpublishing] = useActionState(
-    unpublishSubmission,
-    initialState
-  );
+  const approve = useActionForm(approveSubmission, initialState);
+  const decline = useActionForm(declineSubmission, initialState);
+  const unpublish = useActionForm(unpublishSubmission, initialState);
+  const approving = approve.isPending;
+  const declining = decline.isPending;
+  const unpublishing = unpublish.isPending;
 
   const busy = approving || declining || unpublishing;
-  const error = approveState.error ?? declineState.error ?? unpublishState.error;
+  const error = approve.state.error ?? decline.state.error ?? unpublish.state.error;
 
   return (
     <div className="flex flex-col items-start gap-2">
       <div className="flex flex-wrap items-center gap-2">
         {publicationState === "published" ? (
-          <form action={unpublish}>
+          <form {...unpublish.formProps}>
             <input type="hidden" name="id" value={id} />
             <button
               type="submit"
@@ -68,7 +68,7 @@ export function SubmissionActions({
             </button>
           </form>
         ) : (
-          <form action={approve}>
+          <form {...approve.formProps}>
             <input type="hidden" name="id" value={id} />
             <button
               type="submit"
@@ -88,7 +88,7 @@ export function SubmissionActions({
             would archive it under a word that means "we are not taking this
             on" — taking it down is the other button, and says so. */}
         {publicationState === "draft" && (
-          <form action={decline}>
+          <form {...decline.formProps}>
             <input type="hidden" name="id" value={id} />
             <button
               type="submit"

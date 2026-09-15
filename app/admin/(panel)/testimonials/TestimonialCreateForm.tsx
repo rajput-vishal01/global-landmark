@@ -1,21 +1,22 @@
 "use client";
 
+import { useActionForm } from "@/lib/use-action-form";
 import { FIELD, LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
-import { useActionState } from "react";
+
 import { createTestimonialVideo, type TestimonialFormState } from "./actions";
 
 const initialState: TestimonialFormState = {};
 
 export function TestimonialCreateForm() {
-  const [state, formAction, isPending] = useActionState(
+  const { state, isPending, formProps } = useActionForm(
     createTestimonialVideo,
     initialState
   );
 
   return (
     <form
-      action={formAction}
+      {...formProps}
       className="flex flex-wrap items-end gap-4 border border-border bg-white p-4"
     >
       <div className="flex min-w-64 flex-[2] flex-col gap-1.5">

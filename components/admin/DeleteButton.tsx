@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
-import { useActionState } from "react";
+import { useCallback, useState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { createPortal } from "react-dom";
 import { AnimatePresence, m } from "framer-motion";
 import { useModalLock } from "@/lib/hooks";
@@ -35,9 +35,8 @@ export function DeleteButton({
   label?: string;
   confirmText: string;
 }) {
-  const [state, formAction, isPending] = useActionState(action, {});
+  const { state, isPending, formRef, formProps } = useActionForm(action, {});
   const [open, setOpen] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
 
   useModalLock(
     open,
@@ -46,7 +45,7 @@ export function DeleteButton({
 
   return (
     <>
-      <form ref={formRef} action={formAction} className="inline-flex flex-col items-end gap-1">
+      <form {...formProps} className="inline-flex flex-col items-end gap-1">
         <input type="hidden" name="id" value={id} />
         <button
           type="button"

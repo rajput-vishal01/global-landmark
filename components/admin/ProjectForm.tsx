@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
+import { useState } from "react";
 import { Select } from "@/components/ui/Select";
 import { deskButtonPrimary } from "@/components/admin/desk";
 import { ChecklistField } from "./ChecklistField";
@@ -54,7 +55,7 @@ export function ProjectForm({
   builders: { id: number; name: string }[];
   project?: ProjectWithFields;
 }) {
-  const [state, formAction, isPending] = useActionState(action, {});
+  const { state, isPending, formProps } = useActionForm(action, {});
   const [city, setCity] = useState(project?.city ?? "");
   const [locality, setLocality] = useState(project?.locality ?? "");
   const localities = localitiesIn(city);
@@ -65,7 +66,7 @@ export function ProjectForm({
   ];
 
   return (
-    <form action={formAction} className="flex flex-col gap-6">
+    <form {...formProps} className="flex flex-col gap-6">
       {project && <input type="hidden" name="id" value={project.id} />}
 
       <FormSection title="Basics" defaultOpen>

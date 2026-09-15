@@ -1,5 +1,6 @@
 "use server";
 
+import { idField } from "@/lib/admin/form-fields";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
@@ -65,8 +66,8 @@ export async function createDeal(
 ): Promise<DealFormState> {
   await requireAdmin();
 
-  const clientId = Number(formData.get("clientId"));
-  if (!Number.isInteger(clientId) || clientId <= 0) return { error: "Select a client." };
+  const clientId = idField(formData, "clientId");
+  if (clientId === null) return { error: "Select a client." };
 
   const fields = parseSharedFields(formData);
   if (fields.propertyIdInvalid) return { error: "Invalid property." };
@@ -103,8 +104,8 @@ export async function updateDeal(
 ): Promise<DealFormState> {
   await requireAdmin();
 
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing deal id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing deal id." };
 
   const stage = String(formData.get("stage") ?? "");
   if (!isDealStage(stage)) return { error: "Invalid stage." };
@@ -148,8 +149,8 @@ export async function updateDealStage(
 ): Promise<DealFormState> {
   await requireAdmin();
 
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing deal id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing deal id." };
 
   const stage = String(formData.get("stage") ?? "");
   if (!isDealStage(stage)) return { error: "Invalid stage." };
@@ -183,8 +184,8 @@ export async function addPayment(
 ): Promise<PaymentFormState> {
   await requireAdmin();
 
-  const dealId = Number(formData.get("dealId"));
-  if (!Number.isInteger(dealId)) return { error: "Missing deal id." };
+  const dealId = idField(formData, "dealId");
+  if (dealId === null) return { error: "Missing deal id." };
 
   const amount = parseMoney(formData, "amount");
   if (amount == null || amount <= 0) return { error: "Enter a valid amount." };

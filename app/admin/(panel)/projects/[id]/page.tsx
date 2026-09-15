@@ -6,7 +6,6 @@ import { and, eq, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { projects } from "@/lib/db/schema";
 import { DeleteButton } from "@/components/admin/DeleteButton";
-import { Req } from "@/components/ui/RequiredMark";
 import { formatIndianShort } from "@/lib/attributes";
 import {
   Card,
@@ -17,12 +16,12 @@ import {
   TableWrap,
   deskButton,
   deskButtonPrimary,
-  deskField,
   deskLinkButton,
   deskRowLink,
   numericCell,
 } from "@/components/admin/desk";
-import { createTower, deleteTower } from "../actions";
+import { deleteTower } from "../actions";
+import { TowerForm } from "./TowerForm";
 import { duplicateProperty } from "../../properties/actions";
 
 export const metadata = { title: "Project" };
@@ -219,53 +218,7 @@ export default async function ProjectPitchViewPage({
             treatment: a tower is four numbers and a name. */}
         <Card>
           <p className="desk-eyebrow">Add a tower</p>
-          <form action={createTower} className="flex flex-wrap items-end gap-3">
-            <input type="hidden" name="projectId" value={project.id} />
-            <div className="flex min-w-40 flex-col gap-1.5">
-              <label htmlFor="towerName" className={fieldLabel}>
-                Tower name
-                <Req />
-              </label>
-              <input
-                id="towerName"
-                name="name"
-                type="text"
-                required
-                maxLength={200}
-                placeholder="Tower B"
-                className={deskField}
-              />
-            </div>
-            <div className="flex w-28 flex-col gap-1.5">
-              <label htmlFor="totalFloors" className={fieldLabel}>
-                Floors
-              </label>
-              <input
-                id="totalFloors"
-                name="totalFloors"
-                type="number"
-                min={0}
-                inputMode="numeric"
-                className={deskField}
-              />
-            </div>
-            <div className="flex w-28 flex-col gap-1.5">
-              <label htmlFor="unitsPerFloor" className={fieldLabel}>
-                Units/floor
-              </label>
-              <input
-                id="unitsPerFloor"
-                name="unitsPerFloor"
-                type="number"
-                min={0}
-                inputMode="numeric"
-                className={deskField}
-              />
-            </div>
-            <button type="submit" className={deskButton}>
-              Add tower
-            </button>
-          </form>
+          <TowerForm projectId={project.id} />
         </Card>
       </section>
     </div>

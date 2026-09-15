@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { Req } from "@/components/ui/RequiredMark";
 import { deskButtonPrimary, deskField } from "@/components/admin/desk";
 import { login, type LoginState } from "./actions";
@@ -8,10 +8,10 @@ import { login, type LoginState } from "./actions";
 const initialState: LoginState = {};
 
 export function LoginForm() {
-  const [state, formAction, isPending] = useActionState(login, initialState);
+  const { state, isPending, formProps } = useActionForm(login, initialState);
 
   return (
-    <form action={formAction} className="mt-5 flex flex-col gap-2">
+    <form {...formProps} className="mt-5 flex flex-col gap-2">
       <label
         htmlFor="password"
         className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted"

@@ -1,8 +1,9 @@
 "use client";
 
+import { useActionForm } from "@/lib/use-action-form";
 import { FIELD, LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
-import { useActionState, useState } from "react";
+import { useState } from "react";
 import { createDeal, type DealFormState } from "./actions";
 
 const initialState: DealFormState = {};
@@ -20,7 +21,7 @@ export type DealPickerItem = {
  * re-entering details.
  */
 export function DealCreateForm({ items }: { items: DealPickerItem[] }) {
-  const [state, formAction, isPending] = useActionState(createDeal, initialState);
+  const { state, isPending, formProps } = useActionForm(createDeal, initialState);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
@@ -35,9 +36,12 @@ export function DealCreateForm({ items }: { items: DealPickerItem[] }) {
   const selected = items.find((item) => item.id === selectedId) ?? null;
 
   return (
-    <form action={formAction} className="flex flex-col gap-5 border border-border bg-white p-4">
+    <form {...formProps} className="flex flex-col gap-5 border border-border bg-white p-4">
       <div className="flex flex-col gap-2">
-        <span className={LABEL}>Property or project</span>
+        <span className={LABEL}>
+          Property or project
+          <Req />
+        </span>
         <input type="hidden" name="propertyId" value={selectedId ?? ""} />
         <input
           type="search"

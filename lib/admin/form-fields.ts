@@ -51,3 +51,24 @@ export function moneyField(
 ): number | null {
   return intField(formData, key, max);
 }
+
+/**
+ * A row id: a positive whole number, or null.
+ *
+ * Every action used to read ids as `Number(formData.get("id"))` and check
+ * `Number.isInteger(id)`. A missing or empty field is `Number("") === 0`, and
+ * 0 IS an integer — so the check passed, and the action went on to
+ * `update … where id = 0`, matched nothing, and reported success on a save
+ * that never happened. On inserts that reference a parent (a deal's
+ * property, a payment's deal, a tower's project) the same 0 surfaced as a
+ * foreign-key failure behind a generic "could not save".
+ *
+ * Returning null makes the missing case a type the caller cannot ignore.
+ * scripts/check-forms.mjs fails the build on `Number(formData.get(...Id))`.
+ */
+export function idField(formData: FormData, key = "id"): number | null {
+  const raw = String(formData.get(key) ?? "").trim();
+  if (!/^[1-9]\d*$/.test(raw)) return null;
+  const n = Number(raw);
+  return Number.isSafeInteger(n) ? n : null;
+}

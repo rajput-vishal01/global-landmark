@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
@@ -28,7 +28,7 @@ export function TourRequestForm({
   propertyId: number;
   propertyTitle: string;
 }) {
-  const [state, formAction, isPending] = useActionState(requestTour, initialState);
+  const { state, isPending, formProps } = useActionForm(requestTour, initialState);
 
   if (state.status === "sent") {
     return (
@@ -49,7 +49,7 @@ export function TourRequestForm({
   const minDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   return (
-    <form action={formAction} className="flex max-w-xl flex-col gap-8">
+    <form {...formProps} className="flex max-w-xl flex-col gap-8">
       <input
         type="text"
         name="company"

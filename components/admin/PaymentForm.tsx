@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { LABEL } from "@/components/form-classes";
 import { cardChrome, deskButton, deskField } from "@/components/admin/desk";
 import { Req } from "@/components/ui/RequiredMark";
@@ -13,11 +13,14 @@ const FIELD = `${deskField} w-full`;
 
 /** Inline add-payment row under a deal's payments list (R-31 — partial receipts add up). */
 export function PaymentForm({ dealId }: { dealId: number }) {
-  const [state, formAction, isPending] = useActionState(addPayment, initialState);
+  // Stays on the deal page to log the next instalment, so it clears on success.
+  const { state, isPending, formProps } = useActionForm(addPayment, initialState, {
+    resetOnSuccess: true,
+  });
 
   return (
     <form
-      action={formAction}
+      {...formProps}
       className={`${cardChrome} flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-end`}
     >
       <input type="hidden" name="dealId" value={dealId} />

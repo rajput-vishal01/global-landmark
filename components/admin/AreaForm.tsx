@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
+import { useState } from "react";
 import type { Area } from "@/lib/db/schema";
 import { cardChrome, deskButtonPrimary } from "@/components/admin/desk";
 import { deskFieldFull, deskLabel } from "./FormSection";
@@ -31,12 +32,12 @@ const CHECKBOX =
  * permanently empty for a reason nobody can see.
  */
 export function AreaForm({ area, action }: { area?: Area; action: Action }) {
-  const [state, formAction, isPending] = useActionState(action, initialState);
+  const { state, isPending, formProps } = useActionForm(action, initialState);
   const [matchCity, setMatchCity] = useState(area?.matchCity ?? "");
   const localities = localitiesIn(matchCity);
 
   return (
-    <form action={formAction} className={`${cardChrome} flex flex-col gap-6 p-5`}>
+    <form {...formProps} className={`${cardChrome} flex flex-col gap-6 p-5`}>
       {area && <input type="hidden" name="id" value={area.id} />}
 
       <div className="flex flex-col gap-1.5">

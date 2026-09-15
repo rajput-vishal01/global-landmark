@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import type { CrmClient } from "@/lib/db/schema";
 import { LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
@@ -21,11 +21,11 @@ const FIELD = `${deskField} w-full`;
  * profile section on the client detail page, the same way BuilderForm is
  * reused across builders/new and builders/[id]/edit. */
 export function ClientForm({ client, action }: { client?: CrmClient; action: Action }) {
-  const [state, formAction, isPending] = useActionState(action, initialState);
+  const { state, isPending, formProps } = useActionForm(action, initialState);
   const isEditing = Boolean(client);
 
   return (
-    <form action={formAction} className={`${cardChrome} flex flex-col gap-6 p-5`}>
+    <form {...formProps} className={`${cardChrome} flex flex-col gap-6 p-5`}>
       {client && <input type="hidden" name="id" value={client.id} />}
 
       <div className="grid gap-6 sm:grid-cols-3">

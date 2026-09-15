@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { Req } from "@/components/ui/RequiredMark";
 import {
   subscribeToNewsletter,
@@ -27,13 +27,13 @@ const FIELD_ON_NAVY =
  * already on the list.
  */
 export function NewsletterForm() {
-  const [state, formAction, isPending] = useActionState(
-    subscribeToNewsletter,
-    initialState
-  );
+  // Stays on screen to take another address, so it clears itself on success.
+  const { state, isPending, formProps } = useActionForm(subscribeToNewsletter, initialState, {
+    resetOnSuccess: true,
+  });
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <form {...formProps} className="flex flex-col gap-3">
       {/* Honeypot — hidden from real users, tempting to bots */}
       <input
         type="text"

@@ -1,5 +1,6 @@
 "use server";
 
+import { idField } from "@/lib/admin/form-fields";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -24,8 +25,8 @@ export async function updateTourRequest(
 ): Promise<TourFormState> {
   await requireAdmin();
 
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing request id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing request id." };
 
   const status = String(formData.get("status") ?? "");
   if (!isTourStatus(status)) return { error: "Invalid status." };

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useActionForm } from "@/lib/use-action-form";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
@@ -34,7 +35,7 @@ export function ContactForm({
   source?: string;
   onSuccess?: () => void;
 }) {
-  const [state, formAction, isPending] = useActionState(submitInquiry, initialState);
+  const { state, isPending, formProps } = useActionForm(submitInquiry, initialState);
   const fid = (name: string) => `${idPrefix}${name}`;
   const pathname = usePathname();
   // R-05: the enquiry cart must never re-offer properties from an already-
@@ -70,7 +71,7 @@ export function ContactForm({
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-8">
+    <form {...formProps} className="flex flex-col gap-8">
       {/* Honeypot — hidden from real users, tempting to bots */}
       <input
         type="text"

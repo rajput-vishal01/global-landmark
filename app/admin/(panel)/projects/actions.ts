@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { count, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { builders, projects, properties, towers } from "@/lib/db/schema";
@@ -10,7 +11,7 @@ import { slugify } from "@/lib/slugify";
 import { isLocalityIn } from "@/lib/locations";
 import { parseAmenities } from "@/lib/admin/property-parse";
 import type { DeleteState } from "../properties/actions";
-import { textField, intField } from "@/lib/admin/form-fields";
+import { textField, intField, idField } from "@/lib/admin/form-fields";
 
 export type ProjectFormState = { error?: string };
 
@@ -28,8 +29,7 @@ function date(formData: FormData, key: string): string | null {
  * unless the name changed).
  */
 async function parseSharedFields(formData: FormData) {
-  const builderIdRaw = Number(formData.get("builderId"));
-  const builderId = Number.isInteger(builderIdRaw) && builderIdRaw > 0 ? builderIdRaw : null;
+  const builderId = idField(formData, "builderId");
   let builderName: string | null = null;
   if (builderId) {
     const [row] = await db.select({ name: builders.name }).from(builders).where(eq(builders.id, builderId));
@@ -91,8 +91,8 @@ export async function updateProject(
   formData: FormData
 ): Promise<ProjectFormState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing project id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing project id." };
   const name = textField(formData, "name", 200);
   if (!name) return { error: "A name is required." };
 
@@ -118,8 +118,8 @@ export async function deleteProject(
   formData: FormData
 ): Promise<DeleteState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing project id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing project id." };
 
   try {
     // Properties keep existing (project_id set null) — deleting a society
@@ -147,12 +147,26 @@ export async function deleteProject(
  * directly from `<form action={createTower}>` on the pitch view with no
  * client wrapper, the same reasoning as `duplicateProperty`.
  */
-export async function createTower(formData: FormData): Promise<void> {
+export type TowerFormState = { error?: string };
+
+/**
+ * Adds a tower from the inline form on a project page.
+ *
+ * Returns a state rather than redirecting. It used to catch a failed insert,
+ * log it, and redirect back to the project exactly as if it had worked, and a
+ * whitespace-only name (which passes the browser's `required`) bounced back
+ * the same way with no message. Both now come back as an error the form
+ * shows, with what the broker typed still in place.
+ */
+export async function createTower(
+  _prev: TowerFormState,
+  formData: FormData
+): Promise<TowerFormState> {
   await requireAdmin();
-  const projectId = Number(formData.get("projectId"));
-  if (!Number.isInteger(projectId)) redirect("/admin/projects");
+  const projectId = idField(formData, "projectId");
+  if (projectId === null) return { error: "Missing project id." };
   const name = textField(formData, "name", 200);
-  if (!name) redirect(`/admin/projects/${projectId}`);
+  if (!name) return { error: "Give the tower a name." };
 
   try {
     await db.insert(towers).values({
@@ -164,12 +178,11 @@ export async function createTower(formData: FormData): Promise<void> {
       notes: textField(formData, "notes", 2000),
     });
   } catch (err) {
-    // Logged, not surfaced — matching duplicateProperty's fail-quiet
-    // pattern for a low-stakes inline form (no unique constraint on tower
-    // name to violate; this only guards a stale projectId or a DB hiccup).
     console.error("createTower failed:", err);
+    return { error: "Could not add the tower. Try again." };
   }
-  redirect(`/admin/projects/${projectId}`);
+  revalidatePath(`/admin/projects/${projectId}`);
+  return {};
 }
 
 export async function deleteTower(
@@ -177,8 +190,8 @@ export async function deleteTower(
   formData: FormData
 ): Promise<DeleteState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing tower id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing tower id." };
 
   // Looked up rather than trusted from the form — DeleteButton only ever
   // submits `id`, and the tower's own row already knows which project to

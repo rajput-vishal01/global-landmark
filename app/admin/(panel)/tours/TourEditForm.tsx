@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { Select } from "@/components/ui/Select";
 import { deskButtonSmall } from "@/components/admin/desk";
 import { deskErrorText } from "@/components/admin/FormSection";
@@ -20,13 +20,13 @@ const initialState: TourFormState = {};
  * through the options does not fire a mutation per keystroke.
  */
 export function TourEditForm({ id, status }: { id: number; status: string }) {
-  const [state, formAction, isPending] = useActionState(
+  const { state, isPending, formProps } = useActionForm(
     updateTourRequest,
     initialState
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-2 sm:flex-row sm:items-end">
+    <form {...formProps} className="flex flex-col gap-2 sm:flex-row sm:items-end">
       <input type="hidden" name="id" value={id} />
       <div className="w-36">
         {/* The custom listbox, not a native <select>: the OS draws that popup

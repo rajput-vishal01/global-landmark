@@ -1,5 +1,6 @@
 "use server";
 
+import { idField } from "@/lib/admin/form-fields";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -41,8 +42,8 @@ export async function deleteTestimonialVideo(
   formData: FormData
 ): Promise<DeleteState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing video id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing video id." };
   try {
     await db.delete(testimonialVideos).where(eq(testimonialVideos.id, id));
   } catch (err) {

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { properties } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
+import { idField } from "@/lib/admin/form-fields";
 
 /**
  * Approve / decline a public "sell your property" submission.
@@ -25,7 +26,7 @@ import { revalidatePublicSite } from "@/lib/admin/revalidate";
 export type SubmissionActionState = { error?: string };
 
 async function setState(
-  id: number,
+  id: number | null,
   // "draft" joined the set when a published submission became un-publishable
   // from this screen. Still a closed union rather than a string: the WHERE
   // below is what stops this reaching an ordinary listing, and the type is
@@ -33,7 +34,7 @@ async function setState(
   publicationState: "published" | "archived" | "draft"
 ): Promise<SubmissionActionState> {
   await requireAdmin();
-  if (!Number.isInteger(id) || id <= 0) return { error: "Missing submission id." };
+  if (id === null) return { error: "Missing submission id." };
 
   try {
     // MySQL has no RETURNING on an UPDATE, so the "did this row exist and
@@ -59,14 +60,14 @@ export async function approveSubmission(
   _prev: SubmissionActionState,
   formData: FormData
 ): Promise<SubmissionActionState> {
-  return setState(Number(formData.get("id")), "published");
+  return setState(idField(formData), "published");
 }
 
 export async function declineSubmission(
   _prev: SubmissionActionState,
   formData: FormData
 ): Promise<SubmissionActionState> {
-  return setState(Number(formData.get("id")), "archived");
+  return setState(idField(formData), "archived");
 }
 
 /**
@@ -85,5 +86,5 @@ export async function unpublishSubmission(
   _prev: SubmissionActionState,
   formData: FormData
 ): Promise<SubmissionActionState> {
-  return setState(Number(formData.get("id")), "draft");
+  return setState(idField(formData), "draft");
 }

@@ -1,5 +1,6 @@
 "use server";
 
+import { idField } from "@/lib/admin/form-fields";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -17,11 +18,11 @@ export async function createDeal(
   formData: FormData
 ): Promise<DealFormState> {
   await requireAdmin();
-  const propertyId = Number(formData.get("propertyId"));
+  const propertyId = idField(formData, "propertyId");
   const startsAt = String(formData.get("startsAt") ?? "");
   const endsAt = String(formData.get("endsAt") ?? "");
 
-  if (!Number.isInteger(propertyId)) return { error: "Choose a property." };
+  if (propertyId === null) return { error: "Choose a property." };
   if (!DATE_RE.test(startsAt) || !DATE_RE.test(endsAt)) {
     return { error: "Both dates are required." };
   }
@@ -44,8 +45,8 @@ export async function deleteDeal(
   formData: FormData
 ): Promise<DeleteState> {
   await requireAdmin();
-  const id = Number(formData.get("id"));
-  if (!Number.isInteger(id)) return { error: "Missing deal id." };
+  const id = idField(formData);
+  if (id === null) return { error: "Missing deal id." };
   try {
     await db.delete(deals).where(eq(deals.id, id));
   } catch (err) {

@@ -1,14 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionForm } from "@/lib/use-action-form";
 import { deskLinkButton } from "@/components/admin/desk";
 import { logout } from "./login/actions";
 
 export function LogoutButton() {
-  const [, formAction, isPending] = useActionState(logout, undefined);
+  const { isPending, formProps } = useActionForm(logout, undefined);
 
   return (
-    <form action={formAction}>
+    <form {...formProps}>
       <button
         type="submit"
         disabled={isPending}

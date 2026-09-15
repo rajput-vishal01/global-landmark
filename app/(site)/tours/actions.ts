@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { idField } from "@/lib/admin/form-fields";
 import { db } from "@/lib/db";
 import { tourRequests } from "@/lib/db/schema";
 import { clientIp, isRateLimited } from "@/lib/rate-limit";
@@ -42,9 +43,7 @@ export async function requestTour(
     };
   }
 
-  const propertyIdRaw = Number(formData.get("propertyId"));
-  const propertyId =
-    Number.isInteger(propertyIdRaw) && propertyIdRaw > 0 ? propertyIdRaw : null;
+  const propertyId = idField(formData, "propertyId");
 
   const name = String(formData.get("name") ?? "").trim().slice(0, 200);
   const phone = String(formData.get("phone") ?? "").trim().slice(0, 50);
