@@ -5,19 +5,10 @@ import * as schema from "./schema";
 /**
  * MySQL connection pool.
  *
- * `mode: "planetscale"`, NOT `"default"`. Both make `db.query.*` (the
- * relational API with `with:` includes) work, but they build those joins
- * differently. "default" emits a LATERAL join per `with:`, which needs
- * MySQL 8.0.14+ and does not exist in MariaDB at all. "planetscale" builds
- * the same result from correlated subqueries that run on either.
- *
- * Switched after production (Sept 2026) rendered no listings on the homepage
- * or /properties — both relational queries, where failSoft() turns any error
- * into [] — while the sitemap, a plain select() with no joins, still listed
- * all five published properties. LATERAL support is the difference between
- * those two query shapes, and local dev (MySQL 8.4) never showed it. The two
- * modes return byte-identical rows (10 properties, 33 images) on that local
- * database, so the switch costs nothing where LATERAL does work.
+ * `mode: "default"` is the Drizzle setting that makes `db.query.*` (the
+ * relational API with `with:` includes) work — the panel's CRM and project
+ * screens use it. Without it those calls throw at runtime rather than at
+ * build, which is the worst place to find out.
  *
  * dateStrings for DATE columns: MySQL returns a Date at local midnight,
  * which then re-serialises through UTC and shifts the day backwards on any
@@ -115,7 +106,7 @@ function connection(): MySql2Database<typeof schema> {
   // One pool across dev HMR reloads.
   if (process.env.NODE_ENV !== "production") globalForDb.__gldPool = pool;
 
-  instance = drizzle(pool, { schema, mode: "planetscale" });
+  instance = drizzle(pool, { schema, mode: "default" });
   return instance;
 }
 
