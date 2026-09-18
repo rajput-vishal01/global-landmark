@@ -28,10 +28,18 @@
  *    code that computes them. Custom widgets like <Select> always hold a
  *    value, so a star on one is not checked against `required`.
  *
+ * 5. Creating a property has one writer and one insert per form.
+ *    Autosave may only update an existing listing, and Create claims a
+ *    one-time key after validation. Autosave used to insert its own draft,
+ *    racing Create: brokers saw "already exists" plus a duplicate listing.
+ *
  * Run: node scripts/check-forms.mjs (part of `npm run check`).
  */
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { execSync } from "node:child_process";
+import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
@@ -125,6 +133,79 @@ for (const dir of DIRS) {
         fail(file, src, field.index, `<${field.tag} id="${id}"> is required but its label has no <Req /> — mark it so people know before they submit`);
       }
     }
+  }
+}
+
+// 5. Creating a property: one writer, one insert per form.
+//
+//    Autosave used to insert a draft for a brand-new listing, racing the
+//    Create button. When the two disagreed the broker saw "could not create"
+//    or "already exists" while autosave's draft sat in the list as a
+//    duplicate. Autosave may now only update; Create claims a one-time key
+//    after validation, so a double click cannot insert twice and a rejected
+//    submission can be fixed and sent again.
+{
+  const actionsPath = join(ROOT, "app/admin/(panel)/properties/actions.ts");
+  const actions = code(readFileSync(actionsPath, "utf8"));
+  const fnBody = (name) => {
+    const start = actions.indexOf(`export async function ${name}(`);
+    if (start < 0) return "";
+    const next = actions.indexOf("\nexport ", start + 10);
+    return actions.slice(start, next < 0 ? undefined : next);
+  };
+
+  const saveDraft = fnBody("saveDraft");
+  if (/\.insert\(\s*properties\s*\)/.test(saveDraft)) {
+    fail(actionsPath, actions, actions.indexOf("export async function saveDraft("),
+      "saveDraft inserts into properties — autosave must only update an existing listing; creating is the Create button's job");
+  }
+
+  const create = fnBody("createProperty");
+  const parseAt = create.indexOf("parseProperty(");
+  const claimAt = create.indexOf("claimSubmission(");
+  const insertAt = create.search(/\.insert\(\s*properties\s*\)/);
+  if (claimAt < 0) {
+    fail(actionsPath, actions, actions.indexOf("export async function createProperty("),
+      "createProperty no longer claims a submission key — a double click would insert twice");
+  } else if (!(parseAt >= 0 && parseAt < claimAt && claimAt < insertAt)) {
+    fail(actionsPath, actions, actions.indexOf("export async function createProperty("),
+      "createProperty must validate, THEN claim the submission key, THEN insert — claiming before validation locks out the retry");
+  }
+  if (!/releaseSubmission\(/.test(create)) {
+    fail(actionsPath, actions, actions.indexOf("export async function createProperty("),
+      "createProperty never releases its key — a failed insert would block the same form from retrying");
+  }
+
+  // Behaviour of the key store itself, compiled standalone.
+  const out = mkdtempSync(join(tmpdir(), "gl-keys-"));
+  try {
+    execSync(
+      `npx tsc lib/admin/submission-keys.ts --outDir "${out}" --rootDir lib ` +
+        `--target es2022 --module commonjs --skipLibCheck`,
+      { cwd: ROOT, stdio: "pipe" }
+    );
+    writeFileSync(join(out, "package.json"), JSON.stringify({ type: "commonjs" }));
+    const require = createRequire(join(out, "noop.cjs"));
+    const { claimSubmission, releaseSubmission, SUBMISSION_KEY_TTL_MS } = require(
+      join(out, "admin", "submission-keys.js")
+    );
+    const t0 = 1_000_000;
+    const expect = (cond, what) => {
+      if (!cond) failures.push(`lib/admin/submission-keys.ts  ${what}`);
+    };
+    expect(claimSubmission("form-a", t0) === true, "first submit of a form must be accepted");
+    expect(claimSubmission("form-a", t0 + 50) === false, "a double click on the same form must not be accepted twice");
+    expect(claimSubmission("form-b", t0 + 60) === true, "a different form must never be blocked by another one");
+    releaseSubmission("form-a");
+    expect(claimSubmission("form-a", t0 + 70) === true, "a released key (failed insert) must let the same form retry");
+    expect(
+      claimSubmission("form-b", t0 + 60 + SUBMISSION_KEY_TTL_MS + 1) === true,
+      "keys must expire, or the store grows for the life of the process"
+    );
+  } catch (err) {
+    failures.push(`lib/admin/submission-keys.ts  could not be compiled for its check: ${err.message.split("\n")[0]}`);
+  } finally {
+    rmSync(out, { recursive: true, force: true });
   }
 }
 

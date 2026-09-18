@@ -51,9 +51,9 @@ export function RequiredFieldsPanel({ propertyType }: { propertyType: string }) 
           )}
         </li>
         <li className="text-muted">
-          Everything else is optional. Fields marked{" "}
-          <span className="text-error">*</span> are required; sections show a
-          filled/total count so you can come back and finish later.
+          Fields marked <span className="text-error">*</span> are required.
+          Everything under “More details” at the bottom is optional and can be
+          added any time later.
         </li>
       </ul>
     </aside>

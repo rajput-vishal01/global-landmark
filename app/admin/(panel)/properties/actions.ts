@@ -1,8 +1,9 @@
 "use server";
 
-import { idField } from "@/lib/admin/form-fields";
+import { idField, textField } from "@/lib/admin/form-fields";
+import { claimSubmission, releaseSubmission } from "@/lib/admin/submission-keys";
 import { redirect } from "next/navigation";
-import { and, asc, eq, like, or, sql } from "drizzle-orm";
+import { asc, eq, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   projects,
@@ -221,22 +222,6 @@ export async function createProperty(
 ): Promise<PropertyFormState> {
   await requireAdmin();
 
-  // Autosave (saveDraft) may already have inserted this listing as a draft
-  // before the broker ever clicks "Create property" — the form's hidden id
-  // field gets written the moment that first tick succeeds. Without this
-  // check, clicking the visible submit button after autosave has already
-  // fired would insert a SECOND row and leave the autosaved one orphaned as
-  // an untitled duplicate. Forward to the same update path updateProperty
-  // uses whenever the id turns out to name a real row.
-  const existingId = idField(formData);
-  if (existingId !== null) {
-    const [row] = await db
-      .select({ id: properties.id })
-      .from(properties)
-      .where(eq(properties.id, existingId));
-    if (row) return updateProperty(_prev, formData);
-  }
-
   const parsed = parseProperty(formData, modeFor(formData));
   if (!parsed.ok) return { error: parsed.error };
   const {
@@ -252,34 +237,16 @@ export async function createProperty(
     ...fields
   } = parsed.data;
 
-  // The autosave guard above catches the same-tab race; this catches its
-  // sibling — a broker who clicked "Create property," saw nothing obviously
-  // happen (slow connection, no toast), and clicked again from a second
-  // click or a second tab. A title that exact-matches (case-insensitive) a
-  // property created in the last 2 minutes is almost certainly that same
-  // submission landing twice, not a genuinely new listing — real reuse of a
-  // title (identical flats in the same tower, added days apart) is
-  // unaffected since the window is short on purpose.
-  const recentDuplicate = await db
-    .select({ refCode: properties.refCode })
-    .from(properties)
-    .where(
-      and(
-        like(properties.title, fields.title),
-        // MySQL interval syntax: the unit is a bare keyword, singular, and
-        // must not be quoted. Postgres' `interval '2 minutes'` parses fine in
-        // TypeScript and fails at runtime with ER_PARSE_ERROR — which is what
-        // made every "Create property" submission end at the error boundary.
-        sql`${properties.createdAt} > now() - interval 2 minute`
-      )
-    )
-    .limit(1);
-  if (recentDuplicate.length) {
-    return {
-      error: `A property titled "${fields.title}" was just created${
-        recentDuplicate[0].refCode ? ` (${recentDuplicate[0].refCode})` : ""
-      }. Check the properties list before adding another — this usually means an earlier submission already went through.`,
-    };
+  // One insert per form, however many times it is submitted — a double
+  // click, a retry on a slow connection, a second tap while pending. The key
+  // is claimed only now, after validation, so a submission that failed
+  // validation can be fixed and sent again. It replaces a guard that refused
+  // any title matching a listing created in the last two minutes, which fired
+  // on autosave's own draft and on legitimately identical flats.
+  const submissionKey = textField(formData, "submissionKey", 100);
+  if (submissionKey && !claimSubmission(submissionKey)) {
+    // This form already created its listing (or is creating it right now).
+    redirect("/admin/properties");
   }
 
   try {
@@ -316,6 +283,8 @@ export async function createProperty(
     });
   } catch (err) {
     console.error("createProperty failed:", err);
+    // Nothing was created, so the same form may try again.
+    if (submissionKey) releaseSubmission(submissionKey);
     return { error: "Could not save the property. Check the fields and try again." };
   }
   await syncDocumentFiles(documents);
@@ -478,113 +447,84 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
     ...fields
   } = parsed.data;
 
-  const idRaw = formData.get("id");
-  const existingId =
-    typeof idRaw === "string" && idRaw && Number.isInteger(Number(idRaw))
-      ? Number(idRaw)
-      : null;
+  // Autosave only ever UPDATES a listing that already exists. It used to
+  // insert a draft for a brand-new listing on its first tick, which made it a
+  // second writer racing the Create button for the same row: whenever the two
+  // disagreed — a validation error, a lost id — the broker saw "could not
+  // create" or "already exists" while autosave's draft quietly sat in the
+  // list as a duplicate. Creating is now the Create button's job alone.
+  const existingId = idField(formData);
+  if (existingId === null) {
+    return { ok: false, error: "Autosave starts once the listing has been created." };
+  }
 
   try {
     const projectId = await resolveExistingProjectId(projectName);
     const towerId = await resolveExistingTowerId(projectId, towerName);
     const now = new Date();
 
-    if (existingId) {
-      const [current] = await db
-        .select({ publicationState: properties.publicationState })
-        .from(properties)
-        .where(eq(properties.id, existingId));
-      if (!current) return { ok: false, error: "This listing no longer exists." };
+    const [current] = await db
+      .select({ publicationState: properties.publicationState })
+      .from(properties)
+      .where(eq(properties.id, existingId));
+    if (!current) return { ok: false, error: "This listing no longer exists." };
 
-      // Documents own a private file on disk, the same way images own a
-      // public one — a document dropped from the vault mid-edit needs its
-      // file swept, and one still present must not be touched. Computed
-      // before the transaction so the sweep can run only after it commits.
-      const existingDocs = await db
-        .select({ storageKey: propertyDocuments.storageKey })
-        .from(propertyDocuments)
-        .where(eq(propertyDocuments.propertyId, existingId));
-      const keepDocs = new Set(documents.map((d) => d.storageKey));
-      const removedDocs = existingDocs
-        .map((row) => row.storageKey)
-        .filter((key) => !keepDocs.has(key));
+    // Documents own a private file on disk, the same way images own a
+    // public one — a document dropped from the vault mid-edit needs its
+    // file swept, and one still present must not be touched. Computed
+    // before the transaction so the sweep can run only after it commits.
+    const existingDocs = await db
+      .select({ storageKey: propertyDocuments.storageKey })
+      .from(propertyDocuments)
+      .where(eq(propertyDocuments.propertyId, existingId));
+    const keepDocs = new Set(documents.map((d) => d.storageKey));
+    const removedDocs = existingDocs
+      .map((row) => row.storageKey)
+      .filter((key) => !keepDocs.has(key));
 
-      const slug = await uniqueSlug(fields.title, existingId);
-      await db.transaction(async (tx) => {
-        await tx
-          .update(properties)
-          .set({ ...fields, projectId, towerId, slug, updatedAt: now })
-          .where(eq(properties.id, existingId));
-        if (images.length) {
-          await tx
-            .delete(propertyImages)
-            .where(eq(propertyImages.propertyId, existingId));
-          await tx.insert(propertyImages).values(
-            images.map((img, i) => ({ ...img, propertyId: existingId, sortOrder: i }))
-          );
-        }
-        await tx
-          .delete(propertyDocuments)
-          .where(eq(propertyDocuments.propertyId, existingId));
-        if (documents.length) {
-          await tx.insert(propertyDocuments).values(
-            documents.map((d) => ({ ...d, propertyId: existingId }))
-          );
-        }
-        await writeChildTables(tx, existingId, {
-          owners,
-          charges,
-          media,
-          unitSizes,
-          circleRate,
-        });
-      });
-
-      if (removedDocs.length) {
-        try {
-          await deleteStoredFiles(removedDocs, "private");
-        } catch (err) {
-          console.error("saveDraft: removed document files not swept:", removedDocs, err);
-        }
-      }
-      await syncDocumentFiles(documents, removedDocs);
-
-      if (current.publicationState === "published") revalidatePublicSite();
-      return { ok: true, id: existingId, savedAt: now.toISOString() };
-    }
-
-    // First autosave tick for a brand-new listing — insert once, then every
-    // later tick in this session updates the same row via existingId above.
-    const slug = await uniqueSlug(fields.title);
-    let newId = 0;
+    const slug = await uniqueSlug(fields.title, existingId);
     await db.transaction(async (tx) => {
-      const [row] = await tx
-        .insert(properties)
-        .values({ ...fields, projectId, towerId, slug })
-        .$returningId();
-      newId = row.id;
       await tx
         .update(properties)
-        .set({ refCode: buildRefCode(fields.city, now.getFullYear(), row.id) })
-        .where(eq(properties.id, row.id));
+        .set({ ...fields, projectId, towerId, slug, updatedAt: now })
+        .where(eq(properties.id, existingId));
       if (images.length) {
+        await tx
+          .delete(propertyImages)
+          .where(eq(propertyImages.propertyId, existingId));
         await tx.insert(propertyImages).values(
-          images.map((img, i) => ({ ...img, propertyId: row.id, sortOrder: i }))
+          images.map((img, i) => ({ ...img, propertyId: existingId, sortOrder: i }))
         );
       }
-      // Nothing existed before this row, so every document is new — no
-      // diff needed, unlike the existing-row branch above.
+      await tx
+        .delete(propertyDocuments)
+        .where(eq(propertyDocuments.propertyId, existingId));
       if (documents.length) {
         await tx.insert(propertyDocuments).values(
-          documents.map((d) => ({ ...d, propertyId: row.id }))
+          documents.map((d) => ({ ...d, propertyId: existingId }))
         );
       }
-      await writeChildTables(tx, row.id, { owners, charges, media, unitSizes, circleRate });
+      await writeChildTables(tx, existingId, {
+        owners,
+        charges,
+        media,
+        unitSizes,
+        circleRate,
+      });
     });
-    await syncDocumentFiles(documents);
-    // A brand-new row is always draft (the schema default) — never public,
-    // so no revalidation is needed here.
-    return { ok: true, id: newId, savedAt: now.toISOString() };
+
+    if (removedDocs.length) {
+      try {
+        await deleteStoredFiles(removedDocs, "private");
+      } catch (err) {
+        console.error("saveDraft: removed document files not swept:", removedDocs, err);
+      }
+    }
+    await syncDocumentFiles(documents, removedDocs);
+
+    if (current.publicationState === "published") revalidatePublicSite();
+    return { ok: true, id: existingId, savedAt: now.toISOString() };
+
   } catch (err) {
     console.error("saveDraft failed:", err);
     return { ok: false, error: "Autosave failed. Your work is still in this tab." };

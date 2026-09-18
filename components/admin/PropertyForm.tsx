@@ -43,9 +43,8 @@ type Action = (
 /**
  * Cheap change-detection for autosave, not a data serialisation format —
  * good enough to answer "has anything changed since the last save", never
- * read back or parsed. Excludes `id`, which autosave itself writes after
- * the first insert; including it would make the very act of saving look
- * like a change and trigger a needless follow-up tick.
+ * read back or parsed. Excludes `id`, which never changes while editing and
+ * would only add noise to the comparison.
  */
 function snapshotFormData(fd: FormData): string {
   const parts: string[] = [];
@@ -117,6 +116,7 @@ export function PropertyForm({
   action,
   projects,
   property,
+  submissionKey,
 }: {
   action: Action;
   projects: PublicProject[];
@@ -125,11 +125,12 @@ export function PropertyForm({
    * the public types deliberately cannot express it.
    */
   property?: PropertyWithChildren;
+  /** Issued by the Add page; absent when editing. See the hidden input below. */
+  submissionKey?: string;
 }) {
-  // The autosave request currently on the wire, if any. Submit waits on it: a
-  // brand-new listing's first autosave is what creates the row and hands back
-  // its id, and a submit that reads the form before that id lands carries an
-  // empty id and inserts a second row.
+  // The autosave request currently on the wire, if any (edit mode only). Save
+  // waits for it, so the explicit save always lands after — and wins over — a
+  // tick that read the form a moment earlier.
   const inFlightRef = useRef<Promise<unknown> | null>(null);
   const { state, isPending, formRef, formProps } = useActionForm(action, {}, {
     beforeSubmit: () => inFlightRef.current,
@@ -147,7 +148,6 @@ export function PropertyForm({
     [propertyType]
   );
 
-  const idFieldRef = useRef<HTMLInputElement>(null);
   // Last successfully-autosaved snapshot of the form's data, so a tick with
   // nothing new to say is a no-op rather than an identical round trip.
   //
@@ -162,7 +162,16 @@ export function PropertyForm({
   const lastSavedRef = useRef<string | null>(null);
   const savingRef = useRef(false);
 
+  const isEditing = Boolean(property);
+
   useEffect(() => {
+    // Autosave runs only while EDITING a listing that already exists. On a
+    // new listing it used to create the row itself, making it a second writer
+    // racing the Create button — the source of "already exists" errors and of
+    // duplicate drafts left behind by a failed create. A new listing now exists
+    // only once Create is pressed; until then, leaving the page asks first.
+    if (!isEditing) return;
+
     // ponytail: 20s fixed interval, per §4.5. No debounce-on-idle, no
     // beforeunload flush — add either if brokers report losing the last
     // few seconds of typing before a tab close.
@@ -189,14 +198,6 @@ export function PropertyForm({
         inFlightRef.current = request;
         const result = await request;
         if (result.ok) {
-          // Written directly to the DOM node, not through React state: the
-          // hidden id field is uncontrolled (defaultValue), so this survives
-          // re-renders and the next tick's FormData read picks it up,
-          // turning every subsequent autosave into an update of the same
-          // row instead of a new insert.
-          if (idFieldRef.current && !idFieldRef.current.value) {
-            idFieldRef.current.value = String(result.id);
-          }
           lastSavedRef.current = snapshot;
           setAutosave({ kind: "saved", at: new Date(result.savedAt) });
         } else {
@@ -218,23 +219,42 @@ export function PropertyForm({
     // changes. formRef comes from useActionForm, so the linter cannot see it
     // is a ref — it is, and its identity never changes, so listing it never
     // restarts anything. The locally declared refs are omitted as usual.
-  }, [isPending, isUploading, formRef]);
+  }, [isEditing, isPending, isUploading, formRef]);
+
+  // A new listing is not saved until Create is pressed, so leaving with typed
+  // work asks first. Typing marks the form dirty; submitting clears it so the
+  // redirect after a successful create is not blocked.
+  const dirtyRef = useRef(false);
+  useEffect(() => {
+    if (isEditing) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      if (dirtyRef.current) event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isEditing]);
 
   return (
     // Submits through useActionForm, never <form action={...}>: React would
     // reset the form on a validation error, wiping the broker's input and the
     // autosaved row id, which is what created duplicate listings. See
     // lib/use-action-form.ts.
-    <form {...formProps} className="flex flex-col gap-5">
-      {/* Uncontrolled (defaultValue, not value): autosave writes the id of a
-          newly-created draft straight to this DOM node via idFieldRef, and
-          a React-controlled value would overwrite that on the next render. */}
-      <input
-        ref={idFieldRef}
-        type="hidden"
-        name="id"
-        defaultValue={property?.id ?? ""}
-      />
+    <form
+      {...formProps}
+      onInput={() => {
+        dirtyRef.current = true;
+      }}
+      onSubmit={(event) => {
+        dirtyRef.current = false;
+        formProps.onSubmit(event);
+      }}
+      className="flex flex-col gap-5"
+    >
+      {property && <input type="hidden" name="id" value={property.id} />}
+      {/* One-time key for a new listing: the server creates at most one row
+          per key, so a double click or a retry cannot insert twice. Issued by
+          the page on each load so it matches between server and browser. */}
+      {submissionKey && <input type="hidden" name="submissionKey" value={submissionKey} />}
 
       <RequiredFieldsPanel propertyType={propertyType} />
 
@@ -338,6 +358,8 @@ export function PropertyForm({
         </div>
       </div>
 
+      {/* The essentials, in the order a broker thinks about a listing:
+          what it is (above), then where, how big, how much, and photos. */}
       <BasicDetailsSection
         refCode={property?.refCode}
         listedAt={property?.listedAt}
@@ -346,14 +368,6 @@ export function PropertyForm({
         listingStatus={property?.listingStatus}
         addedBy={property?.addedBy}
         sourceName={property?.sourceName}
-      />
-
-      {/* Property type moved up into the identity block — see the comment there. */}
-      <ClassificationSection
-        dealAttributes={property?.dealAttributes ?? []}
-        facing={property?.facing}
-        possessionStatus={property?.possessionStatus}
-        propertyAge={property?.propertyAge}
       />
 
       <LocationSection
@@ -402,11 +416,6 @@ export function PropertyForm({
         />
       )}
 
-      {/* Sits between configuration and price because it is both: the
-          public Unit / Area / Price table that a project advertises, as
-          opposed to the single negotiated demand price below. */}
-      <UnitSizesEditor initial={property?.unitSizes ?? []} />
-
       <PriceSection
         demandPrice={property?.demandPrice}
         perSqftRate={property?.perSqftRate}
@@ -415,39 +424,6 @@ export function PropertyForm({
         charges={property?.charges ?? []}
         areaSqft={property?.areaSqft}
         circleRate={property?.internal?.circleRate}
-      />
-
-      <OwnersEditor initial={property?.owners ?? []} />
-
-      <FeaturesSection
-        furnishing={property?.furnishing}
-        furnishingInventory={property?.furnishingInventory ?? []}
-        amenities={property?.amenities ?? []}
-        parkingTypes={property?.parkingTypes ?? []}
-        parkingSlots={property?.parkingSlots}
-        showFurnishing={visible.has("furnishing")}
-        showAmenities={visible.has("amenities")}
-        showParking={visible.has("parking")}
-      />
-
-      <LegalLoanSection
-        legalFlags={property?.legalFlags ?? []}
-        reraNumber={property?.reraNumber}
-        loanFlags={property?.loanFlags ?? []}
-        banksOnPanel={property?.banksOnPanel ?? []}
-        documentationFlags={property?.documentationFlags ?? []}
-      />
-
-      {/* CFF 17's file-carrying half — the checklist above records WHICH
-          paperwork exists, this uploads the actual PDF/scan for each. */}
-      <DocumentVault initial={property?.documents ?? []} />
-
-      <SpecificationsSection
-        roadWidth={property?.roadWidth}
-        entranceWidth={property?.entranceWidth}
-        ceilingHeight={property?.ceilingHeight}
-        isCorner={property?.isCorner ?? false}
-        isParkFacing={property?.isParkFacing ?? false}
       />
 
       <FormSection
@@ -468,13 +444,70 @@ export function PropertyForm({
         />
       </FormSection>
 
-      <MediaLinksSection initial={property?.media ?? []} />
-
+      {/* Everything else, folded into one switch so a new listing reads as
+          a short form rather than fifteen sections. Nothing here is needed
+          to save or publish. The sections stay mounted inside <details>, so
+          whatever is filled in still submits while it is folded away. */}
       <FormSection
-        title="Additional details"
-        hint="Anything the fields above do not cover"
+        title="More details"
+        hint="Optional · classification, owners, amenities, legal and loan, documents, specifications, media links"
       >
-        <ExtrasEditor initial={property?.extras ?? []} />
+        <div className="flex flex-col gap-5">
+          {/* Property type moved up into the identity block — see the comment there. */}
+          <ClassificationSection
+            dealAttributes={property?.dealAttributes ?? []}
+            facing={property?.facing}
+            possessionStatus={property?.possessionStatus}
+            propertyAge={property?.propertyAge}
+          />
+
+          {/* Sits between configuration and price because it is both: the
+              public Unit / Area / Price table that a project advertises, as
+              opposed to the single negotiated demand price below. */}
+          <UnitSizesEditor initial={property?.unitSizes ?? []} />
+
+          <OwnersEditor initial={property?.owners ?? []} />
+
+          <FeaturesSection
+            furnishing={property?.furnishing}
+            furnishingInventory={property?.furnishingInventory ?? []}
+            amenities={property?.amenities ?? []}
+            parkingTypes={property?.parkingTypes ?? []}
+            parkingSlots={property?.parkingSlots}
+            showFurnishing={visible.has("furnishing")}
+            showAmenities={visible.has("amenities")}
+            showParking={visible.has("parking")}
+          />
+
+          <LegalLoanSection
+            legalFlags={property?.legalFlags ?? []}
+            reraNumber={property?.reraNumber}
+            loanFlags={property?.loanFlags ?? []}
+            banksOnPanel={property?.banksOnPanel ?? []}
+            documentationFlags={property?.documentationFlags ?? []}
+          />
+
+          {/* CFF 17's file-carrying half — the checklist above records WHICH
+              paperwork exists, this uploads the actual PDF/scan for each. */}
+          <DocumentVault initial={property?.documents ?? []} />
+
+          <SpecificationsSection
+            roadWidth={property?.roadWidth}
+            entranceWidth={property?.entranceWidth}
+            ceilingHeight={property?.ceilingHeight}
+            isCorner={property?.isCorner ?? false}
+            isParkFacing={property?.isParkFacing ?? false}
+          />
+
+          <MediaLinksSection initial={property?.media ?? []} />
+
+          <FormSection
+            title="Additional details"
+            hint="Anything the fields above do not cover"
+          >
+            <ExtrasEditor initial={property?.extras ?? []} />
+          </FormSection>
+        </div>
       </FormSection>
 
       {state.error && (
