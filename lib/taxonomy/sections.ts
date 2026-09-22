@@ -39,7 +39,7 @@ export const SECTIONS = [
 
 export type SectionKey = (typeof SECTIONS)[number]["key"];
 
-export const ALL_SECTION_KEYS: SectionKey[] = SECTIONS.map((s) => s.key);
+const ALL_SECTION_KEYS: SectionKey[] = SECTIONS.map((s) => s.key);
 
 export type Shape = "plot" | "house" | "tower_unit";
 

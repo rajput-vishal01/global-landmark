@@ -65,7 +65,7 @@ export function allInPrice(
  * possible even when the exact price is withheld — the band is derived, not
  * stored, so it can never disagree with the price it came from.
  */
-export const PRICE_BANDS = [
+const PRICE_BANDS = [
   { value: "under-50l", label: "Under ₹50 Lakh", min: 0, max: 5_000_000 },
   { value: "50l-1cr", label: "₹50 Lakh – ₹1 Cr", min: 5_000_000, max: 10_000_000 },
   { value: "1cr-2cr", label: "₹1 – 2 Cr", min: 10_000_000, max: 20_000_000 },

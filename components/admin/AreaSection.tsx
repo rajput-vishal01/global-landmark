@@ -209,9 +209,8 @@ function measureState(value?: number | null, unit?: string | null): Measure {
 }
 
 /**
- * Empty string, never "0", for an absent number. countFilled counts 0 as a
- * legitimate answer, and a zero-foot frontage is not one — an unanswered
- * field must stay visibly unanswered in the section header count.
+ * Empty string, never "0", for an absent number: a zero-foot frontage is
+ * not an answer, so an unanswered field must stay visibly unanswered.
  */
 function numberField(value?: number | null): string {
   return value === null || value === undefined ? "" : String(value);

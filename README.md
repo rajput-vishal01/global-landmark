@@ -1,7 +1,7 @@
 # Global Landmark Realty Group
 
 Luxury real-estate marketing site. Next.js 16 (App Router), Tailwind v4,
-GSAP (SplitText only), Framer Motion, PostgreSQL (Drizzle ORM), local
+GSAP (hero load-in only), Framer Motion, PostgreSQL (Drizzle ORM), local
 filesystem image storage, installable as a PWA.
 
 ```bash

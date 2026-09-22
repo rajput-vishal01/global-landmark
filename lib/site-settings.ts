@@ -45,7 +45,7 @@ export const SETTING_KEYS = {
 } as const;
 
 /** Every row, keyed — used by both the admin form (uncached, always fresh) and the cached public helpers below. */
-export async function getAllSiteSettings(): Promise<Record<string, unknown>> {
+async function getAllSiteSettings(): Promise<Record<string, unknown>> {
   try {
     const rows = await db.select().from(siteSettings);
     return Object.fromEntries(rows.map((r) => [r.key, r.value]));

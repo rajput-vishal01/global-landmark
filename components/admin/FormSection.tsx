@@ -45,8 +45,6 @@ export function FormSection({
   title,
   hint,
   visibility,
-  filled,
-  total,
   defaultOpen = false,
   required = false,
   children,
@@ -59,16 +57,11 @@ export function FormSection({
   visibility?: SectionVisibility;
   /** Marks the section itself as mandatory, for a field with no label of its own (Photos). */
   required?: boolean;
-  /** How many of this section's fields currently carry a value. */
-  filled?: number;
-  total?: number;
   defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const bodyId = useId();
-
-  const showCount = typeof filled === "number" && typeof total === "number";
 
   return (
     <details
@@ -105,11 +98,6 @@ export function FormSection({
         </span>
 
         <span className="mt-1 flex shrink-0 items-center gap-3">
-          {showCount && (
-            <span className="text-[11.5px] tabular-nums text-muted">
-              {filled}/{total}
-            </span>
-          )}
           <svg
             aria-hidden
             width="14"
@@ -156,18 +144,4 @@ function VisibilityTag({ visibility }: { visibility: SectionVisibility }) {
       {isPublic ? "On the website" : "Admin only"}
     </span>
   );
-}
-
-/**
- * Counts how many values in a group are actually set, for the header count.
- * Empty strings, empty arrays, null and undefined are all "not filled";
- * `false` and `0` are legitimate answers and count as filled.
- */
-export function countFilled(values: unknown[]): number {
-  return values.filter((v) => {
-    if (v === null || v === undefined) return false;
-    if (typeof v === "string") return v.trim() !== "";
-    if (Array.isArray(v)) return v.length > 0;
-    return true;
-  }).length;
 }

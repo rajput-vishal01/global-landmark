@@ -28,7 +28,7 @@ export type GoogleReviews = {
  * a trust band, and the full, unfiltered list stays one click away via the
  * "on Google" link, which shows the real average.
  */
-export const MIN_RATING_SHOWN = 4;
+const MIN_RATING_SHOWN = 4;
 
 type RawReview = {
   name?: string;

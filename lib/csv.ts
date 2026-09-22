@@ -31,8 +31,3 @@ export function csvField(value: unknown): string {
 
   return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
-
-/** One CSV line from a row of values, already escaped. */
-export function csvRow(values: readonly unknown[]): string {
-  return values.map(csvField).join(",");
-}

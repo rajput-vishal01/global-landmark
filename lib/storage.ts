@@ -1,7 +1,7 @@
 // Re-exported so every existing `from "@/lib/storage"` import of these keeps
 // working. They live in their own module because they are pure string work
 // and a client component needs them without node:fs coming along.
-export { isStorageKey, imageUrl, isLocalImageUrl, storageKeyFromUrl } from "./storage-keys";
+export { isStorageKey, isLocalImageUrl, storageKeyFromUrl } from "./storage-keys";
 import { isStorageKey, imageUrl } from "./storage-keys";
 
 import { createHash } from "node:crypto";
@@ -152,7 +152,7 @@ export type StoreResult =
 
 
 /** Admin-gated URL for a document. Never rendered on a public page. */
-export function documentUrl(storageKey: string): string {
+function documentUrl(storageKey: string): string {
   return `/api/admin/documents/${storageKey}`;
 }
 
@@ -234,7 +234,7 @@ export function isBundledImageUrl(url: string): boolean {
 }
 
 
-export function mimeForKey(storageKey: string): string {
+function mimeForKey(storageKey: string): string {
   return MIME_BY_EXT[storageKey.split(".").pop() ?? ""] ?? "application/octet-stream";
 }
 

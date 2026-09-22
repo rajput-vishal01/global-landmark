@@ -4,11 +4,12 @@
 >
 > The Phase A motion cull removed ScrollTrigger and Lenis from the project
 > at the client's request ("less animations"). Neither is a dependency any
-> more, and `lib/gsap.ts` registers only `useGSAP` and `SplitText`.
+> more, and `lib/gsap.ts` registers only `useGSAP` (SplitText went too, once
+> the hero stopped splitting its headline).
 >
 > What actually ships today:
-> - **GSAP**: the hero load-in only — a SplitText reveal that runs once on
->   mount. Nothing is driven by scroll position.
+> - **GSAP**: the hero load-in only — a fade-and-rise timeline that runs once
+>   on mount. Nothing is driven by scroll position.
 > - **Framer Motion**: everything else (enter/exit, modals, hover states),
 >   through `LazyMotion` with the `m.*` components.
 > - **CSS**: the marquees and the testimonial wall.

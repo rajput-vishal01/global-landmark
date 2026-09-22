@@ -36,7 +36,7 @@ import {
  */
 
 /** The two result shapes our actions return: admin `{ error }`, public `{ status: "error" }`. */
-export function formFailed(state: unknown): boolean {
+function formFailed(state: unknown): boolean {
   if (!state || typeof state !== "object") return false;
   const s = state as { error?: unknown; status?: unknown };
   return Boolean(s.error) || s.status === "error";

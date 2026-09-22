@@ -165,9 +165,9 @@ const track = svg(
 );
 
 /** A quiet diamond — reads as "listed feature", claims nothing specific. */
-export const AMENITY_ICON_FALLBACK = svg(<path d="M12 3.5 20.5 12 12 20.5 3.5 12z" />);
+const AMENITY_ICON_FALLBACK = svg(<path d="M12 3.5 20.5 12 12 20.5 3.5 12z" />);
 
-export const AMENITY_ICONS: Record<string, ReactNode> = {
+const AMENITY_ICONS: Record<string, ReactNode> = {
   "Club House": building,
   "Swimming Pool": water,
   Gym: dumbbell,
