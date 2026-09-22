@@ -14,7 +14,7 @@ import { WHATSAPP } from "@/lib/data";
  * card that appears after a delay, and a full inquiry modal reusing the
  * site's ContactForm. Portaled to <body> to escape section stacking.
  */
-export function WhatsAppDock() {
+export function WhatsAppDock({ phoneHref }: { phoneHref?: string }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const mounted = useMounted();
@@ -34,7 +34,7 @@ export function WhatsAppDock() {
             two uninvited prompts in one visit is one too many. The dock
             button itself stays — it is a control the visitor chooses. */}
         <m.a
-          href={whatsAppHref(WHATSAPP.defaultMessage)}
+          href={whatsAppHref(WHATSAPP.defaultMessage, phoneHref)}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Chat with us on WhatsApp"

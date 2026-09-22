@@ -3,7 +3,7 @@ import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { Button } from "@/components/ui/Button";
 import { PageHeader, SECTION } from "../_components/page-chrome";
-import { COMPANY } from "@/lib/data";
+import { resolveCompany } from "@/lib/site-settings";
 
 export const metadata: Metadata = {
   title: "You are offline",
@@ -20,7 +20,8 @@ export const metadata: Metadata = {
  * buyer standing at a site visit with no signal can still call. Everything
  * else on this page is decoration by comparison.
  */
-export default function OfflinePage() {
+export default async function OfflinePage() {
+  const COMPANY = await resolveCompany();
   return (
     <>
       <Header />

@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { leads, properties } from "@/lib/db/schema";
 import { sendContactEmails, type InquiryData } from "@/lib/email";
 import { clientIp, isRateLimited } from "@/lib/rate-limit";
-import { COMPANY } from "@/lib/data";
+import { resolveCompany } from "@/lib/site-settings";
 
 export type InquiryState = {
   status: "idle" | "sent" | "error";
@@ -54,7 +54,7 @@ export async function submitInquiry(
     return {
       status: "error",
       message:
-        `Too many inquiries from this connection. Please try again later or email us directly at ${COMPANY.email}.`,
+        `Too many inquiries from this connection. Please try again later or email us directly at ${(await resolveCompany()).email}.`,
     };
   }
 

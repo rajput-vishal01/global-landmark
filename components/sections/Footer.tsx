@@ -41,7 +41,7 @@ export async function Footer() {
 
             <div className="flex flex-col gap-3">
               <h3 className={BLOCK_HEADING}>Follow us</h3>
-              <SocialLinks socials={COMPANY.socials} brand={COMPANY.name} />
+              <SocialLinks socials={COMPANY.socials} brand={COMPANY.name} phoneHref={COMPANY.phoneHref} />
             </div>
           </div>
 

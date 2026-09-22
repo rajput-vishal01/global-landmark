@@ -197,7 +197,7 @@ export default async function PropertyDetailPage({
     property.publicPrice != null &&
     (property.kind === "project" || (property.configurations?.length ?? 0) > 1);
 
-  const whatsApp = whatsAppHref(`${PROPERTY_DETAIL.whatsAppMessagePrefix} ${property.title}.`);
+  const whatsApp = whatsAppHref(`${PROPERTY_DETAIL.whatsAppMessagePrefix} ${property.title}.`, company.phoneHref);
   // R-44: forward-to-a-friend — opens the visitor's own contact picker.
   const shareHref = whatsAppShareHref(
     propertyShareMessage({

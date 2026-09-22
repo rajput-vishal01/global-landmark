@@ -1,13 +1,15 @@
 import { COMPANY } from "@/lib/data";
 import { formatIndianShort } from "@/lib/attributes";
 
-// Env override for launch; falls back to the agency's real primary number
-// from lib/data.ts — never a fake placeholder that could message a stranger.
-const NUMBER =
-  process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || COMPANY.phoneHref.replace(/\D/g, "");
-
-export function whatsAppHref(message = "Hi"): string {
-  return `https://wa.me/${NUMBER}?text=${encodeURIComponent(message)}`;
+/**
+ * Chat link to the office. The number is, in order: the env override, the
+ * primary phone from admin Settings (pass resolveCompany().phoneHref), and
+ * the agency's real number in lib/data.ts — never a placeholder that could
+ * message a stranger.
+ */
+export function whatsAppHref(message = "Hi", phoneHref: string = COMPANY.phoneHref): string {
+  const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || phoneHref.replace(/\D/g, "");
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
 
 /**

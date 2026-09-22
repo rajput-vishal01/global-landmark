@@ -143,7 +143,7 @@ export default async function ContactPage() {
 
             <ContactCard
               label="WhatsApp"
-              href={whatsAppHref(WHATSAPP.defaultMessage)}
+              href={whatsAppHref(WHATSAPP.defaultMessage, COMPANY.phoneHref)}
               external
               icon={
                 <svg width="23" height="23" viewBox="0 0 24 24" fill="currentColor">
@@ -181,7 +181,7 @@ export default async function ContactPage() {
             Walkthroughs, launches and site visits, as they happen
           </h2>
           <div className="mt-8">
-            <SocialPills socials={COMPANY.socials} brand={COMPANY.name} />
+            <SocialPills socials={COMPANY.socials} brand={COMPANY.name} phoneHref={COMPANY.phoneHref} />
           </div>
         </section>
 

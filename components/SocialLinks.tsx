@@ -76,14 +76,17 @@ const SOCIAL_STYLE: Record<string, { bg: string; icon: ReactNode }> = {
 export function SocialLinks({
   socials,
   brand,
+  phoneHref,
 }: {
   socials: readonly { label: string; href: string }[];
   /** The company name, for "Global Landmark on Instagram". */
   brand: string;
+  /** The Settings phone, so WhatsApp follows it. */
+  phoneHref?: string;
 }) {
   const links = [
     ...socials.filter((s) => s.href.startsWith("http")),
-    { label: "WhatsApp", href: whatsAppHref(WHATSAPP.defaultMessage) },
+    { label: "WhatsApp", href: whatsAppHref(WHATSAPP.defaultMessage, phoneHref) },
   ];
   return (
     <ul className="flex flex-wrap gap-3">
@@ -119,13 +122,15 @@ export function SocialLinks({
 export function SocialPills({
   socials,
   brand,
+  phoneHref,
 }: {
   socials: readonly { label: string; href: string }[];
   brand: string;
+  phoneHref?: string;
 }) {
   const links = [
     ...socials.filter((s) => s.href.startsWith("http")),
-    { label: "WhatsApp", href: whatsAppHref(WHATSAPP.defaultMessage) },
+    { label: "WhatsApp", href: whatsAppHref(WHATSAPP.defaultMessage, phoneHref) },
   ];
   return (
     <ul className="flex flex-wrap justify-center gap-3">
