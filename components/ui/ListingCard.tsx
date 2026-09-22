@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { PublicPropertyWithMedia } from "@/lib/db/public-columns";
-import { categoryLabel } from "@/lib/categories";
 import {
   POSSESSION_STATUSES,
   collectionOf,
@@ -126,47 +125,166 @@ function SpecRow({ specs }: { specs: Spec[] }) {
  * StatusBadge: that one renders the internal listing status (Available /
  * Reserved / Sold), which by R-07 never reaches a visitor. This renders
  * build stage, which is the thing a buyer actually scans a portal for.
- *
- * A launch is the one stage worth accenting, and gold stays a rule here —
- * a border and a text colour, never a fill.
  */
-const POSSESSION_ACCENT: Record<string, string> = {
-  "New Launch": "border-gold text-gold-deep",
-};
-
 function PossessionBadge({ status }: { status: string }) {
   return (
-    <span
-      className={`text-eyebrow border bg-surface/95 px-2.5 py-1 font-sans font-medium uppercase tracking-[0.14em] ${
-        POSSESSION_ACCENT[status] ?? "border-border text-ink"
-      }`}
-    >
+    <span className="text-eyebrow border border-gold/60 bg-white/95 px-2.5 py-1 font-sans font-semibold uppercase tracking-[0.12em] text-gold-deep">
       {status}
     </span>
   );
 }
 
-/** Shared chip for the type / category / PLC tag row. */
-function Tag({ children }: { children: React.ReactNode }) {
+const PIN = (
+  <svg
+    aria-hidden
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    className="h-3.5 w-3.5 shrink-0"
+  >
+    <path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Z" />
+    <circle cx="12" cy="9.5" r="2.5" />
+  </svg>
+);
+
+const ARROW = (
+  <svg
+    aria-hidden
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
+  >
+    <path d="M5 12h14M13 6l6 6-6 6" />
+  </svg>
+);
+
+/** Everything both layouts derive from a property, computed once. */
+function cardModel(property: PublicPropertyWithMedia) {
+  const collection = collectionOf(property.propertyType, property.kind);
+  const possession =
+    // A stale or hand-edited value must not render as a badge.
+    property.possessionStatus &&
+    (POSSESSION_STATUSES as readonly string[]).includes(property.possessionStatus)
+      ? property.possessionStatus
+      : null;
+  return {
+    cover: property.images[0],
+    specs: cardSpecs(property),
+    badge: collection
+      ? collectionLabel(collection)
+      : property.kind === "project"
+        ? "Project"
+        : "Property",
+    // Society/project name augments the location rather than replacing it —
+    // a buyer scans for "where" first, "which building" second.
+    projectName: property.project?.name || property.society,
+    possession,
+    // R-05/R-07: no reference code on the card — refCode is internal only.
+    priceLabel:
+      property.publicPrice != null ? formatIndianShort(property.publicPrice) : "Price on request",
+    // "Starts from" is only honest for a listing that covers several units —
+    // a whole project, or a unit offered in more than one configuration.
+    startsFrom:
+      property.publicPrice != null &&
+      (property.kind === "project" || (property.configurations?.length ?? 0) > 1),
+  };
+}
+
+type CardModel = ReturnType<typeof cardModel>;
+
+/** The photograph with its badges and the enquiry toggle — shared by both layouts. */
+function CardImage({
+  property,
+  model,
+  sizes,
+  className,
+  children,
+}: {
+  property: PublicPropertyWithMedia;
+  model: CardModel;
+  sizes: string;
+  className: string;
+  children?: React.ReactNode;
+}) {
   return (
-    <span className="text-meta border border-border px-2 py-0.5 font-sans text-ink-muted">
+    <div className={`relative overflow-hidden bg-ink/5 ${className}`}>
+      {model.cover && (
+        <Image
+          src={model.cover.url}
+          alt={model.cover.alt || property.title}
+          fill
+          // Above Next's default of 75: these are the photographs a buyer
+          // judges a listing on. Allowed values live in next.config.ts.
+          quality={90}
+          sizes={sizes}
+          className="img-zoom"
+        />
+      )}
+      {/* One positioned row, so long badges wrap instead of sliding under
+          the enquiry toggle. */}
+      <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <span className="text-eyebrow max-w-full truncate bg-navy/90 px-2.5 py-1 font-sans font-semibold uppercase tracking-[0.14em] text-cream backdrop-blur-sm">
+            {model.badge}
+          </span>
+          {model.possession && <PossessionBadge status={model.possession} />}
+        </div>
+        <EnquiryToggleButton
+          item={toEnquiryCartItem(property)}
+          className="text-eyebrow pointer-events-auto shrink-0 rounded-full bg-white/95 px-3 py-1.5 font-sans font-semibold uppercase tracking-[0.12em] text-ink shadow-sm backdrop-blur-sm transition-colors hover:bg-cta hover:text-cta-ink"
+        />
+      </div>
       {children}
+    </div>
+  );
+}
+
+function Price({ model, tone }: { model: CardModel; tone: "light" | "dark" }) {
+  const dark = tone === "dark";
+  return (
+    <span className="flex flex-col leading-tight">
+      {model.startsFrom && (
+        <span
+          className={`text-eyebrow font-sans font-semibold uppercase tracking-[0.18em] ${
+            dark ? "text-cream/75" : "text-ink-muted"
+          }`}
+        >
+          Starts from
+        </span>
+      )}
+      <span className={`whitespace-nowrap font-serif text-h4 ${dark ? "text-white" : "text-heading"}`}>
+        {model.priceLabel}
+      </span>
     </span>
   );
 }
 
+function Location({ property, model }: { property: PublicPropertyWithMedia; model: CardModel }) {
+  return (
+    <p className="text-eyebrow flex items-center gap-1.5 font-sans font-semibold uppercase tracking-[0.14em] text-gold-deep">
+      {PIN}
+      <span className="truncate">
+        {locationLine(property)}
+        {model.projectName ? ` · ${model.projectName}` : ""}
+      </span>
+    </p>
+  );
+}
+
 /**
- * Portal card: framed, tight, and with one obvious way in.
+ * Listing card, redesigned (Sep 2026).
  *
- * The redesign traded the tall editorial 4:5 crop for a 4:3 one and pulled
- * the copy in under a hairline frame. That is worth roughly a third of a
- * card's height, which is the whole point — the client's complaint was that
- * three listings filled a screen where the reference fits nine. Nothing was
- * dropped to buy the space: badge, specs, tags and price all still render.
+ * Grid: the price sits on the photograph over a soft fade, so the two facts
+ * a buyer scans a portal for — what it looks like and what it costs — read
+ * in one glance; under it, where, what, and the spec icons, then one quiet
+ * "View details" line. List: a real horizontal card — photograph, then the
+ * story (location, title, project, a two-line description, specs), then a
+ * price column with the actions.
  *
- * The "Details" chip is the portal affordance the card was missing. The
- * whole card is already the link, so the chip is a span that fills yellow
- * on card hover rather than a second, nested anchor.
+ * The whole card is the link; the enquiry toggle stops its own click.
  */
 export function ListingCard({
   property,
@@ -178,128 +296,87 @@ export function ListingCard({
   variant?: "grid" | "list";
   className?: string;
 }) {
-  const isList = variant === "list";
-  const cover = property.images[0];
-  const specs = cardSpecs(property);
-  const collection = collectionOf(property.propertyType, property.kind);
-  const badge = collection
-    ? collectionLabel(collection)
-    : property.kind === "project"
-      ? "Project"
-      : "Property";
-  // Society/project name augments the locality line rather than replacing
-  // it — a buyer scans for "where" first, "which building" second.
-  const projectName = property.project?.name || property.society;
-  const plc = property.plcAttributes ?? [];
-  // A stale or hand-edited value must not render as a badge, so the status
-  // shows only while it is still one of the taxonomy's own.
-  const possession =
-    property.possessionStatus &&
-    (POSSESSION_STATUSES as readonly string[]).includes(property.possessionStatus)
-      ? property.possessionStatus
-      : null;
-  // R-05/R-07: no reference code on the card — refCode is internal only.
-  const priceLabel =
-    property.publicPrice != null
-      ? formatIndianShort(property.publicPrice)
-      : "Price on request";
-  // "Starts from" is only honest for a listing that covers several units —
-  // a whole project, or a unit offered in more than one configuration. On a
-  // single resale flat it would understate a price that is already fixed.
-  const startsFrom =
-    property.publicPrice != null &&
-    (property.kind === "project" || (property.configurations?.length ?? 0) > 1);
+  const model = cardModel(property);
+  const href = `/properties/${property.slug}`;
+  const frame =
+    "group flex overflow-hidden border border-border bg-white transition-[border-color,transform,box-shadow] duration-300 hover:-translate-y-1 hover:border-gold hover:shadow-[0_24px_48px_-28px_rgba(40,30,15,0.45)]";
 
-  return (
-    <Link
-      href={`/properties/${property.slug}`}
-      // White on the ivory page, lifting on hover, so a card reads as the
-      // object it is rather than a box drawn on the ground.
-      className={`group flex border border-border bg-white transition-[border-color,transform,box-shadow] duration-300 hover:-translate-y-1 hover:border-gold hover:shadow-[0_24px_48px_-28px_rgba(40,30,15,0.45)] ${
-        isList ? "flex-col sm:flex-row" : "flex-col"
-      } ${className}`}
-    >
-      <div
-        className={`relative shrink-0 overflow-hidden bg-ink/5 ${
-          isList ? "aspect-[4/3] sm:w-64" : "aspect-[4/3]"
-        }`}
-      >
-        {cover && (
-          <Image
-            src={cover.url}
-            alt={cover.alt || property.title}
-            fill
-            // Above Next's default of 75. These are the photographs a buyer
-            // judges a listing on, and the default was visibly softening them.
-            // Allowed values are declared in next.config.ts's images.qualities.
-            quality={90}
-            sizes={
-              isList
-                ? "(min-width: 640px) 16rem, 100vw"
-                : "(min-width: 1024px) 30vw, (min-width: 768px) 42vw, 100vw"
-            }
-            className="img-zoom"
-          />
-        )}
-        {/* One positioned row, not two independently-positioned corners.
-            The badges and the enquiry toggle were each absolutely placed
-            (left-3 / right-3) with no shared layout, so on a card whose
-            badges ran long — "Kothi" plus "Ready to Move" — the pair slid
-            under the toggle and the text collided. Laying them out as a
-            single justify-between row means the two groups can never
-            occupy the same space: the badges wrap or truncate, and the
-            toggle keeps its width via shrink-0. */}
-        <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex items-start justify-between gap-2">
-          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-            <span className="text-eyebrow max-w-full truncate bg-navy/85 px-2.5 py-1 font-sans font-medium uppercase tracking-[0.16em] text-cream backdrop-blur-sm">
-              {badge}
-            </span>
-            {possession && <PossessionBadge status={possession} />}
-          </div>
-          <EnquiryToggleButton
-            item={toEnquiryCartItem(property)}
-            className="text-eyebrow pointer-events-auto shrink-0 bg-navy/85 px-2.5 py-1 font-sans font-medium uppercase tracking-[0.16em] text-cream backdrop-blur-sm transition-colors hover:bg-navy-deep"
-          />
-        </div>
-      </div>
+  if (variant === "list") {
+    return (
+      <Link href={href} className={`${frame} flex-col md:flex-row ${className}`}>
+        <CardImage
+          property={property}
+          model={model}
+          sizes="(min-width: 768px) 22rem, 100vw"
+          className="aspect-[4/3] shrink-0 md:aspect-auto md:w-[22rem] md:min-h-[15rem]"
+        />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex flex-1 flex-col gap-1.5 p-4 pb-3">
-          <h3 className="font-serif text-h4 leading-snug text-heading">{property.title}</h3>
-          <p className="text-meta font-sans text-ink-muted">
-            {locationLine(property)}
-            {projectName ? ` · ${projectName}` : ""}
-          </p>
-
-          <SpecRow specs={specs} />
-
-          <div className="flex flex-wrap gap-1.5">
-            {property.propertyType && <Tag>{property.propertyType}</Tag>}
-            <Tag>{categoryLabel(property.category)}</Tag>
-            {plc.map((tag) => (
-              <Tag key={tag}>{tag}</Tag>
-            ))}
-          </div>
-        </div>
-
-        {/* Price and the way in share one footer rule, so every card in a
-            grid lands its price on the same line however tall the copy
-            above it runs. */}
-        <div className="flex items-end justify-between gap-3 border-t border-border px-4 py-3">
-          <span className="flex flex-col leading-tight">
-            {startsFrom && (
-              <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.18em] text-ink-muted">
-                Starts from
+        <div className="flex min-w-0 flex-1 flex-col gap-3 p-5 md:p-7">
+          <Location property={property} model={model} />
+          <h3 className="font-serif text-h3 leading-snug text-heading transition-colors duration-300 group-hover:text-gold-deep">
+            {property.title}
+          </h3>
+          {property.description && (
+            <p className="line-clamp-2 text-pretty text-meta font-sans leading-relaxed text-ink-muted">
+              {property.description}
+            </p>
+          )}
+          <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-2 pt-2">
+            <SpecRow specs={model.specs} />
+            {property.propertyType && (
+              <span className="text-meta border-l border-border pl-5 font-sans text-ink-muted">
+                {property.propertyType}
               </span>
             )}
-            <span className="font-sans text-body font-semibold text-ink">
-              {priceLabel}
-            </span>
-          </span>
-          <span className="text-eyebrow border border-ink/20 px-3 py-1.5 font-sans font-semibold uppercase tracking-[0.16em] text-ink transition-colors duration-300 group-hover:border-cta group-hover:bg-cta group-hover:text-cta-ink">
-            Details
+          </div>
+        </div>
+
+        {/* Price column: a clear endpoint to each row, the way a portal list
+            reads — scan down the right edge and compare. */}
+        <div className="flex shrink-0 flex-row items-center justify-between gap-4 border-t border-border bg-surface/60 p-5 md:w-64 md:flex-col md:items-start md:justify-center md:border-l md:border-t-0 md:p-7">
+          <Price model={model} tone="light" />
+          <span className="text-eyebrow inline-flex shrink-0 items-center gap-2 whitespace-nowrap bg-cta px-5 py-3 font-sans font-bold uppercase tracking-[0.14em] text-cta-ink transition-colors group-hover:bg-cta-hover">
+            View details
+            {ARROW}
           </span>
         </div>
+      </Link>
+    );
+  }
+
+  return (
+    <Link href={href} className={`${frame} flex-col ${className}`}>
+      <CardImage
+        property={property}
+        model={model}
+        sizes="(min-width: 1024px) 30vw, (min-width: 768px) 42vw, 100vw"
+        className="aspect-[4/3]"
+      >
+        {/* The fade that carries the price: legible on any photograph. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/75 via-black/30 to-transparent"
+        />
+        <div className="absolute inset-x-4 bottom-3 flex items-end justify-between gap-3">
+          <Price model={model} tone="dark" />
+          {property.propertyType && (
+            <span className="text-eyebrow shrink-0 border border-white/40 bg-white/10 px-2.5 py-1 font-sans font-semibold uppercase tracking-[0.12em] text-white backdrop-blur-sm">
+              {property.propertyType}
+            </span>
+          )}
+        </div>
+      </CardImage>
+
+      <div className="flex flex-1 flex-col gap-2.5 p-5">
+        <Location property={property} model={model} />
+        <h3 className="line-clamp-2 font-serif text-h4 leading-snug text-heading transition-colors duration-300 group-hover:text-gold-deep">
+          {property.title}
+        </h3>
+        <SpecRow specs={model.specs} />
+        <span className="text-eyebrow mt-auto inline-flex items-center gap-2 border-t border-border pt-4 font-sans font-bold uppercase tracking-[0.16em] text-ink transition-colors duration-300 group-hover:text-gold-deep">
+          View details
+          {ARROW}
+        </span>
       </div>
     </Link>
   );

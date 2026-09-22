@@ -5,17 +5,14 @@ import { useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Select } from "@/components/ui/Select";
 import { BOXED_SELECT } from "@/components/form-classes";
-import { localitiesIn } from "@/lib/locations";
 import {
   COLLECTIONS,
   CONFIGURATIONS,
-  FURNISHINGS,
-  POSSESSION_STATUSES,
   PROPERTY_TYPES,
   withEmptyOption as withAll,
 } from "@/lib/attributes";
 import { CATEGORIES } from "@/lib/categories";
-import { propertiesHref, type PropertiesFilterParams } from "@/lib/properties-url";
+import type { PropertiesFilterParams } from "@/lib/properties-url";
 
 const LABEL =
   "text-eyebrow font-sans font-semibold uppercase tracking-[0.2em] text-ink-muted";
@@ -24,15 +21,15 @@ const LABEL =
  * The listings search console (redesigned Sep 2026).
  *
  * One white card, lifted over the page header's edge:
- *   row 1 — keyword search, and category as a segmented switch;
- *   row 2 — the four filters people actually use (city, type, configuration,
- *           collection), with the rest behind "More filters";
+ *   row 1 — keyword search;
+ *   row 2 — city, type, configuration and collection;
  *   row 3 — every applied filter as a removable chip.
  *
- * It replaced a cream panel that showed all eight selects at once, which
- * read as a form to fill in rather than a search. Nothing was dropped: the
- * secondary filters are one click away, and the button counts how many of
- * them are set so a hidden filter is never a surprise.
+ * The client cut it to these (Sep 2026): the category switch (sale /
+ * purchase / lease / invest) and the possession, furnishing, locality and
+ * sector filters are gone from the page. The URL still accepts them, so an
+ * old link keeps working, and one arriving that way shows as a chip that
+ * can be removed.
  *
  * Every control writes to the URL and clears `page` — narrowing the set
  * while sitting on page 3 would otherwise land the visitor on an empty grid.
@@ -48,25 +45,11 @@ export function FilterBar({
   const searchParams = useSearchParams();
 
   const city = current.city ?? "";
-  const localities = localitiesIn(city);
-  const moreSet = [current.possession, current.furnishing, current.locality, current.sector].filter(
-    Boolean
-  ).length;
-  // Opens by itself when one of its filters is already applied, so a visitor
-  // arriving on a filtered link can see what is narrowing the grid.
-  const [showMore, setShowMore] = useState(moreSet > 0);
   // Phones only: the dropdowns fold behind one button so the first listing
   // is not four screens down. From lg they are always shown.
-  const narrowing = [
-    current.city,
-    current.type,
-    current.configuration,
-    current.group,
-    current.possession,
-    current.furnishing,
-    current.locality,
-    current.sector,
-  ].filter(Boolean).length;
+  const narrowing = [current.city, current.type, current.configuration, current.group].filter(
+    Boolean
+  ).length;
   const [showFilters, setShowFilters] = useState(false);
 
   function apply(patch: Record<string, string>) {
@@ -143,28 +126,6 @@ export function FilterBar({
           </button>
         </form>
 
-        {/* Category as a segmented switch. Still <Link>s, so ?category=
-            pages keep their crawlable internal links. */}
-        <nav
-          aria-label="Category"
-          className="flex shrink-0 overflow-x-auto border border-border bg-surface p-1 no-scrollbar"
-        >
-          {[{ value: undefined, label: "All" }, ...CATEGORIES].map((option) => {
-            const isActive = option.value ? option.value === current.category : !current.category;
-            return (
-              <Link
-                key={option.label}
-                href={propertiesHref(current, { category: option.value, page: undefined }, "listings")}
-                aria-current={isActive ? "page" : undefined}
-                className={`text-eyebrow whitespace-nowrap px-4 py-2 font-sans font-semibold uppercase tracking-[0.14em] transition-colors duration-300 ${
-                  isActive ? "bg-navy text-cream" : "text-ink-muted hover:text-ink"
-                }`}
-              >
-                {option.label}
-              </Link>
-            );
-          })}
-        </nav>
 
         <button
           type="button"
@@ -185,7 +146,7 @@ export function FilterBar({
       {/* Row 2: the four filters people use, plus the door to the rest. */}
       <div
         id="listing-filters"
-        className={`${showFilters ? "grid" : "hidden"} grid-cols-1 gap-4 p-4 sm:grid-cols-2 md:p-5 lg:grid lg:grid-cols-[repeat(4,minmax(0,1fr))_auto] lg:items-end`}
+        className={`${showFilters ? "grid" : "hidden"} grid-cols-1 gap-4 p-4 sm:grid-cols-2 md:p-5 lg:grid lg:grid-cols-4 lg:items-end`}
       >
         <Field label="City">
           <Select
@@ -243,107 +204,7 @@ export function FilterBar({
           />
         </Field>
 
-        <button
-          type="button"
-          onClick={() => setShowMore((open) => !open)}
-          aria-expanded={showMore}
-          aria-controls="more-filters"
-          className={`text-eyebrow inline-flex cursor-pointer items-center justify-center gap-2 border px-5 py-3.5 font-sans font-semibold uppercase tracking-[0.14em] transition-colors ${
-            showMore || moreSet > 0
-              ? "border-gold bg-gold/10 text-gold-deep"
-              : "border-border text-ink hover:border-gold"
-          }`}
-        >
-          <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" />
-            <circle cx="16" cy="6" r="2" />
-            <circle cx="10" cy="12" r="2" />
-            <circle cx="18" cy="18" r="2" />
-          </svg>
-          More filters{moreSet > 0 ? ` (${moreSet})` : ""}
-        </button>
       </div>
-
-      {showMore && (
-        <div
-          id="more-filters"
-          // Follows the phone fold: hidden with the rest until Filters is open.
-          className={`${showFilters ? "grid" : "hidden"} grid-cols-1 gap-4 border-t border-border bg-surface/60 p-4 sm:grid-cols-2 md:p-5 lg:grid lg:grid-cols-4`}
-        >
-          <Field label="Possession">
-            <Select
-              key={`possession-${current.possession ?? ""}`}
-              name="possession-filter"
-              aria-label="Possession"
-              defaultValue={current.possession ?? ""}
-              className={BOXED_SELECT}
-              options={withAll("Any possession", POSSESSION_STATUSES)}
-              onValueChange={(v) => apply({ possession: v })}
-            />
-          </Field>
-
-          <Field label="Furnishing">
-            <Select
-              key={`furnishing-${current.furnishing ?? ""}`}
-              name="furnishing-filter"
-              aria-label="Furnishing"
-              defaultValue={current.furnishing ?? ""}
-              className={BOXED_SELECT}
-              options={withAll("Any furnishing", FURNISHINGS)}
-              onValueChange={(v) => apply({ furnishing: v })}
-            />
-          </Field>
-
-          {/* Locality and sector only mean something under a chosen city,
-              so they say so rather than offering an empty list. */}
-          {city && localities.length > 0 ? (
-            <Field label="Locality">
-              <Select
-                key={`locality-${city}-${current.locality ?? ""}`}
-                name="locality-filter"
-                aria-label="Locality"
-                defaultValue={current.locality ?? ""}
-                className={BOXED_SELECT}
-                options={withAll(
-                  "Any locality",
-                  localities.map((l) => l.name)
-                )}
-                onValueChange={(v) => apply({ locality: v })}
-              />
-            </Field>
-          ) : (
-            <Field label="Locality">
-              <p className="border border-dashed border-border px-4 py-3 text-meta font-sans text-ink-muted">
-                Choose a city first
-              </p>
-            </Field>
-          )}
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="sector-filter" className={LABEL}>
-              Sector
-            </label>
-            {/* ponytail: sector has no taxonomy the way locality does
-                (lib/locations.ts models City -> Locality only), so this
-                stays free text rather than a fabricated Select. Promote it
-                once a "distinct sectors per city" query exists. */}
-            <input
-              id="sector-filter"
-              type="text"
-              defaultValue={current.sector ?? ""}
-              placeholder="e.g. Sector 20"
-              onBlur={(e) => apply({ sector: e.currentTarget.value.trim() })}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  apply({ sector: e.currentTarget.value.trim() });
-                }
-              }}
-              className="w-full border border-border bg-white px-4 py-3 font-sans text-body text-ink placeholder:text-ink-muted/60 transition-colors focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/20"
-            />
-          </div>
-        </div>
-      )}
 
       {/* What is actually applied, and one click to undo any of it. */}
       {chips.length > 0 && (
