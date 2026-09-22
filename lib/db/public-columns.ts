@@ -21,13 +21,10 @@ import type { AdminProperty, Area, Project, Builder, PropertyImage, PropertyMedi
  *   demandPrice, perSqftRate, isNegotiable
  *     — price is resolved through `publicPrice()` below, never raw
  *   latitude, longitude, showMapPublicly
- *     — same reasoning as the price, one step further. Allowlisting these
- *       and checking `showMapPublicly` at render time would still ship the
- *       coordinates of every listing in the RSC payload, published pin or
- *       not. The map pin is fetched instead by a query that puts
- *       `showMapPublicly = true` in its WHERE clause, so an unpublished
- *       pin never leaves the database — see lib/db/property-detail.ts.
- *       Do not "just add them here": that is the leak, not the fix.
+ *     — the old map pin, no longer read anywhere. The admin now pastes a
+ *       Google Maps link (mapsUrl, below), and pasting it IS the decision
+ *       to publish it, so it needs no gate. Never add the raw coordinates
+ *       here: rows that never published a pin still hold them.
  *   documentationFlags   — internal by default (R-24)
  *   banksOnPanel/loanFlags are public; the circle-rate comparison is not,
  *     and lives on property_internal, a table no public query imports.
@@ -52,6 +49,7 @@ export const PUBLIC_PROPERTY_COLUMNS = {
   society: true,
   floorNumber: true,
   totalFloors: true,
+  mapsUrl: true,
 
   propertyType: true,
   dealAttributes: true,

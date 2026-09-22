@@ -15,7 +15,6 @@ import {
   propertyMedia,
   propertyOwners,
   propertyUnitSizes,
-  towers,
 } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
@@ -61,10 +60,16 @@ async function writeChildTables(
   propertyId: number,
   data: {
     owners: { name: string; [k: string]: unknown }[];
-    charges: { chargeType: string; [k: string]: unknown }[];
     media: { kind: string; url: string; label: string }[];
-    unitSizes: { unitLabel: string; [k: string]: unknown }[];
-    circleRate: number | null;
+    /**
+     * Charges, unit sizes and the circle rate are no longer on the form
+     * (Sep 2026). Only duplicateProperty passes them, to copy a listing
+     * whole; a form save leaves them out, which leaves the rows alone
+     * instead of replacing them with nothing.
+     */
+    charges?: { chargeType: string; [k: string]: unknown }[];
+    unitSizes?: { unitLabel: string; [k: string]: unknown }[];
+    circleRate?: number | null;
   }
 ) {
   await tx.delete(propertyOwners).where(eq(propertyOwners.propertyId, propertyId));
@@ -74,17 +79,19 @@ async function writeChildTables(
     );
   }
 
-  await tx.delete(propertyCharges).where(eq(propertyCharges.propertyId, propertyId));
-  if (data.charges.length) {
-    await tx.insert(propertyCharges).values(
-      data.charges.map((c) => ({ ...c, propertyId })) as typeof propertyCharges.$inferInsert[]
-    );
-  }
-
   await tx.delete(propertyMedia).where(eq(propertyMedia.propertyId, propertyId));
   if (data.media.length) {
     await tx.insert(propertyMedia).values(
       data.media.map((m, i) => ({ ...m, propertyId, sortOrder: i }))
+    );
+  }
+
+  if (!data.charges || !data.unitSizes || data.circleRate === undefined) return;
+
+  await tx.delete(propertyCharges).where(eq(propertyCharges.propertyId, propertyId));
+  if (data.charges.length) {
+    await tx.insert(propertyCharges).values(
+      data.charges.map((c) => ({ ...c, propertyId })) as typeof propertyCharges.$inferInsert[]
     );
   }
 
@@ -179,43 +186,6 @@ async function resolveExistingProjectId(name: string): Promise<number | null> {
   return existing[0]?.id ?? null;
 }
 
-/**
- * Find a tower by name (case-insensitive) scoped to `projectId`, or create
- * it. Scoped because "Tower A" is a common name — without the project scope
- * a second, unrelated project's "Tower A" would collide with the first.
- * No project selected means no tower can be attached.
- */
-async function resolveTowerId(
-  projectId: number | null,
-  name: string
-): Promise<number | null> {
-  if (!projectId || !name) return null;
-  const existing = await db
-    .select({ id: towers.id })
-    .from(towers)
-    .where(sql`${towers.projectId} = ${projectId} and lower(${towers.name}) = ${name.toLowerCase()}`);
-  if (existing.length) return existing[0].id;
-  const [row] = await db
-    .insert(towers)
-    .values({ projectId, name })
-    .$returningId();
-  return row.id;
-}
-
-/** Autosave variant — existing tower only, never creates (see resolveExistingProjectId). */
-async function resolveExistingTowerId(
-  projectId: number | null,
-  name: string
-): Promise<number | null> {
-  if (!projectId || !name) return null;
-  const existing = await db
-    .select({ id: towers.id })
-    .from(towers)
-    .where(sql`${towers.projectId} = ${projectId} and lower(${towers.name}) = ${name.toLowerCase()}`);
-  return existing[0]?.id ?? null;
-}
-
-
 export async function createProperty(
   _prev: PropertyFormState,
   formData: FormData
@@ -227,13 +197,10 @@ export async function createProperty(
   const {
     images,
     projectName,
-    towerName,
     owners,
-    charges,
     media,
     documents,
-    unitSizes,
-    circleRate,
+    place,
     ...fields
   } = parsed.data;
 
@@ -251,12 +218,11 @@ export async function createProperty(
 
   try {
     const projectId = await resolveProjectId(projectName);
-    const towerId = await resolveTowerId(projectId, towerName);
     const slug = await uniqueSlug(fields.title);
     await db.transaction(async (tx) => {
       const [row] = await tx
         .insert(properties)
-        .values({ ...fields, projectId, towerId, slug })
+        .values({ ...fields, ...place, projectId, slug })
         .$returningId();
       // Ref code is assigned from the row id, inside the same transaction:
       // the id is already unique and monotonic, so two brokers saving at the
@@ -265,7 +231,7 @@ export async function createProperty(
       // change and is never reused after a delete.
       await tx
         .update(properties)
-        .set({ refCode: buildRefCode(fields.city, new Date().getFullYear(), row.id) })
+        .set({ refCode: buildRefCode(place?.city ?? null, new Date().getFullYear(), row.id) })
         .where(eq(properties.id, row.id));
       if (images.length) {
         await tx.insert(propertyImages).values(
@@ -279,7 +245,7 @@ export async function createProperty(
           documents.map((d) => ({ ...d, propertyId: row.id }))
         );
       }
-      await writeChildTables(tx, row.id, { owners, charges, media, unitSizes, circleRate });
+      await writeChildTables(tx, row.id, { owners, media });
     });
   } catch (err) {
     console.error("createProperty failed:", err);
@@ -304,13 +270,10 @@ export async function updateProperty(
   const {
     images,
     projectName,
-    towerName,
     owners,
-    charges,
     media,
     documents,
-    unitSizes,
-    circleRate,
+    place,
     ...fields
   } = parsed.data;
 
@@ -340,18 +303,24 @@ export async function updateProperty(
       .filter((key) => !keepDocuments.has(key));
 
     const projectId = await resolveProjectId(projectName);
-    const towerId = await resolveTowerId(projectId, towerName);
     const slug = await uniqueSlug(fields.title, id);
     await db.transaction(async (tx) => {
       await tx
         .update(properties)
-        .set({ ...fields, projectId, towerId, slug, updatedAt: new Date() })
+        // `place` only when the address named a city: an address that names
+        // none leaves the city the listing already has, rather than
+        // dropping it out of the city filter.
+        .set({ ...fields, ...place, projectId, slug, updatedAt: new Date() })
         .where(eq(properties.id, id));
 
       await tx.delete(propertyImages).where(eq(propertyImages.propertyId, id));
-      await tx.insert(propertyImages).values(
-        images.map((img, i) => ({ ...img, propertyId: id, sortOrder: i }))
-      );
+      // Guarded: an empty insert throws, which made every draft saved
+      // without photos fail with "Could not update the property".
+      if (images.length) {
+        await tx.insert(propertyImages).values(
+          images.map((img, i) => ({ ...img, propertyId: id, sortOrder: i }))
+        );
+      }
 
       await tx.delete(propertyDocuments).where(eq(propertyDocuments.propertyId, id));
       if (documents.length) {
@@ -360,10 +329,7 @@ export async function updateProperty(
         );
       }
 
-      // Previously missing entirely: an edit to an existing property never
-      // wrote owners, charges, media or the circle rate — every save of an
-      // existing listing silently dropped them. This is the fix.
-      await writeChildTables(tx, id, { owners, charges, media, unitSizes, circleRate });
+      await writeChildTables(tx, id, { owners, media });
     });
   } catch (err) {
     console.error("updateProperty failed:", err);
@@ -403,7 +369,7 @@ export type SaveDraftState =
  *
  * Three things keep autosave from doing more than a broker asked for:
  *
- * 1. It NEVER writes publicationState or listingStatus. A new row lands at
+ * 1. It NEVER writes publicationState. A new row lands at
  *    the schema default (draft); an existing row keeps whatever state it
  *    already has. Autosave firing every 20s must not be able to publish a
  *    draft, and must not be able to quietly unpublish a live listing just
@@ -437,15 +403,17 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
   const {
     images,
     projectName,
-    towerName,
     owners,
-    charges,
     media,
     documents,
-    unitSizes,
-    circleRate,
-    ...fields
+    place,
+    ...rest
   } = parsed.data;
+  // Never written by autosave. The form sends it, and it used to be spread
+  // straight into the UPDATE below — so picking "Published" and waiting
+  // twenty seconds put a listing live without the publish checks (photos,
+  // plot area) ever running. Only Save changes may publish.
+  const fields = omit(rest, ["publicationState"]);
 
   // Autosave only ever UPDATES a listing that already exists. It used to
   // insert a draft for a brand-new listing on its first tick, which made it a
@@ -460,7 +428,6 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
 
   try {
     const projectId = await resolveExistingProjectId(projectName);
-    const towerId = await resolveExistingTowerId(projectId, towerName);
     const now = new Date();
 
     const [current] = await db
@@ -486,7 +453,7 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
     await db.transaction(async (tx) => {
       await tx
         .update(properties)
-        .set({ ...fields, projectId, towerId, slug, updatedAt: now })
+        .set({ ...fields, ...place, projectId, slug, updatedAt: now })
         .where(eq(properties.id, existingId));
       if (images.length) {
         await tx
@@ -504,13 +471,7 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
           documents.map((d) => ({ ...d, propertyId: existingId }))
         );
       }
-      await writeChildTables(tx, existingId, {
-        owners,
-        charges,
-        media,
-        unitSizes,
-        circleRate,
-      });
+      await writeChildTables(tx, existingId, { owners, media });
     });
 
     if (removedDocs.length) {

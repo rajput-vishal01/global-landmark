@@ -6,11 +6,8 @@ import { cardChrome } from "@/components/admin/desk";
 /**
  * What this form actually demands, said once at the top.
  *
- * The form carries ~200 inputs across fifteen sections and exactly one of
- * them is always mandatory. Without this panel there is no way for a broker
- * to know that: every field looks equally obligatory, so the form reads as
- * an hour of work when it is really "type a title, save, fill the rest in
- * later". The publish rules are the type-dependent ones from
+ * Two fields are always mandatory and everything else can wait. Without
+ * this panel every field looks equally obligatory. The publish rules are the type-dependent ones from
  * lib/taxonomy/sections.ts, read live off the chosen type rather than
  * restated here, so this cannot drift from what the server enforces.
  */
@@ -27,7 +24,7 @@ export function RequiredFieldsPanel({ propertyType }: { propertyType: string }) 
       <ul className="mt-3 flex flex-col gap-2 text-[13px] text-ink">
         <li>
           <span className="font-semibold">To save a draft:</span> a title and an
-          address line. Those are the only two fields the form refuses to save
+          address. Those are the only two fields the form refuses to save
           without.
         </li>
         <li>

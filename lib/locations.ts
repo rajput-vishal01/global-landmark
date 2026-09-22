@@ -134,3 +134,53 @@ export function localitiesIn(city: string | null | undefined): Locality[] {
 export function isLocalityIn(city: string | null | undefined, locality: string): boolean {
   return localitiesIn(city).some((l) => l.name === locality);
 }
+
+/** Where `name` occurs in `text` as a whole word (case-insensitive), or -1. */
+function wordIndex(text: string, name: string): number {
+  const escaped = name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = new RegExp(`(^|[^a-z0-9])${escaped}(?![a-z0-9])`).exec(text);
+  return match ? match.index + match[1].length : -1;
+}
+
+/**
+ * City and locality read out of a free-text address. The admin form asks
+ * only for the address now, but the public city filter still runs on the
+ * `city` column, so this fills it.
+ *
+ * Indian addresses run small to large ("Sector 20, Panchkula"), so when two
+ * cities are named the one named LAST wins. "New Chandigarh" is blanked out
+ * before looking for "Chandigarh", so it never counts as both. With no city
+ * named, a locality that belongs to exactly one city ("Mullanpur", "Aerocity")
+ * still gives the city away.
+ *
+ * ponytail: a word match against the known list, not geocoding. An address
+ * naming no known city returns null and the listing keeps whatever city it
+ * had; put the city name in the address to set it.
+ */
+export function placeFromAddress(
+  address: string
+): { city: string; locality: string | null } | null {
+  let text = address.toLowerCase();
+  let city: City | null = null;
+  let cityAt = -1;
+  // Longest name first, so "New Chandigarh" is taken before "Chandigarh".
+  for (const c of [...CITIES].sort((a, b) => b.name.length - a.name.length)) {
+    const at = wordIndex(text, c.name);
+    if (at < 0) continue;
+    if (at > cityAt) {
+      city = c;
+      cityAt = at;
+    }
+    text = text.slice(0, at) + " ".repeat(c.name.length) + text.slice(at + c.name.length);
+  }
+
+  if (!city) {
+    const owners = CITIES.filter((c) =>
+      c.localities.some((l) => wordIndex(text, l.name) >= 0)
+    );
+    if (owners.length !== 1) return null;
+    city = owners[0];
+  }
+  const locality = city.localities.find((l) => wordIndex(text, l.name) >= 0);
+  return { city: city.name, locality: locality?.name ?? null };
+}

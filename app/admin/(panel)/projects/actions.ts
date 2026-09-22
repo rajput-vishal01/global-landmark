@@ -57,8 +57,8 @@ async function parseSharedFields(formData: FormData) {
     amenities,
     country: textField(formData, "country", 60) ?? "India",
     city,
-    // A locality is only meaningful under its own city — the same rule
-    // LocationSection's property-side counterpart enforces.
+    // A locality is only meaningful under its own city, or the listing
+    // lands under the wrong filter tab.
     locality: city && localityRaw && isLocalityIn(city, localityRaw) ? localityRaw : null,
     sector: textField(formData, "sector", 120),
     coverImage: textField(formData, "coverImage", 2000),

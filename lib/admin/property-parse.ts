@@ -1,15 +1,11 @@
-import { isCategory } from "../categories";
 import {
   ADDED_BY,
   AREA_UNITS,
-  FACINGS,
   FURNISHINGS,
-  LISTING_STATUSES,
-  POSSESSION_STATUSES,
   PROPERTY_TYPES,
   PUBLICATION_STATES,
 } from "../attributes";
-import { CITY_NAMES, isLocalityIn } from "../locations";
+import { placeFromAddress } from "../locations";
 import {
   isBundledImageUrl,
   isLocalImageUrl,
@@ -24,14 +20,7 @@ import {
   PARKING_TYPES,
   PLC_ATTRIBUTES,
 } from "../taxonomy/features";
-import {
-  CONFIGURATIONS,
-  DEAL_ATTRIBUTES,
-  PROPERTY_AGES,
-  ROOM_FLAGS,
-} from "../taxonomy/property";
 import { OWNER_TYPES, SELLER_CATEGORIES } from "../taxonomy/status";
-import { CHARGE_TYPES, isChargeBasis } from "../taxonomy/price";
 import { toSqft } from "../taxonomy/area";
 
 /**
@@ -247,40 +236,6 @@ export function parseOwners(json: string): ParsedOwner[] | null {
   return owners;
 }
 
-export type ParsedCharge = {
-  chargeType: string;
-  amount: number;
-  basis: string;
-  isIncludedInDemand: boolean;
-};
-
-export function parseCharges(json: string): ParsedCharge[] | null {
-  let raw: unknown;
-  try {
-    raw = JSON.parse(json);
-  } catch {
-    return null;
-  }
-  if (!Array.isArray(raw) || raw.length > 30) return null;
-  const charges: ParsedCharge[] = [];
-  for (const item of raw) {
-    if (typeof item !== "object" || item === null) return null;
-    const c = item as Record<string, unknown>;
-    const chargeType = pick(c.chargeType, CHARGE_TYPES);
-    const amount = int(c.amount, 100_000_000_000);
-    // A charge with no type or no amount is an empty row the admin left
-    // behind, not data.
-    if (!chargeType || amount === null) continue;
-    charges.push({
-      chargeType,
-      amount,
-      basis: isChargeBasis(String(c.basis ?? "")) ? String(c.basis) : "lump_sum",
-      isIncludedInDemand: c.isIncludedInDemand === true,
-    });
-  }
-  return charges;
-}
-
 export type ParsedMedium = { kind: string; url: string; label: string };
 
 const MEDIA_KINDS = ["video", "drone", "virtual_tour", "google_map", "brochure"];
@@ -312,64 +267,6 @@ export function parseMedia(json: string): ParsedMedium[] | null {
     media.push({ kind, url, label: str(m.label, 120) });
   }
   return media;
-}
-
-export type ParsedUnitSize = {
-  unitLabel: string;
-  areaValue: number | null;
-  areaUnit: string | null;
-  price: number | null;
-};
-
-/**
- * The "2 BHK / 1750 sq.ft / ₹3.2 Cr" rows a project page publishes.
- *
- * A row with no label names nothing, so it is dropped the same way a
- * nameless owner and an amountless charge are. Unlike the demand price
- * these figures are public by nature — they are the advertised starting
- * price for a unit type, not the negotiated one — so there is no
- * per-row publish flag to parse.
- */
-export function parseUnitSizes(json: string): ParsedUnitSize[] | null {
-  let raw: unknown;
-  try {
-    raw = JSON.parse(json);
-  } catch {
-    return null;
-  }
-  if (!Array.isArray(raw) || raw.length > 30) return null;
-  const areaUnitValues = AREA_UNITS.map((u) => u.value);
-  const rows: ParsedUnitSize[] = [];
-  for (const item of raw) {
-    if (typeof item !== "object" || item === null) return null;
-    const u = item as Record<string, unknown>;
-    const unitLabel = str(u.unitLabel, 60);
-    if (!unitLabel) continue;
-    rows.push({
-      unitLabel,
-      areaValue: int(u.areaValue, 100_000_000),
-      areaUnit: pick(u.areaUnit, areaUnitValues),
-      price: int(u.price, 100_000_000_000),
-    });
-  }
-  return rows;
-}
-
-/**
- * A map coordinate, kept as the text the operator pasted rather than parsed
- * into a float — see the note on `properties.latitude` in the schema. What
- * is checked here is only that it IS a coordinate: a stray address or a
- * half-typed number must not reach the public map builder, which would
- * otherwise render a pin in the sea off Africa.
- */
-export function parseCoordinate(
-  value: FormDataEntryValue | null,
-  limit: 90 | 180
-): string | null {
-  const s = String(value ?? "").trim().slice(0, 40);
-  if (!s) return null;
-  const n = Number(s);
-  return Number.isFinite(n) && Math.abs(n) <= limit ? s : null;
 }
 
 export type ParsedDocument = {
@@ -482,29 +379,64 @@ function digits(v: unknown): string | null {
   return d || null;
 }
 
+
+/**
+ * A Google Maps link, pasted from Share → Copy link. Replaces the old
+ * latitude / longitude pair: one field, and the admin gets it the same way
+ * any visitor would. It is PUBLIC — pasting it is the decision to show the
+ * map, so there is no separate "show on map" switch.
+ *
+ * Only Google's own hosts get through: this lands in an href on the public
+ * page, so an arbitrary URL here would be a link to anywhere wearing our
+ * "Open in Google Maps" label.
+ */
+export function parseMapsUrl(value: FormDataEntryValue | null): string | null | "invalid" {
+  const s = String(value ?? "").trim().slice(0, 1000);
+  if (!s) return null;
+  let u: URL;
+  try {
+    u = new URL(s);
+  } catch {
+    return "invalid";
+  }
+  if (u.protocol !== "https:") return "invalid";
+  const host = u.hostname.toLowerCase();
+  const isMaps =
+    host === "maps.app.goo.gl" ||
+    /^maps\.google\.[a-z.]+$/.test(host) ||
+    ((host === "goo.gl" || /^(www\.)?google\.[a-z.]+$/.test(host)) &&
+      u.pathname.startsWith("/maps"));
+  return isMaps ? u.toString() : "invalid";
+}
+
+/**
+ * Exactly the fields the form carries — nothing else.
+ *
+ * Fields the client removed from the form (category, status, price and
+ * charges, configuration, classification, unit sizes, specifications, the
+ * detailed location) are deliberately NOT here. The action spreads this
+ * object into the UPDATE, so anything listed here and missing from the form
+ * would be written back as null / false / a default on every save, wiping
+ * whatever an older listing held. Leaving them out leaves those columns
+ * untouched.
+ */
 export type ParsedProperty = {
   title: string;
   publicationState: string;
-  listingStatus: string;
   addedBy: string;
   sourceName: string | null;
-  city: string | null;
-  locality: string | null;
-  sector: string | null;
-  block: string | null;
-  society: string | null;
-  floorNumber: number | null;
-  totalFloors: number | null;
-  unitNumber: string | null;
-  latitude: string | null;
-  longitude: string | null;
-  /** Off unless deliberately ticked — the only thing that publishes a pin. */
-  showMapPublicly: boolean;
-  dealAttributes: string[];
-  configurations: string[];
-  balconies: number | null;
-  roomFlags: string[];
-  propertyAge: string | null;
+  kind: "project" | "unit";
+  projectName: string;
+  description: string;
+  location: string;
+  mapsUrl: string | null;
+  /**
+   * City and locality read out of the address — they still drive the public
+   * city filter. Null when the address names no known city; the action then
+   * leaves whatever the row already has.
+   */
+  place: { city: string; locality: string | null } | null;
+  propertyType: string | null;
   plotArea: number | null;
   plotAreaUnit: string | null;
   builtUpArea: number | null;
@@ -517,12 +449,9 @@ export type ParsedProperty = {
   frontFeet: number | null;
   depthFeet: number | null;
   plcAttributes: string[];
-  roadWidth: number | null;
-  entranceWidth: number | null;
-  ceilingHeight: number | null;
-  isCorner: boolean;
-  isParkFacing: boolean;
+  furnishing: string | null;
   furnishingInventory: string[];
+  amenities: string[];
   parkingTypes: string[];
   parkingSlots: number | null;
   legalFlags: string[];
@@ -530,37 +459,12 @@ export type ParsedProperty = {
   loanFlags: string[];
   banksOnPanel: string[];
   documentationFlags: string[];
-  demandPrice: number | null;
-  perSqftRate: number | null;
-  isNegotiable: boolean;
-  showPricePublicly: boolean;
-  kind: "project" | "unit";
-  category: "sale" | "purchase" | "lease" | "invest";
-  projectName: string;
-  /** Free text, resolved to `towerId` the same way `projectName` resolves to `projectId`. */
-  towerName: string;
-  description: string;
-  location: string;
-  propertyType: string | null;
-  configuration: string | null;
-  beds: number | null;
-  baths: number | null;
-  areaValue: number | null;
-  areaUnit: string;
-  facing: string | null;
-  possessionStatus: string | null;
-  furnishing: string | null;
-  amenities: string[];
   extras: { title: string; description: string }[];
   images: ParsedImage[];
   /** Child tables, written by the action after the row itself. */
   owners: ParsedOwner[];
-  charges: ParsedCharge[];
   media: ParsedMedium[];
   documents: ParsedDocument[];
-  unitSizes: ParsedUnitSize[];
-  /** property_internal — 1:1, internal always. */
-  circleRate: number | null;
 };
 
 export function parseProperty(
@@ -573,22 +477,22 @@ export function parseProperty(
   // Required even for a draft — it is how the listing is found again.
   if (!title) return { ok: false, error: "A title is required." };
 
+  const location = String(formData.get("location") ?? "").trim().slice(0, 300);
+  if (!location) return { ok: false, error: "An address is required." };
+
   const kind = String(formData.get("kind") ?? "unit");
   if (kind !== "project" && kind !== "unit") {
     return { ok: false, error: "Choose a valid listing type." };
   }
 
-  const category = String(formData.get("category") ?? "");
-  if (!isCategory(category)) {
-    return { ok: false, error: "Choose a valid category." };
+  const mapsUrl = parseMapsUrl(formData.get("mapsUrl"));
+  if (mapsUrl === "invalid") {
+    return {
+      ok: false,
+      error:
+        "The map link must be a Google Maps link. In Google Maps press Share, then Copy link, and paste that.",
+    };
   }
-
-  // Free text — an unknown name creates the project (never a hard constraint).
-  const projectName = String(formData.get("projectName") ?? "").trim().slice(0, 200);
-  // Same pattern, scoped to whichever project resolves above (R-12): a
-  // second flat in "Tower A" must not create a same-named tower under a
-  // different project.
-  const towerName = String(formData.get("towerName") ?? "").trim().slice(0, 200);
 
   const images = parseImages(String(formData.get("imagesJson") ?? "[]"));
   if (images === null) {
@@ -598,30 +502,11 @@ export function parseProperty(
         "Image list is invalid — upload files, or paste an images.unsplash.com URL.",
     };
   }
-  const beds = parseOptionalInt(formData.get("beds"));
-  const baths = parseOptionalInt(formData.get("baths"));
-  const areaValue = parseOptionalInt(formData.get("areaValue"));
-  if (beds === "invalid" || baths === "invalid" || areaValue === "invalid") {
-    return {
-      ok: false,
-      error: "Beds, baths, and area must be whole non-negative numbers.",
-    };
-  }
-
-  const amenities = parseAmenities(String(formData.get("amenitiesJson") ?? "[]"));
-  if (amenities === null) return { ok: false, error: "Amenity list is invalid." };
-
-  const extras = parseExtras(String(formData.get("extrasJson") ?? "[]"));
-  if (extras === null) return { ok: false, error: "Additional details are invalid." };
 
   const propertyType = parseChoice(formData.get("propertyType"), PROPERTY_TYPES);
 
-  // The conditional rules (R-12): a tower flat cannot publish without a floor
-  // and a unit; a plot cannot publish without a plot size. Draft saves skip
-  // this entirely.
-  // Everything publishing needs, reported together. This used to stop at the
-  // first gap — add a photo, resubmit, only then hear about the plot area —
-  // which turned one fix into a round trip per missing field.
+  // Everything publishing needs, reported together rather than one per
+  // round trip. Draft saves skip this entirely.
   if (mode === "publish") {
     const missing = [
       ...(images.length ? [] : ["at least one photo"]),
@@ -637,11 +522,14 @@ export function parseProperty(
     }
   }
 
+  const amenities = parseAmenities(String(formData.get("amenitiesJson") ?? "[]"));
+  if (amenities === null) return { ok: false, error: "Amenity list is invalid." };
+
+  const extras = parseExtras(String(formData.get("extrasJson") ?? "[]"));
+  if (extras === null) return { ok: false, error: "Additional details are invalid." };
+
   const owners = parseOwners(String(formData.get("ownersJson") ?? "[]"));
   if (owners === null) return { ok: false, error: "Owner details are invalid." };
-
-  const charges = parseCharges(String(formData.get("chargesJson") ?? "[]"));
-  if (charges === null) return { ok: false, error: "Charge rows are invalid." };
 
   const media = parseMedia(String(formData.get("mediaJson") ?? "[]"));
   if (media === null) return { ok: false, error: "Media links are invalid." };
@@ -649,15 +537,14 @@ export function parseProperty(
   const documents = parseDocuments(String(formData.get("documentsJson") ?? "[]"));
   if (documents === null) return { ok: false, error: "Document rows are invalid." };
 
-  const unitSizes = parseUnitSizes(String(formData.get("unitSizesJson") ?? "[]"));
-  if (unitSizes === null) return { ok: false, error: "Unit size rows are invalid." };
-
   const areaUnitValues = AREA_UNITS.map((u) => u.value);
   const num = (name: string) => {
     const v = parseOptionalInt(formData.get(name));
     return v === "invalid" ? null : v;
   };
   const unit = (name: string) => parseChoice(formData.get(name), areaUnitValues);
+  const list = (name: string, allowed: readonly string[] | null, max?: number) =>
+    parseList(String(formData.get(name) ?? "[]"), allowed, max) ?? [];
 
   const plotArea = num("plotArea");
   const plotAreaUnit = unit("plotAreaUnit");
@@ -668,42 +555,24 @@ export function parseProperty(
   const carpetArea = num("carpetArea");
   const carpetAreaUnit = unit("carpetAreaUnit");
 
-  const city = parseChoice(formData.get("city"), CITY_NAMES);
-  const locality = String(formData.get("locality") ?? "").trim().slice(0, 120) || null;
-
   return {
     ok: true,
     data: {
       title,
-      // CFF group 1 — internal. Unknown values fall back to the safe
-      // default rather than failing the save: a broker mid-call should not
-      // lose a listing to a malformed select.
+      // Unknown values fall back to the safe default rather than failing
+      // the save: a broker mid-call should not lose a listing to a stale select.
       publicationState:
         parseChoice(formData.get("publicationState"), PUBLICATION_STATES) ?? "draft",
-      listingStatus:
-        parseChoice(formData.get("listingStatus"), LISTING_STATUSES) ?? "Available",
       addedBy: parseChoice(formData.get("addedBy"), ADDED_BY) ?? "Global Landmark",
-      sourceName:
-        String(formData.get("sourceName") ?? "").trim().slice(0, 200) || null,
-      city,
-      sector: String(formData.get("sector") ?? "").trim().slice(0, 120) || null,
-      block: String(formData.get("block") ?? "").trim().slice(0, 120) || null,
-      society: String(formData.get("society") ?? "").trim().slice(0, 200) || null,
-      floorNumber: num("floorNumber"),
-      totalFloors: num("totalFloors"),
-      unitNumber: String(formData.get("unitNumber") ?? "").trim().slice(0, 60) || null,
-      latitude: parseCoordinate(formData.get("latitude"), 90),
-      longitude: parseCoordinate(formData.get("longitude"), 180),
-      // Defaults to OFF, exactly like showPricePublicly, and for a sharper
-      // reason: publishing exact coordinates is fine for a launched project
-      // and not fine for a private resale kothi whose owner details are
-      // internal. The safe answer is the one you get by doing nothing.
-      showMapPublicly: parseBool(formData, "showMapPublicly"),
-      dealAttributes: parseList(String(formData.get("dealAttributesJson") ?? "[]"), DEAL_ATTRIBUTES) ?? [],
-      configurations: parseList(String(formData.get("configurationsJson") ?? "[]"), CONFIGURATIONS) ?? [],
-      balconies: num("balconies"),
-      roomFlags: parseList(String(formData.get("roomFlagsJson") ?? "[]"), ROOM_FLAGS) ?? [],
-      propertyAge: parseChoice(formData.get("propertyAge"), PROPERTY_AGES),
+      sourceName: String(formData.get("sourceName") ?? "").trim().slice(0, 200) || null,
+      kind,
+      // Free text — an unknown name creates the project (never a hard constraint).
+      projectName: String(formData.get("projectName") ?? "").trim().slice(0, 200),
+      description: String(formData.get("description") ?? "").trim().slice(0, 10_000),
+      location,
+      mapsUrl,
+      place: placeFromAddress(location),
+      propertyType,
       plotArea,
       plotAreaUnit,
       builtUpArea,
@@ -723,55 +592,22 @@ export function parseProperty(
       ]),
       frontFeet: num("frontFeet"),
       depthFeet: num("depthFeet"),
-      plcAttributes: parseList(String(formData.get("plcAttributesJson") ?? "[]"), PLC_ATTRIBUTES) ?? [],
-      roadWidth: num("roadWidth"),
-      entranceWidth: num("entranceWidth"),
-      ceilingHeight: num("ceilingHeight"),
-      isCorner: parseBool(formData, "isCorner"),
-      isParkFacing: parseBool(formData, "isParkFacing"),
-      furnishingInventory: parseList(String(formData.get("furnishingInventoryJson") ?? "[]"), null, 30) ?? [],
-      parkingTypes: parseList(String(formData.get("parkingTypesJson") ?? "[]"), PARKING_TYPES) ?? [],
-      parkingSlots: num("parkingSlots"),
-      legalFlags: parseList(String(formData.get("legalFlagsJson") ?? "[]"), LEGAL_FLAGS) ?? [],
-      reraNumber: String(formData.get("reraNumber") ?? "").trim().slice(0, 120) || null,
-      loanFlags: parseList(String(formData.get("loanFlagsJson") ?? "[]"), LOAN_FLAGS) ?? [],
-      banksOnPanel: parseList(String(formData.get("banksOnPanelJson") ?? "[]"), null, 30) ?? [],
-      documentationFlags: parseList(String(formData.get("documentationFlagsJson") ?? "[]"), DOCUMENTATION_FLAGS) ?? [],
-      demandPrice: num("demandPrice"),
-      perSqftRate: num("perSqftRate"),
-      isNegotiable: parseBool(formData, "isNegotiable"),
-      // Defaults to OFF and must be ticked deliberately: the public site
-      // shows "Price on request" unless this is true.
-      showPricePublicly: parseBool(formData, "showPricePublicly"),
-      owners,
-      charges,
-      media,
-      documents,
-      unitSizes,
-      circleRate: num("circleRate"),
-      // A locality is only meaningful under its own city — keeping one that
-      // belongs to a different city would put the listing under the wrong
-      // filter tab.
-      locality: city && locality && isLocalityIn(city, locality) ? locality : null,
-      kind,
-      category,
-      projectName,
-      towerName,
-      description: String(formData.get("description") ?? "").trim().slice(0, 10_000),
-      location: String(formData.get("location") ?? "").trim().slice(0, 300),
-      propertyType,
-      configuration: String(formData.get("configuration") ?? "").trim().slice(0, 100) || null,
-      beds,
-      baths,
-      areaValue,
-      areaUnit:
-        parseChoice(formData.get("areaUnit"), AREA_UNITS.map((u) => u.value)) ?? "sqft",
-      facing: parseChoice(formData.get("facing"), FACINGS),
-      possessionStatus: parseChoice(formData.get("possessionStatus"), POSSESSION_STATUSES),
+      plcAttributes: list("plcAttributesJson", PLC_ATTRIBUTES),
       furnishing: parseChoice(formData.get("furnishing"), FURNISHINGS),
+      furnishingInventory: list("furnishingInventoryJson", null, 30),
       amenities,
+      parkingTypes: list("parkingTypesJson", PARKING_TYPES),
+      parkingSlots: num("parkingSlots"),
+      legalFlags: list("legalFlagsJson", LEGAL_FLAGS),
+      reraNumber: String(formData.get("reraNumber") ?? "").trim().slice(0, 120) || null,
+      loanFlags: list("loanFlagsJson", LOAN_FLAGS),
+      banksOnPanel: list("banksOnPanelJson", null, 30),
+      documentationFlags: list("documentationFlagsJson", DOCUMENTATION_FLAGS),
       extras,
       images,
+      owners,
+      media,
+      documents,
     },
   };
 }

@@ -180,6 +180,14 @@ export const properties = mysqlTable(
     latitude: text("latitude"),
     longitude: text("longitude"),
     showMapPublicly: boolean("show_map_publicly").notNull().default(false),
+    /**
+     * A Google Maps share link (Sep 2026) — replaces latitude / longitude /
+     * showMapPublicly in the admin form, which no longer writes those three.
+     * Public: pasting the link is the decision to show the map. The old
+     * columns stay so no existing data is lost; migration 0004 carried every
+     * published pin across into this column.
+     */
+    mapsUrl: text("maps_url"),
 
     // --- Classification (CFF 2, 7, 10, 11, 12) -----------------------------
     propertyType: varchar("property_type", { length: 100 }),

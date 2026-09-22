@@ -8,7 +8,6 @@ import { STATUS_TONE } from "@/lib/admin/status-tone";
 
 import {
   ADDED_BY,
-  LISTING_STATUSES,
   PUBLICATION_STATES,
   type ListingStatus,
 } from "@/lib/attributes";
@@ -45,9 +44,9 @@ export function BasicDetailsSection({
   const [publicationState, setPublicationState] = useState(
     initialPublicationState ?? "draft"
   );
-  const [listingStatus, setListingStatus] = useState(
-    initialListingStatus ?? "Available"
-  );
+  // Status is no longer asked (Sep 2026). A listing keeps whatever status
+  // it already has; a new one is Available.
+  const listingStatus = initialListingStatus ?? "Available";
   const [addedBy, setAddedBy] = useState(initialAddedBy ?? "Global Landmark");
   const [sourceName, setSourceName] = useState(initialSourceName ?? "");
 
@@ -59,7 +58,6 @@ export function BasicDetailsSection({
   const needsSource = addedBy !== "Global Landmark";
   const filled = countFilled([
     publicationState,
-    listingStatus,
     addedBy,
     ...(needsSource ? [sourceName] : []),
   ]);
@@ -69,7 +67,7 @@ export function BasicDetailsSection({
       title="Basic details"
       hint="Internal only — never shown on the public site"
       filled={filled}
-      total={needsSource ? 4 : 3}
+      total={needsSource ? 3 : 2}
       defaultOpen
     >
       {/* Read-only provenance. Assigned by the server; shown so a broker can
@@ -82,35 +80,20 @@ export function BasicDetailsSection({
         </dl>
       )}
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="flex flex-col gap-2">
-          <label htmlFor="publicationState" className={deskLabel}>
-            Publication
-          </label>
-          <Select
-            id="publicationState"
-            name="publicationState"
-            defaultValue={publicationState}
-            onValueChange={setPublicationState}
-            options={PUBLICATION_STATES.map((s) => ({
-              value: s,
-              label: s === "draft" ? "Draft — not on the site" : s === "published" ? "Published" : "Archived",
-            }))}
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label htmlFor="listingStatus" className={deskLabel}>
-            Status
-          </label>
-          <Select
-            id="listingStatus"
-            name="listingStatus"
-            defaultValue={listingStatus}
-            onValueChange={setListingStatus}
-            options={LISTING_STATUSES.map((s) => ({ value: s, label: s }))}
-          />
-        </div>
+      <div className="flex flex-col gap-2">
+        <label htmlFor="publicationState" className={deskLabel}>
+          Publication
+        </label>
+        <Select
+          id="publicationState"
+          name="publicationState"
+          defaultValue={publicationState}
+          onValueChange={setPublicationState}
+          options={PUBLICATION_STATES.map((s) => ({
+            value: s,
+            label: s === "draft" ? "Draft — not on the site" : s === "published" ? "Published" : "Archived",
+          }))}
+        />
       </div>
 
       <p
@@ -123,7 +106,9 @@ export function BasicDetailsSection({
         <span aria-hidden>{isLive ? "●" : "○"}</span>
         {isLive
           ? "Live on the public site."
-          : "Not on the public site. Only a published listing marked Available appears publicly."}
+          : publicationState === "published"
+            ? `Not on the public site: this listing is marked ${listingStatus}. Only Available listings appear publicly.`
+            : "Not on the public site. Set Publication to Published to put it live."}
       </p>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

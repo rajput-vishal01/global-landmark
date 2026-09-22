@@ -44,12 +44,7 @@ export const ALL_SECTION_KEYS: SectionKey[] = SECTIONS.map((s) => s.key);
 export type Shape = "plot" | "house" | "tower_unit";
 
 /** Fields a shape must have before it may be published. */
-export type FieldKey =
-  | "floorNumber"
-  | "unitNumber"
-  | "plotArea"
-  | "superArea"
-  | "configuration";
+export type FieldKey = "plotArea";
 
 const PROPERTY_SHAPE: Record<PropertyType, Shape> = {
   // Land with no building on it — no rooms, no furnishing, no parking.
@@ -84,9 +79,10 @@ const SHAPE_RULES: Record<Shape, { omit: SectionKey[]; required: FieldKey[] }> =
     required: [],
   },
   tower_unit: {
+    // Floor and unit number used to be required here; the client removed
+    // both from the form (Sep 2026), so a flat publishes on its photos.
     omit: [],
-    // Floor and unit are how a flat is identified at all.
-    required: ["floorNumber", "unitNumber"],
+    required: [],
   },
 };
 
@@ -116,11 +112,7 @@ export function sectionsFor(propertyType: string | null | undefined): SectionKey
  * unitNumber", which is a column name, not something a broker can find.
  */
 export const FIELD_LABELS: Record<FieldKey, string> = {
-  floorNumber: "Floor number",
-  unitNumber: "Unit number",
   plotArea: "Plot area",
-  superArea: "Super area",
-  configuration: "Configuration",
 };
 
 export function requiredFieldsFor(

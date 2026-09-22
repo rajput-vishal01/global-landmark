@@ -230,16 +230,68 @@ try {
     !sections.sectionsFor("Residential Plot").includes("furnishing"),
     "a plot is not furnished"
   );
-  const flatRequired = sections.requiredFieldsFor("Flat/Apartment");
-  assert.ok(
-    flatRequired.includes("floorNumber") && flatRequired.includes("unitNumber"),
-    "a tower flat must have floor and unit"
-  );
-  const plotRequired = sections.requiredFieldsFor("Residential Plot");
-  assert.ok(
-    !plotRequired.includes("floorNumber") && !plotRequired.includes("unitNumber"),
-    "a plot needs neither floor nor unit"
-  );
+  // Floor and unit number left the form (Sep 2026), so nothing may demand them.
+  assert.deepEqual(sections.requiredFieldsFor("Flat/Apartment"), [], "a flat publishes on its photos");
+  assert.deepEqual(sections.requiredFieldsFor("Residential Plot"), ["plotArea"], "a plot still needs its size");
+
+  // --- the address carries the city now -------------------------------------
+  const place = (a) => locations.placeFromAddress(a);
+  assert.deepEqual(place("Sector 20, Panchkula"), { city: "Panchkula", locality: null });
+  assert.deepEqual(place("Aerocity, Mohali"), { city: "Mohali", locality: "Aerocity" });
+  assert.deepEqual(place("Sector 3, New Chandigarh"), { city: "New Chandigarh", locality: null },
+    "New Chandigarh is not also read as Chandigarh");
+  assert.deepEqual(place("Chandigarh-Ambala Highway, Zirakpur"), { city: "Zirakpur", locality: null },
+    "the city named last wins");
+  assert.deepEqual(place("Near Mullanpur"), { city: "New Chandigarh", locality: "Mullanpur" },
+    "a locality owned by one city gives the city away");
+  assert.equal(place("Airport Road"), null, "a locality several cities share decides nothing");
+  assert.equal(place("Sector 62"), null);
+  assert.equal(place("mohalireal estate"), null, "whole words only");
+
+  // --- the map link ---------------------------------------------------------
+  const parse = load("admin/property-parse.js");
+  for (const ok of [
+    "https://maps.app.goo.gl/AbC123",
+    "https://www.google.com/maps/place/Sector+62",
+    "https://maps.google.com/?cid=1",
+    "https://goo.gl/maps/xyz",
+    "https://www.google.co.in/maps?q=30.7,76.8",
+  ]) {
+    assert.equal(typeof parse.parseMapsUrl(ok), "string", `accepts ${ok}`);
+  }
+  for (const bad of [
+    "http://maps.app.goo.gl/AbC123",
+    "https://evil.example/maps",
+    "https://www.google.com/search?q=x",
+    "https://goo.gl/other",
+    "javascript:alert(1)",
+    "Sector 62",
+  ]) {
+    assert.equal(parse.parseMapsUrl(bad), "invalid", `rejects ${bad}`);
+  }
+  assert.equal(parse.parseMapsUrl(""), null, "empty means no map");
+
+  // Removed fields must not be in the parse result: the action spreads it
+  // into the UPDATE, so a key here that the form no longer sends would wipe
+  // that column on every save of an older listing.
+  const fd = new FormData();
+  fd.set("title", "Test");
+  fd.set("location", "Sector 20, Panchkula");
+  const parsed = parse.parseProperty(fd, "draft");
+  assert.ok(parsed.ok, "title + address is enough for a draft");
+  for (const gone of [
+    "category", "listingStatus", "demandPrice", "perSqftRate", "showPricePublicly",
+    "isNegotiable", "configuration", "beds", "baths", "balconies", "facing",
+    "possessionStatus", "propertyAge", "dealAttributes", "roadWidth", "isCorner",
+    "isParkFacing", "sector", "block", "society", "floorNumber", "unitNumber",
+    "latitude", "longitude", "showMapPublicly", "areaValue", "areaUnit",
+  ]) {
+    assert.ok(!(gone in parsed.data), `${gone} is not written by the form`);
+  }
+  assert.deepEqual(parsed.data.place, { city: "Panchkula", locality: null });
+  const noAddress = new FormData();
+  noAddress.set("title", "Test");
+  assert.ok(!parse.parseProperty(noAddress, "draft").ok, "an address is required");
   assert.ok(
     sections.sectionsFor("Independent House").includes("configuration"),
     "a house still has rooms to configure"

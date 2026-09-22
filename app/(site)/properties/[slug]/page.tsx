@@ -108,11 +108,9 @@ export default async function PropertyDetailPage({
   const gallery = property.images.slice(1);
   const floorPlans = property.images.filter((img) => img.mediaKind === "floor_plan");
   const specs = propertySpecs(property);
-  // Phase E. Three reads gated in SQL rather than at render time: the map
-  // pin exists here only when `showMapPublicly` is true, and a document only
-  // when its own `isPublic` is true. See lib/db/property-detail.ts — this
-  // page has no way to obtain either without the broker having said so.
-  const { unitSizes, documents, mapPin } = await getPropertyDetailExtras(property.id);
+  // A document arrives here only when its own `isPublic` is true — gated in
+  // SQL, see lib/db/property-detail.ts.
+  const { unitSizes, documents } = await getPropertyDetailExtras(property.id);
   // R-45: rank the whole published pool on locality → configuration →
   // budget instead of taking the three newest listings that happen to share
   // a category. One unfiltered listProperties() call, which is the same
@@ -527,18 +525,7 @@ export default async function PropertyDetailPage({
         addressCountry: "IN",
       },
       ...(property.beds != null ? { numberOfRooms: property.beds } : {}),
-      // Coordinates go into structured data only when the broker published
-      // the pin — the same gate as the visible map, because JSON-LD is just
-      // as public as a rendered element and is read by more crawlers.
-      ...(mapPin
-        ? {
-            geo: {
-              "@type": "GeoCoordinates",
-              latitude: mapPin.latitude,
-              longitude: mapPin.longitude,
-            },
-          }
-        : {}),
+      ...(property.mapsUrl ? { hasMap: property.mapsUrl } : {}),
     },
     // Only when the listing is flagged for public pricing — the withheld
     // figure must never leave the database, structured data included.
@@ -600,13 +587,13 @@ export default async function PropertyDetailPage({
         {/* Gallery / Map, above the tabs — the reference portal's first
             decision after the hero is "show me the photos or show me where
             this is", and it should not be buried under the copy. */}
-        {(gallery.length > 0 || mapPin) && (
+        {(gallery.length > 0 || property.mapsUrl) && (
           <section className="px-5 pt-14 md:px-12 md:pt-20">
             <GalleryMapToggle
               images={gallery}
               title={property.title}
               location={property.location}
-              pin={mapPin}
+              mapsUrl={property.mapsUrl}
             />
           </section>
         )}
