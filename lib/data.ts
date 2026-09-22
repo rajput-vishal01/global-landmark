@@ -121,7 +121,7 @@ export const COMPANY = {
 export const SEO = {
   title: "Global Landmark Realty Group | Tricity Luxury Real Estate",
   description:
-    "Landmark residences across Chandigarh, Panchkula, Mohali and Zirakpur. Considered representation, private dealing.",
+    "Landmark residences across Chandigarh, Panchkula, Mohali and Zirakpur. Flats, villas, plots and SCOs, with considered representation and private dealing.",
   /** Branded card rendered by app/og/route.tsx; resolved against metadataBase. */
   ogImage: "/og",
 };
