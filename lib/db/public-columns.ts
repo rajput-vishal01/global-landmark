@@ -1,4 +1,4 @@
-import type { AdminProperty, Area, Project, Builder, PropertyImage, PropertyMedium, Tower } from "./schema";
+import type { AdminProperty, Project, Builder, PropertyImage, PropertyMedium, Tower } from "./schema";
 
 /**
  * THE PUBLIC PROJECTION — the single place that decides what a visitor may see.
@@ -167,25 +167,6 @@ export const PUBLIC_MEDIA_COLUMNS = {
 } as const;
 
 /**
- * An area landing page renders a name, a photo and a paragraph.
- * `matchCity` / `matchLocality` are absent deliberately: they are the rule
- * by which an area claims listings, they are resolved in SQL, and shipping
- * them would put the broker's matching config into the RSC payload of every
- * page that renders an area card. `isPublished` is absent for the same
- * reason it is on properties — an unpublished row is never selected, so the
- * flag has nothing left to say by the time a component sees the row.
- */
-export const PUBLIC_AREA_COLUMNS = {
-  id: true,
-  name: true,
-  slug: true,
-  city: true,
-  coverImage: true,
-  blurb: true,
-  sortOrder: true,
-} as const;
-
-/**
  * The public price, resolved server-side: null whenever the listing is not
  * flagged for public pricing, so "Price on request" is what renders and the
  * real figure never leaves the database.
@@ -199,7 +180,6 @@ export type PublicBuilder = Pick<Builder, keyof typeof PUBLIC_BUILDER_COLUMNS>;
 export type PublicTower = Pick<Tower, keyof typeof PUBLIC_TOWER_COLUMNS>;
 export type PublicImage = Pick<PropertyImage, keyof typeof PUBLIC_IMAGE_COLUMNS>;
 export type PublicMedium = Pick<PropertyMedium, keyof typeof PUBLIC_MEDIA_COLUMNS>;
-export type PublicArea = Pick<Area, keyof typeof PUBLIC_AREA_COLUMNS>;
 
 /** What every public listing surface receives. */
 export type PublicPropertyWithMedia = PublicProperty & {

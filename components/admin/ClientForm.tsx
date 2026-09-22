@@ -18,8 +18,7 @@ const initialState: ClientFormState = {};
 const FIELD = `${deskField} w-full`;
 
 /** Create + edit client profile form (R-30) — reused as the always-editable
- * profile section on the client detail page, the same way BuilderForm is
- * reused across builders/new and builders/[id]/edit. */
+ * profile section on the client detail page. */
 export function ClientForm({ client, action }: { client?: CrmClient; action: Action }) {
   const { state, isPending, formProps } = useActionForm(action, initialState);
   const isEditing = Boolean(client);

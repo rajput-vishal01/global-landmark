@@ -7,8 +7,8 @@ import { deskButtonPrimary } from "@/components/admin/desk";
 /**
  * "Add X" as a dialog instead of a trip to /new.
  *
- * These records are short — a builder is a name, a service is a title and a
- * sentence — and sending someone to another screen to type them loses their
+ * These records are short — a service is a title and a sentence, a quote is
+ * a few lines — and sending someone to another screen to type them loses their
  * place in the list they were just reading, then drops them back at the top
  * of it afterwards.
  *
@@ -25,7 +25,7 @@ export function AddRecordDialog({
   description,
   children,
 }: {
-  /** Button text, e.g. "Add builder". */
+  /** Button text, e.g. "Add service". */
   label: string;
   title: string;
   description?: string;

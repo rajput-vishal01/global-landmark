@@ -200,8 +200,8 @@ export async function convertLeadToClient(leadId: number): Promise<void> {
  * `onDelete: "cascade"`, so without this guard removing a client would take
  * their deals — and, through crm_deals, their payment history — with them.
  * Brokerage records are the last thing that should disappear as a side
- * effect of tidying a contact list. Same stance as deleteBuilder: refuse and
- * name the count, rather than cascade and hope it was intended.
+ * effect of tidying a contact list. So refuse and name the count, rather
+ * than cascade and hope it was intended.
  *
  * Activities do cascade, deliberately. They are a log of calls and notes
  * about this person; keeping them after the person is gone serves nobody.

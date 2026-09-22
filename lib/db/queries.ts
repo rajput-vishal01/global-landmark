@@ -140,12 +140,10 @@ type PropertyFilters = {
  * One delayed retry absorbs serverless-Postgres cold starts (Neon suspends
  * on idle and the first query after wake often fails).
  *
- * Shared with lib/db/areas.ts, which had grown its own copy without the
- * retry — so /areas and every area page were the one public surface that
- * still went empty on a cold start. lib/db/content.ts deliberately keeps a
- * separate no-retry `safe()`; see the reasoning there.
+ * lib/db/content.ts deliberately keeps a separate no-retry `safe()`; see
+ * the reasoning there.
  */
-export function failSoft<A extends unknown[], R>(
+function failSoft<A extends unknown[], R>(
   fn: (...args: A) => Promise<R>,
   label: string,
   fallback: R
