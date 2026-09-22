@@ -59,11 +59,13 @@ and the dark bands are never cool slate.
 
 | Ground | Utility on a band | Look |
 |---|---|---|
-| Ivory | `bg-surface` | near-white, soft gold light from above |
-| Champagne | `bg-cream` | deeper warm band, glow from the corners |
+| Ivory | `bg-surface` | flat warm near-white (#fdfaf4) |
+| Champagne | `bg-cream` | flat, visibly deeper (#f2e7d3) |
 | Graphite | `bg-navy` / `bg-navy-deep` | the logo's backdrop, gold halo at the top |
 
-The gradients live in `app/globals.css` ("Brand grounds") and attach by
+Light bands are flat on purpose: a fade inside them made neighbouring
+sections either glitch at the join or merge into one. Only the graphite
+bands carry a gradient, each lit from a different side. The gradients live in `app/globals.css` ("Brand grounds") and attach by
 selector to `section`, `main`, `aside` and `[data-band]` (the footer stays flat
 graphite at the client's request). So a new band
 gets them by using the colour utility, and small chips stay flat. Cards stay

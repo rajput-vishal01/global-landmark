@@ -32,7 +32,7 @@
   --color-gold-highlight: #f5d98b;
   --color-gold-deep: #8a5a22;
   --color-surface: #fdfaf4;
-  --color-cream: #f6efe2;
+  --color-cream: #f2e7d3;
   --color-border: #e6dccb;
   --color-error: #9a2b2b;
 
@@ -183,12 +183,17 @@
 /* ───────────────────────────────────────────────────────────────────────
    Brand grounds (Sep 2026 redesign).
 
-   Drawn from the logo: a champagne-gold glow on warm taupe-grey. Three
-   grounds, each a soft glow over a gentle vertical fall:
+   Drawn from the logo: a champagne-gold glow on warm taupe-grey.
 
-     ivory      light bands (`bg-surface`)  near-white, gold light from above
-     champagne  alternate bands (`bg-cream`) deeper, glow from the corners
-     graphite   dark bands (`bg-navy`, `bg-navy-deep`) the logo's own backdrop
+     ivory      light bands (`bg-surface`)   FLAT warm near-white
+     champagne  alternate bands (`bg-cream`)  FLAT, visibly deeper than ivory
+     graphite   dark bands (`bg-navy`, `bg-navy-deep`) gradient, the logo's backdrop
+
+   The light bands are deliberately flat. A fade inside a light band made
+   the join with its neighbour read either as a glitch (tones mismatched)
+   or as one merged section (tones matched). The client wants each section
+   to read as its own block, so light bands are solid colours with a clean
+   edge between them, and only the dark bands carry a gradient.
 
    Applied by selector rather than by editing every section: a band that
    uses the colour utility picks up its gradient automatically, and the
@@ -199,19 +204,6 @@
    ponytail: selector-driven, so a new band gets its gradient for free —
    the ceiling is a `div` band, which needs `data-band` to opt in. */
 :root {
-  /* Both light grounds start and end on the same tone (#f8f2e7), and their
-     glows sit inside the band, clear of the top and bottom edges. When two
-     light bands meet, the colours either side of the join are identical, so
-     there is no seam. Before this, ivory ended on one tone and champagne
-     began on another with a gold glow on its top edge, and the join read as
-     a rendering glitch. */
-  --grad-ivory:
-    radial-gradient(ellipse 60% 45% at 50% 40%, rgb(245 217 139 / 0.12), transparent 70%),
-    linear-gradient(180deg, #f8f2e7 0%, #fdfaf4 45%, #fdfaf4 55%, #f8f2e7 100%);
-  --grad-champagne:
-    radial-gradient(ellipse 45% 45% at 82% 38%, rgb(201 153 46 / 0.12), transparent 70%),
-    radial-gradient(ellipse 40% 40% at 18% 66%, rgb(138 90 34 / 0.07), transparent 70%),
-    linear-gradient(180deg, #f8f2e7 0%, #f1e6d2 50%, #f8f2e7 100%);
   --grad-graphite:
     radial-gradient(ellipse 55% 75% at 50% -8%, rgb(245 217 139 / 0.22), rgb(201 153 46 / 0.07) 45%, transparent 75%),
     linear-gradient(180deg, #3e3831 0%, #2d2924 50%, #1f1c18 100%);
@@ -228,12 +220,6 @@
     linear-gradient(100deg, #3e3831 0%, #2d2924 45%, #1f1c18 100%);
 }
 
-:where(section, main, aside, header, [data-band]).bg-surface {
-  background-image: var(--grad-ivory);
-}
-:where(section, main, aside, [data-band]).bg-cream {
-  background-image: var(--grad-champagne);
-}
 :where(section, main, aside, header, [data-band]).bg-navy {
   background-image: var(--grad-graphite);
 }
