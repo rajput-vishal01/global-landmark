@@ -28,7 +28,9 @@ export async function Testimonials() {
   return (
     // Graphite gradient against the now flat footer, so the last band and
     // the footer no longer read as one block.
-    <section className="overflow-hidden bg-navy py-16 md:py-24">
+    // data-glow="side": lit from the left, so it does not repeat the
+    // top-lit Deal of the Week band or the bottom-lit List With Us band.
+    <section data-glow="side" className="overflow-hidden bg-navy py-16 md:py-24">
       <div className="px-5 md:px-12">
         <SectionHeading
           align="center"

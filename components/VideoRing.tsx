@@ -44,10 +44,10 @@ function useStageWidth(ref: React.RefObject<HTMLDivElement | null>): number {
 
 /**
  * Ring diameter as a share of the stage. Over 1 because, seen from outside,
- * the far sides recede and project narrower than the diameter; 1.3 lands
- * the visible sweep at roughly the full width.
+ * the far sides recede and project narrower than the diameter; 1.75 carries
+ * the outermost cards to both edges of the stage (the overflow clips them).
  */
-const RING_SPAN = 1.3;
+const RING_SPAN = 1.75;
 /** Space between neighbouring cards, as a fraction of a card's width. */
 const CARD_GAP = 0.18;
 /**
