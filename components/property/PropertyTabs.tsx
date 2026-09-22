@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 export type PropertyTab = {
   id: string;
@@ -28,6 +28,19 @@ export type PropertyTab = {
 export function PropertyTabs({ tabs }: { tabs: PropertyTab[] }) {
   const [active, setActive] = useState(tabs[0]?.id ?? "");
   const stripRef = useRef<HTMLDivElement>(null);
+
+  // A link to "#<tab id>" elsewhere on the page (the side rail’s "Schedule
+  // a site visit") opens that tab and brings it into view.
+  useEffect(() => {
+    function openFromHash() {
+      const id = window.location.hash.slice(1);
+      if (!tabs.some((t) => t.id === id)) return;
+      setActive(id);
+      stripRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    window.addEventListener("hashchange", openFromHash);
+    return () => window.removeEventListener("hashchange", openFromHash);
+  }, [tabs]);
 
   if (tabs.length === 0) return null;
 

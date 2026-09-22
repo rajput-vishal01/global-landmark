@@ -3,7 +3,9 @@
 import { headers } from "next/headers";
 import { idField } from "@/lib/admin/form-fields";
 import { db } from "@/lib/db";
-import { tourRequests } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
+import { properties, tourRequests } from "@/lib/db/schema";
+import { sendTourEmails } from "@/lib/email";
 import { clientIp, isRateLimited } from "@/lib/rate-limit";
 import { isTourTime, isTourType } from "@/lib/taxonomy/tours";
 
@@ -62,22 +64,37 @@ export async function requestTour(
   const preferredTime = String(formData.get("preferredTime") ?? "");
   const preferredDate = String(formData.get("preferredDate") ?? "").trim();
 
+  const request = {
+    name,
+    phone,
+    email: email || null,
+    // Unknown values are dropped rather than rejected, the same house rule
+    // the admin parsers follow: a stale select must not lose the request.
+    tourType: isTourType(tourType) ? tourType : null,
+    preferredDate: DATE_RE.test(preferredDate) ? preferredDate : null,
+    preferredTime: isTourTime(preferredTime) ? preferredTime : null,
+    message: String(formData.get("message") ?? "").trim().slice(0, 2000) || null,
+  };
+
   try {
-    await db.insert(tourRequests).values({
-      propertyId,
-      name,
-      phone,
-      email: email || null,
-      // Unknown values are dropped rather than rejected, the same house rule
-      // the admin parsers follow: a stale select must not lose the request.
-      tourType: isTourType(tourType) ? tourType : null,
-      preferredDate: DATE_RE.test(preferredDate) ? preferredDate : null,
-      preferredTime: isTourTime(preferredTime) ? preferredTime : null,
-      message: String(formData.get("message") ?? "").trim().slice(0, 2000) || null,
-    });
+    await db.insert(tourRequests).values({ propertyId, ...request });
   } catch (err) {
     console.error("requestTour failed:", err);
     return { status: "error", message: "Something went wrong. Please try again." };
+  }
+
+  // Saved first, emailed second: the request is already in Admin → Tour
+  // Requests, so a mail failure is logged and never shown as a failed visit.
+  try {
+    const [property] = propertyId
+      ? await db
+          .select({ title: properties.title, refCode: properties.refCode, slug: properties.slug })
+          .from(properties)
+          .where(eq(properties.id, propertyId))
+      : [];
+    await sendTourEmails({ ...request, property: property ?? null });
+  } catch (err) {
+    console.error("requestTour: email failed (request already saved):", err);
   }
 
   return { status: "sent" };

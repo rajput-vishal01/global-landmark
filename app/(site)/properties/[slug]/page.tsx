@@ -632,8 +632,11 @@ export default async function PropertyDetailPage({
                 {PROPERTY_DETAIL.sidebarNote}
               </p>
               <div className="mt-7 flex flex-col gap-3">
-                <a href="#inquire" className={RAIL_PRIMARY}>
-                  Request Details
+                <a href="#tour" className={RAIL_PRIMARY}>
+                  Schedule a site visit
+                </a>
+                <a href="#inquire" className={RAIL_SECONDARY}>
+                  Request details
                 </a>
                 <a href={COMPANY.phoneHref} className={RAIL_SECONDARY}>
                   Call {COMPANY.phone}

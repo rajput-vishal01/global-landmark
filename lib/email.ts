@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { resolveCompany } from "@/lib/site-settings";
+import { SITE_URL } from "@/lib/seo";
 
 type ResolvedCompany = Awaited<ReturnType<typeof resolveCompany>>;
 
@@ -216,5 +217,114 @@ export async function sendContactEmails(data: InquiryData): Promise<boolean> {
     console.error("Confirmation email failed (inquiry already delivered):", err);
   }
 
+  return true;
+}
+
+export type TourEmailData = {
+  name: string;
+  phone: string;
+  email: string | null;
+  property: { title: string; refCode: string | null; slug: string } | null;
+  tourType: string | null;
+  preferredDate: string | null;
+  preferredTime: string | null;
+  message: string | null;
+};
+
+function tourRows(data: TourEmailData): string {
+  const when = [data.preferredDate, data.preferredTime].filter(Boolean).join(", ");
+  const rows: [string, string][] = [
+    [
+      "Property",
+      data.property
+        ? `${data.property.title}${data.property.refCode ? ` (${data.property.refCode})` : ""}`
+        : "Not linked to a listing",
+    ],
+    ["Name", data.name],
+    ["Phone", data.phone],
+    ["Email", data.email || "Not provided"],
+    ["Visit", data.tourType ?? "In person or video call"],
+    ["Preferred time", when || "Any time"],
+    ...(data.message ? ([["Message", data.message]] as [string, string][]) : []),
+  ];
+  return rows
+    .map(
+      ([label, value]) => `
+      <tr>
+        <td style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${BRAND.muted};padding:14px 0 4px;border-top:1px solid ${BRAND.border};">${label}</td>
+      </tr>
+      <tr>
+        <td style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:${BRAND.ink};padding:0 0 14px;">${escapeHtml(value).replaceAll("\n", "<br/>")}</td>
+      </tr>`
+    )
+    .join("");
+}
+
+/**
+ * A visitor asked to see a property. The office gets the request with a
+ * call button (a tour is arranged by phone); the visitor, if they left an
+ * email, gets a short confirmation. Same contract as sendContactEmails:
+ * false only when mail is not configured, and the confirmation is
+ * best-effort once the office has it.
+ */
+export async function sendTourEmails(data: TourEmailData): Promise<boolean> {
+  const transporter = getTransporter();
+  if (!transporter) {
+    console.error("Gmail env vars missing; tour request not emailed:", data.phone);
+    return false;
+  }
+  const company = await resolveCompany();
+  const from = process.env.GMAIL_USER!;
+  const listingLink = data.property
+    ? `<p style="font-family:Arial,Helvetica,sans-serif;font-size:13px;margin:16px 0 0;"><a href="${escapeHtml(`${SITE_URL}/properties/${data.property.slug}`)}" style="color:${BRAND.goldDeep};">View the listing</a></p>`
+    : "";
+
+  await transporter.sendMail({
+    from: `"${company.name} Website" <${from}>`,
+    to: from,
+    ...(data.email ? { replyTo: data.email } : {}),
+    subject: `Tour request: ${data.property?.title ?? "a property"} — ${data.name}`,
+    html: shell(
+      `
+      <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:normal;color:${BRAND.ink};margin:0 0 8px;">New tour request</h1>
+      <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:${BRAND.muted};margin:0 0 24px;">
+        Someone wants to visit a property. It is also waiting in Admin → Tour Requests.
+      </p>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${tourRows(data)}</table>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:24px;">
+        <tr><td style="background-color:${BRAND.navy};">
+          <a href="tel:${escapeHtml(data.phone.replace(/[^\d+]/g, ""))}" style="display:inline-block;padding:12px 28px;font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:${BRAND.cream};text-decoration:none;">Call ${escapeHtml(data.name)}</a>
+        </td></tr>
+      </table>
+      ${listingLink}
+    `,
+      company
+    ),
+  });
+
+  if (!data.email) return true;
+  try {
+    await transporter.sendMail({
+      from: `"${company.legalName}" <${from}>`,
+      to: data.email,
+      subject: `Your visit request — ${company.name}`,
+      html: shell(
+        `
+        <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:normal;color:${BRAND.ink};margin:0 0 8px;">We have your visit request</h1>
+        <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${BRAND.ink};margin:0 0 16px;">
+          Dear ${escapeHtml(data.name)}, thank you. We will call you on ${escapeHtml(data.phone)} to fix a time that suits you.
+        </p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${tourRows(data)}</table>
+        <p style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.7;color:${BRAND.ink};margin:24px 0 0;">
+          With regards,<br/>
+          <span style="font-family:Georgia,'Times New Roman',serif;color:${BRAND.goldDeep};">${company.legalName}</span>
+        </p>
+      `,
+        company
+      ),
+    });
+  } catch (err) {
+    console.error("Tour confirmation email failed (request already delivered):", err);
+  }
   return true;
 }
