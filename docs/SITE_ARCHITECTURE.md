@@ -1,33 +1,51 @@
 # Site Architecture
 
-> **Built so far (July 2026):** `/`, `/about`, `/contact`, `/properties` (live DB data + category filter), `/properties/[slug]`, `/news` — under the `(site)` route group — plus the admin panel served at `/admin` behind the password gate (`proxy.ts`). The rest of this sitemap is the longer-term target.
+> **Routes as built (Sep 2026).** The table below is what exists in `app/`. The original design-time sitemap (communities, agents, services, journal, list-with-us) was never built: `/sell` became the seller page and `/news` the insight surface. The builder profile pages (`/builders/[slug]`) and area pages (`/areas`, `/areas/[slug]`) were removed in Sep 2026 (7103eff); `next.config.ts` redirects all three to `/properties` (308, permanent) so old links land on the listings. The `builders` and `areas` tables stay, so no stored data was lost.
 
-Sitemap for the marketing site. Routes assume the `(site)` route group from [TECH_STACK.md](TECH_STACK.md#folder-structure).
+Public pages sit in the `(site)` route group, which adds the enquiry dock, the WhatsApp button, the back-to-top button and the callback pop-up to every page.
 
-| Route | Page | Why it exists |
-|---|---|---|
-| `/` | Home | First impression + credibility. Hero, credibility band (stats/press), featured listings, community teaser, agent teaser, journal teaser, CTA band. Must land the aaronkirman.com-tier impression within one scroll ([PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md#success-criteria)). |
-| `/properties` | Listings | Core discovery surface for buyers/investors. Real grid (not slider-only, per [DESIGN_REFERENCES.md](DESIGN_REFERENCES.md)), filter bar (price, beds, location, status), fixed-aspect-ratio cards. |
-| `/properties/[slug]` | Property Detail | Where inquiries convert. Gallery, spec sheet (metadata sidebar pattern from big.dk), signature scrubbed-reveal image, floor plans, map, agent contact, similar listings. |
-| `/communities` | Communities/Neighborhoods index | Luxury buyers buy a location as much as a property — this page sells the area (skyline, lifestyle, amenities) before individual listings. |
-| `/communities/[slug]` | Community Detail | Deep dive on one neighborhood/development — imagery-led, stats (avg. price, walk score, etc.), listings within that community. |
-| `/about` | About | Brand story, credibility, differentiation. Feeds the "is this brokerage legitimate" question for all four audiences. |
-| `/agents` | Team/Agents index | Luxury real estate sells on relationship — this is a trust surface, especially for sellers evaluating who represents them. |
-| `/agents/[slug]` | Agent Detail | Individual bio, specialties, active/sold listings, direct contact — supports referral-network and seller audiences specifically. |
-| `/services/buy` | Buy | Explains the buyer journey/value prop. Distinct from `/properties` — this is persuasion, not discovery. |
-| `/services/sell` | Sell | The "list with us" pitch in depth — process, marketing approach, track record. Primary seller-conversion page. |
-| `/services/invest` | Invest | Investor-specific framing (yield, off-plan, portfolio) — distinct audience needs distinct proof points (ROI data, not lifestyle imagery). |
-| `/journal` | Journal/Insights index | Market insight content — SEO surface, and a credibility/expertise signal for all audiences. |
-| `/journal/[slug]` | Journal Article | Individual article. Reading-width container (~1100px, per [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md#layout-system)). |
-| `/contact` | Contact | General inquiry catch-all — form + office locations/map. |
-| `/list-with-us` | List With Us | Dedicated seller-lead-capture page — could be a service under `/services/sell`, kept as its own top-level route because it's the primary seller CTA target from nav/footer and deserves its own conversion-focused URL rather than being buried under `/services`. |
+## Public routes
+
+| Route | Page |
+|---|---|
+| `/` | Home: hero with search, credibility band, featured listings, Deal of the Week, locations, about split, developer marquee, services, client quotes (with the office's Google reviews), video reels, CTA band. |
+| `/properties` | Listings: search console (keyword, city, type, configuration, collection) with removable filter chips, sort, grid/list view, pagination, location cards, recently viewed. The URL still accepts the retired filters (category, possession, furnishing, locality, sector), so old links keep working. |
+| `/properties/[slug]` | Property detail: gallery and full-screen viewer (original files), a sticky jump bar (Overview, Details, Amenities, Plans, Videos, Location — each only when it has content), a sticky enquiry card, "Request details" and "Book a site visit" dialogs, a map preview that opens the listing's Google Maps link, area converter, public brochures, similar listings. |
+| `/projects/[slug]` | Project page: towers and unit table, amenities, builder line, RERA, enquiry form. |
+| `/sell` | Owners list a property: form with photo upload and an optional Google Maps link. The exact address stays private (see [CONTENT_MODEL.md](CONTENT_MODEL.md)); the row lands in Admin → Property Submissions. |
+| `/news` | Tricity property news via newsdata.io (12h cache), with a fallback state when the key is unset. |
+| `/about`, `/contact` | Company story; contact form (writes a lead), office details and map, social profiles. |
+| `/privacy`, `/terms`, `/data-deletion` | Legal pages, built from `lib/legal.ts` and the Udyam details in `lib/data.ts`. |
+| `/offline` | Service-worker fallback page. |
+
+Unknown slugs render a "Not found" page with `noindex`. The status stays 200 on purpose: the root `app/loading.tsx` streams every route, so the status line is sent before the page can call `notFound()`.
+
+## Machine routes
+
+| Route | What |
+|---|---|
+| `/sitemap.xml` | `app/sitemap.ts`, evaluated per request: static pages, every public listing and every project. |
+| `/robots.txt` | `app/robots.ts`: allows `/` and `/api/images/`, disallows `/api/` and `/admin`. |
+| `/manifest.webmanifest` | `app/manifest.ts` (PWA). |
+| `/og` | The branded share card (`app/og/route.tsx`), rendered once at build. |
+| `/api/search` | Portfolio search for the hero and menu. |
+| `/api/images/[key]`, `/api/documents/[key]` | Uploaded photos; brochures an admin marked public. |
+| `/api/sell/upload` | Photo upload for `/sell` (rate-limited, public). |
+| `/api/ig-thumb/[code]` | Instagram reel thumbnails for the video reels. |
+| `/api/health` | Health check used by the deploy. |
+| `/api/admin/*` | Admin-only: private documents, uploads, lead CSV export. |
+
+Requests on `www.` are redirected to the bare domain (308, `next.config.ts`).
+
+## Admin
+
+`/admin` and everything under it: [ADMIN_DESK.md](ADMIN_DESK.md#current-screens) lists the screens. `proxy.ts` sends visitors without a session to `/admin/login`, and every admin page and action checks the session again.
 
 ## Navigation structure
 
-- **Primary nav** (header): Properties, Communities, Agents, About, Journal, Contact — six items max, flat (no deep dropdowns), per the aaronkirman.com-over-omniyat.com nav-depth decision in [DESIGN_REFERENCES.md](DESIGN_REFERENCES.md).
-- **Primary CTA** (always visible in header, distinct styling): "List With Us" or "Contact an Agent" depending on page context.
-- **Footer**: full sitemap, office locations, social, legal (privacy, fair housing/equal opportunity disclosures — required for real estate), newsletter signup.
-- **Services** (`/services/buy`, `/sell`, `/invest`) are reachable from footer and from contextual CTAs on relevant pages (e.g. a "Thinking of selling?" CTA band on `/properties/[slug]`) rather than cluttering the primary header nav.
+- **Header** (`components/sections/nav-links.ts`): About, Listings, Sell, News, plus the phone and a call button.
+- **Full-screen menu**: Home, About, Listings, Sell, News, Contact, with portfolio search.
+- **Footer**: office address and map preview, phone and email, social profiles, the Udyam number, and the legal pages.
 
 ## Not in scope this phase
 
