@@ -113,10 +113,11 @@ export function DealBoard({ rows }: { rows: Row[] }) {
         </p>
       )}
 
-      {/* min-w on the columns keeps them readable while the board scrolls on a
-          laptop; xl:min-w-0 lets all eight share the full width on a desktop
-          instead of forcing a scrollbar the page is wide enough not to need. */}
-      <div className="grid grid-cols-1 gap-4 overflow-x-auto sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+      {/* One row of stage columns from md up, each at least 200px wide: the
+          board scrolls sideways inside itself when the eight columns don't
+          fit, instead of squeezing cards or spilling into the next column.
+          Phones stack the stages. */}
+      <div className="grid grid-cols-1 gap-4 overflow-x-auto pb-2 md:auto-cols-[minmax(200px,1fr)] md:grid-flow-col md:grid-cols-none">
         {columns.map(({ stage, deals }) => {
           // No point lighting up the column the card already sits in — that
           // drop is a no-op and the highlight would promise otherwise.
@@ -150,7 +151,7 @@ export function DealBoard({ rows }: { rows: Row[] }) {
               }}
               // An outline, not a fill: gold marks edges and never grounds.
               // Held at outline-2 in both states so nothing shifts on hover.
-              className={`flex min-w-[220px] flex-col gap-3 rounded-[10px] p-2 outline-2 transition-colors xl:min-w-0 ${
+              className={`flex min-w-0 flex-col gap-3 rounded-[10px] p-2 outline-2 transition-colors ${
                 isTarget ? "bg-raise outline-gold" : "outline-transparent"
               }`}
             >
