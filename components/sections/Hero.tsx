@@ -106,8 +106,10 @@ export function Hero() {
       // positioned children of this section and open past its bottom edge,
       // so clipping the section cut every city / type / status list off
       // mid-list. The clip belongs on the image layer, which is the only
-      // thing that actually needs it.
-      className="relative flex min-h-[92dvh] w-full items-center justify-center bg-dark-deep"
+      // thing that actually needs it. overflow-x-clip clips sideways only:
+      // the intro zoom (scale 1.08) would otherwise make phones scroll
+      // horizontally while it plays, and the dropdowns still open downward.
+      className="relative flex min-h-[92dvh] w-full items-center justify-center overflow-x-clip bg-dark-deep"
     >
       <div className="hero-img absolute inset-0 overflow-hidden">
         {SLIDES.map(
