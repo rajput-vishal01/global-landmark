@@ -28,6 +28,13 @@ const START_ROTATION = 0;
 /** Pixels of pointer travel before a press counts as a drag, not a click. */
 const DRAG_SLOP = 6;
 const DRAG_SENSITIVITY = 0.5;
+/** Degrees per wheel pixel for trackpad swipes, and the pause before snapping to a card. */
+const WHEEL_SENSITIVITY = 0.15;
+const WHEEL_SETTLE_MS = 160;
+/** Largest per-move velocity (degrees) that feeds the release spin. */
+const MAX_FLICK = 10;
+/** How far a release carries: velocity x this, so at most about two cards. */
+const FLICK_CARRY = 6;
 
 /** Width of the stage the ring sits in, tracked so the ring can fill it. */
 function useStageWidth(ref: React.RefObject<HTMLDivElement | null>): number {
@@ -83,21 +90,20 @@ export function VideoRing({ videos }: { videos: TestimonialVideo[] }) {
   const rotation = useMotionValue(START_ROTATION);
   const drag = useRef({ active: false, lastX: 0, travelled: 0, velocity: 0 });
 
+  /**
+   * After a drag: carry on a little in the flick's direction, then glide onto
+   * the nearest card. A plain eased tween rather than inertia physics, which
+   * took seconds to come to rest and overshot by several cards.
+   */
   const settle = useCallback(
     (velocity: number) => {
-      const from = rotation.get();
-      animate(from, from + velocity * 20, {
-        type: "inertia",
-        velocity: velocity * 20,
-        power: 0.8,
-        timeConstant: 300,
-        restDelta: 0.5,
-        // Always come to rest with a card squarely at the front.
-        modifyTarget: (target) => Math.round(target / angle) * angle,
-        onUpdate: (v) => rotation.set(v),
+      const carried = rotation.get() + velocity * FLICK_CARRY;
+      animate(rotation, Math.round(carried / angle) * angle, {
+        duration: reduceMotion ? 0 : 0.7,
+        ease: [0.23, 1, 0.32, 1],
       });
     },
-    [rotation, angle]
+    [rotation, angle, reduceMotion]
   );
 
   /** Turn the ring so card `index` faces the viewer, by the short way round. */
@@ -111,6 +117,34 @@ export function VideoRing({ videos }: { videos: TestimonialVideo[] }) {
     },
     [rotation, angle, reduceMotion]
   );
+
+  // Trackpad two-finger swipes and Shift + mouse wheel arrive as horizontal
+  // wheel events, not pointer drags. A mostly-vertical wheel is left alone
+  // so the page still scrolls past the ring. Non-passive, because a
+  // horizontal swipe must not also trigger the browser's back gesture.
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    let snapTimer: ReturnType<typeof setTimeout> | undefined;
+    const onWheel = (e: WheelEvent) => {
+      const dx = e.shiftKey && e.deltaX === 0 ? e.deltaY : e.deltaX;
+      if (Math.abs(dx) <= Math.abs(e.shiftKey ? 0 : e.deltaY)) return;
+      e.preventDefault();
+      rotation.stop();
+      // Swiping left moves the cards left, the same as dragging left.
+      rotation.set(rotation.get() - dx * WHEEL_SENSITIVITY);
+      clearTimeout(snapTimer);
+      snapTimer = setTimeout(() => {
+        const target = Math.round(rotation.get() / angle) * angle;
+        animate(rotation, target, { duration: reduceMotion ? 0 : 0.45, ease: [0.23, 1, 0.32, 1] });
+      }, WHEEL_SETTLE_MS);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      clearTimeout(snapTimer);
+      el.removeEventListener("wheel", onWheel);
+    };
+  }, [rotation, angle, reduceMotion]);
 
   function onPointerDown(event: React.PointerEvent) {
     if (event.button !== 0) return;
@@ -127,8 +161,10 @@ export function VideoRing({ videos }: { videos: TestimonialVideo[] }) {
       state.travelled += Math.abs(dx);
       // Seen from outside, a positive rotateY carries the front card to the
       // right, so the ring turns with the pointer at +dx.
-      state.velocity = dx * DRAG_SENSITIVITY;
-      rotation.set(rotation.get() + state.velocity);
+      rotation.set(rotation.get() + dx * DRAG_SENSITIVITY);
+      // Capped for the release spin only, so a hard flick carries a few
+      // cards instead of whirling the ring round several times.
+      state.velocity = Math.max(-MAX_FLICK, Math.min(MAX_FLICK, dx * DRAG_SENSITIVITY));
     };
     const up = () => {
       drag.current.active = false;
@@ -153,6 +189,9 @@ export function VideoRing({ videos }: { videos: TestimonialVideo[] }) {
       <div
         ref={stageRef}
         onPointerDown={onPointerDown}
+        // The browser's own drag-and-drop (of a thumbnail, or selected
+        // text) swallows the pointer stream mid-drag and the ring stops.
+        onDragStart={(e) => e.preventDefault()}
         // pan-y: a vertical swipe still scrolls the page on a phone; only a
         // sideways drag turns the ring.
         className="group/ring relative w-full cursor-grab select-none overflow-hidden active:cursor-grabbing [touch-action:pan-y]"
