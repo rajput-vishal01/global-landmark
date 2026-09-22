@@ -64,7 +64,8 @@ and the dark bands are never cool slate.
 | Graphite | `bg-navy` / `bg-navy-deep` | the logo's backdrop, gold halo at the top |
 
 The gradients live in `app/globals.css` ("Brand grounds") and attach by
-selector to `section`, `footer`, `main`, `aside` and `[data-band]`. So a new band
+selector to `section`, `main`, `aside` and `[data-band]` (the footer stays flat
+graphite at the client's request). So a new band
 gets them by using the colour utility, and small chips stay flat. Cards stay
 pure `bg-white` so they lift off the ground. The admin panel pins the old
 neutral tokens and is unaffected.

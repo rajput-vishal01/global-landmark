@@ -214,18 +214,20 @@
     linear-gradient(180deg, #2d2924 0%, #1b1815 100%);
 }
 
-:where(section, footer, main, aside, header, [data-band]).bg-surface {
+:where(section, main, aside, header, [data-band]).bg-surface {
   background-image: var(--grad-ivory);
 }
-:where(section, footer, main, aside, [data-band]).bg-cream {
+:where(section, main, aside, [data-band]).bg-cream {
   background-image: var(--grad-champagne);
 }
-:where(section, footer, main, aside, header, [data-band]).bg-navy {
+:where(section, main, aside, header, [data-band]).bg-navy {
   background-image: var(--grad-graphite);
 }
-:where(section, footer, main, aside, [data-band]):is(.bg-navy-deep, .bg-dark-deep) {
+:where(section, main, aside, [data-band]):is(.bg-navy-deep, .bg-dark-deep) {
   background-image: var(--grad-graphite-deep);
 }
+/* The footer is left out of every selector above on purpose: the client
+   wanted it a flat graphite, not a gradient (Sep 2026). */
 /* The translucent sticky header must stay translucent: no gradient. */
 header[class*="bg-surface/"] {
   background-image: none;
