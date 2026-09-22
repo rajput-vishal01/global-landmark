@@ -19,7 +19,7 @@ const out = mkdtempSync(join(tmpdir(), "gl-features-"));
 
 try {
   execSync(
-    `npx tsc lib/similar.ts lib/csv.ts --outDir "${out}" --rootDir lib ` +
+    `npx tsc lib/similar.ts lib/csv.ts lib/page-meta.ts --outDir "${out}" --rootDir lib ` +
       `--target es2022 --module commonjs --esModuleInterop --skipLibCheck`,
     { stdio: "pipe" }
   );
@@ -28,6 +28,7 @@ try {
   const require = createRequire(join(out, "noop.cjs"));
   const { rankSimilar, similarityScore } = require(join(out, "similar.js"));
   const { csvField } = require(join(out, "csv.js"));
+  const meta = require(join(out, "page-meta.js"));
 
   // --- Similar ranking (R-45) ---------------------------------------------
   const subject = {
@@ -111,6 +112,52 @@ try {
   assert.equal(csvField('say "hi"'), '"say ""hi"""', "inner quotes are doubled");
   assert.equal(csvField("line\nbreak"), '"line\nbreak"', "newline forces quoting");
   assert.equal(csvField(null), "", "null is an empty field");
+
+  // --- Listing and project page titles (lib/page-meta.ts) -----------------
+  // 42 characters is what " | Global Landmark" leaves inside 60.
+  const unit = {
+    title: "3 BHK Residence, Imperial Residency",
+    kind: "unit",
+    category: "sale",
+    description: "",
+    propertyType: "Flat/Apartment",
+    configuration: "3 BHK",
+    society: null,
+    locality: null,
+    sector: null,
+    city: "Zirakpur",
+    location: "Peer Muchalla, Zirakpur",
+    possessionStatus: "Ready to Move",
+    furnishing: null,
+    project: { name: "Imperial Residency" },
+  };
+  assert.equal(
+    meta.listingTitle(unit, "1,850 Sq Ft"),
+    "3 BHK Flat in Imperial Residency, Zirakpur",
+    "type, society and city; 'for Sale' dropped before the society is"
+  );
+  const kothi = { ...unit, propertyType: "Independent House", configuration: "5 BHK", sector: "12", city: "Panchkula", project: null };
+  assert.equal(meta.listingTitle(kothi, null), "5 BHK Kothi in Sector 12, Panchkula", "a bare sector number reads as a sector");
+  assert.equal(
+    meta.listingTitle({ ...kothi, sector: null }, null),
+    "5 BHK Kothi for Sale in Panchkula",
+    "'for Sale' stays when there is room"
+  );
+  const noType = { ...unit, title: "3 BHK Builder Floor, Peer Muchalla Zirakpur", propertyType: null, project: null };
+  assert.equal(meta.listingTitle(noType, null), "3 BHK Builder Floor in Zirakpur", "an over-long broker title keeps its first phrase and the city");
+  for (const listing of [unit, kothi, noType, { ...unit, title: "x".repeat(90), kind: "project" }]) {
+    assert.ok(meta.listingTitle(listing, null).length <= meta.TITLE_MAX, `title fits: ${listing.title}`);
+    const description = meta.listingDescription(listing, null);
+    assert.ok(description.length <= meta.DESCRIPTION_MAX, "description fits");
+    assert.ok(!/₹|\bcr(ore)?\b|\blakh|\bprice\b/i.test(description), "no price in a description");
+  }
+  assert.equal(meta.photoAlt(unit, null, 2, 5), "3 BHK Flat in Imperial Residency, Zirakpur, photo 2 of 5");
+  assert.equal(meta.clipText("one two three four", 12), "one two…", "clipped at a word, never mid-word");
+  assert.equal(
+    meta.projectTitle({ name: "Imperial Residency", description: null, builderName: null, locality: "Peer Muchalla", sector: null, city: "Zirakpur", possessionStatus: null }),
+    "Imperial Residency, Zirakpur",
+    "project title narrows to the city when locality and city are too long"
+  );
 
   console.log("check-features: all assertions passed");
 } finally {

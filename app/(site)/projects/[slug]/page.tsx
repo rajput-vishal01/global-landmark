@@ -11,6 +11,7 @@ import { PageHeader, SECTION, SECTION_BAND } from "../../_components/page-chrome
 import { AMENITY_GROUPS, formatArea, formatIndianShort } from "@/lib/attributes";
 import { PROJECT_DETAIL } from "@/lib/data";
 import { breadcrumbJsonLd, canonical, jsonLdHtml, OG_DEFAULTS } from "@/lib/seo";
+import { projectDescription, projectTitle } from "@/lib/page-meta";
 
 // ISR: cached and served instantly; admin edits bust the cache on save.
 export const revalidate = 3600;
@@ -37,12 +38,11 @@ export async function generateMetadata({
   const project = await getProjectBySlug(slug);
   if (!project) return { title: "Not found", robots: { index: false } };
   const path = `/projects/${project.slug}`;
-  const location = projectLocation(project);
-  // SERPs truncate around 60-65 chars; admin-entered names are unbounded.
-  const title = `${project.name}${location ? ` — ${location}` : ""}`.slice(0, 65);
-  const description =
-    project.description?.slice(0, 160) ||
-    `Residential project${location ? ` in ${location}` : ""}.`;
+  // Name and place, fitted to 60 characters with the site suffix (admin
+  // names are unbounded); a short description is topped up with the facts.
+  const facts = { ...project, builderName: project.builderName || project.builder?.name };
+  const title = projectTitle(facts);
+  const description = projectDescription(facts);
   // Absolute: uploaded images are same-origin paths, and a social crawler
   // has no origin to resolve them against. No photo at all: the brand card.
   const cover = projectCover(project);
@@ -213,9 +213,9 @@ export default async function ProjectDetailPage({
 
             {amenityGroups.length > 0 && (
               <div>
-                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <h2 className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Amenities
-                </span>
+                </h2>
                 <div className="flex max-w-2xl flex-col gap-5">
                   {amenityGroups.map((group) => (
                     <div key={group.label}>
@@ -241,9 +241,11 @@ export default async function ProjectDetailPage({
             {/* Tower / unit availability (R-12) */}
             <div>
               <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
-                <span className="block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                {/* h2s, styled as eyebrows: the tower names below are h3s,
+                    and without these they sat straight under the h1. */}
+                <h2 className="block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Availability
-                </span>
+                </h2>
                 {totalAvailable > 0 && (
                   <span className="text-meta font-sans text-ink-muted">
                     {totalAvailable} unit{totalAvailable === 1 ? "" : "s"} available
@@ -277,18 +279,18 @@ export default async function ProjectDetailPage({
 
             {galleryImages.length > 0 && (
               <div>
-                <span className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <h2 className="mb-6 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Gallery
-                </span>
+                </h2>
                 <GalleryLightbox images={galleryImages} title={project.name} />
               </div>
             )}
 
             {location && (
               <div>
-                <span className="mb-4 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
+                <h2 className="mb-4 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Location
-                </span>
+                </h2>
                 <p className="max-w-xl text-pretty text-body font-sans text-ink">
                   {location}
                 </p>

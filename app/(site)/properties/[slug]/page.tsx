@@ -37,6 +37,9 @@ import { whatsAppHref, whatsAppShareHref, propertyShareMessage } from "@/lib/wha
 import { COMPANY, PROPERTY_DETAIL } from "@/lib/data";
 import { resolveCompany } from "@/lib/site-settings";
 import { breadcrumbJsonLd, canonical, jsonLdHtml, OG_DEFAULTS, ORG_ID } from "@/lib/seo";
+import { listingDescription, listingTitle, photoAlt } from "@/lib/page-meta";
+import { isCity } from "@/lib/locations";
+import { propertiesHref } from "@/lib/properties-url";
 
 // ISR: cached and served instantly; admin edits bust the cache on save.
 export const revalidate = 3600;
@@ -50,11 +53,11 @@ export async function generateMetadata({
   const property = await getPropertyBySlug(slug);
   if (!property) return { title: "Not found", robots: { index: false } };
   const path = `/properties/${property.slug}`;
-  // SERPs truncate around 60-65 chars; admin titles are unbounded.
-  const title = `${property.title} — ${property.location}`.slice(0, 65);
-  const description =
-    property.description.slice(0, 160) ||
-    `${categoryLabel(property.category)} in ${property.location}.`;
+  // Built from the listing's facts (type, BHK, society, place) to fit 60
+  // characters with the site suffix; admin titles are unbounded.
+  const area = areaLabel(property);
+  const title = listingTitle(property, area);
+  const description = listingDescription(property, area);
   // The cover photo — a floor plan makes a poor preview — else the branded
   // card. Absolute: uploads are same-origin paths, and a social crawler has
   // no origin to resolve them against.
@@ -166,12 +169,20 @@ export default async function PropertyDetailPage({
   // R-45: ranked on locality → configuration → budget, from the same cached
   // pool /properties already warms.
   const similar = rankSimilar(property, await listProperties(), 3);
+  const cityListings = property.city && isCity(property.city) ? property.city : null;
 
   const specs = propertySpecs(property);
   const headline = headlineArea(property);
   const area = areaLabel(property);
   const floorPlans = property.images.filter((img) => img.mediaKind === "floor_plan");
   const photos = property.images.filter((img) => img.mediaKind !== "floor_plan");
+  // Alt text from the listing's facts wherever the broker left it empty, or
+  // put the listing's title on every photo, which describes none of them.
+  const galleryPhotos = photos.map((img, i) =>
+    img.alt && img.alt !== property.title
+      ? img
+      : { ...img, alt: photoAlt(property, area, i + 1, photos.length) }
+  );
   const collection = collectionOf(property.propertyType, property.kind);
   const possession =
     property.possessionStatus &&
@@ -399,7 +410,7 @@ export default async function PropertyDetailPage({
         {photos.length > 0 && (
           <section className="bg-surface px-5 pt-8 md:px-12 md:pt-10">
             <div>
-              <PropertyGallery images={photos} title={property.title} />
+              <PropertyGallery images={galleryPhotos} title={property.title} />
             </div>
           </section>
         )}
@@ -448,7 +459,19 @@ export default async function PropertyDetailPage({
                       <dt className="text-eyebrow font-sans font-semibold uppercase tracking-[0.15em] text-ink-muted">
                         {label}
                       </dt>
-                      <dd className="mt-1.5 break-words font-sans text-body text-ink">{value}</dd>
+                      <dd className="mt-1.5 break-words font-sans text-body text-ink">
+                        {/* The unit's own project page: the society's other units, builder and RERA. */}
+                        {label === "Project" && property.project ? (
+                          <Link
+                            href={`/projects/${property.project.slug}`}
+                            className="underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
+                          >
+                            {value}
+                          </Link>
+                        ) : (
+                          value
+                        )}
+                      </dd>
                     </div>
                   ))}
                 </dl>
@@ -717,8 +740,13 @@ export default async function PropertyDetailPage({
                 eyebrow="You may also like"
                 title="Similar properties"
                 aside={
-                  <Link href="/properties" className="font-sans transition-colors hover:text-ink">
-                    View all listings
+                  // The listing's own city, as a filtered page, when it has a
+                  // known one; otherwise the whole portfolio.
+                  <Link
+                    href={cityListings ? propertiesHref({}, { city: cityListings }) : "/properties"}
+                    className="font-sans transition-colors hover:text-ink"
+                  >
+                    {cityListings ? `More listings in ${cityListings}` : "View all listings"}
                   </Link>
                 }
               />
