@@ -81,7 +81,13 @@
       "Home Loan Available"
     ],
     "banksOnPanel": [],
-    "coverImage": null
+    "coverImage": {
+      "url": "https://images.unsplash.com/photo-1607261720324-b68cd0857a8a?w=2400&q=90&fm=jpg&fit=max",
+      "alt": "Exterior, Kachnar Township, Peer Muchalla, Zirakpur",
+      "source": "https://unsplash.com/photos/white-and-brown-concrete-building-BS5S84VfH_s",
+      "author": "Syed Fahim Haider",
+      "licence": "Unsplash License"
+    }
   },
   {
     "slug": "siswan-ridge-villas",
@@ -120,7 +126,13 @@
       "Home Loan Available"
     ],
     "banksOnPanel": [],
-    "coverImage": null
+    "coverImage": {
+      "url": "https://images.unsplash.com/photo-1787704113747-c1a65d1a6a62?w=2400&q=90&fm=jpg&fit=max",
+      "alt": "Exterior, Siswan Ridge Villas, Mullanpur, New Chandigarh",
+      "source": "https://unsplash.com/photos/modern-house-with-wood-paneling-iDq7J5bAa0I",
+      "author": "Ibrahim Design",
+      "licence": "Unsplash License"
+    }
   },
   {
     "slug": "sarson-fields",
@@ -187,6 +199,12 @@
     "reraNumber": null,
     "loanFlags": [],
     "banksOnPanel": [],
-    "coverImage": null
+    "coverImage": {
+      "url": "https://images.unsplash.com/photo-1630060041646-3ba002aa7d37?w=2400&q=90&fm=jpg&fit=max",
+      "alt": "Exterior, Copperleaf Square, PR-7 Road, Zirakpur",
+      "source": "https://unsplash.com/photos/white-concrete-building-near-green-trees-under-white-clouds-during-daytime-YkXbHOGI8ZY",
+      "author": "Parth Savani",
+      "licence": "Unsplash License"
+    }
   }
 ]

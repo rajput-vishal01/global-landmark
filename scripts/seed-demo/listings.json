@@ -1,0 +1,1900 @@
+[
+  {
+    "kind": "unit",
+    "projectName": "Semal Heights",
+    "propertyType": "Flat/Apartment",
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": 1780,
+    "superAreaUnit": "sqft",
+    "carpetArea": 1245,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [
+      "Garden Facing"
+    ],
+    "furnishing": "Unfurnished",
+    "furnishingInventory": [],
+    "amenities": [
+      "Club House",
+      "Swimming Pool",
+      "Gym",
+      "Lift",
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Gated Community",
+      "Children's Play Area",
+      "Park",
+      "Jogging Track",
+      "Visitor Parking",
+      "Intercom"
+    ],
+    "parkingTypes": [
+      "Covered Parking",
+      "Visitor Parking"
+    ],
+    "parkingSlots": 1,
+    "legalFlags": [],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank",
+      "ICICI Bank"
+    ],
+    "extras": [
+      {
+        "title": "Facing",
+        "description": "East"
+      },
+      {
+        "title": "Floor",
+        "description": "9th of 18"
+      },
+      {
+        "title": "Possession",
+        "description": "Under construction"
+      }
+    ],
+    "media": [],
+    "title": "3 BHK Flat in Semal Heights, Sector 82 Mohali",
+    "location": "Sector 82, Airport Road, Mohali",
+    "description": "An east-facing three-bedroom residence on the ninth floor of Semal Heights, the high-rise society taking shape off Airport Road in Sector 82. The plan puts the living and dining in one long room that opens onto a deep balcony, with the kitchen and a utility area kept to one side. All three bedrooms have attached bathrooms, and the master looks out over the central lawns. Chandigarh International Airport is about fifteen minutes away, and the IT City and Aerocity offices are closer still. The tower is under construction; the unit is offered from the builder's current inventory, and our team can walk you through the floor plans and the construction schedule on site.",
+    "slug": "3-bhk-flat-in-semal-heights-sector-82-mohali",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Sector%2082%2C%20Airport%20Road%2C%20Mohali",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1632398461186-37c76a70062f?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 3 BHK Flat in Semal Heights, Sector 82, Airport Road, Mohali",
+        "source": "https://unsplash.com/photos/a-couple-of-tall-buildings-sitting-next-to-each-other-2EmCXrpIKA0",
+        "author": "Parth Savani",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1745301558339-44eb3217d5da?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 3 BHK Flat in Semal Heights, Sector 82, Airport Road, Mohali",
+        "source": "https://unsplash.com/photos/a-luxurious-modern-living-room-with-exquisite-design-oaITdLL7bD4",
+        "author": "Spl Interiors",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bedroom, 3 BHK Flat in Semal Heights, Sector 82, Airport Road, Mohali",
+        "source": "https://unsplash.com/photos/modern-bedroom-with-white-upholstered-bed-RUvW1KGD9a4",
+        "author": "Spacejoy",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1600489000022-c2086d79f9d4?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Kitchen, 3 BHK Flat in Semal Heights, Sector 82, Airport Road, Mohali",
+        "source": "https://unsplash.com/photos/white-and-brown-kitchen-cabinet--aDGbdTsBZg",
+        "author": "Collov Home Design",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bathroom, 3 BHK Flat in Semal Heights, Sector 82, Airport Road, Mohali",
+        "source": "https://unsplash.com/photos/modern-bathroom-with-shower-and-vanity-g51F6-WYzyU",
+        "author": "Lotus Design N Print",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "Semal Heights",
+    "propertyType": "Flat/Apartment",
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": 2450,
+    "superAreaUnit": "sqft",
+    "carpetArea": 1720,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [
+      "Corner Property",
+      "Park Facing",
+      "Floor PLC"
+    ],
+    "furnishing": "Unfurnished",
+    "furnishingInventory": [],
+    "amenities": [
+      "Club House",
+      "Swimming Pool",
+      "Gym",
+      "Lift",
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Gated Community",
+      "Children's Play Area",
+      "Park",
+      "Jogging Track",
+      "Visitor Parking",
+      "Intercom"
+    ],
+    "parkingTypes": [
+      "Covered Parking",
+      "Visitor Parking"
+    ],
+    "parkingSlots": 2,
+    "legalFlags": [],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank",
+      "ICICI Bank",
+      "Axis Bank"
+    ],
+    "extras": [
+      {
+        "title": "Facing",
+        "description": "North-East"
+      },
+      {
+        "title": "Floor",
+        "description": "14th of 18"
+      },
+      {
+        "title": "Possession",
+        "description": "Under construction"
+      }
+    ],
+    "media": [],
+    "title": "4 BHK Flat in Semal Heights, Sector 82 Mohali",
+    "location": "Sector 82, Airport Road, Mohali",
+    "description": "A four-bedroom corner apartment on an upper floor of Semal Heights, with windows on two sides and a wraparound balcony facing the park. The layout separates a formal living room from a family lounge, and the fourth bedroom works as a study or a guest room with its own bathroom. A separate servant room and a utility balcony sit off the kitchen. The society is planned around a clubhouse, pool and landscaped courts, a short drive from the airport, the IT City and the schools along Airport Road. Construction is underway; we can share the plan, specifications and the current progress at the site office.",
+    "slug": "4-bhk-flat-in-semal-heights-sector-82-mohali",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Sector%2082%2C%20Airport%20Road%2C%20Mohali",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1632398461363-741a64493ab6?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 4 BHK Flat in Semal Heights, Sector 82, Airport Road, Mohali",
+        "source": "https://unsplash.com/photos/a-tall-building-with-a-lot-of-windows-and-a-lot-of-scaffolding-on-zc5B3H1W1E8",
+        "author": "Parth Savani",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1682662046610-fbdb3db4bd74?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 4 BHK Flat in Semal Heights, Sector 82, Airport Road, Mohali",
+        "source": "https://unsplash.com/photos/a-living-room-filled-with-furniture-and-a-painting-on-the-wall-QI2sIqrbp9Y",
+        "author": "Pyx Photography",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1750420556288-d0e32a6f517b?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bedroom, 4 BHK Flat in Semal Heights, Sector 82, Airport Road, Mohali",
+        "source": "https://unsplash.com/photos/a-modern-bedroom-with-a-stylish-neutral-aesthetic-0tVimluL_ls",
+        "author": "Spl Interiors",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Kitchen, 4 BHK Flat in Semal Heights, Sector 82, Airport Road, Mohali",
+        "source": "https://unsplash.com/photos/modern-white-kitchen-with-marble-island-GliaHAJ3_5A",
+        "author": "Jason Briscoe",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1576698483491-8c43f0862543?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bathroom, 4 BHK Flat in Semal Heights, Sector 82, Airport Road, Mohali",
+        "source": "https://unsplash.com/photos/white-ceramic-sink-O7WjrXiKy_s",
+        "author": "Amira Aboalnaga",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "Kachnar Township",
+    "propertyType": "Flat/Apartment",
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": 1150,
+    "superAreaUnit": "sqft",
+    "carpetArea": 820,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [],
+    "furnishing": "Semi Furnished",
+    "furnishingInventory": [
+      "Wardrobes",
+      "Chimney",
+      "Geyser",
+      "RO"
+    ],
+    "amenities": [
+      "Lift",
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Gated Community",
+      "Children's Play Area",
+      "Park",
+      "Visitor Parking"
+    ],
+    "parkingTypes": [
+      "Covered Parking"
+    ],
+    "parkingSlots": 1,
+    "legalFlags": [],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank"
+    ],
+    "extras": [
+      {
+        "title": "Facing",
+        "description": "West"
+      },
+      {
+        "title": "Floor",
+        "description": "4th of 8"
+      },
+      {
+        "title": "Possession",
+        "description": "Ready to move"
+      }
+    ],
+    "media": [],
+    "title": "2 BHK Flat in Kachnar Township, Peer Muchalla Zirakpur",
+    "location": "Peer Muchalla, Zirakpur",
+    "description": "A ready-to-move two-bedroom flat in Kachnar Township, a gated society in Peer Muchalla with the Panchkula border a few minutes away. The apartment is on the fourth floor, with a bright living room, a modular kitchen and two bedrooms that share a well-lit common bathroom alongside the attached one. Wardrobes and fans are already in place, so it suits a first home or a rental. Daily shopping, schools and the Zirakpur–Panchkula road are close by, and the township has its own park, power backup and round-the-clock security.",
+    "slug": "2-bhk-flat-in-kachnar-township-peer-muchalla-zirakpur",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Peer%20Muchalla%2C%20Zirakpur",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1607261720324-b68cd0857a8a?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 2 BHK Flat in Kachnar Township, Peer Muchalla, Zirakpur",
+        "source": "https://unsplash.com/photos/white-and-brown-concrete-building-BS5S84VfH_s",
+        "author": "Syed Fahim Haider",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1600121848594-d8644e57abab?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 2 BHK Flat in Kachnar Township, Peer Muchalla, Zirakpur",
+        "source": "https://unsplash.com/photos/gray-and-white-living-room-set-0sDzRgrN_pI",
+        "author": "Lotus Design N Print",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1586105251261-72a756497a11?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bedroom, 2 BHK Flat in Kachnar Township, Peer Muchalla, Zirakpur",
+        "source": "https://unsplash.com/photos/black-and-white-bed-linen-kyt0PkBSCNQ",
+        "author": "Kam Idris",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Kitchen, 2 BHK Flat in Kachnar Township, Peer Muchalla, Zirakpur",
+        "source": "https://unsplash.com/photos/gray-steel-3-door-refrigerator-near-modular-kitchen-MP0bgaS_d1c",
+        "author": "Naomi Hébert",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "Kachnar Township",
+    "propertyType": "Flat/Apartment",
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": 1560,
+    "superAreaUnit": "sqft",
+    "carpetArea": 1110,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [
+      "Park Facing"
+    ],
+    "furnishing": "Semi Furnished",
+    "furnishingInventory": [
+      "Wardrobes",
+      "Chimney",
+      "Geyser",
+      "AC"
+    ],
+    "amenities": [
+      "Lift",
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Gated Community",
+      "Children's Play Area",
+      "Park",
+      "Jogging Track",
+      "Visitor Parking"
+    ],
+    "parkingTypes": [
+      "Covered Parking",
+      "Two-Wheeler Parking"
+    ],
+    "parkingSlots": 1,
+    "legalFlags": [],
+    "loanFlags": [
+      "Home Loan Available",
+      "Bank Approved"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank",
+      "ICICI Bank"
+    ],
+    "extras": [
+      {
+        "title": "Facing",
+        "description": "North"
+      },
+      {
+        "title": "Floor",
+        "description": "2nd of 8"
+      },
+      {
+        "title": "Possession",
+        "description": "Ready to move"
+      }
+    ],
+    "media": [],
+    "title": "3 BHK Flat in Kachnar Township, Peer Muchalla Zirakpur",
+    "location": "Peer Muchalla, Zirakpur",
+    "description": "A three-bedroom, ready-to-move home in Kachnar Township that looks over the society's central green. The living and dining area opens onto a balcony running the width of the room, and the kitchen has space for a breakfast counter. Each bedroom has its own bathroom, and the master includes a dressing area. The flat is on the second floor, so the lift is a convenience rather than a necessity. Peer Muchalla keeps you close to both Panchkula and the Zirakpur market, with the Chandigarh border about ten minutes away.",
+    "slug": "3-bhk-flat-in-kachnar-township-peer-muchalla-zirakpur",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Peer%20Muchalla%2C%20Zirakpur",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1716315850495-2b9703381ab3?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 3 BHK Flat in Kachnar Township, Peer Muchalla, Zirakpur",
+        "source": "https://unsplash.com/photos/a-large-building-with-a-lot-of-trees-in-front-of-it-xdpR78XWWEs",
+        "author": "Md Mahtab",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1634822929277-0c51ca0e8846?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 3 BHK Flat in Kachnar Township, Peer Muchalla, Zirakpur",
+        "source": "https://unsplash.com/photos/a-living-room-with-a-couch-a-chair-and-a-table-9iljaLpo9uw",
+        "author": "Jonathan Borba",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1696762932825-2737db830bbe?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bedroom, 3 BHK Flat in Kachnar Township, Peer Muchalla, Zirakpur",
+        "source": "https://unsplash.com/photos/a-bedroom-with-a-bed-and-a-chair-ErDrzSvSNv4",
+        "author": "Le Quan",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Kitchen, 3 BHK Flat in Kachnar Township, Peer Muchalla, Zirakpur",
+        "source": "https://unsplash.com/photos/white-kitchen-room-set-G7sE2S4Lab4",
+        "author": "Aaron Huber",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1661107259637-4e1c55462428?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bathroom, 3 BHK Flat in Kachnar Township, Peer Muchalla, Zirakpur",
+        "source": "https://unsplash.com/photos/a-bathroom-with-a-large-mirror-mLx6oMw32PI",
+        "author": "serjan midili",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "",
+    "propertyType": "Flat/Apartment",
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": 1650,
+    "superAreaUnit": "sqft",
+    "carpetArea": 1180,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [],
+    "furnishing": "Semi Furnished",
+    "furnishingInventory": [
+      "Wardrobes",
+      "Chimney",
+      "Geyser",
+      "Curtains"
+    ],
+    "amenities": [
+      "Lift",
+      "Power Backup",
+      "Security",
+      "Park",
+      "Visitor Parking",
+      "Intercom"
+    ],
+    "parkingTypes": [
+      "Stilt Parking"
+    ],
+    "parkingSlots": 1,
+    "legalFlags": [
+      "Freehold"
+    ],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank",
+      "ICICI Bank"
+    ],
+    "extras": [
+      {
+        "title": "Facing",
+        "description": "South-East"
+      },
+      {
+        "title": "Floor",
+        "description": "3rd of 5"
+      },
+      {
+        "title": "Possession",
+        "description": "Ready to move"
+      }
+    ],
+    "media": [],
+    "title": "3 BHK Flat, Sector 70 Mohali",
+    "location": "Sector 70, Mohali",
+    "description": "A well-kept three-bedroom resale flat in a mid-rise society in Sector 70, one of Mohali's settled residential sectors. The home has a living room with a separate dining nook, a modular kitchen, and three bedrooms with two attached bathrooms. The owners have maintained it carefully, with fresh paint and new fittings in the kitchen. Schools, the Sector 70 market and the Phase 3B2 market are all within a short drive, and the Airport Road is about ten minutes away.",
+    "slug": "3-bhk-flat-sector-70-mohali",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Sector%2070%2C%20Mohali",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1549499090-c9203d2b20ad?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 3 BHK Flat, Sector 70, Mohali",
+        "source": "https://unsplash.com/photos/white-high-rise-building-during-daytime-0_e-H1eGf_A",
+        "author": "Dylan Mullins",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1787383274118-19be2f542e2b?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 3 BHK Flat, Sector 70, Mohali",
+        "source": "https://unsplash.com/photos/living-room-with-orange-sofa-qGQ1-2jaAG4",
+        "author": "SHHOONYA The Design Stud",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1615529162924-f8605388461d?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bedroom, 3 BHK Flat, Sector 70, Mohali",
+        "source": "https://unsplash.com/photos/white-bed-linen-on-brown-wooden-bed-frame-ffFnddUEaL4",
+        "author": "Spacejoy",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1588854337221-4cf9fa96059c?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Kitchen, 3 BHK Flat, Sector 70, Mohali",
+        "source": "https://unsplash.com/photos/white-wooden-kitchen-cabinet-and-white-kitchen-counter-UDDULE_eIBY",
+        "author": "Lotus Design N Print",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "",
+    "propertyType": "Flat/Apartment",
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": 1225,
+    "superAreaUnit": "sqft",
+    "carpetArea": 870,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [],
+    "furnishing": "Semi Furnished",
+    "furnishingInventory": [
+      "Wardrobes",
+      "Chimney",
+      "Geyser"
+    ],
+    "amenities": [
+      "Lift",
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Gym",
+      "Visitor Parking"
+    ],
+    "parkingTypes": [
+      "Basement Parking"
+    ],
+    "parkingSlots": 1,
+    "legalFlags": [],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank"
+    ],
+    "extras": [
+      {
+        "title": "Facing",
+        "description": "East"
+      },
+      {
+        "title": "Floor",
+        "description": "11th of 14"
+      },
+      {
+        "title": "Possession",
+        "description": "Ready to move"
+      }
+    ],
+    "media": [],
+    "title": "2 BHK Flat, VIP Road Zirakpur",
+    "location": "VIP Road, Zirakpur",
+    "description": "A two-bedroom apartment in a high-rise on Zirakpur's VIP Road, with Chandigarh, the airport and the Ambala highway all within easy reach. The living room opens onto a balcony with an open view, and both bedrooms have attached bathrooms. The kitchen is fitted with cabinets and a chimney. The society has lifts, power backup and security at the gate, and the VIP Road stretch has cafés, supermarkets and schools a few minutes' walk away. A practical home, or a steady rental for professionals working in the Tricity.",
+    "slug": "2-bhk-flat-vip-road-zirakpur",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=VIP%20Road%2C%20Zirakpur",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1663985139222-6af2f8646104?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 2 BHK Flat, VIP Road, Zirakpur",
+        "source": "https://unsplash.com/photos/a-tall-building-with-many-windows-RUOLhYJF75w",
+        "author": "Jacob Vathikulam",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1705321963943-de94bb3f0dd3?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 2 BHK Flat, VIP Road, Zirakpur",
+        "source": "https://unsplash.com/photos/a-living-room-with-a-couch-and-a-table-g_5UyVBIX_k",
+        "author": "Pipcke",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1642541070065-3912f347e7c6?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bedroom, 2 BHK Flat, VIP Road, Zirakpur",
+        "source": "https://unsplash.com/photos/a-bed-room-with-a-neatly-made-bed-and-a-painting-on-the-wall-IUTewwzaFeM",
+        "author": "mahmoud azmy",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1629079447777-1e605162dc8d?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bathroom, 2 BHK Flat, VIP Road, Zirakpur",
+        "source": "https://unsplash.com/photos/white-ceramic-sink-with-mirror-1AF5hP6F4tI",
+        "author": "Steven Ungermann",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "",
+    "propertyType": "Flat/Apartment",
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": 1850,
+    "superAreaUnit": "sqft",
+    "carpetArea": 1300,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [
+      "Green Belt Facing"
+    ],
+    "furnishing": "Semi Furnished",
+    "furnishingInventory": [
+      "Wardrobes",
+      "AC",
+      "Chimney",
+      "Geyser"
+    ],
+    "amenities": [
+      "Club House",
+      "Swimming Pool",
+      "Gym",
+      "Lift",
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Gated Community",
+      "Park"
+    ],
+    "parkingTypes": [
+      "Covered Parking"
+    ],
+    "parkingSlots": 2,
+    "legalFlags": [],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank",
+      "ICICI Bank"
+    ],
+    "extras": [
+      {
+        "title": "Facing",
+        "description": "North"
+      },
+      {
+        "title": "Floor",
+        "description": "6th of 12"
+      },
+      {
+        "title": "Possession",
+        "description": "Ready to move"
+      }
+    ],
+    "media": [],
+    "title": "3 BHK Flat, Aerocity Mohali",
+    "location": "Aerocity, Mohali",
+    "description": "A three-bedroom flat in a gated society in Mohali's Aerocity, the planned sector beside the international airport. The apartment is laid out around a generous living and dining room, with a kitchen that has a separate utility balcony. The master bedroom has a walk-in wardrobe and a large bathroom. Aerocity's wide roads and green belts keep the area quiet, and the airport, the IT City and the PR-7 road connect you across the Tricity in minutes.",
+    "slug": "3-bhk-flat-aerocity-mohali",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Aerocity%2C%20Mohali",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1566474011016-8ffce6ff433a?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 3 BHK Flat, Aerocity, Mohali",
+        "source": "https://unsplash.com/photos/white-high-rise-building-c1mPkEufpqY",
+        "author": "Mohd Zubair",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1729086046027-09979ade13fd?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 3 BHK Flat, Aerocity, Mohali",
+        "source": "https://unsplash.com/photos/a-living-room-with-a-white-couch-and-a-table-AUOuawx5B0M",
+        "author": "Kam Idris",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1604580040660-f0a7f9abaea6?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bedroom, 3 BHK Flat, Aerocity, Mohali",
+        "source": "https://unsplash.com/photos/red-throw-pillow-on-white-sofa-f9O-1eKGlQM",
+        "author": "Amira Aboalnaga",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1588854337236-6889d631faa8?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Kitchen, 3 BHK Flat, Aerocity, Mohali",
+        "source": "https://unsplash.com/photos/modern-kitchen-with-marble-countertops-oCw5_evbWyI",
+        "author": "Lotus Design N Print",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1733426107854-ee00a25d72a7?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bathroom, 3 BHK Flat, Aerocity, Mohali",
+        "source": "https://unsplash.com/photos/a-bathroom-with-a-tub-sink-and-large-window-N03PjHWOEFA",
+        "author": "Murad Kerimli",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "",
+    "propertyType": "Penthouse",
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": 3600,
+    "superAreaUnit": "sqft",
+    "carpetArea": 2550,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [
+      "Hill View",
+      "Floor PLC"
+    ],
+    "furnishing": "Fully Furnished",
+    "furnishingInventory": [
+      "AC",
+      "Beds",
+      "Sofa",
+      "Dining Table",
+      "Wardrobes",
+      "Chimney",
+      "Geyser",
+      "Curtains",
+      "TV"
+    ],
+    "amenities": [
+      "Club House",
+      "Swimming Pool",
+      "Gym",
+      "Lift",
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Gated Community",
+      "Smart Home",
+      "Intercom"
+    ],
+    "parkingTypes": [
+      "Basement Parking",
+      "Covered Parking"
+    ],
+    "parkingSlots": 3,
+    "legalFlags": [
+      "Freehold"
+    ],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank",
+      "ICICI Bank",
+      "Axis Bank",
+      "Punjab National Bank"
+    ],
+    "extras": [
+      {
+        "title": "Terrace",
+        "description": "Private, about 1,200 sq ft"
+      },
+      {
+        "title": "Facing",
+        "description": "North"
+      },
+      {
+        "title": "Floor",
+        "description": "Top floor (16th)"
+      },
+      {
+        "title": "Possession",
+        "description": "Ready to move"
+      }
+    ],
+    "media": [],
+    "title": "4 BHK Penthouse, Sector 66 Mohali",
+    "location": "Sector 66, Mohali",
+    "description": "A top-floor penthouse in Sector 66 with a private terrace that takes in the Shivalik hills on a clear day. The double-height living room is the centrepiece, with a separate family lounge, a formal dining space and a kitchen finished in stone. Four bedrooms each have their own bathroom, and a staff room sits beside the service entrance. The terrace is large enough for a garden and evening gatherings. Sector 66 is minutes from the airport road, the IT City and the international cricket stadium.",
+    "slug": "4-bhk-penthouse-sector-66-mohali",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Sector%2066%2C%20Mohali",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1775582336512-8d79600fa7d5?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 4 BHK Penthouse, Sector 66, Mohali",
+        "source": "https://unsplash.com/photos/apartment-buildings-under-a-cloudy-sky-vGV8U2CuA-8",
+        "author": "Ishaan Sen",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1564078516393-cf04bd966897?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 4 BHK Penthouse, Sector 66, Mohali",
+        "source": "https://unsplash.com/photos/gray-padded-chaise-couch-beside-window-rEJxpBskj3Q",
+        "author": "Roberto Nickson",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1682662046426-f7589013d25e?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 4 BHK Penthouse, Sector 66, Mohali",
+        "source": "https://unsplash.com/photos/a-living-room-filled-with-furniture-and-a-painting-on-the-wall-MIAIZkjpRS4",
+        "author": "Pyx Photography",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1640109478916-f445f8f19b11?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bedroom, 4 BHK Penthouse, Sector 66, Mohali",
+        "source": "https://unsplash.com/photos/a-bedroom-with-a-green-wall-and-a-white-bed-RnAo-ha4bpM",
+        "author": "Lotus Design N Print",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1776363116182-51694a04a1d5?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Balcony, 4 BHK Penthouse, Sector 66, Mohali",
+        "source": "https://unsplash.com/photos/modern-balcony-with-city-view-and-hanging-chair-iqGUN6GIl78",
+        "author": "Aalo Lens",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1600684388091-627109f3cd60?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Kitchen, 4 BHK Penthouse, Sector 66, Mohali",
+        "source": "https://unsplash.com/photos/modern-kitchen-with-black-cabinets-3hEGHI4b4gg",
+        "author": "Sven Brandsma",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "",
+    "propertyType": "Flat/Apartment",
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": 1500,
+    "superAreaUnit": "sqft",
+    "carpetArea": 1150,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [],
+    "furnishing": "Semi Furnished",
+    "furnishingInventory": [
+      "Wardrobes",
+      "Chimney",
+      "Geyser"
+    ],
+    "amenities": [
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Park",
+      "Intercom"
+    ],
+    "parkingTypes": [
+      "Stilt Parking"
+    ],
+    "parkingSlots": 1,
+    "legalFlags": [],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank"
+    ],
+    "extras": [
+      {
+        "title": "Facing",
+        "description": "East"
+      },
+      {
+        "title": "Floor",
+        "description": "1st"
+      },
+      {
+        "title": "Possession",
+        "description": "Ready to move"
+      }
+    ],
+    "media": [],
+    "title": "3 BHK Builder Floor, Dhakoli Zirakpur",
+    "location": "Dhakoli, Zirakpur",
+    "description": "A newly built three-bedroom first floor in a low-rise block in Dhakoli, a few minutes from the Panchkula and Chandigarh borders. It is an independent floor with its own entrance and stilt parking below, so there are no society charges to speak of. The living room faces the front and gets good light through the day; the kitchen is modular, and all three bedrooms have attached bathrooms. Dhakoli has everyday shopping, schools and the Zirakpur–Panchkula road close at hand.",
+    "slug": "3-bhk-builder-floor-dhakoli-zirakpur",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Dhakoli%2C%20Zirakpur",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1784894690165-8c6fe7dae24d?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 3 BHK Builder Floor, Dhakoli, Zirakpur",
+        "source": "https://unsplash.com/photos/modern-apartment-building-with-balconies-trees-and-a-white-car-W1hPRxkykeU",
+        "author": "Sneha Iyer",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1787390629829-abb32b3025c5?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 3 BHK Builder Floor, Dhakoli, Zirakpur",
+        "source": "https://unsplash.com/photos/living-room-with-beige-sofas-15cXFq_G5IU",
+        "author": "SHHOONYA The Design Stud",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1638840992956-142399e7e2df?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bedroom, 3 BHK Builder Floor, Dhakoli, Zirakpur",
+        "source": "https://unsplash.com/photos/a-bedroom-with-a-large-bed-and-a-painting-on-the-wall-zvhjrkA7gSk",
+        "author": "Billy Jo Catbagan",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1556912167-f556f1f39fdf?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Kitchen, 3 BHK Builder Floor, Dhakoli, Zirakpur",
+        "source": "https://unsplash.com/photos/four-brown-stools-RryFk4n-vOs",
+        "author": "roam in color",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "",
+    "propertyType": "Flat/Apartment",
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": 2250,
+    "superAreaUnit": "sqft",
+    "carpetArea": 1800,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [
+      "Park Facing"
+    ],
+    "furnishing": "Semi Furnished",
+    "furnishingInventory": [
+      "Wardrobes",
+      "Chimney",
+      "Geyser",
+      "Curtains"
+    ],
+    "amenities": [
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Park",
+      "Intercom"
+    ],
+    "parkingTypes": [
+      "Covered Parking",
+      "Open Parking"
+    ],
+    "parkingSlots": 2,
+    "legalFlags": [
+      "Freehold"
+    ],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank",
+      "ICICI Bank"
+    ],
+    "extras": [
+      {
+        "title": "Lawn",
+        "description": "Private front lawn"
+      },
+      {
+        "title": "Facing",
+        "description": "North"
+      },
+      {
+        "title": "Floor",
+        "description": "Ground"
+      },
+      {
+        "title": "Possession",
+        "description": "Ready to move"
+      }
+    ],
+    "media": [],
+    "title": "4 BHK Builder Floor, Sector 21 Panchkula",
+    "location": "Sector 21, Panchkula",
+    "description": "A spacious four-bedroom ground floor in Sector 21, one of Panchkula's established residential sectors, with a private front lawn and a covered car porch. The floor has a formal drawing room, a separate family lounge and a large kitchen with a store. Four bedrooms with attached bathrooms give room for a joint family. The sector is green and quiet, with markets, schools and the Panchkula–Chandigarh road within a few minutes.",
+    "slug": "4-bhk-builder-floor-sector-21-panchkula",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Sector%2021%2C%20Panchkula",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1660470686924-9ff45375ec66?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 4 BHK Builder Floor, Sector 21, Panchkula",
+        "source": "https://unsplash.com/photos/a-building-with-a-balcony-E7uwzdR2_cs",
+        "author": "Batuhan Doğan",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1745429523617-0d837856ca35?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 4 BHK Builder Floor, Sector 21, Panchkula",
+        "source": "https://unsplash.com/photos/modern-living-room-with-a-chic-neutral-color-scheme--jk2BBoQxSk",
+        "author": "POOJAN THANEKAR",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1662454419716-c4c504728811?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bedroom, 4 BHK Builder Floor, Sector 21, Panchkula",
+        "source": "https://unsplash.com/photos/a-bed-in-a-room-MPd1Vcdvg1w",
+        "author": "mahmoud azmy",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1628745277862-bc0b2d68c50c?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Kitchen, 4 BHK Builder Floor, Sector 21, Panchkula",
+        "source": "https://unsplash.com/photos/white-and-brown-kitchen-counter-UPbYh3A5cdg",
+        "author": "Zac Gudakov",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1521783593447-5702b9bfd267?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bathroom, 4 BHK Builder Floor, Sector 21, Panchkula",
+        "source": "https://unsplash.com/photos/white-ceramic-bathtub-near-white-framed-window-6TY_WrJTwSI",
+        "author": "Chastity Cortijo",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "",
+    "propertyType": "Flat/Apartment",
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": 1400,
+    "superAreaUnit": "sqft",
+    "carpetArea": 1050,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [],
+    "furnishing": "Unfurnished",
+    "furnishingInventory": [],
+    "amenities": [
+      "Lift",
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Park"
+    ],
+    "parkingTypes": [
+      "Stilt Parking"
+    ],
+    "parkingSlots": 1,
+    "legalFlags": [],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank"
+    ],
+    "extras": [
+      {
+        "title": "Facing",
+        "description": "West"
+      },
+      {
+        "title": "Floor",
+        "description": "2nd"
+      },
+      {
+        "title": "Possession",
+        "description": "Ready to move"
+      }
+    ],
+    "media": [],
+    "title": "3 BHK Builder Floor, Kharar–Landran Road Kharar",
+    "location": "Kharar–Landran Road, Kharar",
+    "description": "A three-bedroom second floor in a new low-rise development on the Kharar–Landran road, suited to families who want space at a sensible entry point in the Tricity. The floor has an open living and dining area, a modular kitchen and three bedrooms, two of them with attached bathrooms. Lift access and stilt parking are part of the building. Chandigarh University, Kharar's markets and the Mohali sectors are within a short drive.",
+    "slug": "3-bhk-builder-floor-kharar-landran-road-kharar",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Kharar%E2%80%93Landran%20Road%2C%20Kharar",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1559998852-f8ab898d889e?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 3 BHK Builder Floor, Kharar–Landran Road, Kharar",
+        "source": "https://unsplash.com/photos/low-angle-photo-of-high-rise-building-9-rieBJwwoA",
+        "author": "Omkar Jadhav",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1632829882891-5047ccc421bc?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 3 BHK Builder Floor, Kharar–Landran Road, Kharar",
+        "source": "https://unsplash.com/photos/a-living-room-filled-with-furniture-and-a-fire-place-EVjqpcn79AM",
+        "author": "Spacejoy",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1644057501622-dfa7dd26dbfb?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bedroom, 3 BHK Builder Floor, Kharar–Landran Road, Kharar",
+        "source": "https://unsplash.com/photos/a-bedroom-with-a-large-bed-and-a-chair-vz9IbCAXHKQ",
+        "author": "Ali Moradi",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1650894622076-e09ab837c502?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bathroom, 3 BHK Builder Floor, Kharar–Landran Road, Kharar",
+        "source": "https://unsplash.com/photos/a-bathroom-with-a-sink-and-a-mirror-f61KO4nDeJA",
+        "author": "Alona Gross",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "",
+    "propertyType": "Independent House",
+    "plotArea": 1,
+    "plotAreaUnit": "kanal",
+    "builtUpArea": 6200,
+    "builtUpAreaUnit": "sqft",
+    "superArea": null,
+    "superAreaUnit": "sqft",
+    "carpetArea": null,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [
+      "Park Facing"
+    ],
+    "furnishing": "Semi Furnished",
+    "furnishingInventory": [
+      "Wardrobes",
+      "AC",
+      "Chimney",
+      "Geyser",
+      "Curtains"
+    ],
+    "amenities": [
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Park"
+    ],
+    "parkingTypes": [
+      "Covered Parking",
+      "Open Parking"
+    ],
+    "parkingSlots": 3,
+    "legalFlags": [
+      "Freehold"
+    ],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank",
+      "ICICI Bank"
+    ],
+    "extras": [
+      {
+        "title": "Storeys",
+        "description": "Ground + first, with terrace"
+      },
+      {
+        "title": "Facing",
+        "description": "East"
+      },
+      {
+        "title": "Possession",
+        "description": "Ready to move"
+      }
+    ],
+    "media": [],
+    "title": "5 BHK Kothi, Sector 8 Chandigarh",
+    "location": "Sector 8, Chandigarh",
+    "description": "A two-storey kothi on a one-kanal plot in Sector 8, among Chandigarh's most sought-after northern sectors, a short walk from the Sector 8 market and the leisure valley. The house was rebuilt a few years ago with a contemporary front, and it keeps the generous proportions of the original: a formal drawing room, a family lounge, five bedrooms with attached bathrooms and a terrace on the upper floor. A front lawn and a covered porch complete the plot. Sukhna Lake, the Rock Garden and the city's best schools are minutes away.",
+    "slug": "5-bhk-kothi-sector-8-chandigarh",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Sector%208%2C%20Chandigarh",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1723110994499-df46435aa4b3?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 5 BHK Kothi, Sector 8, Chandigarh",
+        "source": "https://unsplash.com/photos/a-car-is-parked-in-front-of-a-house-hmlP-v0vJ5o",
+        "author": "Elite prop",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1682662046457-74fd5b199b92?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 5 BHK Kothi, Sector 8, Chandigarh",
+        "source": "https://unsplash.com/photos/a-living-room-filled-with-furniture-and-a-painting-on-the-wall-CgA03H9jCKw",
+        "author": "Pyx Photography",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1757344454333-cc666252e596?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bedroom, 5 BHK Kothi, Sector 8, Chandigarh",
+        "source": "https://unsplash.com/photos/modern-bedroom-with-wooden-accents-and-soft-lighting-u-RIsXlI8Q8",
+        "author": "POOJAN THANEKAR",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1602028915047-37269d1a73f7?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Kitchen, 5 BHK Kothi, Sector 8, Chandigarh",
+        "source": "https://unsplash.com/photos/modern-kitchen-with-grey-cabinets-RwXneIyqxAw",
+        "author": "Lotus Design N Print",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1638799869566-b17fa794c4de?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bathroom, 5 BHK Kothi, Sector 8, Chandigarh",
+        "source": "https://unsplash.com/photos/a-bathroom-with-a-large-white-bathtub-next-to-a-walk-in-shower-Dk_o7KQyGkI",
+        "author": "Lotus Design N Print",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "",
+    "propertyType": "Independent House",
+    "plotArea": 250,
+    "plotAreaUnit": "sqyd",
+    "builtUpArea": 3400,
+    "builtUpAreaUnit": "sqft",
+    "superArea": null,
+    "superAreaUnit": "sqft",
+    "carpetArea": null,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [
+      "Park Facing"
+    ],
+    "furnishing": "Semi Furnished",
+    "furnishingInventory": [
+      "Wardrobes",
+      "Chimney",
+      "Geyser"
+    ],
+    "amenities": [
+      "Power Backup",
+      "Security",
+      "Park"
+    ],
+    "parkingTypes": [
+      "Covered Parking"
+    ],
+    "parkingSlots": 2,
+    "legalFlags": [
+      "Freehold"
+    ],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank",
+      "ICICI Bank"
+    ],
+    "extras": [
+      {
+        "title": "Facing",
+        "description": "South"
+      },
+      {
+        "title": "Possession",
+        "description": "Ready to move"
+      }
+    ],
+    "media": [],
+    "title": "4 BHK Independent House, Sector 69 Mohali",
+    "location": "Sector 69, Mohali",
+    "description": "A four-bedroom independent house on a 250 sq yd plot in Sector 69, facing a park. The ground floor has a drawing room, an open kitchen with a dining area and a guest bedroom; the upper floor has three more bedrooms and a family lounge that opens onto a balcony. Every bedroom has an attached bathroom. The house has been lived in and well maintained, with space on the terrace for a further room. Sector 69 is close to the airport road, the Sector 70 market and several good schools.",
+    "slug": "4-bhk-independent-house-sector-69-mohali",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Sector%2069%2C%20Mohali",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1764566917581-2cfd7ba4edd8?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 4 BHK Independent House, Sector 69, Mohali",
+        "source": "https://unsplash.com/photos/modern-white-house-with-arched-windows-and-balcony-SRnulgSckqo",
+        "author": "sohail shaikh",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1589834390005-5d4fb9bf3d32?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 4 BHK Independent House, Sector 69, Mohali",
+        "source": "https://unsplash.com/photos/living-room-with-brown-leather-sofa-GHCVUtBECuY",
+        "author": "Michael Oxendine",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1654064550858-c62b971a378a?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bedroom, 4 BHK Independent House, Sector 69, Mohali",
+        "source": "https://unsplash.com/photos/a-large-bed-sitting-in-a-bedroom-next-to-a-chair-YmtlGsmTcgk",
+        "author": "dada design",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1696987007764-7f8b85dd3033?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Bathroom, 4 BHK Independent House, Sector 69, Mohali",
+        "source": "https://unsplash.com/photos/a-bathroom-with-two-sinks-a-toilet-and-a-shower-ckdoA-tv9uw",
+        "author": "Clay Banks",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "Siswan Ridge Villas",
+    "propertyType": "Villa",
+    "plotArea": 300,
+    "plotAreaUnit": "sqyd",
+    "builtUpArea": 3800,
+    "builtUpAreaUnit": "sqft",
+    "superArea": null,
+    "superAreaUnit": "sqft",
+    "carpetArea": null,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [
+      "Hill View"
+    ],
+    "furnishing": "Unfurnished",
+    "furnishingInventory": [],
+    "amenities": [
+      "Club House",
+      "Swimming Pool",
+      "Gym",
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Gated Community",
+      "Park",
+      "Jogging Track",
+      "EV Charging"
+    ],
+    "parkingTypes": [
+      "Covered Parking"
+    ],
+    "parkingSlots": 2,
+    "legalFlags": [],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank",
+      "ICICI Bank"
+    ],
+    "extras": [
+      {
+        "title": "Facing",
+        "description": "North"
+      },
+      {
+        "title": "Possession",
+        "description": "New launch"
+      }
+    ],
+    "media": [],
+    "title": "4 BHK Villa in Siswan Ridge Villas, Mullanpur New Chandigarh",
+    "location": "Mullanpur, New Chandigarh",
+    "description": "A four-bedroom villa in Siswan Ridge Villas, a low-rise gated community in Mullanpur with the Shivalik foothills close behind it. The villa is planned over two floors around a double-height living room, with a private garden at the front and a terrace upstairs. All four bedrooms have attached bathrooms, and the ground-floor bedroom suits elders in the family. New Chandigarh's wide roads connect to the PGI, the Chandigarh sectors and the new cricket stadium in minutes. Launch inventory; floor plans and specifications are available on request.",
+    "slug": "4-bhk-villa-in-siswan-ridge-villas-mullanpur-new-chandigarh",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Mullanpur%2C%20New%20Chandigarh",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1787704113747-c1a65d1a6a62?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 4 BHK Villa in Siswan Ridge Villas, Mullanpur, New Chandigarh",
+        "source": "https://unsplash.com/photos/modern-house-with-wood-paneling-iDq7J5bAa0I",
+        "author": "Ibrahim Design",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1787704101780-8449d1d725fb?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 4 BHK Villa in Siswan Ridge Villas, Mullanpur, New Chandigarh",
+        "source": "https://unsplash.com/photos/modern-house-with-silver-luxury-car-tGbLKq8IXpU",
+        "author": "Ibrahim Design",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1628744876497-eb30460be9f6?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 4 BHK Villa in Siswan Ridge Villas, Mullanpur, New Chandigarh",
+        "source": "https://unsplash.com/photos/living-room-with-grey-velvet-sofas-mw_mj-noYHM",
+        "author": "Zac Gudakov",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1682662045247-3740fa9f51c6?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 4 BHK Villa in Siswan Ridge Villas, Mullanpur, New Chandigarh",
+        "source": "https://unsplash.com/photos/a-living-room-filled-with-furniture-and-a-painting-on-the-wall-J3HoTPrIQSg",
+        "author": "Pyx Photography",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "Siswan Ridge Villas",
+    "propertyType": "Villa",
+    "plotArea": 500,
+    "plotAreaUnit": "sqyd",
+    "builtUpArea": 5600,
+    "builtUpAreaUnit": "sqft",
+    "superArea": null,
+    "superAreaUnit": "sqft",
+    "carpetArea": null,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [
+      "Corner Property",
+      "Hill View"
+    ],
+    "furnishing": "Unfurnished",
+    "furnishingInventory": [],
+    "amenities": [
+      "Club House",
+      "Swimming Pool",
+      "Gym",
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Gated Community",
+      "Park",
+      "Jogging Track",
+      "EV Charging",
+      "Smart Home"
+    ],
+    "parkingTypes": [
+      "Covered Parking",
+      "Open Parking"
+    ],
+    "parkingSlots": 3,
+    "legalFlags": [],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank",
+      "ICICI Bank"
+    ],
+    "extras": [
+      {
+        "title": "Facing",
+        "description": "North-East"
+      },
+      {
+        "title": "Possession",
+        "description": "New launch"
+      }
+    ],
+    "media": [],
+    "title": "5 BHK Villa in Siswan Ridge Villas, Mullanpur New Chandigarh",
+    "location": "Mullanpur, New Chandigarh",
+    "description": "The largest villa type in Siswan Ridge Villas: five bedrooms over two floors on a corner plot, with a landscaped garden on two sides. A formal living room and a separate family room flank a central staircase, and the kitchen opens onto the garden. The master suite on the upper floor has a dressing room and a private balcony towards the hills. The community's clubhouse and pool are a short walk away. Launch inventory in Mullanpur, New Chandigarh; our team can arrange a visit to the site and the sample villa.",
+    "slug": "5-bhk-villa-in-siswan-ridge-villas-mullanpur-new-chandigarh",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Mullanpur%2C%20New%20Chandigarh",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1664117680405-68c91cf40739?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 5 BHK Villa in Siswan Ridge Villas, Mullanpur, New Chandigarh",
+        "source": "https://unsplash.com/photos/a-building-with-a-lot-of-windows-QwACChyxHJY",
+        "author": "Obingo 77",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1735987928098-c512af56d1a9?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Exterior, 5 BHK Villa in Siswan Ridge Villas, Mullanpur, New Chandigarh",
+        "source": "https://unsplash.com/photos/a-house-with-palm-trees-in-front-of-it-bN-7tqSMr88",
+        "author": "Bob Osias",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1600210492493-0946911123ea?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 5 BHK Villa in Siswan Ridge Villas, Mullanpur, New Chandigarh",
+        "source": "https://unsplash.com/photos/living-room-with-brown-sofa-and-glass-window-4_jQL4JCS98",
+        "author": "Collov Home Design",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1618220179428-22790b461013?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Living room, 5 BHK Villa in Siswan Ridge Villas, Mullanpur, New Chandigarh",
+        "source": "https://unsplash.com/photos/green-plant-on-white-ceramic-pot-IH7wPsjwomc",
+        "author": "Spacejoy",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "Sarson Fields",
+    "propertyType": "Residential Plot",
+    "plotArea": 250,
+    "plotAreaUnit": "sqyd",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": null,
+    "superAreaUnit": "sqft",
+    "carpetArea": null,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": 45,
+    "depthFeet": 50,
+    "plcAttributes": [
+      "Park Facing"
+    ],
+    "furnishing": null,
+    "furnishingInventory": [],
+    "amenities": [
+      "Gated Community",
+      "Security",
+      "Park"
+    ],
+    "parkingTypes": [],
+    "parkingSlots": null,
+    "legalFlags": [],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank"
+    ],
+    "extras": [
+      {
+        "title": "Road width",
+        "description": "40 ft"
+      },
+      {
+        "title": "Possession",
+        "description": "New launch"
+      }
+    ],
+    "media": [],
+    "title": "250 Sq Yd Plot in Sarson Fields, Kharar",
+    "location": "Kharar–Landran Road, Kharar",
+    "description": "A 250 sq yd residential plot in Sarson Fields, a new plotted development on the Kharar–Landran road with wide internal roads and a gated entrance. The plot faces a 40-foot road, with a park a short walk away, and it is sized for a comfortable two-storey home. Kharar's markets, Chandigarh University and the Mohali sectors are within a short drive, and the area has seen steady development over the past few years. Site visits can be arranged with our team.",
+    "slug": "250-sq-yd-plot-in-sarson-fields-kharar",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Kharar%E2%80%93Landran%20Road%2C%20Kharar",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1773215023063-e662ea91a69c?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Plotted layout, 250 Sq Yd Plot in Sarson Fields, Kharar–Landran Road, Kharar",
+        "source": "https://unsplash.com/photos/aerial-view-of-a-new-housing-development-construction-site-nsevmnDU7FM",
+        "author": "Iain",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1714466686999-9c75d128c176?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Entrance, 250 Sq Yd Plot in Sarson Fields, Kharar–Landran Road, Kharar",
+        "source": "https://unsplash.com/photos/a-large-white-building-sitting-next-to-a-road-TYnkdtWRum8",
+        "author": "yuvraj Singh",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1787672358468-7c872a7f75eb?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Open land, 250 Sq Yd Plot in Sarson Fields, Kharar–Landran Road, Kharar",
+        "source": "https://unsplash.com/photos/people-working-on-construction-site-44DTpoXkVsE",
+        "author": "Divaris Shirichena",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "",
+    "propertyType": "Residential Plot",
+    "plotArea": 1,
+    "plotAreaUnit": "kanal",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": null,
+    "superAreaUnit": "sqft",
+    "carpetArea": null,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": 50,
+    "depthFeet": 109,
+    "plcAttributes": [
+      "Hill View"
+    ],
+    "furnishing": null,
+    "furnishingInventory": [],
+    "amenities": [
+      "Security",
+      "Park"
+    ],
+    "parkingTypes": [],
+    "parkingSlots": null,
+    "legalFlags": [
+      "Freehold"
+    ],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank"
+    ],
+    "extras": [
+      {
+        "title": "Road width",
+        "description": "60 ft"
+      },
+      {
+        "title": "Facing",
+        "description": "North"
+      }
+    ],
+    "media": [],
+    "title": "1 Kanal Residential Plot, Mullanpur New Chandigarh",
+    "location": "Mullanpur, New Chandigarh",
+    "description": "A one-kanal residential plot in Mullanpur, New Chandigarh, on a quiet lane with an open view towards the Shivalik foothills. The plot is regular in shape with a wide frontage, well suited to a large family home with a garden. New Chandigarh's planned roads link it to the PGI, the Chandigarh sectors and Kharar, and the area continues to grow around the new medical and sports facilities. Documentation is ready for a straightforward transfer.",
+    "slug": "1-kanal-residential-plot-mullanpur-new-chandigarh",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Mullanpur%2C%20New%20Chandigarh",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1764222233275-87dc016c11dc?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Plotted layout, 1 Kanal Residential Plot, Mullanpur, New Chandigarh",
+        "source": "https://unsplash.com/photos/aerial-view-of-a-hillside-with-buildings-and-roads--BTDA9TKxfg",
+        "author": "Paul Addo",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1585652516863-fbc02c1c206e?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Approach road, 1 Kanal Residential Plot, Mullanpur, New Chandigarh",
+        "source": "https://unsplash.com/photos/gray-concrete-road-under-blue-sky-and-white-clouds-during-daytime-TiHXNVTFYAU",
+        "author": "Arpan Goyal",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1702797733516-d3239d07b205?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Approach road, 1 Kanal Residential Plot, Mullanpur, New Chandigarh",
+        "source": "https://unsplash.com/photos/an-empty-road-surrounded-by-trees-in-the-middle-of-a-forest-E9D1zbb9GoE",
+        "author": "Prateek Sujaina",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "Copperleaf Square",
+    "propertyType": null,
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": 3900,
+    "builtUpAreaUnit": "sqft",
+    "superArea": null,
+    "superAreaUnit": "sqft",
+    "carpetArea": null,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [
+      "Main Road Facing"
+    ],
+    "furnishing": null,
+    "furnishingInventory": [],
+    "amenities": [
+      "Lift",
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Visitor Parking"
+    ],
+    "parkingTypes": [
+      "Basement Parking",
+      "Open Parking"
+    ],
+    "parkingSlots": null,
+    "legalFlags": [],
+    "loanFlags": [
+      "Bank Approved"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank"
+    ],
+    "extras": [
+      {
+        "title": "Storeys",
+        "description": "Ground + 2"
+      },
+      {
+        "title": "Possession",
+        "description": "Under construction"
+      }
+    ],
+    "media": [],
+    "title": "SCO in Copperleaf Square, PR-7 Road Zirakpur",
+    "location": "PR-7 Road, Zirakpur",
+    "description": "A three-storey shop-cum-office in Copperleaf Square, the commercial project on the PR-7 airport road in Zirakpur. The SCO has a double-height ground-floor showroom with a glass frontage onto the service road, and two upper floors suited to offices, a clinic or a restaurant. Parking is planned at the front and in the basement. The PR-7 stretch carries steady traffic between the airport, Zirakpur and Mohali, with new housing on both sides. Under construction; plans and the floor-wise layout are available on request.",
+    "slug": "sco-in-copperleaf-square-pr-7-road-zirakpur",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=PR-7%20Road%2C%20Zirakpur",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1630060041646-3ba002aa7d37?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Building, SCO in Copperleaf Square, PR-7 Road, Zirakpur",
+        "source": "https://unsplash.com/photos/white-concrete-building-near-green-trees-under-white-clouds-during-daytime-YkXbHOGI8ZY",
+        "author": "Parth Savani",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1601039913996-d74e58095333?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Building, SCO in Copperleaf Square, PR-7 Road, Zirakpur",
+        "source": "https://unsplash.com/photos/white-and-black-concrete-building-aW8kdtqXMcs",
+        "author": "Swapnil Potdar",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1546327740-f2dc2592370b?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Retail frontage, SCO in Copperleaf Square, PR-7 Road, Zirakpur",
+        "source": "https://unsplash.com/photos/clear-glass-display-counter-3b5Ivt8rG10",
+        "author": "Bhaumik Kaji",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "Copperleaf Square",
+    "propertyType": null,
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": 1100,
+    "builtUpAreaUnit": "sqft",
+    "superArea": null,
+    "superAreaUnit": "sqft",
+    "carpetArea": null,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [
+      "Main Road Facing",
+      "Corner Property"
+    ],
+    "furnishing": null,
+    "furnishingInventory": [],
+    "amenities": [
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Visitor Parking"
+    ],
+    "parkingTypes": [
+      "Open Parking"
+    ],
+    "parkingSlots": null,
+    "legalFlags": [],
+    "loanFlags": [
+      "Bank Approved"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank"
+    ],
+    "extras": [
+      {
+        "title": "Frontage",
+        "description": "About 28 ft of glass front"
+      },
+      {
+        "title": "Possession",
+        "description": "Under construction"
+      }
+    ],
+    "media": [],
+    "title": "Showroom in Copperleaf Square, PR-7 Road Zirakpur",
+    "location": "PR-7 Road, Zirakpur",
+    "description": "A ground-floor showroom in Copperleaf Square with a wide glass front onto the PR-7 service road. The floor plate is open, with a mezzanine at the rear for storage or a back office, and a washroom and pantry. It suits a brand outlet, a car accessories store or a furniture gallery that needs frontage on a busy road. The project is under construction; our team can share the layout and walk you through the site.",
+    "slug": "showroom-in-copperleaf-square-pr-7-road-zirakpur",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=PR-7%20Road%2C%20Zirakpur",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1594233666755-d1cb282abd25?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Building, Showroom in Copperleaf Square, PR-7 Road, Zirakpur",
+        "source": "https://unsplash.com/photos/white-and-black-concrete-building-under-blue-sky-during-daytime-WaAa14Wvpgg",
+        "author": "Swapnil Potdar",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1739066598279-1297113f5c6a?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Retail frontage, Showroom in Copperleaf Square, PR-7 Road, Zirakpur",
+        "source": "https://unsplash.com/photos/a-store-front-with-many-items-on-display-bAKYjjvAQIE",
+        "author": "Zoshua Colah",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1604328698692-f76ea9498e76?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Office floor, Showroom in Copperleaf Square, PR-7 Road, Zirakpur",
+        "source": "https://unsplash.com/photos/modern-lounge-interior-with-plants-and-chairs-p_kICQCOM4s",
+        "author": "Copernico",
+        "licence": "Unsplash License"
+      }
+    ]
+  },
+  {
+    "kind": "unit",
+    "projectName": "",
+    "propertyType": null,
+    "plotArea": null,
+    "plotAreaUnit": "sqft",
+    "builtUpArea": null,
+    "builtUpAreaUnit": "sqft",
+    "superArea": 6500,
+    "superAreaUnit": "sqft",
+    "carpetArea": null,
+    "carpetAreaUnit": "sqft",
+    "frontFeet": null,
+    "depthFeet": null,
+    "plcAttributes": [],
+    "furnishing": "Fully Furnished",
+    "furnishingInventory": [],
+    "amenities": [
+      "Lift",
+      "Power Backup",
+      "Security",
+      "CCTV",
+      "Wi-Fi",
+      "Visitor Parking"
+    ],
+    "parkingTypes": [
+      "Basement Parking"
+    ],
+    "parkingSlots": 6,
+    "legalFlags": [],
+    "loanFlags": [
+      "Bank Approved"
+    ],
+    "banksOnPanel": [
+      "SBI",
+      "HDFC Bank"
+    ],
+    "extras": [
+      {
+        "title": "Seating",
+        "description": "About 60 workstations"
+      },
+      {
+        "title": "Possession",
+        "description": "Ready to move"
+      }
+    ],
+    "media": [],
+    "title": "Office Space, IT City Mohali",
+    "location": "IT City, Mohali",
+    "description": "A fitted office floor in a glass-fronted building in Mohali's IT City, ready for a team of about sixty. The space has an open workstation area, two meeting rooms, a cabin for the leadership and a pantry, with power backup for the whole floor. IT City sits beside the airport road, with the international airport, Aerocity and the Mohali sectors a short drive away, and the area is home to several technology and services firms.",
+    "slug": "office-space-it-city-mohali",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=IT%20City%2C%20Mohali",
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1703745006226-98d4b948dc41?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Building, Office Space, IT City, Mohali",
+        "source": "https://unsplash.com/photos/a-very-tall-building-with-a-lot-of-windows-xZNZdWMzlnE",
+        "author": "Anmol Jain",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1579487785973-74d2ca7abdd5?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Office floor, Office Space, IT City, Mohali",
+        "source": "https://unsplash.com/photos/black-and-brown-chairs-and-tables-DyFjxmHt3Es",
+        "author": "Jose Losada",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1549637642-90187f64f420?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Office floor, Office Space, IT City, Mohali",
+        "source": "https://unsplash.com/photos/empty-black-rolling-chairs-at-cubicles-2zZp12ChxhU",
+        "author": "kate.sade",
+        "licence": "Unsplash License"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=2400&q=90&fm=jpg&fit=max",
+        "alt": "Office floor, Office Space, IT City, Mohali",
+        "source": "https://unsplash.com/photos/turned-off-laptop-computer-on-top-of-brown-wooden-table-VWcPlbHglYc",
+        "author": "Alesia Kazantceva",
+        "licence": "Unsplash License"
+      }
+    ]
+  }
+]
