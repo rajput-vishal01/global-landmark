@@ -199,13 +199,19 @@
    ponytail: selector-driven, so a new band gets its gradient for free —
    the ceiling is a `div` band, which needs `data-band` to opt in. */
 :root {
+  /* Both light grounds start and end on the same tone (#f8f2e7), and their
+     glows sit inside the band, clear of the top and bottom edges. When two
+     light bands meet, the colours either side of the join are identical, so
+     there is no seam. Before this, ivory ended on one tone and champagne
+     began on another with a gold glow on its top edge, and the join read as
+     a rendering glitch. */
   --grad-ivory:
-    radial-gradient(ellipse 90% 55% at 50% 0%, rgb(245 217 139 / 0.18), transparent 70%),
-    linear-gradient(180deg, #fefcf8 0%, #f7f0e3 100%);
+    radial-gradient(ellipse 60% 45% at 50% 40%, rgb(245 217 139 / 0.12), transparent 70%),
+    linear-gradient(180deg, #f8f2e7 0%, #fdfaf4 45%, #fdfaf4 55%, #f8f2e7 100%);
   --grad-champagne:
-    radial-gradient(ellipse 70% 60% at 100% 0%, rgb(201 153 46 / 0.16), transparent 65%),
-    radial-gradient(ellipse 60% 55% at 0% 100%, rgb(138 90 34 / 0.09), transparent 65%),
-    linear-gradient(165deg, #f9f2e5 0%, #efe3cc 100%);
+    radial-gradient(ellipse 45% 45% at 82% 38%, rgb(201 153 46 / 0.12), transparent 70%),
+    radial-gradient(ellipse 40% 40% at 18% 66%, rgb(138 90 34 / 0.07), transparent 70%),
+    linear-gradient(180deg, #f8f2e7 0%, #f1e6d2 50%, #f8f2e7 100%);
   --grad-graphite:
     radial-gradient(ellipse 55% 75% at 50% -8%, rgb(245 217 139 / 0.22), rgb(201 153 46 / 0.07) 45%, transparent 75%),
     linear-gradient(180deg, #3e3831 0%, #2d2924 50%, #1f1c18 100%);
