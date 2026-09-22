@@ -213,7 +213,9 @@ export function ListingCard({
   return (
     <Link
       href={`/properties/${property.slug}`}
-      className={`group flex border border-border bg-surface transition-colors duration-300 hover:border-gold ${
+      // White on the ivory page, lifting on hover, so a card reads as the
+      // object it is rather than a box drawn on the ground.
+      className={`group flex border border-border bg-white transition-[border-color,transform,box-shadow] duration-300 hover:-translate-y-1 hover:border-gold hover:shadow-[0_24px_48px_-28px_rgba(40,30,15,0.45)] ${
         isList ? "flex-col sm:flex-row" : "flex-col"
       } ${className}`}
     >

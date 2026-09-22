@@ -10,7 +10,7 @@ import { LANDING_LOCATIONS } from "@/lib/locations";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { Pagination } from "@/components/Pagination";
 import { ListingsToolbar } from "@/components/ListingsToolbar";
-import { PageHeader, SectionHeading, SECTION } from "../_components/page-chrome";
+import { PageHeader, SectionHeading } from "../_components/page-chrome";
 import {
   listProperties,
   countProperties,
@@ -182,7 +182,7 @@ export default async function PropertiesPage({
   return (
     <>
       <Header />
-      <main>
+      <main className="bg-surface">
         <PageHeader
           breadcrumbs={BREADCRUMBS}
           eyebrow="Portfolio"
@@ -194,20 +194,23 @@ export default async function PropertiesPage({
           }
         />
 
-        <section id="listings" className={SECTION}>
-          <SectionHeading
-            eyebrow="The portfolio"
-            title="All listings"
-            aside={
+        {/* The search console lifts over the header's bottom edge, so the
+            first thing under the title is the way to narrow the portfolio. */}
+        <div className="relative z-10 -mt-10 px-5 md:-mt-14 md:px-12">
+          <FilterBar current={current} cityCounts={cityCounts} />
+        </div>
+
+        <section id="listings" className="scroll-mt-24 px-5 pb-16 pt-10 md:px-12 md:pb-24 md:pt-12">
+          <ListingsToolbar
+            sort={sort}
+            view={view}
+            current={current}
+            summary={
               totalCount > 0
-                ? `Showing ${firstOnPage}-${lastOnPage} of ${totalCount}`
-                : undefined
+                ? `Showing ${firstOnPage}–${lastOnPage} of ${totalCount} listing${totalCount === 1 ? "" : "s"}`
+                : "No listings match these filters"
             }
           />
-
-          <FilterBar current={current} cityCounts={cityCounts} />
-
-          <ListingsToolbar sort={sort} view={view} current={current} rule={false} />
 
           {properties.length === 0 ? (
             <div className="max-w-xl">
