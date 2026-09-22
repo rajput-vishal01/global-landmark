@@ -92,6 +92,9 @@ export async function resolveCompany(): Promise<typeof COMPANY> {
     phoneAlt: override.phoneAlt ?? COMPANY.phoneAlt,
     phoneAltHref: override.phoneAltHref ?? COMPANY.phoneAltHref,
     email: override.email ?? COMPANY.email,
+    // Saved in Settings all along, but never applied — the site had no
+    // hours line to put it on. The footer and contact page show it now.
+    officeHours: override.officeHours ?? COMPANY.officeHours,
     socials: mergeSocials(override.socials),
   };
 }

@@ -9,7 +9,7 @@ import {
   type SettingsFormState,
 } from "./actions";
 import type { ContactOverride, CredibilityOverride } from "@/lib/site-settings";
-import { COMPANY } from "@/lib/data";
+import { COMPANY, CREDIBILITY } from "@/lib/data";
 
 const initialState: SettingsFormState = {};
 
@@ -43,7 +43,7 @@ export function ContactSettingsForm({ initial }: { initial: ContactOverride | nu
             id="addressLines"
             name="addressLines"
             rows={3}
-            defaultValue={initial?.addressLines?.join("\n") ?? ""}
+            defaultValue={(initial?.addressLines?.length ? initial.addressLines : COMPANY.addressLines).join("\n")}
             className={deskFieldFull}
           />
         </div>
@@ -56,7 +56,7 @@ export function ContactSettingsForm({ initial }: { initial: ContactOverride | nu
               id="phone"
               name="phone"
               type="text"
-              defaultValue={initial?.phone ?? ""}
+              defaultValue={initial?.phone ?? COMPANY.phone}
               className={deskFieldFull}
             />
           </div>
@@ -69,7 +69,7 @@ export function ContactSettingsForm({ initial }: { initial: ContactOverride | nu
               name="phoneHref"
               type="text"
               placeholder="tel:+91..."
-              defaultValue={initial?.phoneHref ?? ""}
+              defaultValue={initial?.phoneHref ?? COMPANY.phoneHref}
               className={deskFieldFull}
             />
           </div>
@@ -83,7 +83,7 @@ export function ContactSettingsForm({ initial }: { initial: ContactOverride | nu
               id="phoneAlt"
               name="phoneAlt"
               type="text"
-              defaultValue={initial?.phoneAlt ?? ""}
+              defaultValue={initial?.phoneAlt ?? COMPANY.phoneAlt}
               className={deskFieldFull}
             />
           </div>
@@ -96,7 +96,7 @@ export function ContactSettingsForm({ initial }: { initial: ContactOverride | nu
               name="phoneAltHref"
               type="text"
               placeholder="tel:+91..."
-              defaultValue={initial?.phoneAltHref ?? ""}
+              defaultValue={initial?.phoneAltHref ?? COMPANY.phoneAltHref}
               className={deskFieldFull}
             />
           </div>
@@ -104,13 +104,13 @@ export function ContactSettingsForm({ initial }: { initial: ContactOverride | nu
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className={FIELD_ROW}>
             <label htmlFor="email" className={deskLabel}>
-              Enquiry inbox
+              Email shown on the website
             </label>
             <input
               id="email"
               name="email"
               type="email"
-              defaultValue={initial?.email ?? ""}
+              defaultValue={initial?.email ?? COMPANY.email}
               className={deskFieldFull}
             />
           </div>
@@ -128,7 +128,7 @@ export function ContactSettingsForm({ initial }: { initial: ContactOverride | nu
             />
           </div>
         </div>
-        <p className={`${deskLabel} -mb-2`}>Social links (blank falls back to the default profile)</p>
+        <p className={`${deskLabel} -mb-2`}>Social links</p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {(
             [
@@ -188,7 +188,7 @@ export function CredibilitySettingsForm({ initial }: { initial: CredibilityOverr
               id="headingPre"
               name="headingPre"
               type="text"
-              defaultValue={initial?.headingPre ?? ""}
+              defaultValue={initial?.headingPre ?? CREDIBILITY.headingPre}
               className={deskFieldFull}
             />
           </div>
@@ -200,7 +200,7 @@ export function CredibilitySettingsForm({ initial }: { initial: CredibilityOverr
               id="headingHighlight"
               name="headingHighlight"
               type="text"
-              defaultValue={initial?.headingHighlight ?? ""}
+              defaultValue={initial?.headingHighlight ?? CREDIBILITY.headingHighlight}
               className={deskFieldFull}
             />
           </div>
@@ -212,7 +212,7 @@ export function CredibilitySettingsForm({ initial }: { initial: CredibilityOverr
               id="headingPost"
               name="headingPost"
               type="text"
-              defaultValue={initial?.headingPost ?? ""}
+              defaultValue={initial?.headingPost ?? CREDIBILITY.headingPost}
               className={deskFieldFull}
             />
           </div>
@@ -225,7 +225,7 @@ export function CredibilitySettingsForm({ initial }: { initial: CredibilityOverr
             id="sub"
             name="sub"
             rows={2}
-            defaultValue={initial?.sub ?? ""}
+            defaultValue={initial?.sub ?? CREDIBILITY.sub}
             className={deskFieldFull}
           />
         </div>

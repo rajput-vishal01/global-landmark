@@ -9,7 +9,7 @@ import { MENU_GROUPS } from "./nav-links";
 import { InstallButton } from "@/components/InstallButton";
 import { PropertySearch } from "@/components/PropertySearch";
 import { useModalLock, useMounted } from "@/lib/hooks";
-import { COMPANY } from "@/lib/data";
+import type { Company } from "@/lib/data";
 
 /**
  * Fullscreen overlay menu — blurred page behind, centered wordmark,
@@ -20,9 +20,12 @@ import { COMPANY } from "@/lib/data";
 export function FullscreenMenu({
   open,
   onClose,
+  company: COMPANY,
 }: {
   open: boolean;
   onClose: () => void;
+  /** From Settings via Header — phones, email, address and socials. */
+  company: Company;
 }) {
   const mounted = useMounted();
   useModalLock(open, onClose);

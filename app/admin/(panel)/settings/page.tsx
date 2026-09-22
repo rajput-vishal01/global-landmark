@@ -23,9 +23,9 @@ export default async function AdminSettingsPage() {
       />
 
       <p className="max-w-2xl text-[13px] text-soft">
-        A blank field keeps the current default from{" "}
-        <code className="text-[12px] text-muted">lib/data.ts</code> — fill in only
-        what should override it.
+        Every box shows what the website uses right now — in the header, the
+        footer, the contact and sell pages, and each property page’s call
+        button. Change a value and save; clear a box to go back to the original.
       </p>
 
       <ContactSettingsForm initial={contact} />

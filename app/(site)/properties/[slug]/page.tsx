@@ -31,6 +31,7 @@ import { isAreaUnit } from "@/lib/taxonomy/area";
 import { rankSimilar } from "@/lib/similar";
 import { whatsAppHref, whatsAppShareHref, propertyShareMessage } from "@/lib/whatsapp";
 import { COMPANY, PROPERTY_DETAIL } from "@/lib/data";
+import { resolveCompany } from "@/lib/site-settings";
 import { breadcrumbJsonLd, canonical, jsonLdHtml } from "@/lib/seo";
 
 // ISR: cached and served instantly; admin edits bust the cache on save.
@@ -108,6 +109,8 @@ export default async function PropertyDetailPage({
   const gallery = property.images.slice(1);
   const floorPlans = property.images.filter((img) => img.mediaKind === "floor_plan");
   const specs = propertySpecs(property);
+  // The call button follows Admin → Settings, like the header and footer.
+  const company = await resolveCompany();
   const headline = headlineArea(property);
   // A document arrives here only when its own `isPublic` is true — gated in
   // SQL, see lib/db/property-detail.ts.
@@ -638,8 +641,8 @@ export default async function PropertyDetailPage({
                 <a href="#inquire" className={RAIL_SECONDARY}>
                   Request details
                 </a>
-                <a href={COMPANY.phoneHref} className={RAIL_SECONDARY}>
-                  Call {COMPANY.phone}
+                <a href={company.phoneHref} className={RAIL_SECONDARY}>
+                  Call {company.phone}
                 </a>
                 <a
                   href={whatsApp}

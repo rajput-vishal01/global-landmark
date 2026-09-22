@@ -12,6 +12,9 @@
 
 // ─── Identity & contact ────────────────────────────────────────────────────
 
+/** COMPANY’s shape, for components handed the Settings-merged copy. */
+export type Company = typeof COMPANY;
+
 export const COMPANY = {
   /** Wordmark line 1 — appears in the nav, menu, footer, emails. */
   name: "Global Landmark",
@@ -53,6 +56,8 @@ export const COMPANY = {
   phoneHref: "tel:+919882084786",
   phoneAlt: "+91 70090-00164",
   phoneAltHref: "tel:+917009000164",
+  /** Set in Admin → Settings; empty means the site shows no hours line. */
+  officeHours: "" as string,
   /**
    * The "Official address of Enterprise" block on the Udyam certificate,
    * transcribed field for field:

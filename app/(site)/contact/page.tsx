@@ -221,6 +221,9 @@ export default async function ContactPage() {
                     </span>
                   ))}
                 </address>
+                {COMPANY.officeHours && (
+                  <p className="mt-3 font-sans text-meta text-ink-muted">Open {COMPANY.officeHours}</p>
+                )}
                 <ul className="mt-5 flex flex-wrap gap-2">
                   {COMPANY.markets.map((market) => (
                     <li

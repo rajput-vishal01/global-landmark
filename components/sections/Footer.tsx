@@ -73,6 +73,9 @@ export async function Footer() {
                   </span>
                 ))}
               </address>
+              {COMPANY.officeHours && (
+                <p className="text-meta font-sans text-cream/60">{COMPANY.officeHours}</p>
+              )}
               <a
                 href={COMPANY.mapsUrl}
                 target="_blank"
