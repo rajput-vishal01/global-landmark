@@ -46,8 +46,17 @@ type NewsdataResponse = {
 
 const REVALIDATE_SECONDS = 12 * 60 * 60; // client-requested 12h refresh
 
-/** Pages pulled per query. 10 rows a page, and the 48h window rarely holds more. */
-const PAGES_PER_QUERY = 2;
+/**
+ * Pages pulled per query, 10 rows a page. Three, so the relevance gate has a
+ * deeper pool to keep from and "Load more" on /news has more to reveal.
+ *
+ * ponytail: the cost is credits, not time. 9 queries x 3 pages = 27 credits
+ * per 12h refresh, about 54 a day against the free plan's 200. The page
+ * fetches more by revealing this pool, never by calling the API per click:
+ * a public button that spent credits would let any visitor drain the quota
+ * and blank the page for everyone.
+ */
+const PAGES_PER_QUERY = 3;
 
 async function fetchPage(
   apiKey: string,

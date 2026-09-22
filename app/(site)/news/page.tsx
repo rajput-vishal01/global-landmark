@@ -41,7 +41,7 @@ export default async function NewsPage() {
   return (
     <>
       <Header />
-      <main>
+      <main className="bg-surface">
         <PageHeader
           breadcrumbs={BREADCRUMBS}
           eyebrow="Market briefing"
@@ -49,19 +49,21 @@ export default async function NewsPage() {
           sub={NEWS_PAGE.sub}
         />
 
-        <section className={SECTION}>
+        <section className={`mx-auto max-w-7xl ${SECTION}`}>
           <SectionHeading
             eyebrow="Tricity property desk"
             title="Latest coverage"
             aside={
               articles.length > 0
-                ? `${articles.length} stor${articles.length === 1 ? "y" : "ies"}`
+                ? // The feed is cached for 12 hours (lib/news.ts), so say so:
+                  // a reader seeing yesterday's stories should know why.
+                  `${articles.length} stor${articles.length === 1 ? "y" : "ies"} · refreshed twice a day`
                 : undefined
             }
           />
 
           {articles.length === 0 ? (
-            <div className="max-w-xl">
+            <div className="max-w-xl border border-border border-t-2 border-t-gold bg-white p-8 md:p-10">
               <span aria-hidden className="mb-6 block h-px w-12 bg-gold" />
               <p className="font-serif text-h4 text-heading">{NEWS_PAGE.emptyTitle}</p>
               <p className="mt-4 text-pretty text-body font-sans text-ink-muted">

@@ -33,12 +33,16 @@ const PROPERTY_RE =
  * — "property dealer shot dead in Zirakpur" is about a property dealer,
  * not about the property market.
  *
+ * Sentencing is here too ("ED secures 18 months' jail for postal official",
+ * which named Chandigarh and a seized property and so passed both gates).
+ * A probe into a land deal is market news; who went to prison is not.
+ *
  * No trailing \b on the stems: the previous version used \bmurder\b, which
  * matches "murder" but not "murdered", and \bassault\b, which missed
  * "assaulted". Inflections were walking straight through the gate.
  */
 const VIOLENT_RE =
-  /\b(murder|rape|abduct|kidnap|assault|molest|suicide|kill|death|dead|shot|shoot|stab|body|terror|accident|crash|arrest|attack|clash|riot|firing|lynch)/i;
+  /\b(murder|rape|abduct|kidnap|assault|molest|suicide|kill|death|dead|shot|shoot|stab|body|terror|accident|crash|arrest|attack|clash|riot|firing|lynch|jail|sentenc|convict|imprison|prison)/i;
 
 /**
  * Both gates are hard requirements: the story must be about the Tricity AND
@@ -51,7 +55,19 @@ const VIOLENT_RE =
  * cricket is worse than one showing four stories, so the tier is gone and
  * the page's honest empty state does the work instead.
  */
+/**
+ * Hospitality and events PR. A hotel is a "property" in its own press copy
+ * ("Lords Hotels & Resorts showcases bespoke wedding celebrations"), which
+ * put wedding marketing at the top of a market page.
+ */
+const LIFESTYLE_RE = /\b(wedding|celebrat|banquet|honeymoon|staycation)/i;
+
 export function isMarketStory(title: string, description: string | null): boolean {
   const hay = `${title} ${description ?? ""}`;
-  return TRICITY_RE.test(hay) && PROPERTY_RE.test(hay) && !VIOLENT_RE.test(hay);
+  return (
+    TRICITY_RE.test(hay) &&
+    PROPERTY_RE.test(hay) &&
+    !VIOLENT_RE.test(hay) &&
+    !LIFESTYLE_RE.test(hay)
+  );
 }

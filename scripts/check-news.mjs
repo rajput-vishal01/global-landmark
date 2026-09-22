@@ -37,6 +37,11 @@ const REJECT = [
   ["Realtor murdered in Kharar plot row", null],
   ["Builder assaulted at Mohali site", null],
   ["Killings near Panchkula housing colony", null],
+  // A conviction that happens to name a Tricity city and a seized property.
+  ["Punjab: ED secures 18 months' jail for postal official", "Property attached in Chandigarh."],
+  ["Mohali realtor convicted in cheating case, sentenced to 3 years", null],
+  // Hospitality PR that calls a hotel a property.
+  ["Lords Hotels & Resorts Showcases Bespoke Wedding Celebrations", "A luxury property near Chandigarh."],
   // Property, but not our market.
   ["Mumbai real estate hits record high", "Property prices in Mumbai surged."],
   ["Gurgaon township launched by builder", null],
