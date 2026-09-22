@@ -31,19 +31,35 @@ export function useOutsideClick(
 }
 
 /**
+ * Every overlay open right now, oldest first. Overlays can stack (a timed
+ * popup over a dialog, a lightbox over a form), so the scroll lock is held
+ * until the LAST one closes, and Escape closes only the topmost.
+ */
+const openModals: symbol[] = [];
+
+/** True while any overlay is open — timed popups check it before showing. */
+export function isModalOpen(): boolean {
+  return openModals.length > 0;
+}
+
+/**
  * Overlay behavior: while `open`, body scroll is locked and (when `onClose`
- * is given) Escape closes.
+ * is given) Escape closes this overlay if it is the topmost one.
  */
 export function useModalLock(open: boolean, onClose?: () => void): void {
   useEffect(() => {
     if (!open) return;
-    const onKey =
-      onClose && ((e: KeyboardEvent) => e.key === "Escape" && onClose());
+    const id = Symbol("modal");
+    openModals.push(id);
     document.body.style.overflow = "hidden";
-    if (onKey) window.addEventListener("keydown", onKey);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && onClose && openModals.at(-1) === id) onClose();
+    };
+    window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = "";
-      if (onKey) window.removeEventListener("keydown", onKey);
+      openModals.splice(openModals.indexOf(id), 1);
+      if (!openModals.length) document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
     };
   }, [open, onClose]);
 }

@@ -99,6 +99,9 @@ export function Select({
 
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Escape") {
+      // An open list swallows Escape, so a Select inside a dialog closes its
+      // list, not the dialog.
+      if (isOpen) e.nativeEvent.stopImmediatePropagation();
       setIsOpen(false);
       return;
     }

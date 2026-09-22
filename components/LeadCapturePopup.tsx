@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { BOXED_FIELD, LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
-import { useModalLock, useMounted } from "@/lib/hooks";
+import { isModalOpen, useModalLock, useMounted } from "@/lib/hooks";
 import { submitInquiry, type InquiryState } from "@/app/(site)/contact/actions";
 
 const DELAY_MS = 10_000;
@@ -71,7 +71,14 @@ export function LeadCapturePopup() {
     } catch {
       return;
     }
-    const id = setTimeout(() => setIsOpen(true), DELAY_MS);
+    // Never over another overlay (a booking dialog, the photo viewer, the
+    // menu): wait until the visitor has closed it, then show.
+    let id: ReturnType<typeof setTimeout>;
+    const tryOpen = () => {
+      if (isModalOpen()) id = setTimeout(tryOpen, 3000);
+      else setIsOpen(true);
+    };
+    id = setTimeout(tryOpen, DELAY_MS);
     return () => clearTimeout(id);
   }, [pathname]);
 
