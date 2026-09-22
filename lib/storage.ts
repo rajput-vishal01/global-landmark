@@ -70,11 +70,48 @@ const IMAGE_TYPES: Record<string, string> = {
   "image/avif": "avif",
 };
 
-/** Legal documents (R-29) — private, admin-gated on the way back out. */
+/**
+ * Property documents (R-29) — private, admin-gated on the way back out.
+ * PDF, Word, and any common photo format (a scan off a phone is a JPEG or a
+ * HEIC as often as a PDF). SVG is deliberately absent: it can carry script,
+ * and the admin previews these files inline.
+ */
 const DOCUMENT_TYPES: Record<string, string> = {
   "application/pdf": "pdf",
+  "application/msword": "doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
   "image/jpeg": "jpg",
   "image/png": "png",
+  "image/webp": "webp",
+  "image/avif": "avif",
+  "image/gif": "gif",
+  "image/bmp": "bmp",
+  "image/tiff": "tiff",
+  "image/heic": "heic",
+  "image/heif": "heic",
+};
+
+/**
+ * Fallback by filename when the browser sends no usable type — Windows
+ * reports HEIC, and sometimes .docx, as "" or application/octet-stream. The
+ * bytes are still checked against the extension below, so a renamed file
+ * gains nothing.
+ */
+const DOCUMENT_EXT_BY_NAME: Record<string, string> = {
+  pdf: "pdf",
+  doc: "doc",
+  docx: "docx",
+  jpg: "jpg",
+  jpeg: "jpg",
+  png: "png",
+  webp: "webp",
+  avif: "avif",
+  gif: "gif",
+  bmp: "bmp",
+  tif: "tiff",
+  tiff: "tiff",
+  heic: "heic",
+  heif: "heic",
 };
 
 /** Reverse map for serving: extension decides Content-Type, not the request. */
@@ -83,7 +120,13 @@ const MIME_BY_EXT: Record<string, string> = {
   png: "image/png",
   webp: "image/webp",
   avif: "image/avif",
+  gif: "image/gif",
+  bmp: "image/bmp",
+  tiff: "image/tiff",
+  heic: "image/heic",
   pdf: "application/pdf",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 };
 
 /**
@@ -228,12 +271,17 @@ export async function storeFile(
   kind: "image" | "document"
 ): Promise<StoreResult> {
   const allowed = kind === "image" ? IMAGE_TYPES : DOCUMENT_TYPES;
-  const ext = allowed[file.type];
+  const nameExt = file.name.split(".").pop()?.toLowerCase() ?? "";
+  const ext =
+    allowed[file.type] ?? (kind === "document" ? DOCUMENT_EXT_BY_NAME[nameExt] : undefined);
 
   if (!ext) {
     return {
       ok: false,
-      error: `Unsupported file type "${file.type || "unknown"}". Allowed: ${Object.keys(allowed).join(", ")}.`,
+      error:
+        kind === "document"
+          ? `"${file.name}" is not a PDF, Word file or photo.`
+          : `Unsupported file type "${file.type || "unknown"}". Allowed: ${Object.keys(allowed).join(", ")}.`,
     };
   }
   if (file.size > MAX_UPLOAD_BYTES) {
@@ -250,8 +298,8 @@ export async function storeFile(
   if (kind === "image" && !looksLikeImage(data)) {
     return { ok: false, error: "That file is not a valid image." };
   }
-  if (kind === "document" && ext === "pdf" && data.subarray(0, 5).toString("ascii") !== "%PDF-") {
-    return { ok: false, error: "That file is not a valid PDF." };
+  if (kind === "document" && !matchesExtension(data, ext)) {
+    return { ok: false, error: `"${file.name}" is damaged or not really a .${ext} file.` };
   }
 
   const storageKey = `${createHash("sha256").update(data).digest("hex")}.${ext}`;
@@ -275,10 +323,38 @@ export async function storeFile(
     file: {
       storageKey,
       url: visibility === "private" ? documentUrl(storageKey) : imageUrl(storageKey),
-      mimeType: file.type,
+      // Ours, from the checked extension — never the type the client claimed.
+      mimeType: MIME_BY_EXT[ext] ?? file.type,
       sizeBytes: data.byteLength,
     },
   };
+}
+
+/**
+ * Does the file start the way its extension says? Magic numbers only — enough
+ * to stop a script renamed .pdf, which is the case that matters.
+ */
+export function matchesExtension(buf: Buffer, ext: string): boolean {
+  if (buf.length < 12) return false;
+  const ascii = (from: number, to: number) => buf.subarray(from, to).toString("ascii");
+  switch (ext) {
+    case "pdf":
+      return ascii(0, 5) === "%PDF-";
+    case "docx": // a zip container
+      return buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04;
+    case "doc": // OLE compound file
+      return buf.subarray(0, 8).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]));
+    case "gif":
+      return ascii(0, 4) === "GIF8";
+    case "bmp":
+      return ascii(0, 2) === "BM";
+    case "tiff":
+      return ascii(0, 4) === "II*\0" || ascii(0, 4) === "MM\0*";
+    case "heic":
+      return ascii(4, 8) === "ftyp";
+    default: // jpg, png, webp, avif
+      return looksLikeImage(buf);
+  }
 }
 
 /**

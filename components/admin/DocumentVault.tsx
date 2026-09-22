@@ -1,23 +1,27 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Select } from "@/components/ui/Select";
-import { deskButton } from "@/components/admin/desk";
-import { deskFieldFull, deskLabel } from "./FormSection";
-
+import { deskButton, deskButtonSmall, focusRing } from "@/components/admin/desk";
+import { useModalLock, useMounted } from "@/lib/hooks";
+import { withEmptyOption } from "@/lib/attributes";
 import { DOCUMENTATION_FLAGS } from "@/lib/taxonomy/features";
 
 /**
- * CFF group 17 — the legal document vault (R-29). Every row points at a file
- * under private/ storage, readable only through the admin-gated
- * /api/admin/documents/<key> route built alongside this component.
+ * The property's paperwork (R-29), arranged the way a broker thinks about
+ * it: by document. Each row is one kind of document — Sale Deed, Registry,
+ * Naksha — with however many files belong to it (a deed runs to several
+ * scanned pages). Pick what the document is, then upload; once a row has a
+ * file, a fresh empty row appears for the next document.
  *
- * ONE exception, added in Phase E: a document can be marked "visible
- * publicly" so a brochure can be downloaded from the property page. That
- * flag is per file, defaults to false, and is the only thing that publishes
- * anything here. It is deliberately NOT derived from the document type —
- * "Brochure" as a type is a label someone typed from a dropdown, and a
- * mistyped one must not be able to publish a sale deed.
+ * Files land under private/ and are served only through the admin-gated
+ * /api/admin/documents/<key>. Every file can be previewed in place.
+ *
+ * ONE exception to private: a file can be marked "On website" so a brochure
+ * can be downloaded from the property page. Per file, off by default, and
+ * never derived from the document type — a type is a label picked from a
+ * dropdown, and a mis-picked one must not publish a sale deed.
  */
 
 type DocumentInput = {
@@ -31,28 +35,9 @@ type DocumentInput = {
   isPublic?: boolean | null;
 };
 
-/** The checkbox shape ChecklistField already uses across the admin. */
-const CHECKBOX =
-  "h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-[3px] border border-line bg-surface transition-colors checked:border-gold checked:bg-gold";
-
-/**
- * Must match DOCUMENT_TYPES in lib/storage.ts — the upload route rejects
- * anything else regardless of what this attribute lets the OS picker show.
- */
-const ACCEPT = "application/pdf,image/jpeg,image/png";
-
-/** Mirrors the 30-row cap parseDocuments() enforces in lib/admin/property-parse.ts. */
-const MAX_DOCS = 30;
-
-/**
- * `id` is client-side only, like the row id pattern in MediaLinksSection —
- * rows are keyed by it rather than by index so removing one mid-list doesn't
- * shift another row's uncontrolled <Select> into showing the wrong docType.
- */
-type DocRow = {
-  id: number;
-  docType: string;
+type DocFile = {
   storageKey: string;
+  docType: string;
   fileName: string;
   mimeType: string;
   sizeBytes: number;
@@ -61,271 +46,483 @@ type DocRow = {
   isPublic: boolean;
 };
 
-function toRow(input: DocumentInput, id: number): DocRow {
-  return {
-    id,
-    docType: input.docType,
-    storageKey: input.storageKey,
-    fileName: input.fileName,
-    mimeType: input.mimeType,
-    sizeBytes: input.sizeBytes,
-    note: input.note ?? "",
-    uploadedBy: input.uploadedBy ?? "",
-    // `?? false`, never `?? true`, and never inferred from docType: a file
-    // whose visibility nobody considered stays private.
-    isPublic: input.isPublic ?? false,
-  };
-}
+/** One document row. `id` is client-only, so removing a row never shifts another's select. */
+type Group = { id: number; docType: string };
 
-/** sizeBytes always comes back from the upload response, never typed by a user. */
+/**
+ * What the picker offers. The upload route checks the bytes of every file
+ * regardless — this only decides what the OS dialog shows.
+ */
+const ACCEPT = ".pdf,.doc,.docx,image/*,.heic,.heif";
+
+/** Mirrors the 30-row cap parseDocuments() enforces. */
+const MAX_DOCS = 30;
+
+/** Formats a browser draws itself; anything else (Word, HEIC, TIFF) downloads. */
+const PREVIEWABLE_IMAGE = /^image\/(jpeg|png|webp|avif|gif|bmp)$/;
+
 function formatSize(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function fileUrl(storageKey: string, inline = false): string {
+  return `/api/admin/documents/${storageKey}${inline ? "?inline=1" : ""}`;
+}
+
+function kindOf(mimeType: string): "pdf" | "image" | "word" | "other" {
+  if (mimeType === "application/pdf") return "pdf";
+  if (mimeType.startsWith("image/")) return "image";
+  if (mimeType.includes("word")) return "word";
+  return "other";
+}
+
 export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
-  const [rows, setRows] = useState<DocRow[]>(() =>
-    initial.map((doc, i) => toRow(doc, i))
+  const [files, setFiles] = useState<DocFile[]>(() =>
+    initial.map((d) => ({
+      storageKey: d.storageKey,
+      docType: d.docType,
+      fileName: d.fileName,
+      mimeType: d.mimeType,
+      sizeBytes: d.sizeBytes,
+      note: d.note ?? "",
+      uploadedBy: d.uploadedBy ?? "",
+      // `?? false`, never inferred from docType: a file whose visibility
+      // nobody considered stays private.
+      isPublic: d.isPublic ?? false,
+    }))
   );
-  const nextId = useRef(initial.length);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // One row per document type already on file, plus an empty one to add the next.
+  const [groups, setGroups] = useState<Group[]>(() =>
+    [...new Set(initial.map((d) => d.docType).filter(Boolean)), ""].map((docType, id) => ({
+      id,
+      docType,
+    }))
+  );
+  const nextId = useRef(groups.length);
+  const [uploading, setUploading] = useState<{ groupId: number; done: number; total: number } | null>(
+    null
+  );
+  const [errors, setErrors] = useState<Record<number, string[]>>({});
+  const [preview, setPreview] = useState<DocFile | null>(null);
 
-  function update(id: number, patch: Partial<DocRow>) {
-    setRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, ...patch } : row))
-    );
-  }
+  const usedTypes = new Set(groups.map((g) => g.docType).filter(Boolean));
+  const hasBlankRow = groups.some((g) => !g.docType);
+  const isFull = files.length >= MAX_DOCS;
 
-  function remove(id: number) {
-    setRows((prev) => prev.filter((row) => row.id !== id));
-  }
-
-  async function uploadFile(fileList: FileList | null) {
-    const file = fileList?.[0];
-    if (!file) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const body = new FormData();
-      body.append("file", file);
-      // `kind=document` is the field that routes storeFile() to private/
-      // instead of public/ — ImageUploader posts to this same endpoint
-      // without it and gets the image default. Dropping this here would
-      // silently publish a legal document at a guessable public URL, which
-      // is the exact bug this whole component exists to prevent.
-      body.append("kind", "document");
-      const res = await fetch("/api/admin/upload", { method: "POST", body });
-      const data = (await res.json()) as
-        | { storageKey: string; url: string; mimeType: string; sizeBytes: number }
-        | { error: string };
-      if (!res.ok || !("storageKey" in data)) {
-        setError("error" in data ? data.error : `Upload failed (${res.status}).`);
-        return;
-      }
-      // url is /api/admin/documents/<storageKey> — derivable from storageKey
-      // alone, so it isn't stored on the row; building it twice would risk
-      // the two copies drifting.
-      setRows((prev) => [
-        ...prev,
-        {
-          id: nextId.current++,
-          docType: "",
-          storageKey: data.storageKey,
-          fileName: file.name,
-          mimeType: data.mimeType,
-          sizeBytes: data.sizeBytes,
-          note: "",
-          uploadedBy: "",
-          isPublic: false,
-        },
-      ]);
-    } catch (err) {
-      console.error("Document upload failed:", err);
-      setError("Upload failed — check your connection and try again.");
-    } finally {
-      setBusy(false);
+  function setGroupType(group: Group, docType: string) {
+    setGroups((prev) => prev.map((g) => (g.id === group.id ? { ...g, docType } : g)));
+    // The files already in this row are the same document under its new name.
+    if (group.docType) {
+      setFiles((prev) =>
+        prev.map((f) => (f.docType === group.docType ? { ...f, docType } : f))
+      );
     }
   }
 
+  function removeGroup(group: Group) {
+    setFiles((prev) => prev.filter((f) => f.docType !== group.docType || !group.docType));
+    setGroups((prev) => {
+      const rest = prev.filter((g) => g.id !== group.id);
+      return rest.some((g) => !g.docType) ? rest : [...rest, { id: nextId.current++, docType: "" }];
+    });
+  }
+
+  function addBlankRow() {
+    setGroups((prev) => [...prev, { id: nextId.current++, docType: "" }]);
+  }
+
+  function updateFile(storageKey: string, patch: Partial<DocFile>) {
+    setFiles((prev) => prev.map((f) => (f.storageKey === storageKey ? { ...f, ...patch } : f)));
+  }
+
+  async function upload(group: Group, picked: FileList | File[] | null) {
+    const list = Array.from(picked ?? []);
+    if (!group.docType || list.length === 0) return;
+
+    const room = MAX_DOCS - files.length;
+    const batch = list.slice(0, Math.max(0, room));
+    const problems: string[] =
+      list.length > batch.length
+        ? [`Only ${batch.length} of ${list.length} files fit — a listing holds ${MAX_DOCS} documents.`]
+        : [];
+
+    setUploading({ groupId: group.id, done: 0, total: batch.length });
+    setErrors((prev) => ({ ...prev, [group.id]: [] }));
+
+    // One at a time: a batch of scans can be large, and a failed file should
+    // cost only itself, not the rest of the selection.
+    const added: DocFile[] = [];
+    for (const [i, file] of batch.entries()) {
+      try {
+        const body = new FormData();
+        body.append("file", file);
+        // `kind=document` routes the file to private/. Dropping it would
+        // publish a legal document at a guessable public URL.
+        body.append("kind", "document");
+        const res = await fetch("/api/admin/upload", { method: "POST", body });
+        const data = (await res.json().catch(() => ({}))) as
+          | { storageKey: string; mimeType: string; sizeBytes: number }
+          | { error?: string };
+        if (!res.ok || !("storageKey" in data)) {
+          problems.push(
+            res.status === 413
+              ? `"${file.name}" is too large to upload.`
+              : "error" in data && data.error
+                ? data.error
+                : `"${file.name}" did not upload (${res.status}).`
+          );
+        } else if (
+          !files.some((f) => f.storageKey === data.storageKey) &&
+          !added.some((f) => f.storageKey === data.storageKey)
+        ) {
+          added.push({
+            storageKey: data.storageKey,
+            docType: group.docType,
+            fileName: file.name,
+            mimeType: data.mimeType,
+            sizeBytes: data.sizeBytes,
+            note: "",
+            uploadedBy: "",
+            isPublic: false,
+          });
+        } else {
+          problems.push(`"${file.name}" is already attached.`);
+        }
+      } catch (err) {
+        console.error("Document upload failed:", err);
+        problems.push(`"${file.name}" failed — check your connection and try again.`);
+      }
+      setUploading({ groupId: group.id, done: i + 1, total: batch.length });
+    }
+
+    setFiles((prev) => [...prev, ...added]);
+    setErrors((prev) => ({ ...prev, [group.id]: problems }));
+    setUploading(null);
+    // The row now holds a document, so offer the next one.
+    if (added.length > 0) {
+      setGroups((prev) =>
+        prev.some((g) => !g.docType) ? prev : [...prev, { id: nextId.current++, docType: "" }]
+      );
+    }
+  }
 
   return (
     <>
-      {/* Whole list travels as one hidden field, exactly like mediaJson in
-          MediaLinksSection. parseDocuments() on the server re-validates
-          every row (docType against DOCUMENTATION_FLAGS, storageKey against
-          an actual uploaded file) and drops anything broken — this
-          component's state is convenience for the broker, never the gate. */}
+      {/* The whole list travels as one hidden field. parseDocuments() on the
+          server re-validates every row and drops anything broken — this
+          state is convenience for the broker, never the gate. */}
       <input
         type="hidden"
         name="documentsJson"
         value={JSON.stringify(
-          rows.map((row) => ({
-            docType: row.docType,
-            storageKey: row.storageKey,
-            fileName: row.fileName,
-            mimeType: row.mimeType,
-            sizeBytes: row.sizeBytes,
-            note: row.note,
-            uploadedBy: row.uploadedBy,
-            isPublic: row.isPublic,
-          }))
+          files
+            .filter((f) => usedTypes.has(f.docType))
+            .map((f) => ({
+              docType: f.docType,
+              storageKey: f.storageKey,
+              fileName: f.fileName,
+              mimeType: f.mimeType,
+              sizeBytes: f.sizeBytes,
+              note: f.note,
+              uploadedBy: f.uploadedBy,
+              isPublic: f.isPublic,
+            }))
         )}
       />
 
-      <p className="rounded-lg border border-line-soft border-l-[3px] border-l-gold bg-raise px-4 py-3 text-[13px] text-ink">
-        Private by default. A file here can be downloaded solely by a
-        logged-in admin, and is never indexed by search engines, unless you
-        tick “Visible publicly” on that specific file.
-      </p>
-
-      {rows.length > 0 && (
-        <ul className="flex flex-col gap-4">
-          {rows.map((row) => (
+      <ul className="flex flex-col gap-3">
+        {groups.map((group, index) => {
+          const groupFiles = group.docType ? files.filter((f) => f.docType === group.docType) : [];
+          const busy = uploading?.groupId === group.id;
+          const groupErrors = errors[group.id] ?? [];
+          return (
             <li
-              key={row.id}
-              className="flex flex-col gap-4 rounded-lg border border-line-soft bg-raise p-4"
+              key={group.id}
+              onDragOver={(e) => {
+                if (group.docType) e.preventDefault();
+              }}
+              onDrop={(e) => {
+                if (!group.docType) return;
+                e.preventDefault();
+                void upload(group, e.dataTransfer.files);
+              }}
+              className={`flex flex-col gap-3 rounded-lg border p-3.5 ${
+                group.docType ? "border-line bg-surface" : "border-dashed border-line bg-raise/60"
+              }`}
             >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex min-w-0 flex-col">
-                  <span className="truncate text-[13px] text-ink">
-                    {row.fileName}
-                  </span>
-                  <span className="text-[11.5px] text-muted">
-                    {formatSize(row.sizeBytes)}
-                  </span>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="w-5 shrink-0 text-center text-[11.5px] font-semibold tabular-nums text-muted">
+                  {index + 1}
+                </span>
+                <div className="min-w-[12rem] flex-1">
+                  <Select
+                    // Remounts when the choice changes elsewhere (removal), so
+                    // the shown value and the row cannot disagree.
+                    key={`${group.id}-${group.docType}`}
+                    id={`doc-group-${group.id}`}
+                    name={`docGroup${group.id}`}
+                    aria-label={`Document ${index + 1} type`}
+                    defaultValue={group.docType}
+                    onValueChange={(value) => setGroupType(group, value)}
+                    options={withEmptyOption(
+                      "— What is this document? —",
+                      DOCUMENTATION_FLAGS.filter(
+                        (t) => t === group.docType || !usedTypes.has(t)
+                      )
+                    )}
+                  />
                 </div>
-                <div className="flex shrink-0 items-center gap-4">
-                  {/* Opens in a new tab so the broker can confirm the right
-                      file uploaded without losing their place in the form. */}
-                  <a
-                    href={`/api/admin/documents/${row.storageKey}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gold-deep hover:underline"
-                  >
-                    View
-                  </a>
+
+                <label
+                  className={`${deskButton} ${
+                    !group.docType || busy || isFull ? "pointer-events-none opacity-50" : ""
+                  } has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-gold`}
+                >
+                  <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+                  </svg>
+                  {busy
+                    ? `Uploading ${uploading.done + 1 > uploading.total ? uploading.total : uploading.done + 1} of ${uploading.total}…`
+                    : groupFiles.length
+                      ? "Add more files"
+                      : "Upload files"}
+                  <input
+                    type="file"
+                    multiple
+                    accept={ACCEPT}
+                    disabled={!group.docType || busy || isFull}
+                    onChange={(e) => {
+                      void upload(group, e.target.files);
+                      e.target.value = "";
+                    }}
+                    className="sr-only"
+                  />
+                </label>
+
+                {(group.docType || groups.length > 1) && (
                   <button
                     type="button"
-                    onClick={() => remove(row.id)}
-                    aria-label={`Remove ${row.fileName}`}
-                    className="cursor-pointer px-1.5 py-1 text-error hover:opacity-70"
+                    onClick={() => removeGroup(group)}
+                    aria-label={`Remove ${group.docType || "this row"}${groupFiles.length ? " and its files" : ""}`}
+                    title="Remove this document"
+                    className={`cursor-pointer rounded-md p-1.5 text-muted transition-colors hover:bg-raise hover:text-error ${focusRing}`}
                   >
-                    ✕
+                    <svg aria-hidden width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+                    </svg>
                   </button>
-                </div>
+                )}
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label htmlFor={`doc-${row.id}-type`} className={deskLabel}>
-                  Document type
-                </label>
-                <Select
-                  id={`doc-${row.id}-type`}
-                  name={`documents.${row.id}.docType`}
-                  defaultValue={row.docType}
-                  onValueChange={(value) => update(row.id, { docType: value })}
-                  options={DOCUMENTATION_FLAGS.map((flag) => ({
-                    value: flag,
-                    label: flag,
-                  }))}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor={`doc-${row.id}-note`} className={deskLabel}>
-                  Note
-                </label>
-                <input
-                  id={`doc-${row.id}-note`}
-                  type="text"
-                  maxLength={1000}
-                  value={row.note}
-                  onChange={(e) => update(row.id, { note: e.target.value })}
-                  placeholder="Optional — e.g. Awaiting registrar stamp"
-                  className={deskFieldFull}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor={`doc-${row.id}-uploader`} className={deskLabel}>
-                  Uploaded by
-                </label>
-                {/* Free text, not a session user id — there is no admin
-                    login/user system yet, so this is the only record of who
-                    attached the file until one gets built. */}
-                <input
-                  id={`doc-${row.id}-uploader`}
-                  type="text"
-                  maxLength={200}
-                  value={row.uploadedBy}
-                  onChange={(e) => update(row.id, { uploadedBy: e.target.value })}
-                  placeholder="Name of the admin who uploaded this"
-                  className={deskFieldFull}
-                />
-              </div>
-
-              {/* Per file, never per document type. The value travels inside
-                  documentsJson above (not as its own form field), and the
-                  server accepts it only as a literal `true` — see
-                  parseDocuments() in lib/admin/property-parse.ts. */}
-              <div
-                className={`flex flex-col gap-2 rounded-lg border p-3 ${
-                  row.isPublic ? "border-error bg-error/5" : "border-line"
-                }`}
-              >
-                <label className="flex cursor-pointer items-start gap-2.5 text-[13px] text-ink">
-                  <input
-                    type="checkbox"
-                    checked={row.isPublic}
-                    onChange={(e) => update(row.id, { isPublic: e.target.checked })}
-                    className={`${CHECKBOX} mt-0.5`}
-                  />
-                  Visible publicly — anyone can download this file
-                </label>
-                <p
-                  className={`text-[12.5px] ${
-                    row.isPublic ? "text-error" : "text-muted"
-                  }`}
-                >
-                  {row.isPublic
-                    ? "ON. This file is listed on the public property page and downloadable without logging in. Only ever tick this for a brochure or a price list — never for registry papers, a sale deed, or anything carrying an owner's details."
-                    : "Off — admin download only. Tick this only for a brochure or price list you want buyers to have."}
+              {!group.docType && (
+                <p className="pl-7 text-[11.5px] text-muted">
+                  Choose what the document is, then upload — several files at once is fine.
                 </p>
-              </div>
+              )}
+
+              {groupFiles.length > 0 && (
+                <ul className="flex flex-col gap-2 pl-7">
+                  {groupFiles.map((file) => (
+                    <FileRow
+                      key={file.storageKey}
+                      file={file}
+                      onPreview={() => setPreview(file)}
+                      onRemove={() =>
+                        setFiles((prev) => prev.filter((f) => f.storageKey !== file.storageKey))
+                      }
+                      onTogglePublic={(isPublic) => updateFile(file.storageKey, { isPublic })}
+                    />
+                  ))}
+                </ul>
+              )}
+
+              {groupErrors.length > 0 && (
+                <ul role="alert" className="flex flex-col gap-0.5 pl-7 text-[12px] text-error">
+                  {groupErrors.map((message) => (
+                    <li key={message}>{message}</li>
+                  ))}
+                </ul>
+              )}
             </li>
-          ))}
-        </ul>
-      )}
+          );
+        })}
+      </ul>
 
-      {rows.length < MAX_DOCS ? (
-        <label className={`${deskButton} w-fit`}>
-          {busy ? "Uploading..." : "Upload document"}
-          <input
-            type="file"
-            accept={ACCEPT}
-            disabled={busy}
-            onChange={(e) => uploadFile(e.target.files)}
-            className="hidden"
-          />
-        </label>
-      ) : (
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-[11.5px] text-muted">
-          {MAX_DOCS} documents attached — the maximum this form accepts.
-          Remove one before uploading another.
+          PDF, Word (.doc, .docx) or any photo · up to 8 MB each · drag files onto a row ·{" "}
+          {files.length}/{MAX_DOCS} files
         </p>
-      )}
+        {!hasBlankRow && !isFull && (
+          <button type="button" onClick={addBlankRow} className={deskButtonSmall}>
+            + Add another document
+          </button>
+        )}
+      </div>
 
-      <p className="text-[11.5px] text-muted">
-        PDF, JPEG or PNG.
-      </p>
-
-      {error && (
-        <p role="alert" className="text-[12px] text-error">
-          {error}
-        </p>
-      )}
+      <PreviewDialog file={preview} onClose={() => setPreview(null)} />
     </>
+  );
+}
+
+function FileRow({
+  file,
+  onPreview,
+  onRemove,
+  onTogglePublic,
+}: {
+  file: DocFile;
+  onPreview: () => void;
+  onRemove: () => void;
+  onTogglePublic: (isPublic: boolean) => void;
+}) {
+  const kind = kindOf(file.mimeType);
+  return (
+    <li
+      className={`flex flex-col gap-2 rounded-md border px-2.5 py-2 ${
+        file.isPublic ? "border-error/60 bg-error/5" : "border-line-soft bg-raise/50"
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onPreview}
+          aria-label={`Preview ${file.fileName}`}
+          className={`relative flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-line bg-surface ${focusRing}`}
+        >
+          {kind === "image" && PREVIEWABLE_IMAGE.test(file.mimeType) ? (
+            // eslint-disable-next-line @next/next/no-img-element -- admin-gated route, not optimisable
+            <img src={fileUrl(file.storageKey, true)} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span
+              className={`text-[10px] font-bold tracking-wide ${
+                kind === "pdf" ? "text-error" : kind === "word" ? "text-[#2b579a]" : "text-soft"
+              }`}
+            >
+              {kind === "pdf" ? "PDF" : kind === "word" ? "DOC" : "IMG"}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={onPreview}
+          className={`flex min-w-0 flex-1 cursor-pointer flex-col text-left ${focusRing}`}
+        >
+          <span className="truncate text-[13px] text-ink hover:underline">{file.fileName}</span>
+          <span className="text-[11.5px] text-muted">{formatSize(file.sizeBytes)}</span>
+        </button>
+
+        <label
+          className="flex shrink-0 cursor-pointer items-center gap-1.5 text-[11.5px] text-soft"
+          title="Lets anyone download this file from the property page"
+        >
+          <input
+            type="checkbox"
+            checked={file.isPublic}
+            onChange={(e) => onTogglePublic(e.target.checked)}
+            className="h-3.5 w-3.5 cursor-pointer accent-[var(--color-gold)]"
+          />
+          On website
+        </label>
+
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`Remove ${file.fileName}`}
+          className={`shrink-0 cursor-pointer rounded-md p-1 text-muted transition-colors hover:text-error ${focusRing}`}
+        >
+          <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M6 6l12 12M18 6 6 18" />
+          </svg>
+        </button>
+      </div>
+      {file.isPublic && (
+        <p className="text-[11.5px] leading-snug text-error">
+          Anyone can download this from the property page. Only for a brochure or
+          price list — never a deed, registry or anything with an owner&apos;s details.
+        </p>
+      )}
+    </li>
+  );
+}
+
+/** A file shown in place: PDFs in a frame, photos as images, the rest as a download. */
+function PreviewDialog({ file, onClose }: { file: DocFile | null; onClose: () => void }) {
+  const mounted = useMounted();
+  useModalLock(
+    file !== null,
+    useCallback(() => onClose(), [onClose])
+  );
+  if (!mounted || !file) return null;
+
+  const kind = kindOf(file.mimeType);
+  const canShow = kind === "pdf" || PREVIEWABLE_IMAGE.test(file.mimeType);
+
+  return createPortal(
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-dark-deep/70 p-3 backdrop-blur-sm sm:p-6"
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Preview of ${file.fileName}`}
+        onClick={(e) => e.stopPropagation()}
+        className="flex max-h-full w-full max-w-4xl flex-col overflow-hidden rounded-[10px] bg-surface shadow-2xl"
+      >
+        <div className="flex items-center gap-3 border-b border-line-soft px-4 py-3">
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate text-[13.5px] font-semibold text-ink">{file.fileName}</span>
+            <span className="text-[11.5px] text-muted">
+              {file.docType} · {formatSize(file.sizeBytes)}
+            </span>
+          </div>
+          <a href={fileUrl(file.storageKey)} className={deskButtonSmall}>
+            Download
+          </a>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close preview"
+            className={`cursor-pointer rounded-md p-1.5 text-muted hover:text-ink ${focusRing}`}
+          >
+            <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+              <path d="M5 5l14 14M19 5 5 19" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="flex min-h-0 flex-1 items-center justify-center bg-raise">
+          {kind === "pdf" ? (
+            <iframe
+              src={fileUrl(file.storageKey, true)}
+              title={file.fileName}
+              className="h-[78vh] w-full border-0 bg-surface"
+            />
+          ) : canShow ? (
+            // eslint-disable-next-line @next/next/no-img-element -- admin-gated route, not optimisable
+            <img
+              src={fileUrl(file.storageKey, true)}
+              alt={file.fileName}
+              className="max-h-[78vh] w-auto max-w-full object-contain"
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+              <span className="text-[13px] text-ink">
+                {kind === "word"
+                  ? "Word files cannot be shown in the browser."
+                  : "This photo format cannot be shown in the browser."}
+              </span>
+              <a href={fileUrl(file.storageKey)} className={deskButton}>
+                Download to open it
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }

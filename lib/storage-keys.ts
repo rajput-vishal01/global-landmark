@@ -19,7 +19,7 @@
  * separator or a `..` segment — the reason resolveStoragePath can build a
  * filesystem path from one at all.
  */
-const KEY_PATTERN = /^[a-f0-9]{64}\.(jpg|png|webp|avif|pdf)$/;
+const KEY_PATTERN = /^[a-f0-9]{64}\.(jpg|png|webp|avif|gif|bmp|tiff|heic|pdf|doc|docx)$/;
 
 export function isStorageKey(key: string): boolean {
   return KEY_PATTERN.test(key);

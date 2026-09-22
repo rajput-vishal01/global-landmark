@@ -499,11 +499,14 @@ export function PropertyForm({
           id="section-paperwork"
           index={8}
           title="Paperwork"
-          hint="Which documents exist, and the files themselves. Private unless you publish a file."
+          hint="Pick what each document is and upload its files. Private unless you put a file on the website."
           visibility="internal"
         >
           <div className="flex flex-col gap-2">
-            <span className={deskLabel}>Documents available</span>
+            <span className={deskLabel}>Documents the owner has</span>
+            <p className={deskHint}>
+              Tick what exists even before it is uploaded. Uploading a file below ticks its type for you.
+            </p>
             <ChecklistField
               name="documentationFlagsJson"
               options={DOCUMENTATION_FLAGS}
@@ -512,7 +515,7 @@ export function PropertyForm({
             />
           </div>
           <div className="flex flex-col gap-4 border-t border-line-soft pt-5">
-            <span className={deskLabel}>Files</span>
+            <span className={deskLabel}>Uploaded documents</span>
             <DocumentVault initial={property?.documents ?? []} />
           </div>
         </FormSection>

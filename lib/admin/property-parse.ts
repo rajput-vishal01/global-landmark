@@ -602,7 +602,14 @@ export function parseProperty(
       reraNumber: String(formData.get("reraNumber") ?? "").trim().slice(0, 120) || null,
       loanFlags: list("loanFlagsJson", LOAN_FLAGS),
       banksOnPanel: list("banksOnPanelJson", null, 30),
-      documentationFlags: list("documentationFlagsJson", DOCUMENTATION_FLAGS),
+      // An uploaded file of a type is proof the document exists, so it ticks
+      // that type on the checklist even if nobody ticked it by hand.
+      documentationFlags: [
+        ...new Set([
+          ...list("documentationFlagsJson", DOCUMENTATION_FLAGS),
+          ...documents.map((d) => d.docType),
+        ]),
+      ],
       extras,
       images,
       owners,

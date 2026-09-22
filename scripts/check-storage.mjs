@@ -51,6 +51,31 @@ try {
     assert.equal(storage.isBundledImageUrl(bad), false, `not bundled imagery: ${bad}`);
   }
 
+  // --- document formats: the bytes must match the extension ------------------
+  const pad = (head) => Buffer.concat([Buffer.from(head, "binary"), Buffer.alloc(16)]);
+  const ok = {
+    pdf: pad("%PDF-1.7"),
+    docx: pad("PK\x03\x04"),
+    doc: pad("\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"),
+    gif: pad("GIF89a"),
+    bmp: pad("BM"),
+    tiff: pad("II*\x00"),
+    heic: pad("\x00\x00\x00\x18ftypheic"),
+    jpg: pad("\xff\xd8\xff\xe0"),
+  };
+  for (const [ext, bytes] of Object.entries(ok)) {
+    assert.ok(storage.matchesExtension(bytes, ext), `a real .${ext} is accepted`);
+  }
+  const script = pad("<script>alert(1)</script>");
+  for (const ext of Object.keys(ok)) {
+    assert.equal(storage.matchesExtension(script, ext), false, `a script renamed .${ext} is refused`);
+  }
+  assert.equal(storage.matchesExtension(ok.pdf, "docx"), false, "a PDF is not a .docx");
+  for (const ext of ["docx", "doc", "heic", "gif", "tiff", "bmp"]) {
+    assert.ok(storage.isStorageKey(`${"c".repeat(64)}.${ext}`), `.${ext} keys are valid`);
+  }
+  assert.equal(storage.isStorageKey(`${"c".repeat(64)}.svg`), false, "no SVG — it can carry script");
+
   // --- the leak -------------------------------------------------------------
   const priv = storage.resolveStoragePath(KEY, "private");
   mkdirSync(dirname(priv), { recursive: true });
