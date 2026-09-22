@@ -3,6 +3,8 @@ import { count, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { properties, tourRequests } from "@/lib/db/schema";
 import { TourEditForm } from "./TourEditForm";
+import { deleteTourRequest } from "./actions";
+import { DeleteButton } from "@/components/admin/DeleteButton";
 import { formatDateTime } from "@/lib/dates";
 import {
   Chip,
@@ -178,7 +180,7 @@ export default async function AdminToursPage({
             <Table className="min-w-[1000px]">
               <thead>
                 <tr>
-                  {["Visitor", "Contact", "Property", "Requested slot", "Status", "Received"].map(
+                  {["Visitor", "Contact", "Property", "Requested slot", "Status", "Received", ""].map(
                     (h) => (
                       <th key={h} scope="col">
                         {h}
@@ -246,6 +248,15 @@ export default async function AdminToursPage({
                       </td>
                       <td className="whitespace-nowrap text-muted">
                         {formatDateTime(row.createdAt)}
+                      </td>
+                      <td className="whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-3">
+                          <DeleteButton
+                            action={deleteTourRequest}
+                            id={row.id}
+                            confirmText={`Delete the tour request from ${row.name}? Nothing else is removed.`}
+                          />
+                        </div>
                       </td>
                     </tr>
                   );

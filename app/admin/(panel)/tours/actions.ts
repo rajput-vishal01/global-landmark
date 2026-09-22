@@ -8,6 +8,7 @@ import { tourRequests } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
 import { isTourStatus } from "@/lib/taxonomy/tours";
+import type { DeleteState } from "../properties/actions";
 
 export type TourFormState = { error?: string };
 
@@ -43,6 +44,30 @@ export async function updateTourRequest(
   // status changes nothing a visitor sees, so this is belt-and-braces — but
   // "which mutations are safe to skip" is exactly the judgment that goes
   // wrong quietly, so the rule stays unconditional.
+  revalidatePublicSite();
+  return {};
+}
+
+/**
+ * Delete a tour request — clearing spam out of the inbox, the same gesture
+ * as deleteLead. Nothing references tour_requests, so nothing else goes.
+ */
+export async function deleteTourRequest(
+  _prev: DeleteState,
+  formData: FormData
+): Promise<DeleteState> {
+  await requireAdmin();
+  const id = idField(formData);
+  if (id === null) return { error: "Missing request id." };
+
+  try {
+    await db.delete(tourRequests).where(eq(tourRequests.id, id));
+  } catch (err) {
+    console.error("deleteTourRequest failed:", err);
+    return { error: "Delete failed. Try again." };
+  }
+
+  revalidatePath("/admin/tours");
   revalidatePublicSite();
   return {};
 }
