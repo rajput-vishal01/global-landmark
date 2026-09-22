@@ -9,7 +9,8 @@ import { clientIp, isRateLimited } from "@/lib/rate-limit";
 import { refCode as buildRefCode } from "@/lib/attributes";
 import { isAreaUnit } from "@/lib/taxonomy/area";
 import { isConfiguration, PROPERTY_TYPES } from "@/lib/taxonomy/property";
-import { CITY_NAMES } from "@/lib/locations";
+import { CITY_NAMES, placeFromAddress } from "@/lib/locations";
+import { parseMapsUrl } from "@/lib/admin/property-parse";
 import { parseSellPhotos } from "@/lib/sell-photos";
 import { deleteStoredFiles, storageKeyFromUrl } from "@/lib/storage";
 
@@ -102,7 +103,25 @@ export async function submitProperty(
     return { status: "error", message: "That email address does not look right." };
   }
 
-  const city = oneOf(field(formData, "city", 100), CITY_NAMES);
+  const mapsUrl = parseMapsUrl(formData.get("mapsUrl"));
+  if (mapsUrl === "invalid") {
+    return {
+      status: "error",
+      message: "The map link should be a Google Maps link — in Google Maps press Share, then Copy link.",
+    };
+  }
+
+  // The seller’s exact address is private (the form promises so), so it
+  // goes on the owner record and the listing gets a public line built from
+  // sector, locality and city instead. It used to be saved as the listing’s
+  // own address, which put it on the website the moment it was approved.
+  const address = field(formData, "address", 300);
+  const locality = field(formData, "locality", 120);
+  const sector = field(formData, "sector", 60);
+  const city =
+    oneOf(field(formData, "city", 100), CITY_NAMES) ??
+    (address ? placeFromAddress(address)?.city ?? null : null);
+  const publicLocation = [sector, locality, city].filter(Boolean).join(", ");
   const areaUnitRaw = field(formData, "areaUnit", 20);
   const configuration = field(formData, "configuration", 40);
 
@@ -136,9 +155,10 @@ export async function submitProperty(
           configuration: configuration && isConfiguration(configuration) ? configuration : null,
 
           city,
-          locality: field(formData, "locality", 120),
-          sector: field(formData, "sector", 60),
-          location: field(formData, "address", 300) ?? "",
+          locality,
+          sector,
+          location: publicLocation,
+          mapsUrl,
 
           areaValue: positiveNumber(formData, "areaValue", 10_000_000),
           // NOT NULL with a "sqft" default — an unrecognised unit falls back
@@ -183,6 +203,7 @@ export async function submitProperty(
         mobile,
         sellerCategory: "Owner",
         ownerType: "Individual",
+        address,
         notes: email ? `Submitted from the website. Email: ${email}` : "Submitted from the website.",
       });
     });

@@ -224,6 +224,24 @@ export function SellPropertyForm() {
             <input id="address" name="address" type="text" className={BOX} />
             <p className={HINT}>Kept private. It is never shown on the site.</p>
           </div>
+          <div className="flex flex-col gap-2 sm:col-span-2">
+            <label htmlFor="mapsUrl" className={LABEL}>
+              Google Maps link {OPTIONAL}
+            </label>
+            <input
+              id="mapsUrl"
+              name="mapsUrl"
+              type="url"
+              inputMode="url"
+              placeholder="https://maps.app.goo.gl/…"
+              className={BOX}
+            />
+            <p className={HINT}>
+              In Google Maps, open the spot, press Share, then Copy link. Once we list
+              the property it shows as a map on its page — leave it empty to keep the
+              exact spot private.
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-[1fr_0.8fr_1.2fr]">
