@@ -9,13 +9,13 @@ import { ContactForm } from "@/components/ContactForm";
 import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
 import { ListingCard, areaLabel, propertySpecs } from "@/components/ui/ListingCard";
 import { EnquiryToggleButton } from "@/components/EnquiryToggleButton";
-import { EmiCalculator } from "@/components/EmiCalculator";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { AreaConverter } from "@/components/AreaConverter";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { PropertyGallery } from "@/components/property/PropertyGallery";
 import { SectionNav } from "@/components/property/SectionNav";
 import { TourRequestForm } from "@/components/property/TourRequestForm";
+import { FormDialog } from "@/components/property/FormDialog";
 import { amenityIcon } from "@/components/amenity-icons";
 import { SectionHeading, SECTION } from "../../_components/page-chrome";
 import { toEnquiryCartItem } from "@/lib/enquiry-cart-item";
@@ -77,7 +77,7 @@ export async function generateMetadata({
 const EYEBROW = "text-eyebrow font-sans font-semibold uppercase tracking-[0.2em] text-gold-deep";
 const CHIP = "border border-border bg-white px-3.5 py-2 font-sans text-meta text-ink";
 /** Anchored sections clear the site header plus the sticky jump bar. */
-const ANCHOR = "scroll-mt-44";
+const ANCHOR = "scroll-mt-36";
 
 const RAIL_PRIMARY =
   "text-eyebrow inline-flex w-full justify-center bg-cta px-6 py-4 text-center font-sans font-bold uppercase tracking-[0.18em] text-cta-ink transition-colors duration-200 hover:bg-cta-hover";
@@ -135,8 +135,9 @@ const PIN = (
  * A graphite header carrying the title, the key facts and the price; the
  * photographs as a five-tile mosaic with a full-screen viewer behind it
  * (never every upload stacked down the page); then one scrolling page of
- * sections — overview, details, amenities, plans, location, visit — with a
- * sticky jump bar, beside a sticky enquiry card. Every section renders
+ * sections — overview, details, amenities, plans, location — with a sticky
+ * jump bar, beside a sticky enquiry card. The two forms (book a visit,
+ * request details) open in a dialog from their buttons, never inline. Every section renders
  * only when the listing has something to put in it.
  */
 export default async function PropertyDetailPage({
@@ -258,7 +259,6 @@ export default async function PropertyDetailPage({
     ...(hasPlans ? [{ id: "plans", label: "Plans" }] : []),
     ...(tourMedia.length ? [{ id: "videos", label: "Videos" }] : []),
     ...(hasLocation ? [{ id: "location", label: "Location" }] : []),
-    { id: "tour", label: "Book a visit" },
   ];
 
   const jsonLd = {
@@ -306,7 +306,7 @@ export default async function PropertyDetailPage({
         {/* The header: graphite, no photograph behind it — the photographs
             get their own mosaic directly below, at full strength. */}
         <section className="bg-navy px-5 pb-12 pt-32 md:px-12 md:pb-14 md:pt-40">
-          <div className="mx-auto max-w-7xl">
+          <div>
             <Breadcrumbs items={breadcrumbItems} tone="dark" />
             <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
               <div className="min-w-0 max-w-3xl">
@@ -350,12 +350,15 @@ export default async function PropertyDetailPage({
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 lg:justify-end">
-                  <a
-                    href="#tour"
-                    className="text-eyebrow inline-flex items-center bg-cta px-6 py-3.5 font-sans font-bold uppercase tracking-[0.18em] text-cta-ink transition-colors hover:bg-cta-hover"
+<FormDialog
+                    label="Book a site visit"
+                    className={"text-eyebrow inline-flex items-center bg-cta px-6 py-3.5 font-sans font-bold uppercase tracking-[0.18em] text-cta-ink transition-colors hover:bg-cta-hover"}
+                    eyebrow="See it in person"
+                    title="Book a site visit"
+                    sub={`${property.title}. Pick a day and a time and we will confirm by phone — in person, or a video call if you are outside the Tricity.`}
                   >
-                    Book a site visit
-                  </a>
+                    <TourRequestForm propertyId={property.id} propertyTitle={property.title} />
+                  </FormDialog>
                   <EnquiryToggleButton
                     icon
                     item={toEnquiryCartItem(property)}
@@ -384,7 +387,7 @@ export default async function PropertyDetailPage({
 
         {photos.length > 0 && (
           <section className="bg-surface px-5 pt-8 md:px-12 md:pt-10">
-            <div className="mx-auto max-w-7xl">
+            <div>
               <PropertyGallery images={photos} title={property.title} />
             </div>
           </section>
@@ -394,7 +397,7 @@ export default async function PropertyDetailPage({
         <SectionNav items={nav} />
 
         <div className="bg-surface px-5 py-12 md:px-12 md:py-16">
-          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-20">
             <div className="flex min-w-0 flex-col gap-12">
               <Section id="overview" eyebrow="Overview" title="About this property">
                 {property.description ? (
@@ -496,12 +499,6 @@ export default async function PropertyDetailPage({
                   </div>
                 )}
 
-                <div className="mt-10">
-                  <p className={EYEBROW}>Estimate your EMI</p>
-                  <div className="mt-4">
-                    <EmiCalculator publicPrice={property.publicPrice} />
-                  </div>
-                </div>
               </Section>
 
               {amenityList.length > 0 && (
@@ -613,17 +610,10 @@ export default async function PropertyDetailPage({
                 </Section>
               )}
 
-              <Section id="tour" eyebrow="See it in person" title="Book a site visit">
-                <p className="mb-8 max-w-xl text-pretty text-body font-sans text-ink-muted">
-                  Pick a day and a time, and we will confirm by phone. Visits are
-                  accompanied; a video call works if you are outside the Tricity.
-                </p>
-                <TourRequestForm propertyId={property.id} propertyTitle={property.title} />
-              </Section>
             </div>
 
             {/* The enquiry card: price and every way to act, always in reach. */}
-            <aside className="lg:sticky lg:top-44 lg:self-start">
+            <aside className="lg:sticky lg:top-36 lg:self-start">
               <div className="border border-border bg-white p-7 shadow-[0_24px_48px_-36px_rgba(40,30,15,0.45)]">
                 <p className="text-eyebrow font-sans font-semibold uppercase tracking-[0.2em] text-ink-muted">
                   {startsFrom ? "Starts from" : "Price"}
@@ -641,12 +631,26 @@ export default async function PropertyDetailPage({
                   </dl>
                 )}
                 <div className="mt-6 flex flex-col gap-2.5">
-                  <a href="#tour" className={RAIL_PRIMARY}>
-                    Book a site visit
-                  </a>
-                  <a href="#inquire" className={RAIL_SECONDARY}>
-                    Request details
-                  </a>
+<FormDialog
+                    label="Book a site visit"
+                    className={RAIL_PRIMARY}
+                    eyebrow="See it in person"
+                    title="Book a site visit"
+                    sub={`${property.title}. Pick a day and a time and we will confirm by phone — in person, or a video call if you are outside the Tricity.`}
+                  >
+                    <TourRequestForm propertyId={property.id} propertyTitle={property.title} />
+                  </FormDialog>
+                  <FormDialog
+                    label="Request details"
+                    className={RAIL_SECONDARY}
+                    eyebrow="Enquire"
+                    title={PROPERTY_DETAIL.inquiryHeading}
+                    sub={`About ${property.title}. ${PROPERTY_DETAIL.inquirySub}`}
+                  >
+                    {/* The listing travels with the enquiry, so the lead in the
+                        admin says which property it is about. */}
+                    <ContactForm idPrefix="detail-" propertyIds={[property.id]} source="property_page" />
+                  </FormDialog>
                   <div className="grid grid-cols-2 gap-2.5">
                     <a href={company.phoneHref} className={RAIL_SECONDARY}>
                       Call
@@ -689,26 +693,9 @@ export default async function PropertyDetailPage({
           </div>
         </div>
 
-        <section id="inquire" className={`${ANCHOR} border-y border-border bg-cream px-5 py-16 md:px-12 md:py-24`}>
-          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 md:grid-cols-[1fr_1.4fr] md:gap-20">
-            <div className="md:sticky md:top-44 md:self-start">
-              <p className={EYEBROW}>Enquire</p>
-              <h2 className="mt-3 max-w-sm text-balance font-serif text-h3 text-heading">
-                {PROPERTY_DETAIL.inquiryHeading}
-              </h2>
-              <p className="mt-5 max-w-sm text-pretty text-body font-sans text-ink-muted">
-                About {property.title}. {PROPERTY_DETAIL.inquirySub}
-              </p>
-            </div>
-            {/* The listing travels with the enquiry, so the lead in the admin
-                says which property it is about. */}
-            <ContactForm propertyIds={[property.id]} source="property_page" />
-          </div>
-        </section>
-
         {similar.length > 0 && (
           <section className={SECTION}>
-            <div className="mx-auto max-w-7xl">
+            <div>
               <SectionHeading
                 eyebrow="You may also like"
                 title="Similar properties"

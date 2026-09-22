@@ -28,9 +28,11 @@ export function SectionNav({ items }: { items: { id: string; label: string }[] }
   return (
     <nav
       aria-label="On this page"
-      className="sticky top-[4.5rem] z-30 mt-8 border-b border-border bg-surface/95 backdrop-blur-sm md:top-24 md:mt-10"
+      // Flush under the site header (77px tall at every width) — any gap
+      // between the two lets the page scroll through visibly.
+      className="sticky top-[76px] z-30 mt-8 border-b border-border bg-surface md:mt-10"
     >
-      <ul className="mx-auto flex max-w-7xl gap-6 overflow-x-auto px-5 [scrollbar-width:none] md:gap-9 md:px-12 [&::-webkit-scrollbar]:hidden">
+      <ul className="flex gap-6 overflow-x-auto px-5 [scrollbar-width:none] md:gap-9 md:px-12 [&::-webkit-scrollbar]:hidden">
         {items.map((item) => (
           <li key={item.id} className="shrink-0">
             <a

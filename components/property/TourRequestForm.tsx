@@ -1,14 +1,14 @@
 "use client";
 
 import { useActionForm } from "@/lib/use-action-form";
-import { LABEL } from "@/components/form-classes";
+import { BOXED_FIELD, BOXED_SELECT, LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
 import { requestTour, type TourState } from "@/app/(site)/tours/actions";
 import { TOUR_TIMES, TOUR_TYPES } from "@/lib/taxonomy/tours";
 
-const FIELD_CLASSES =
-  "w-full appearance-none rounded-none border-b border-border bg-transparent py-3 font-sans text-body text-ink placeholder:text-ink-muted/60 focus:border-gold focus:outline-none";
+// Boxed, like the enquiry form: the two open from the same page.
+const FIELD_CLASSES = BOXED_FIELD;
 
 const initialState: TourState = { status: "idle" };
 
@@ -49,7 +49,7 @@ export function TourRequestForm({
   const minDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   return (
-    <form {...formProps} className="flex max-w-xl flex-col gap-8">
+    <form {...formProps} className="flex flex-col gap-6">
       <input
         type="text"
         name="company"
@@ -60,7 +60,7 @@ export function TourRequestForm({
       />
       <input type="hidden" name="propertyId" value={propertyId} />
 
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor="tourType" className={LABEL}>
             Tour type
@@ -68,6 +68,7 @@ export function TourRequestForm({
           <Select
             id="tourType"
             name="tourType"
+            className={BOXED_SELECT}
             defaultValue={TOUR_TYPES[0]}
             options={TOUR_TYPES.map((t) => ({ value: t, label: t }))}
           />
@@ -93,12 +94,13 @@ export function TourRequestForm({
         <Select
           id="preferredTime"
           name="preferredTime"
+          className={BOXED_SELECT}
           defaultValue={TOUR_TIMES[2]}
           options={TOUR_TIMES.map((t) => ({ value: t, label: t }))}
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor="tourName" className={LABEL}>
             Name
