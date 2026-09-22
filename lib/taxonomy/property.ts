@@ -16,10 +16,8 @@
  *
  * The CFF also lists "Lease", "Pre-Leased Property" and "Investment
  * Property" here, but those describe the deal, not the structure — a
- * pre-leased shop is still a Shop. They live in DEAL_ATTRIBUTES below and
- * combine with any physical type, so a listing can be a Shop that is both
- * Pre-Leased and an Investment Property. "Lease" itself is already the
- * existing `lease` category in lib/categories.ts.
+ * pre-leased shop is still a Shop — so they are not types. "Lease" itself
+ * is the existing `lease` category in lib/categories.ts.
  */
 export const PROPERTY_TYPES = [
   "Residential Plot",
@@ -30,9 +28,6 @@ export const PROPERTY_TYPES = [
 ] as const;
 
 export type PropertyType = (typeof PROPERTY_TYPES)[number];
-
-/** Deal-shape flags that combine with any physical type (see note above). */
-export const DEAL_ATTRIBUTES = ["Pre-Leased Property", "Investment Property"] as const;
 
 /** CFF group 10. */
 export const FACINGS = [
@@ -54,20 +49,6 @@ export const POSSESSION_STATUSES = [
   "Ready to Move",
   "Under Construction",
   "New Launch",
-] as const;
-
-/**
- * CFF group 12.
- * ponytail: stored as a band, as the client wrote it. A construction year
- * would age correctly on its own instead of going stale — CONFIRM before
- * a large import makes the band hard to revisit.
- */
-export const PROPERTY_AGES = [
-  "New",
-  "Less than 1 Year",
-  "1–5 Years",
-  "5–10 Years",
-  "More than 10 Years",
 ] as const;
 
 /** CFF group 9, level. */
@@ -124,40 +105,6 @@ export const CONFIGURATIONS = [
 ] as const;
 
 export type Configuration = (typeof CONFIGURATIONS)[number];
-
-/** CFF group 7, the room checklist beyond the BHK label. */
-export const ROOM_FLAGS = [
-  "Servant Room",
-  "Study Room",
-  "Store Room",
-  "Pooja Room",
-  "Terrace",
-  "Roof Rights",
-] as const;
-
-/**
- * What selecting a configuration tab pre-fills (R-09). Every value stays
- * hand-editable afterwards — this is a starting point, not a constraint.
- * "+1" means a servant room on top of the bedroom count, the local
- * convention; a 3+1 is a 3-bedroom with servant quarters, not 4 bedrooms.
- */
-export const CONFIGURATION_TEMPLATES: Record<
-  Configuration,
-  { beds: number | null; baths: number | null; balconies: number | null; rooms: string[] }
-> = {
-  "1 BHK": { beds: 1, baths: 1, balconies: 1, rooms: [] },
-  "2 BHK": { beds: 2, baths: 2, balconies: 1, rooms: [] },
-  "3 BHK": { beds: 3, baths: 3, balconies: 2, rooms: [] },
-  "4 BHK": { beds: 4, baths: 4, balconies: 2, rooms: [] },
-  "5 BHK": { beds: 5, baths: 5, balconies: 3, rooms: [] },
-  "2+1": { beds: 2, baths: 2, balconies: 1, rooms: ["Servant Room"] },
-  "3+1": { beds: 3, baths: 3, balconies: 2, rooms: ["Servant Room"] },
-  "4+1": { beds: 4, baths: 4, balconies: 2, rooms: ["Servant Room"] },
-  "3+2": { beds: 3, baths: 3, balconies: 2, rooms: ["Servant Room", "Study Room"] },
-  Duplex: { beds: 3, baths: 3, balconies: 2, rooms: ["Terrace"] },
-  Triplex: { beds: 4, baths: 4, balconies: 3, rooms: ["Terrace", "Roof Rights"] },
-  Studio: { beds: 1, baths: 1, balconies: 0, rooms: [] },
-};
 
 export function isConfiguration(value: string): value is Configuration {
   return (CONFIGURATIONS as readonly string[]).includes(value);

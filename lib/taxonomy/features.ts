@@ -123,7 +123,10 @@ export const PLC_ATTRIBUTES = [
 
 /**
  * CFF group 14. Public — RERA registration is expected in Indian property
- * advertising and the rest are trust signals.
+ * advertising and the rest are trust signals. The group's "Mortgaged" is
+ * deliberately not here: it is a negotiating position, not a selling point,
+ * so it is `property_internal.is_mortgaged` and can never be rendered by the
+ * public legal strip by accident.
  */
 export const LEGAL_FLAGS = [
   "RERA Registered",
@@ -131,13 +134,6 @@ export const LEGAL_FLAGS = [
   "Registry Available",
   "Freehold",
 ] as const;
-
-/**
- * Also CFF group 14, but internal only: whether a property is mortgaged is
- * a negotiating position, not a selling point. Kept out of LEGAL_FLAGS so
- * it can never be rendered by the public legal strip by accident.
- */
-export const INTERNAL_LEGAL_FLAGS = ["Mortgaged"] as const;
 
 /**
  * CFF group 17. Internal by default — CONFIRM whether a trimmed public

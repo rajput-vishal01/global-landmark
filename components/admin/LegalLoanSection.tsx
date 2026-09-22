@@ -81,8 +81,8 @@ export function LegalLoanSection({
 
             "Mortgaged" is absent on purpose. It belongs to the same CFF group
             but it is a negotiating position, not a selling point, so it lives
-            on the internal table via INTERNAL_LEGAL_FLAGS and cannot reach
-            the public legal strip by accident.
+            on the internal table (property_internal.is_mortgaged) and cannot
+            reach the public legal strip by accident.
 
             Fixed taxonomy, so no free text: the server drops what it does not
             recognise and the broker would never learn why. */}

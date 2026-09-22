@@ -20,9 +20,6 @@ export const LISTING_STATUSES = [
 
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
 
-/** Admin badge colours, using the existing @theme tokens only. */
-
-
 /** A listing is only ever public while it is genuinely available. */
 export const PUBLIC_STATUSES: readonly ListingStatus[] = ["Available"];
 
@@ -47,8 +44,6 @@ export function isPubliclyVisible(
 
 /** Draft exists because a half-entered listing mid-call is normal. */
 export const PUBLICATION_STATES = ["draft", "published", "archived"] as const;
-
-export type PublicationState = (typeof PUBLICATION_STATES)[number];
 
 /** CFF group 1 — provenance. `sourceName` names the dealer or owner. */
 export const ADDED_BY = ["Global Landmark", "Dealer", "Owner"] as const;

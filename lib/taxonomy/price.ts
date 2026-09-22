@@ -9,35 +9,6 @@
  * and never reaches a public query.
  */
 
-export const CHARGE_TYPES = [
-  "Maintenance",
-  "PLC",
-  "IFMS",
-  "Club Charges",
-  "Parking Charges",
-  "IDC",
-  "EDC",
-  "GST",
-  "Registry Charges",
-  "Transfer Charges",
-  "Other Charges",
-] as const;
-
-export type ChargeType = (typeof CHARGE_TYPES)[number];
-
-/** How a charge's amount should be read. */
-export const CHARGE_BASES = [
-  { value: "lump_sum", label: "Lump sum" },
-  { value: "per_sqft", label: "Per sq.ft" },
-  { value: "percent", label: "% of demand price" },
-] as const;
-
-export type ChargeBasis = (typeof CHARGE_BASES)[number]["value"];
-
-export function isChargeBasis(value: string): value is ChargeBasis {
-  return CHARGE_BASES.some((b) => b.value === value);
-}
-
 /** Indian currency formatting — one formatter, used everywhere including email. */
 export function formatRupees(paise: number): string {
   return `₹${Math.round(paise).toLocaleString("en-IN")}`;
