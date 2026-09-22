@@ -27,7 +27,7 @@ export function FeaturedListings({
     <section id="listings" className="bg-cream px-5 py-16 md:px-12 md:py-24">
       <SectionHeading
         eyebrow="Featured"
-        title="Exclusive Listings"
+        title="Our Listings"
         action={
           <Button href="/properties" variant="outline">
             View All Listings

@@ -222,7 +222,7 @@ export const WHATSAPP = {
 // ─── Subpages ──────────────────────────────────────────────────────────────
 
 export const PROPERTIES_PAGE = {
-  title: "Exclusive Listings",
+  title: "Our Listings",
   subSuffix: "Off-market introductions on request.",
   emptySub: "The portfolio is being prepared.",
   emptyBody:

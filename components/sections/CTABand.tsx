@@ -21,7 +21,7 @@ export function CTABand() {
           sub={CTA_BAND.sub}
         />
         <div className="mt-9">
-          <Button href="/contact" variant="primary">
+          <Button href="/sell" variant="primary">
             {CTA_BAND.ctaLabel}
           </Button>
         </div>

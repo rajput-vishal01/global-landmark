@@ -41,7 +41,7 @@ import {
 import { COMPANY, PROPERTIES_PAGE } from "@/lib/data";
 import { canonical } from "@/lib/seo";
 
-const PAGE_TITLE = "Exclusive Listings";
+const PAGE_TITLE = "Our Listings";
 const PAGE_DESCRIPTION = `The current portfolio of landmark residences represented by ${COMPANY.legalName}.`;
 
 export const metadata: Metadata = {
