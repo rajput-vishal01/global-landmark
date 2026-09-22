@@ -12,7 +12,9 @@
    then optional sections that render only when filled.
 
 Landing page redesign checkpoint: git tag `landing-v1` marks the landing
-page as it was before the Sep 2026 redesign, for a revert.
+page as it was before the Sep 2026 redesign. That redesign (eed4754) was
+tried and reverted (3321b66) at the client's call; the landing page is
+back to landing-v1.
 
 Context-building phase produced all `.md` docs; the build is now underway.
 Shipped since: landing page + subpages (earlier sessions), then the July 2026
