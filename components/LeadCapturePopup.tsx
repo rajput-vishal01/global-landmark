@@ -136,7 +136,7 @@ export function LeadCapturePopup() {
             <div data-band className="flex flex-col bg-navy p-7 text-cream md:p-9">
               <div className="flex items-center gap-3">
                 <Image
-                  src="/logo.png"
+                  src="/logo-mark.png"
                   alt=""
                   width={44}
                   height={44}

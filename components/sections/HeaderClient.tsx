@@ -58,11 +58,12 @@ export function HeaderClient({ company }: { company: Company }) {
           href="/"
           className={`flex items-center gap-2.5 whitespace-nowrap font-serif uppercase transition-colors duration-500 sm:gap-3 ${tone}`}
         >
-          {/* Not preloaded: logo.png is a 1.4 MB file drawn at 44px, and a
-              preload put it ahead of the hero photo — the page's largest
-              paint — on every page. */}
+          {/* logo-mark.png: the 1024px, 1.4 MB logo.png scaled to 256px (22 KB)
+              for a mark drawn at 44–56px. Still not preloaded, so it never
+              queues ahead of the hero photo. logo.png stays for structured
+              data and share cards, which want the large file. */}
           <Image
-            src="/logo.png"
+            src="/logo-mark.png"
             alt=""
             width={56}
             height={56}

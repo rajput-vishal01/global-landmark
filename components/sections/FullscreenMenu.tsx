@@ -51,7 +51,7 @@ export function FullscreenMenu({
               className="flex items-center gap-2.5 whitespace-nowrap font-serif uppercase text-cream sm:gap-3"
             >
               <Image
-                src="/logo.png"
+                src="/logo-mark.png"
                 alt=""
                 width={56}
                 height={56}
