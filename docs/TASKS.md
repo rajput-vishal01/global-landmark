@@ -1,5 +1,19 @@
 # Tasks — Phased Build Roadmap
 
+## Pending (Sep 2026) — do in this order
+
+1. **Redesign the admin Create/Edit property form.** It is too complex for
+   the client to use. Cut it to the essentials every listing needs, with the
+   rest optional and out of the way. First, because the detail page can only
+   show what this form reliably captures, and brokers are blocked on it now.
+2. **Redesign the public property detail page** (`/properties/[slug]`),
+   after a few real listings have gone in through the new form, and around
+   the fields those listings actually carry: gallery, price and key facts,
+   then optional sections that render only when filled.
+
+Landing page redesign checkpoint: git tag `landing-v1` marks the landing
+page as it was before the Sep 2026 redesign, for a revert.
+
 Context-building phase produced all `.md` docs; the build is now underway.
 Shipped since: landing page + subpages (earlier sessions), then the July 2026
 feature expansion — PostgreSQL/Drizzle data layer, admin panel behind the
