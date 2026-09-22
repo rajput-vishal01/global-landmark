@@ -13,6 +13,7 @@ import { CITY_NAMES, placeFromAddress } from "@/lib/locations";
 import { parseMapsUrl } from "@/lib/admin/property-parse";
 import { parseSellPhotos } from "@/lib/sell-photos";
 import { deleteStoredFiles, storageKeyFromUrl } from "@/lib/storage";
+import { sendSubmissionEmail } from "@/lib/email";
 
 /**
  * "List your property" — the public seller submission (R-56).
@@ -228,6 +229,14 @@ export async function submitProperty(
     }
 
     return { status: "error", message: "Something went wrong. Please try again." };
+  }
+
+  // Saved first, emailed second, as for tours: the listing is already in
+  // Admin → Submissions, so mail trouble is logged and never shown here.
+  try {
+    await sendSubmissionEmail({ title, location: publicLocation, ownerName, mobile, email, photos: photos.length });
+  } catch (err) {
+    console.error("[mail] property submission: office notification failed:", err);
   }
 
   return { status: "sent" };

@@ -20,6 +20,7 @@
     "check:news": "node scripts/check-news.mjs",
     "check": "npm run check:sw && npm run check:taxonomy && npm run check:features && npm run check:storage && npm run check:news && npm run check:reviews && npm run check:legal && npm run check:forms && tsc --noEmit && eslint .",
     "sweep:uploads": "node scripts/sweep-orphan-uploads.mjs",
+    "mail:test": "node scripts/mail-test.mjs",
     "check:legal": "node scripts/check-legal.mjs",
     "check:forms": "node scripts/check-forms.mjs",
     "check:reviews": "node scripts/check-reviews.mjs"
