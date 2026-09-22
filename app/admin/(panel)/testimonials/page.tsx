@@ -30,13 +30,25 @@ export default async function AdminTestimonialsPage() {
             <li key={video.id}>
               <Card>
                 <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-ink">
-                  <VideoThumb provider={video.provider} videoId={video.videoId} />
+                  <VideoThumb provider={video.provider} videoId={video.videoId} showMissingHint />
                 </div>
                 <div className="mt-3 flex items-start justify-between gap-3">
                   <p className="min-w-0 text-[13px] text-ink">
                     {video.caption || <span className="text-muted">No caption</span>}
                     <span className="mt-0.5 block truncate text-[11.5px] text-muted">
-                      {video.provider} · {video.videoId}
+                      {video.provider} ·{" "}
+                      <a
+                        href={
+                          video.provider === "instagram"
+                            ? `https://www.instagram.com/reel/${video.videoId}/`
+                            : `https://www.youtube.com/watch?v=${video.videoId}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline decoration-line underline-offset-2 hover:text-ink"
+                      >
+                        Open
+                      </a>
                     </span>
                   </p>
                   <DeleteButton
