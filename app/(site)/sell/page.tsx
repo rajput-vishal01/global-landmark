@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { SellPropertyForm } from "@/components/SellPropertyForm";
-import { PageHeader, SECTION } from "../_components/page-chrome";
+import { PageHeader } from "../_components/page-chrome";
 import { canonical } from "@/lib/seo";
+import { COMPANY } from "@/lib/data";
 
 const PAGE_TITLE = "Sell your property";
 const PAGE_DESCRIPTION =
@@ -38,11 +39,17 @@ const STEPS: [string, string][] = [
   ],
 ];
 
+/**
+ * Sell, redesigned (Sep 2026). The old page was a bare list of steps beside
+ * a long underlined form. Now: the steps as a connected timeline on a
+ * graphite card, with a direct line to the office under it, beside the form
+ * as a white card in three numbered parts. Wording unchanged.
+ */
 export default function SellPage() {
   return (
     <>
       <Header />
-      <main>
+      <main className="bg-surface">
         <PageHeader
           eyebrow="List with us"
           title={PAGE_TITLE}
@@ -50,28 +57,61 @@ export default function SellPage() {
           breadcrumbs={BREADCRUMBS}
         />
 
-        <section className={SECTION}>
-          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-16 lg:grid-cols-[1fr_minmax(0,1.4fr)] lg:gap-24">
-            <div className="flex flex-col gap-10 lg:sticky lg:top-28 lg:self-start">
-              <div className="flex flex-col gap-6">
-                {STEPS.map(([heading, body], i) => (
-                  <div key={heading} className="flex gap-5">
-                    <span
-                      aria-hidden
-                      className="text-eyebrow shrink-0 pt-1 font-sans font-semibold tracking-[0.2em] text-gold-deep"
-                    >
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <div className="flex flex-col gap-1.5">
-                      <h2 className="font-serif text-h4 text-ink">{heading}</h2>
-                      <p className="text-pretty text-meta font-sans leading-relaxed text-ink-muted">
-                        {body}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+        <section className="px-5 py-14 md:px-12 md:py-20">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.5fr)] lg:gap-14">
+            <aside className="flex flex-col gap-5 lg:sticky lg:top-28 lg:self-start">
+              <div className="bg-navy p-8 text-cream md:p-10" data-band>
+                <p className="text-eyebrow font-sans font-semibold uppercase tracking-[0.22em] text-cta">
+                  How it works
+                </p>
+                {/* A timeline, not a list: the gold spine is what tells the
+                    reader these happen in order. */}
+                <ol className="relative mt-8 flex flex-col gap-8">
+                  <span
+                    aria-hidden
+                    className="absolute bottom-3 left-[17px] top-3 w-px bg-gradient-to-b from-gold via-gold/40 to-transparent"
+                  />
+                  {STEPS.map(([heading, body], i) => (
+                    <li key={heading} className="relative flex gap-5">
+                      <span
+                        aria-hidden
+                        className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gold bg-navy font-sans text-meta font-semibold text-cta"
+                      >
+                        {i + 1}
+                      </span>
+                      <div className="flex flex-col gap-1.5 pt-1">
+                        <h2 className="font-serif text-h4 text-cream">{heading}</h2>
+                        <p className="text-pretty text-meta font-sans leading-relaxed text-cream/70">
+                          {body}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
               </div>
-            </div>
+
+              <div className="flex items-center justify-between gap-4 border border-border bg-white px-6 py-5">
+                <div>
+                  <p className="text-eyebrow font-sans font-semibold uppercase tracking-[0.18em] text-gold-deep">
+                    Prefer to talk?
+                  </p>
+                  <a
+                    href={COMPANY.phoneHref}
+                    className="mt-1 block font-serif text-h4 text-heading transition-colors hover:text-gold-deep"
+                  >
+                    {COMPANY.phone}
+                  </a>
+                </div>
+                <span
+                  aria-hidden
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gold/50 text-gold-deep"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                    <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" />
+                  </svg>
+                </span>
+              </div>
+            </aside>
 
             <SellPropertyForm />
           </div>
