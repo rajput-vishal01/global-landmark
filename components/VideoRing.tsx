@@ -23,7 +23,7 @@ import { VideoLightbox } from "@/components/VideoTestimonials";
  * a branded card), which background-image cannot do.
  */
 
-/** Card i faces the viewer when the ring is at i * angle, so 0 puts the first card in front. */
+/** Card i faces the viewer when the ring is at -i * angle, so 0 puts the first card in front. */
 const START_ROTATION = 0;
 /** Pixels of pointer travel before a press counts as a drag, not a click. */
 const DRAG_SLOP = 6;
@@ -42,10 +42,19 @@ function useStageWidth(ref: React.RefObject<HTMLDivElement | null>): number {
   return width;
 }
 
-/** Share of the stage the ring's diameter spans. Under 1 so the edge cards are not clipped. */
-const RING_SPAN = 0.92;
+/**
+ * Ring diameter as a share of the stage. Over 1 because, seen from outside,
+ * the far sides recede and project narrower than the diameter; 1.3 lands
+ * the visible sweep at roughly the full width.
+ */
+const RING_SPAN = 1.3;
 /** Space between neighbouring cards, as a fraction of a card's width. */
 const CARD_GAP = 0.18;
+/**
+ * Camera distance as a multiple of the radius. Lower = stronger depth: the
+ * front card stays full size and the side cards shrink harder.
+ */
+const PERSPECTIVE = 1.8;
 
 export function VideoRing({ videos }: { videos: TestimonialVideo[] }) {
   const [openVideo, setOpenVideo] = useState<TestimonialVideo | null>(null);
@@ -95,7 +104,7 @@ export function VideoRing({ videos }: { videos: TestimonialVideo[] }) {
   const bringToFront = useCallback(
     (index: number) => {
       const current = rotation.get();
-      const base = START_ROTATION + index * angle;
+      const base = START_ROTATION - index * angle;
       const target = base + 360 * Math.round((current - base) / 360);
       rotation.stop();
       animate(rotation, target, { duration: reduceMotion ? 0 : 0.6, ease: [0.23, 1, 0.32, 1] });
@@ -116,7 +125,9 @@ export function VideoRing({ videos }: { videos: TestimonialVideo[] }) {
       const dx = e.clientX - state.lastX;
       state.lastX = e.clientX;
       state.travelled += Math.abs(dx);
-      state.velocity = -dx * DRAG_SENSITIVITY;
+      // Seen from outside, a positive rotateY carries the front card to the
+      // right, so the ring turns with the pointer at +dx.
+      state.velocity = dx * DRAG_SENSITIVITY;
       rotation.set(rotation.get() + state.velocity);
     };
     const up = () => {
@@ -152,33 +163,39 @@ export function VideoRing({ videos }: { videos: TestimonialVideo[] }) {
       >
         <div
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-          // Perspective grows with the ring, or a wide ring bends like a fisheye.
-          style={{ perspective: distance * 3, width: cardWidth, height: cardHeight }}
+          // Perspective scales with the ring so the depth reads the same at any width.
+          style={{ perspective: distance * PERSPECTIVE, width: cardWidth, height: cardHeight }}
         >
-          {/* pointer-events-none: the ring's own plane sits exactly where the
-              front card sits, and in 3D hit-testing the parent won the tie,
-              so the front card could not be clicked. Cards opt back in. */}
+          {/* Seen from OUTSIDE the ring: each card sits on the rim facing
+              out, and the whole ring is pushed back by its radius, so the
+              front card is at the screen plane (largest) and the rest
+              shrink as they curve away. pointer-events-none on the ring so
+              only the cards take clicks; they opt back in. */}
           <m.ul
             className="pointer-events-none absolute inset-0"
-            style={{ transformStyle: "preserve-3d", rotateY: rotation }}
+            style={{ transformStyle: "preserve-3d", z: -distance, rotateY: rotation }}
           >
             {faces.map(({ video, isRepeat }, index) => (
-              <m.li
+              <li
                 key={`${video.id}-${index}`}
                 aria-hidden={isRepeat || undefined}
                 className="absolute inset-0"
+                // Not preserve-3d: the card flattens into this one plane, so
+                // backface-visibility hides the whole card once it turns away.
                 style={{
-                  transformStyle: "preserve-3d",
                   backfaceVisibility: "hidden",
-                  rotateY: index * -angle,
-                  z: -distance,
-                  transformOrigin: `50% 50% ${distance}px`,
+                  transform: `rotateY(${index * angle}deg) translateZ(${distance}px)`,
                 }}
-                initial={reduceMotion ? false : { y: 200, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ delay: Math.min(index, 12) * 0.08, duration: 1.2, ease: [0.23, 1, 0.32, 1] }}
               >
+                {/* Entrance on an inner wrapper: Framer writes its own
+                    transform, which would replace the placement above. */}
+                <m.div
+                  className="h-full w-full"
+                  initial={reduceMotion ? false : { y: 200, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ delay: Math.min(index, 12) * 0.08, duration: 1.2, ease: [0.23, 1, 0.32, 1] }}
+                >
                 <button
                   type="button"
                   tabIndex={isRepeat ? -1 : undefined}
@@ -192,8 +209,8 @@ export function VideoRing({ videos }: { videos: TestimonialVideo[] }) {
                     if (e.currentTarget.matches(":focus-visible")) bringToFront(index);
                   }}
                   aria-label={`Play video${video.caption ? ` — ${video.caption}` : ""}`}
-                  // Dimming lives here, not on the <li>: Framer writes an inline
-                  // opacity on the <li> for its entrance, which a class cannot beat.
+                  // Dimming lives here, not on the wrapper: Framer writes an
+                  // inline opacity on the wrapper for its entrance.
                   className="pointer-events-auto group relative block h-full w-full cursor-pointer overflow-hidden bg-dark-deep transition-opacity duration-200 group-hover/ring:opacity-50 hover:!opacity-100 focus-visible:!opacity-100 shadow-[0_30px_60px_-25px_rgba(0,0,0,0.7)] ring-1 ring-gold/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold"
                 >
                   <VideoThumb
@@ -219,7 +236,8 @@ export function VideoRing({ videos }: { videos: TestimonialVideo[] }) {
                     </span>
                   )}
                 </button>
-              </m.li>
+                </m.div>
+              </li>
             ))}
           </m.ul>
         </div>
@@ -230,8 +248,8 @@ export function VideoRing({ videos }: { videos: TestimonialVideo[] }) {
       <div className="mt-2 flex justify-center gap-2">
         {(
           [
-            [-1, "Previous video", "M15 5l-7 7 7 7"],
-            [1, "Next video", "M9 5l7 7-7 7"],
+            [1, "Previous video", "M15 5l-7 7 7 7"],
+            [-1, "Next video", "M9 5l7 7-7 7"],
           ] as const
         ).map(([direction, label, path]) => (
           <button
