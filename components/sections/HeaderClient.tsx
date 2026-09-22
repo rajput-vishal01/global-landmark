@@ -58,12 +58,14 @@ export function HeaderClient({ company }: { company: Company }) {
           href="/"
           className={`flex items-center gap-2.5 whitespace-nowrap font-serif uppercase transition-colors duration-500 sm:gap-3 ${tone}`}
         >
+          {/* Not preloaded: logo.png is a 1.4 MB file drawn at 44px, and a
+              preload put it ahead of the hero photo — the page's largest
+              paint — on every page. */}
           <Image
             src="/logo.png"
             alt=""
             width={56}
             height={56}
-            priority
             className="h-9 w-9 shrink-0 object-contain sm:h-11 sm:w-11"
           />
           <span className="text-sm tracking-[0.12em] sm:text-lg sm:tracking-[0.16em] md:text-xl">
