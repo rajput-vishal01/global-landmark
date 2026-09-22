@@ -5,7 +5,7 @@ import { MAX_SELL_PHOTOS } from "@/lib/sell-photos";
 
 /** Kept in step with IMAGE_MIME_TYPES / MAX_UPLOAD_BYTES in lib/storage.ts. */
 const ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
-const MAX_MB = 8;
+const MAX_MB = 20;
 
 /**
  * Photo picker for the public seller form.

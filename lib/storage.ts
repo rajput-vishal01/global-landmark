@@ -130,10 +130,11 @@ const MIME_BY_EXT: Record<string, string> = {
 };
 
 /**
- * 8 MB. Comfortably fits a full-resolution property photo off a phone or a
- * DSLR export. Raise deliberately.
+ * 20 MB: room for a full-quality photo, which is served untouched (the site
+ * never re-encodes images). Raise deliberately — the reverse proxy in front
+ * of the app must allow at least this much (nginx: client_max_body_size).
  */
-export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 
 /** `<sha256>.<ext>` — the whole identity of a stored file. */
 

@@ -37,17 +37,13 @@ const nextConfig: NextConfig = {
     // photography and goes when the client's own images land.
     remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
 
-    // Next 16 changed the default for this from "any quality" to [75], so a
-    // `quality` prop outside this list is rejected at request time. Property
-    // photography is the product here — a buyer decides whether to visit off
-    // these images — so the gallery is served at 95 and cards at 90, and 75
-    // stays listed because unrelated imagery still uses the default.
-    qualities: [75, 90, 95],
-
-    // AVIF first, WebP as the fallback. AVIF carries noticeably more detail
-    // per byte at these quality levels, which is what makes 95 affordable;
-    // browsers that cannot take it are served the WebP.
-    formats: ["image/avif", "image/webp"],
+    // Every image is served exactly as uploaded (Sep 2026, the client’s
+    // call): no resizing, no AVIF/WebP re-encode, 100% of the uploaded
+    // quality. The photographs are the product, and the optimiser’s copies
+    // were visibly softer than the files the broker uploaded. The cost is
+    // weight — upload photos at the size they should be seen (around 2500px
+    // on the long edge is plenty), not straight off a 50MP camera.
+    unoptimized: true,
   },
   // Builder and area pages were removed (Sep 2026). Anything still linking
   // to them lands on the listings instead of a 404.

@@ -17,7 +17,7 @@ import { clientIp, isRateLimited } from "@/lib/rate-limit";
  *
  * What it does NOT need to guard, because lib/storage.ts already does:
  * MIME type (a fixed allowlist, extension derived from it and never from the
- * client), an 8MB ceiling, and a filename that is the SHA-256 of the bytes —
+ * client), a 20MB ceiling, and a filename that is the SHA-256 of the bytes —
  * so nothing user-supplied reaches the path, and the same photo uploaded
  * twice overwrites itself instead of filling the disk.
  */

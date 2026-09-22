@@ -8,7 +8,7 @@ type UploaderImage = { url: string; storageKey: string | null; alt: string };
 
 /** Kept in step with IMAGE_MIME_TYPES / MAX_UPLOAD_BYTES in lib/storage.ts. */
 const ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
-const MAX_MB = 8;
+const MAX_MB = 20;
 /**
  * Must match MAX_IMAGES in lib/admin/property-parse.ts. The server rejects an
  * over-long list with "Image list is invalid", which reads as a bug rather

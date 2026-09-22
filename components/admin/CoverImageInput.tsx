@@ -6,7 +6,7 @@ import { deskFieldFull } from "./FormSection";
 
 /** Kept in step with IMAGE_MIME_TYPES / MAX_UPLOAD_BYTES in lib/storage.ts. */
 const ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
-const MAX_MB = 8;
+const MAX_MB = 20;
 
 /**
  * One image, one field — the single-cover counterpart to ImageUploader.

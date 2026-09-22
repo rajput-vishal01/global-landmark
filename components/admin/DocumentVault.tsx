@@ -351,7 +351,7 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-[11.5px] text-muted">
-          PDF, Word (.doc, .docx) or any photo · up to 8 MB each · drag files onto a row ·{" "}
+          PDF, Word (.doc, .docx) or any photo · up to 20 MB each · drag files onto a row ·{" "}
           {files.length}/{MAX_DOCS} files
         </p>
         {!hasBlankRow && !isFull && (
