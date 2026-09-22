@@ -4,7 +4,10 @@ import { COMPANY, SEO } from "@/lib/data";
 // Branded default OG card (referenced as SEO.ogImage). Property pages
 // override it with their own photography via generateMetadata; this covers
 // the homepage and every page without a listing image. Static — no
-// request APIs — so it renders once and is cached.
+// request APIs — so it renders once at build and is served from there;
+// without this line a GET handler re-drew the PNG on every request.
+export const dynamic = "force-static";
+
 export async function GET() {
   return new ImageResponse(
     (
