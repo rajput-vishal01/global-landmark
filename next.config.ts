@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === "development";
 
+/** The canonical origin (lib/seo.ts reads the same variable). */
+const SITE = new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000");
+
 // script-src needs 'unsafe-inline' for Next's hydration bootstrap; img-src
 // stays broad because news thumbnails come from arbitrary publisher hosts.
 const CSP = [
@@ -52,6 +55,14 @@ const nextConfig: NextConfig = {
       { source: "/areas", destination: "/properties", permanent: true },
       { source: "/areas/:slug", destination: "/properties", permanent: true },
       { source: "/builders/:slug", destination: "/properties", permanent: true },
+      // One host. www served the whole site as a copy of the canonical bare
+      // domain; .well-known stays put for certificate checks.
+      {
+        source: "/:path((?!\\.well-known/).*)",
+        has: [{ type: "host", value: `www.${SITE.hostname}` }],
+        destination: `${SITE.origin}/:path`,
+        permanent: true,
+      },
     ];
   },
   async headers() {
