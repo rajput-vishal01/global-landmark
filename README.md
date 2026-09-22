@@ -62,7 +62,7 @@ path outside the deploy directory in production so a redeploy cannot wipe it.
 npm run check
 ```
 
-Runs the service-worker routing assertions, the taxonomy and EMI/ranking
+Runs the service-worker routing assertions, the taxonomy and ranking
 assertions, `tsc --noEmit` and `eslint`. There is no test framework —
 these assert-based scripts are the suite (`scripts/check-*.mjs`).
 

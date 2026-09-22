@@ -1,7 +1,7 @@
 /**
  * The /news relevance gate.
  *
- * Pure and Next-free on purpose, exactly like lib/emi.ts and lib/similar.ts:
+ * Pure and Next-free on purpose, exactly like lib/similar.ts:
  * scripts/check-news.mjs compiles this file on its own with plain tsc, which
  * cannot see Next's `fetch(..., { next: { revalidate } })` extension. Keeping
  * the predicate out of lib/news.ts is what makes it testable.
