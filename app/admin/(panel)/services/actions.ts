@@ -46,6 +46,9 @@ export async function createService(
   await requireAdmin();
   const title = String(formData.get("title") ?? "").trim().slice(0, 200);
   if (!title) return { error: "A title is required." };
+  if (textField(formData, "href", 300) && !linkField(formData)) {
+    return { error: "The link must be a page on this site (starting with /) or a full https:// address." };
+  }
 
   try {
     await db.insert(services).values({ title, ...parseService(formData) });
@@ -66,6 +69,9 @@ export async function updateService(
   if (id === null) return { error: "Missing service id." };
   const title = String(formData.get("title") ?? "").trim().slice(0, 200);
   if (!title) return { error: "A title is required." };
+  if (textField(formData, "href", 300) && !linkField(formData)) {
+    return { error: "The link must be a page on this site (starting with /) or a full https:// address." };
+  }
 
   try {
     await db

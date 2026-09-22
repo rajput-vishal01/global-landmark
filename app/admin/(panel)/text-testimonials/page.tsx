@@ -38,7 +38,7 @@ export default async function AdminTextTestimonialsPage() {
     <div className="flex flex-col gap-4">
       <PageHead
         title="Written testimonials"
-        sub="Client quotes for the “What our clients say” strip. Video reels live under Testimonials, not here."
+        sub="Client quotes for the “What our clients say” strip. Video reels are under Website content → Video Reels."
         actions={
           <AddRecordDialog
             label="Add client quote"
