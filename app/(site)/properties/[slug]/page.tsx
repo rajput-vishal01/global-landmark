@@ -36,7 +36,7 @@ import { rankSimilar } from "@/lib/similar";
 import { whatsAppHref, whatsAppShareHref, propertyShareMessage } from "@/lib/whatsapp";
 import { COMPANY, PROPERTY_DETAIL } from "@/lib/data";
 import { resolveCompany } from "@/lib/site-settings";
-import { breadcrumbJsonLd, canonical, jsonLdHtml } from "@/lib/seo";
+import { breadcrumbJsonLd, canonical, jsonLdHtml, OG_DEFAULTS, ORG_ID } from "@/lib/seo";
 
 // ISR: cached and served instantly; admin edits bust the cache on save.
 export const revalidate = 3600;
@@ -55,16 +55,18 @@ export async function generateMetadata({
   const description =
     property.description.slice(0, 160) ||
     `${categoryLabel(property.category)} in ${property.location}.`;
-  // Absolute: uploaded images are same-origin paths, and a social crawler
-  // has no origin to resolve them against.
-  const ogImages = property.images[0] ? [{ url: canonical(property.images[0].url) }] : undefined;
+  // The cover photo — a floor plan makes a poor preview — else the branded
+  // card. Absolute: uploads are same-origin paths, and a social crawler has
+  // no origin to resolve them against.
+  const cover = property.images.find((img) => img.mediaKind !== "floor_plan") ?? property.images[0];
+  const ogImages = cover ? [{ url: canonical(cover.url) }] : OG_DEFAULTS.images;
   return {
     title,
     description,
     alternates: { canonical: path },
     openGraph: {
+      ...OG_DEFAULTS,
       type: "website",
-      siteName: COMPANY.legalName,
       title,
       description,
       url: canonical(path),
@@ -92,6 +94,14 @@ const MEDIA_LABELS: Record<string, string> = {
   virtual_tour: "Virtual tour",
   google_map: "View on Google Maps",
   brochure: "Download brochure",
+};
+
+/** The schema.org type of the unit a listing sells, for the JSON-LD. Plots are a plain Place. */
+const SCHEMA_UNIT_TYPE: Record<string, "Apartment" | "House"> = {
+  "Flat/Apartment": "Apartment",
+  Penthouse: "Apartment",
+  "Independent House": "House",
+  Villa: "House",
 };
 
 /** One content section of the page: eyebrow, serif title, then the body. */
@@ -261,32 +271,33 @@ export default async function PropertyDetailPage({
     ...(hasLocation ? [{ id: "location", label: "Location" }] : []),
   ];
 
+  // Only an Accommodation (Apartment, House) takes room counts in
+  // schema.org; a plot is a plain Place and a whole project a Residence.
+  const unitType = property.kind === "project" ? undefined : SCHEMA_UNIT_TYPE[property.propertyType ?? ""];
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
     name: property.title,
-    description: property.description,
+    ...(property.description ? { description: property.description } : {}),
     url: canonical(`/properties/${property.slug}`),
-    image: property.images.map((img) => canonical(img.url)),
-    provider: { "@type": "RealEstateAgent", name: COMPANY.legalName, url: canonical("/") },
+    ...(property.images.length ? { image: property.images.map((img) => canonical(img.url)) } : {}),
+    provider: { "@type": "RealEstateAgent", "@id": ORG_ID, name: COMPANY.legalName, url: canonical("/") },
     about: {
-      "@type": "Residence",
+      "@type": property.kind === "project" ? "Residence" : (unitType ?? "Place"),
       name: property.title,
-      address: { "@type": "PostalAddress", addressLocality: property.location, addressCountry: "IN" },
-      ...(property.beds != null ? { numberOfRooms: property.beds } : {}),
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: property.location,
+        addressLocality: property.city || property.location,
+        addressCountry: "IN",
+      },
+      ...(unitType && property.beds != null ? { numberOfBedrooms: property.beds } : {}),
+      ...(unitType && property.baths != null ? { numberOfBathroomsTotal: property.baths } : {}),
       ...(property.mapsUrl ? { hasMap: property.mapsUrl } : {}),
     },
-    // Only when the listing is flagged for public pricing.
-    ...(property.publicPrice != null
-      ? {
-          offers: {
-            "@type": "Offer",
-            price: property.publicPrice,
-            priceCurrency: "INR",
-            availability: "https://schema.org/InStock",
-          },
-        }
-      : {}),
+    // No Offer. Listings go out as "Price on request", and even a published
+    // price makes a thin Offer — no sale-or-rent function, no rent period —
+    // that says less than the page itself does.
   };
   const breadcrumbItems = [
     { name: "Home", path: "/" },

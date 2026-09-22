@@ -9,8 +9,8 @@ import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
 import { getProjectBySlug, type PublicProjectDetail } from "@/lib/db/queries";
 import { PageHeader, SECTION, SECTION_BAND } from "../../_components/page-chrome";
 import { AMENITY_GROUPS, formatArea, formatIndianShort } from "@/lib/attributes";
-import { COMPANY, PROJECT_DETAIL } from "@/lib/data";
-import { breadcrumbJsonLd, canonical, jsonLdHtml } from "@/lib/seo";
+import { PROJECT_DETAIL } from "@/lib/data";
+import { breadcrumbJsonLd, canonical, jsonLdHtml, OG_DEFAULTS } from "@/lib/seo";
 
 // ISR: cached and served instantly; admin edits bust the cache on save.
 export const revalidate = 3600;
@@ -20,6 +20,12 @@ type ProjectUnit = PublicProjectDetail["units"][number];
 
 function projectLocation(project: PublicProjectDetail): string {
   return [project.locality, project.sector, project.city].filter(Boolean).join(", ");
+}
+
+/** The project's cover, else the first unit photo the page shows: a real photo beats the stock card. */
+function projectCover(project: PublicProjectDetail): string | undefined {
+  const units = [...project.towers.flatMap((t) => t.units), ...project.units];
+  return project.coverImage || units.flatMap((u) => u.images)[0]?.url;
 }
 
 export async function generateMetadata({
@@ -38,15 +44,16 @@ export async function generateMetadata({
     project.description?.slice(0, 160) ||
     `Residential project${location ? ` in ${location}` : ""}.`;
   // Absolute: uploaded images are same-origin paths, and a social crawler
-  // has no origin to resolve them against.
-  const ogImages = project.coverImage ? [{ url: canonical(project.coverImage) }] : undefined;
+  // has no origin to resolve them against. No photo at all: the brand card.
+  const cover = projectCover(project);
+  const ogImages = cover ? [{ url: canonical(cover) }] : OG_DEFAULTS.images;
   return {
     title,
     description,
     alternates: { canonical: path },
     openGraph: {
+      ...OG_DEFAULTS,
       type: "website",
-      siteName: COMPANY.legalName,
       title,
       description,
       url: canonical(path),
@@ -112,27 +119,27 @@ export default async function ProjectDetailPage({
 
   // ApartmentComplex — the schema.org type built for a multi-unit society,
   // with the RERA number carried as an identifier the way Indian property
-  // listings expect it.
+  // listings expect it. No `provider`: schema.org gives a Place none, and
+  // the agency is already on the page as its own RealEstateAgent node.
+  const cover = projectCover(project);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ApartmentComplex",
     name: project.name,
     ...(project.description ? { description: project.description } : {}),
     url: canonical(`/projects/${project.slug}`),
-    ...(project.coverImage ? { image: [canonical(project.coverImage)] } : {}),
-    ...(project.totalUnits != null ? { numberOfAccommodationUnits: project.totalUnits } : {}),
+    ...(cover ? { image: [canonical(cover)] } : {}),
+    ...(project.totalUnits != null
+      ? { numberOfAccommodationUnits: { "@type": "QuantitativeValue", value: project.totalUnits } }
+      : {}),
     ...(project.reraNumber
       ? { identifier: { "@type": "PropertyValue", propertyID: "RERA", value: project.reraNumber } }
       : {}),
     address: {
       "@type": "PostalAddress",
-      ...(location ? { addressLocality: location } : {}),
+      // The city alone: the locality list mixes in bands like "Sector Area".
+      ...(project.city || location ? { addressLocality: project.city || location } : {}),
       addressCountry: project.country === "India" ? "IN" : project.country || "IN",
-    },
-    provider: {
-      "@type": "RealEstateAgent",
-      name: COMPANY.legalName,
-      url: canonical("/"),
     },
   };
 
