@@ -88,6 +88,16 @@ export const projects = mysqlTable("projects", {
   locality: text("locality"),
   sector: text("sector"),
   coverImage: text("cover_image"),
+  /**
+   * What every unit in the project shares (Sep 2026, migration 0005). The
+   * property form copies these in when a unit is filed under the project,
+   * so a broker types a society's address and bank panel once.
+   */
+  address: text("address"),
+  mapsUrl: text("maps_url"),
+  legalFlags: json("legal_flags").$type<string[]>(),
+  loanFlags: json("loan_flags").$type<string[]>(),
+  banksOnPanel: json("banks_on_panel").$type<string[]>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

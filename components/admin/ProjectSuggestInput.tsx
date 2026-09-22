@@ -15,12 +15,19 @@ export function ProjectSuggestInput({
   suggestions,
   defaultValue = "",
   id,
+  onValueChange,
 }: {
   suggestions: string[];
   defaultValue?: string;
   id?: string;
+  /** Every change, typed or picked — the property form uses it to fill in the project’s details. */
+  onValueChange?: (value: string) => void;
 }) {
-  const [value, setValue] = useState(defaultValue);
+  const [value, setValueState] = useState(defaultValue);
+  function setValue(next: string) {
+    setValueState(next);
+    onValueChange?.(next);
+  }
   const [isOpen, setIsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 

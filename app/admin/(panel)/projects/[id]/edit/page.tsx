@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { projects } from "@/lib/db/schema";
 import { ProjectForm } from "@/components/admin/ProjectForm";
-import { updateProject, listBuildersForSelect } from "../../actions";
+import { updateProject } from "../../actions";
 import Link from "next/link";
 import { PageHead, deskButton } from "@/components/admin/desk";
 
@@ -18,24 +18,21 @@ export default async function EditProjectPage({
   const numericId = Number(id);
   if (!Number.isInteger(numericId)) notFound();
 
-  const [[project], builders] = await Promise.all([
-    db.select().from(projects).where(eq(projects.id, numericId)),
-    listBuildersForSelect(),
-  ]);
+  const [project] = await db.select().from(projects).where(eq(projects.id, numericId));
   if (!project) notFound();
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
       <PageHead
         title="Edit project"
-        sub="A society or township. Listings link to it by name and inherit its amenities instead of re-entering them."
+        sub="Changes here fill in for units you file under this project from now on."
         actions={
-          <Link href="/admin/projects" className={deskButton}>
+          <Link href={`/admin/projects/${project.id}`} className={deskButton}>
             Cancel
           </Link>
         }
       />
-      <ProjectForm action={updateProject} builders={builders} project={project} />
+      <ProjectForm action={updateProject} project={project} />
     </div>
   );
 }

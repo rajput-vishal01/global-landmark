@@ -93,7 +93,7 @@ export default async function ProjectDetailPage({
 
   const facts = (
     [
-      ["Builder", project.builder?.name],
+      ["Builder", project.builderName || project.builder?.name],
       ["RERA Number", project.reraNumber],
       ["Possession Status", project.possessionStatus],
       ["Launch Date", project.launchDate],
@@ -161,7 +161,7 @@ export default async function ProjectDetailPage({
         <PageHeader
           breadcrumbs={breadcrumbItems}
           image={project.coverImage ? { src: project.coverImage, alt: project.name } : null}
-          eyebrow={`Project${project.builder ? ` · ${project.builder.name}` : ""}`}
+          eyebrow={`Project${project.builderName || project.builder ? ` · ${project.builderName || project.builder?.name}` : ""}`}
           title={project.name}
           sub={location || undefined}
         />

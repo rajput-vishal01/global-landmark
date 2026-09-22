@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import type { ProjectPrefill } from "@/lib/admin/project-prefill";
 import { and, asc, desc, eq, like, lte, gte, or, sql, inArray, count } from "drizzle-orm";
 import { db } from "./index";
 import { deals, projects, properties, propertyImages, propertyMedia, testimonialVideos } from "./schema";
@@ -598,12 +599,23 @@ export const listTestimonialVideos = failSoft(
   []
 );
 
-export async function listProjectsForAdmin(): Promise<PublicProject[]> {
+/** Projects for the property form’s picker, with what a unit inherits. */
+export async function listProjectsForAdmin(): Promise<ProjectPrefill[]> {
   try {
-    return await db.query.projects.findMany({
-      columns: PUBLIC_PROJECT_COLUMNS,
-      orderBy: [asc(projects.name)],
-    });
+    return await db
+      .select({
+        id: projects.id,
+        name: projects.name,
+        address: projects.address,
+        mapsUrl: projects.mapsUrl,
+        amenities: projects.amenities,
+        legalFlags: projects.legalFlags,
+        loanFlags: projects.loanFlags,
+        banksOnPanel: projects.banksOnPanel,
+        reraNumber: projects.reraNumber,
+      })
+      .from(projects)
+      .orderBy(asc(projects.name));
   } catch (err) {
     console.error("listProjectsForAdmin failed:", err);
     return [];

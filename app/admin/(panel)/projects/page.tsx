@@ -86,7 +86,7 @@ export default async function AdminProjectsPage() {
                       {p.name}
                     </Link>
                   </td>
-                  <td className="text-soft">{p.builderName || "No builder linked"}</td>
+                  <td className="text-soft">{p.builderName || "—"}</td>
                   <td className="whitespace-nowrap text-soft">{p.reraNumber || "—"}</td>
                   <td className={`${numericCell} whitespace-nowrap text-soft`}>
                     {p.propertyCount}

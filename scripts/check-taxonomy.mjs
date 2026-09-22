@@ -23,7 +23,7 @@ try {
   execSync(
     `npx tsc lib/taxonomy/area.ts lib/taxonomy/property.ts lib/taxonomy/features.ts ` +
       `lib/taxonomy/price.ts lib/taxonomy/status.ts lib/taxonomy/collections.ts ` +
-      `lib/taxonomy/sections.ts lib/locations.ts lib/admin/property-parse.ts ` +
+      `lib/taxonomy/sections.ts lib/locations.ts lib/admin/property-parse.ts lib/admin/project-prefill.ts ` +
       `--outDir "${out}" --rootDir lib --target es2022 --module commonjs --esModuleInterop --skipLibCheck`,
     { stdio: "pipe" }
   );
@@ -308,6 +308,26 @@ try {
     sections.requiredFieldsFor("Something Unmapped"),
     [],
     "an unknown type requires nothing"
+  );
+
+  // --- a unit inherits from its project, never over what was typed ---------
+  const prefill = load("admin/project-prefill.js");
+  const project = {
+    id: 1, name: "Green Lotus", address: "Green Lotus, Zirakpur", mapsUrl: "https://maps.app.goo.gl/x",
+    amenities: ["Gym", "Pool"], legalFlags: ["OC Received"], loanFlags: ["Home Loan Available"],
+    banksOnPanel: ["HDFC"], reraNumber: "PBRERA-1",
+  };
+  const empty = { address: "", mapsUrl: "", amenities: [], legalFlags: [], reraNumber: "", loanFlags: [], banksOnPanel: [] };
+  const fromEmpty = prefill.applyProject(empty, project);
+  assert.equal(fromEmpty.fields.address, "Green Lotus, Zirakpur", "an empty address takes the project’s");
+  assert.ok(fromEmpty.fields.legalFlags.includes(prefill.RERA_FLAG), "a RERA number ticks RERA Registered");
+  assert.equal(fromEmpty.fields.reraNumber, "PBRERA-1");
+  const mine = { ...empty, address: "Tower B-1204, Green Lotus, Zirakpur", amenities: ["Gym", "Club House"] };
+  const merged = prefill.applyProject(mine, project).fields;
+  assert.equal(merged.address, mine.address, "a typed address is never overwritten");
+  assert.deepEqual(merged.amenities, ["Gym", "Club House", "Pool"], "ticks merge, none lost, none doubled");
+  assert.deepEqual(
+    prefill.applyProject(fromEmpty.fields, project).filled, [], "applying twice changes nothing"
   );
 
   console.log("check-taxonomy: all assertions passed");

@@ -8,7 +8,15 @@ import { PageHead, deskButton } from "@/components/admin/desk";
 
 export const metadata = { title: "Add property" };
 
-export default async function NewPropertyPage() {
+export default async function NewPropertyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ project?: string }>;
+}) {
+  // "Add a unit" on a project page lands here with ?project=<id>, and the
+  // form starts filed under that project with its details filled in.
+  const projectParam = Number((await searchParams).project);
+  const initialProjectId = Number.isInteger(projectParam) ? projectParam : undefined;
   // Render per request, stated here rather than inherited from the panel
   // layout: the submission key below must be new on every load. A cached page
   // would hand every broker the same key, and the second listing created with
@@ -32,6 +40,7 @@ export default async function NewPropertyPage() {
         projects={projects}
         // New per page load: one form, at most one listing.
         submissionKey={randomUUID()}
+        initialProjectId={initialProjectId}
       />
     </div>
   );

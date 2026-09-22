@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useActionForm } from "@/lib/use-action-form";
 import type { AdminProperty, PropertyImage } from "@/lib/db/schema";
-import type { PublicProject } from "@/lib/db/public-columns";
+import {
+  applyProject,
+  type ProjectPrefill,
+  type SharedFields,
+} from "@/lib/admin/project-prefill";
 import {
   saveDraft,
   type PropertyFormState,
@@ -102,9 +106,13 @@ export function PropertyForm({
   projects,
   property,
   submissionKey,
+  initialProjectId,
 }: {
   action: Action;
-  projects: PublicProject[];
+  /** Every project, with the details a unit filed under it inherits. */
+  projects: ProjectPrefill[];
+  /** Add page opened from a project ("Add a unit"): start filed under it. */
+  initialProjectId?: number;
   /**
    * The admin form is the one place that legitimately sees the full row —
    * the public types deliberately cannot express it.
@@ -123,7 +131,84 @@ export function PropertyForm({
   const [isUploading, setIsUploading] = useState(false);
   const [propertyType, setPropertyType] = useState(property?.propertyType ?? "");
   const [title, setTitle] = useState(property?.title ?? "");
-  const [address, setAddress] = useState(property?.location ?? "");
+  // What a project can fill in. Held here (not in the sections) so picking a
+  // project can write into it; see lib/admin/project-prefill.ts.
+  const startProject = property
+    ? undefined
+    : projects.find((p) => p.id === initialProjectId);
+  const [shared, setShared] = useState<SharedFields>(() => {
+    const own: SharedFields = {
+      address: property?.location ?? "",
+      mapsUrl: property?.mapsUrl ?? "",
+      amenities: property?.amenities ?? [],
+      legalFlags: property?.legalFlags ?? [],
+      reraNumber: property?.reraNumber ?? "",
+      loanFlags: property?.loanFlags ?? [],
+      banksOnPanel: property?.banksOnPanel ?? [],
+    };
+    return startProject ? applyProject(own, startProject).fields : own;
+  });
+  const [featureSeed, setFeatureSeed] = useState({
+    furnishing: property?.furnishing ?? null,
+    furnishingInventory: property?.furnishingInventory ?? [],
+    parkingTypes: property?.parkingTypes ?? [],
+    parkingSlots: property?.parkingSlots ?? null,
+  });
+  // Bumped when a project fills fields, remounting the checklist sections so
+  // they pick the new values up (they keep their own state otherwise).
+  const [seedVersion, setSeedVersion] = useState(0);
+  const [filledFrom, setFilledFrom] = useState<{ project: string; filled: string[] } | null>(
+    () =>
+      startProject
+        ? { project: startProject.name, filled: ["the project’s shared details"] }
+        : null
+  );
+  const appliedProjectRef = useRef<number | null>(
+    startProject?.id ?? property?.projectId ?? null
+  );
+  const address = shared.address;
+  const setAddress = (value: string) => setShared((prev) => ({ ...prev, address: value }));
+
+  function pickProject(name: string) {
+    const project = projects.find(
+      (p) => p.name.toLowerCase() === name.trim().toLowerCase()
+    );
+    if (!project || project.id === appliedProjectRef.current || !formRef.current) return;
+    appliedProjectRef.current = project.id;
+
+    // The sections own their checklists, so read what is ticked right now
+    // from the form itself — nothing the broker did is lost in the refill.
+    const fd = new FormData(formRef.current);
+    const json = (key: string): string[] => {
+      try {
+        const value: unknown = JSON.parse(String(fd.get(key) ?? "[]"));
+        return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
+      } catch {
+        return [];
+      }
+    };
+    const { fields, filled } = applyProject(
+      {
+        ...shared,
+        amenities: json("amenitiesJson"),
+        legalFlags: json("legalFlagsJson"),
+        reraNumber: String(fd.get("reraNumber") ?? ""),
+        loanFlags: json("loanFlagsJson"),
+        banksOnPanel: json("banksOnPanelJson"),
+      },
+      project
+    );
+    const slots = String(fd.get("parkingSlots") ?? "").trim();
+    setFeatureSeed({
+      furnishing: String(fd.get("furnishing") ?? "") || null,
+      furnishingInventory: json("furnishingInventoryJson"),
+      parkingTypes: json("parkingTypesJson"),
+      parkingSlots: slots && Number.isInteger(Number(slots)) ? Number(slots) : null,
+    });
+    setShared(fields);
+    setSeedVersion((v) => v + 1);
+    setFilledFrom({ project: project.name, filled });
+  }
   const [photoCount, setPhotoCount] = useState(property?.images.length ?? 0);
   const [autosave, setAutosave] = useState<AutosaveStatus>({ kind: "idle" });
 
@@ -312,8 +397,32 @@ export function PropertyForm({
             <ProjectSuggestInput
               id="projectName"
               suggestions={projects.map((p) => p.name)}
-              defaultValue={property?.project?.name ?? ""}
+              defaultValue={property?.project?.name ?? startProject?.name ?? ""}
+              onValueChange={pickProject}
             />
+            {filledFrom ? (
+              <p
+                aria-live="polite"
+                className="rounded-md border-l-[3px] border-l-gold bg-gold/8 px-3 py-2 text-[12px] leading-snug text-soft"
+              >
+                {filledFrom.filled.length > 0 ? (
+                  <>
+                    Filled from <span className="font-semibold text-ink">{filledFrom.project}</span>:{" "}
+                    {filledFrom.filled.join(", ")}. Anything you had already entered was kept.
+                  </>
+                ) : (
+                  <>
+                    <span className="font-semibold text-ink">{filledFrom.project}</span> has nothing
+                    new to add — its details are already here.
+                  </>
+                )}
+              </p>
+            ) : (
+              <p className={deskHint}>
+                Pick an existing project and its address, map, amenities and legal
+                details fill in for you.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">
@@ -381,7 +490,8 @@ export function PropertyForm({
               type="url"
               inputMode="url"
               maxLength={1000}
-              defaultValue={property?.mapsUrl ?? ""}
+              value={shared.mapsUrl}
+              onChange={(e) => setShared((prev) => ({ ...prev, mapsUrl: e.target.value }))}
               placeholder="https://maps.app.goo.gl/…"
               className={deskFieldFull}
             />
@@ -456,11 +566,12 @@ export function PropertyForm({
           visibility="public"
         >
           <FeaturesSection
-            furnishing={property?.furnishing}
-            furnishingInventory={property?.furnishingInventory ?? []}
-            amenities={property?.amenities ?? []}
-            parkingTypes={property?.parkingTypes ?? []}
-            parkingSlots={property?.parkingSlots}
+            key={`features-${seedVersion}`}
+            furnishing={featureSeed.furnishing}
+            furnishingInventory={featureSeed.furnishingInventory}
+            amenities={shared.amenities}
+            parkingTypes={featureSeed.parkingTypes}
+            parkingSlots={featureSeed.parkingSlots}
             showFurnishing={visible.has("furnishing")}
             showAmenities={visible.has("amenities")}
             showParking={visible.has("parking")}
@@ -475,10 +586,11 @@ export function PropertyForm({
           visibility="public"
         >
           <LegalLoanSection
-            legalFlags={property?.legalFlags ?? []}
-            reraNumber={property?.reraNumber}
-            loanFlags={property?.loanFlags ?? []}
-            banksOnPanel={property?.banksOnPanel ?? []}
+            key={`legal-${seedVersion}`}
+            legalFlags={shared.legalFlags}
+            reraNumber={shared.reraNumber}
+            loanFlags={shared.loanFlags}
+            banksOnPanel={shared.banksOnPanel}
           />
         </FormSection>
 

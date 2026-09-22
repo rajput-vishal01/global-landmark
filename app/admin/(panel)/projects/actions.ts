@@ -2,14 +2,21 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { count, eq, sql } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { builders, projects, properties, towers } from "@/lib/db/schema";
+import { projects, properties, towers } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
 import { slugify } from "@/lib/slugify";
-import { isLocalityIn } from "@/lib/locations";
-import { parseAmenities } from "@/lib/admin/property-parse";
+import { placeFromAddress } from "@/lib/locations";
+import {
+  isAllowedImageUrl,
+  parseAmenities,
+  parseChoice,
+  parseList,
+  parseMapsUrl,
+} from "@/lib/admin/property-parse";
+import { AREA_UNITS, LEGAL_FLAGS, LOAN_FLAGS, POSSESSION_STATUSES } from "@/lib/attributes";
 import type { DeleteState } from "../properties/actions";
 import { textField, intField, idField } from "@/lib/admin/form-fields";
 
@@ -24,44 +31,54 @@ function date(formData: FormData, key: string): string | null {
 }
 
 /**
- * Every field the project form can submit, minus name/slug which each
- * caller handles (create picks a fresh slug, update keeps the row's own
- * unless the name changed).
+ * Every field the project form sends, minus the name (each caller handles
+ * the slug). Fields the form no longer asks — builder link, price
+ * appreciation, country, sector — are not returned, so an update leaves
+ * whatever they hold alone. City and locality come from the address, and
+ * only when it names a city, the same rule a property follows.
  */
-async function parseSharedFields(formData: FormData) {
-  const builderId = idField(formData, "builderId");
-  let builderName: string | null = null;
-  if (builderId) {
-    const [row] = await db.select({ name: builders.name }).from(builders).where(eq(builders.id, builderId));
-    builderName = row?.name ?? null;
+function parseSharedFields(
+  formData: FormData
+): { ok: true; data: Record<string, unknown> } | { ok: false; error: string } {
+  const mapsUrl = parseMapsUrl(formData.get("mapsUrl"));
+  if (mapsUrl === "invalid") {
+    return {
+      ok: false,
+      error: "The map link must be a Google Maps link. In Google Maps press Share, then Copy link, and paste that.",
+    };
   }
-
-  const city = textField(formData, "city", 120);
-  const localityRaw = textField(formData, "locality", 200);
-  const amenities = parseAmenities(String(formData.get("amenitiesJson") ?? "[]")) ?? [];
+  const coverImage = textField(formData, "coverImage", 2000);
+  if (coverImage && !isAllowedImageUrl(coverImage)) {
+    return { ok: false, error: "Upload the cover photo instead of pasting a link to it." };
+  }
+  const address = textField(formData, "address", 300);
+  const place = address ? placeFromAddress(address) : null;
+  const list = (name: string, allowed: readonly string[] | null) =>
+    parseList(String(formData.get(name) ?? "[]"), allowed, 60) ?? [];
 
   return {
-    builderId,
-    builderName,
-    description: textField(formData, "description", 2000),
-    reraNumber: textField(formData, "reraNumber", 60),
-    possessionStatus: textField(formData, "possessionStatus", 60),
-    launchDate: date(formData, "launchDate"),
-    possessionDate: date(formData, "possessionDate"),
-    priceAppreciation: textField(formData, "priceAppreciation", 2000),
-    totalTowers: intField(formData, "totalTowers", 500),
-    totalUnits: intField(formData, "totalUnits", 50_000),
-    numberOfFloors: intField(formData, "numberOfFloors", 500),
-    greenAreaValue: intField(formData, "greenAreaValue", 10_000_000),
-    greenAreaUnit: textField(formData, "greenAreaUnit", 20),
-    amenities,
-    country: textField(formData, "country", 60) ?? "India",
-    city,
-    // A locality is only meaningful under its own city, or the listing
-    // lands under the wrong filter tab.
-    locality: city && localityRaw && isLocalityIn(city, localityRaw) ? localityRaw : null,
-    sector: textField(formData, "sector", 120),
-    coverImage: textField(formData, "coverImage", 2000),
+    ok: true,
+    data: {
+      builderName: textField(formData, "builderName", 200),
+      description: textField(formData, "description", 2000),
+      possessionStatus: parseChoice(formData.get("possessionStatus"), POSSESSION_STATUSES),
+      launchDate: date(formData, "launchDate"),
+      possessionDate: date(formData, "possessionDate"),
+      totalTowers: intField(formData, "totalTowers", 500),
+      totalUnits: intField(formData, "totalUnits", 50_000),
+      numberOfFloors: intField(formData, "numberOfFloors", 500),
+      greenAreaValue: intField(formData, "greenAreaValue", 10_000_000),
+      greenAreaUnit: parseChoice(formData.get("greenAreaUnit"), AREA_UNITS.map((u) => u.value)),
+      amenities: parseAmenities(String(formData.get("amenitiesJson") ?? "[]")) ?? [],
+      address,
+      mapsUrl,
+      coverImage,
+      legalFlags: list("legalFlagsJson", LEGAL_FLAGS),
+      reraNumber: textField(formData, "reraNumber", 100),
+      loanFlags: list("loanFlagsJson", LOAN_FLAGS),
+      banksOnPanel: list("banksOnPanelJson", null),
+      ...(place ? { city: place.city, locality: place.locality } : {}),
+    },
   };
 }
 
@@ -73,11 +90,12 @@ export async function createProject(
   const name = textField(formData, "name", 200);
   if (!name) return { error: "A name is required." };
 
-  const fields = await parseSharedFields(formData);
+  const parsed = parseSharedFields(formData);
+  if (!parsed.ok) return { error: parsed.error };
 
   try {
     const slug = slugify(name) || `project-${Date.now()}`;
-    await db.insert(projects).values({ name, slug, ...fields });
+    await db.insert(projects).values({ name, slug, ...parsed.data });
   } catch (err) {
     console.error("createProject failed:", err);
     return { error: "Could not save — a project with that name may already exist." };
@@ -96,7 +114,8 @@ export async function updateProject(
   const name = textField(formData, "name", 200);
   if (!name) return { error: "A name is required." };
 
-  const fields = await parseSharedFields(formData);
+  const parsed = parseSharedFields(formData);
+  if (!parsed.ok) return { error: parsed.error };
 
   try {
     const [current] = await db.select({ name: projects.name, slug: projects.slug }).from(projects).where(eq(projects.id, id));
@@ -104,7 +123,7 @@ export async function updateProject(
     // Only regenerate the slug when the name actually changed — a stable
     // slug means a bookmarked/shared project URL keeps working.
     const slug = name === current.name ? current.slug : slugify(name) || current.slug;
-    await db.update(projects).set({ name, slug, ...fields }).where(eq(projects.id, id));
+    await db.update(projects).set({ name, slug, ...parsed.data }).where(eq(projects.id, id));
   } catch (err) {
     console.error("updateProject failed:", err);
     return { error: "Could not update — try again." };
@@ -215,21 +234,4 @@ export async function deleteTower(
     return { error: "Delete failed. Try again." };
   }
   redirect(`/admin/projects/${tower.projectId}`);
-}
-
-/**
- * Builder options for the project form's selector, cheapest-first.
- *
- * Guarded like every other export here: this file is "use server", so an
- * exported function is a callable endpoint whether or not a page calls it,
- * and both callers are already admin pages — the check costs nothing.
- */
-export async function listBuildersForSelect(): Promise<{ id: number; name: string }[]> {
-  await requireAdmin();
-  try {
-    return await db.select({ id: builders.id, name: builders.name }).from(builders).orderBy(sql`lower(${builders.name})`);
-  } catch (err) {
-    console.error("listBuildersForSelect failed:", err);
-    return [];
-  }
 }
