@@ -36,37 +36,7 @@ function locationLine(property: PublicPropertyWithMedia): string {
   );
 }
 
-/**
- * Inline SVG rather than an icon package: three glyphs do not justify a
- * dependency, and these ship inside the RSC payload with no extra request.
- * All three are drawn on the same 24 grid at the same stroke weight so they
- * sit on one optical line with the label beside them.
- */
-const SPEC_ICONS = {
-  bed: (
-    <>
-      <path d="M2 18v-6h20v6" />
-      <path d="M2 12V6" />
-      <path d="M6 12v-2h5v2" />
-      <path d="M2 18v2M22 18v2" />
-    </>
-  ),
-  bath: (
-    <>
-      <path d="M3 12h18v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3z" />
-      <path d="M6 12V6a2 2 0 0 1 4 0" />
-      <path d="M6 19l-1 2M18 19l1 2" />
-    </>
-  ),
-  area: (
-    <>
-      <path d="M3 3h18v18H3z" />
-      <path d="M9 15l6-6M15 9h-4M15 9v4" />
-    </>
-  ),
-} as const;
-
-type SpecIcon = keyof typeof SPEC_ICONS;
+type SpecIcon = "bed" | "bath" | "area";
 type Spec = { icon: SpecIcon; label: string };
 
 /**
@@ -95,44 +65,8 @@ function cardSpecs(property: PublicPropertyWithMedia): Spec[] {
   return specs;
 }
 
-function SpecRow({ specs }: { specs: Spec[] }) {
-  if (specs.length === 0) return null;
-  return (
-    <ul className="text-meta flex flex-wrap items-center gap-x-4 gap-y-1.5 font-sans text-ink-muted">
-      {specs.map((spec) => (
-        <li key={spec.icon} className="flex items-center gap-1.5">
-          <svg
-            aria-hidden
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-3.5 w-3.5 shrink-0 text-gold-deep"
-          >
-            {SPEC_ICONS[spec.icon]}
-          </svg>
-          {spec.label}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/**
- * The public face of `possessionStatus`. Deliberately NOT the admin's
- * StatusBadge: that one renders the internal listing status (Available /
- * Reserved / Sold), which by R-07 never reaches a visitor. This renders
- * build stage, which is the thing a buyer actually scans a portal for.
- */
-function PossessionBadge({ status }: { status: string }) {
-  return (
-    <span className="text-eyebrow border border-gold/60 bg-white/95 px-2.5 py-1 font-sans font-semibold uppercase tracking-[0.12em] text-gold-deep">
-      {status}
-    </span>
-  );
-}
+/** Ease with weight: settles rather than stops. */
+const MOTION = "duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]";
 
 const PIN = (
   <svg
@@ -140,7 +74,7 @@ const PIN = (
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="1.6"
+    strokeWidth="1.5"
     className="h-3.5 w-3.5 shrink-0"
   >
     <path d="M12 21s7-6.1 7-11.5A7 7 0 0 0 5 9.5C5 14.9 12 21 12 21Z" />
@@ -151,28 +85,24 @@ const PIN = (
 const ARROW = (
   <svg
     aria-hidden
+    width="14"
+    height="14"
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     strokeWidth="2"
-    className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"
+    className={`transition-transform ${MOTION} group-hover:translate-x-1`}
   >
     <path d="M5 12h14M13 6l6 6-6 6" />
   </svg>
 );
 
-/** Everything both layouts derive from a property, computed once. */
+/** Everything the card derives from a property, computed once. */
 function cardModel(property: PublicPropertyWithMedia) {
   const collection = collectionOf(property.propertyType, property.kind);
-  const possession =
-    // A stale or hand-edited value must not render as a badge.
-    property.possessionStatus &&
-    (POSSESSION_STATUSES as readonly string[]).includes(property.possessionStatus)
-      ? property.possessionStatus
-      : null;
+  const projectName = property.project?.name || property.society;
   return {
     cover: property.images[0],
-    specs: cardSpecs(property),
     badge: collection
       ? collectionLabel(collection)
       : property.kind === "project"
@@ -180,111 +110,41 @@ function cardModel(property: PublicPropertyWithMedia) {
         : "Property",
     // Society/project name augments the location rather than replacing it —
     // a buyer scans for "where" first, "which building" second.
-    projectName: property.project?.name || property.society,
-    possession,
+    where: `${locationLine(property)}${projectName ? ` · ${projectName}` : ""}`,
+    // One plain line of facts; on a photograph, chips would be clutter.
+    facts: cardSpecs(property)
+      .map((s) => s.label)
+      .join(" · "),
+    // A stale or hand-edited value must not render.
+    possession:
+      property.possessionStatus &&
+      (POSSESSION_STATUSES as readonly string[]).includes(property.possessionStatus)
+        ? property.possessionStatus
+        : null,
     // R-05/R-07: no reference code on the card — refCode is internal only.
     priceLabel:
       property.publicPrice != null ? formatIndianShort(property.publicPrice) : "Price on request",
-    // "Starts from" is only honest for a listing that covers several units —
-    // a whole project, or a unit offered in more than one configuration.
+    hasPrice: property.publicPrice != null,
+    // "Starts from" is only honest for a listing that covers several units.
     startsFrom:
       property.publicPrice != null &&
       (property.kind === "project" || (property.configurations?.length ?? 0) > 1),
   };
 }
 
-type CardModel = ReturnType<typeof cardModel>;
-
-/** The photograph with its badges and the enquiry toggle — shared by both layouts. */
-function CardImage({
-  property,
-  model,
-  sizes,
-  className,
-  children,
-}: {
-  property: PublicPropertyWithMedia;
-  model: CardModel;
-  sizes: string;
-  className: string;
-  children?: React.ReactNode;
-}) {
-  return (
-    <div className={`relative overflow-hidden bg-ink/5 ${className}`}>
-      {model.cover && (
-        <Image
-          src={model.cover.url}
-          alt={model.cover.alt || property.title}
-          fill
-          // Above Next's default of 75: these are the photographs a buyer
-          // judges a listing on. Allowed values live in next.config.ts.
-          quality={90}
-          sizes={sizes}
-          className="img-zoom"
-        />
-      )}
-      {/* One positioned row, so long badges wrap instead of sliding under
-          the enquiry toggle. */}
-      <div className="pointer-events-none absolute inset-x-3 top-3 z-10 flex items-start justify-between gap-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-          <span className="text-eyebrow max-w-full truncate bg-navy/90 px-2.5 py-1 font-sans font-semibold uppercase tracking-[0.14em] text-cream backdrop-blur-sm">
-            {model.badge}
-          </span>
-          {model.possession && <PossessionBadge status={model.possession} />}
-        </div>
-        <EnquiryToggleButton
-          item={toEnquiryCartItem(property)}
-          className="text-eyebrow pointer-events-auto shrink-0 rounded-full bg-white/95 px-3 py-1.5 font-sans font-semibold uppercase tracking-[0.12em] text-ink shadow-sm backdrop-blur-sm transition-colors hover:bg-cta hover:text-cta-ink"
-        />
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function Price({ model, tone }: { model: CardModel; tone: "light" | "dark" }) {
-  const dark = tone === "dark";
-  return (
-    <span className="flex flex-col leading-tight">
-      {model.startsFrom && (
-        <span
-          className={`text-eyebrow font-sans font-semibold uppercase tracking-[0.18em] ${
-            dark ? "text-cream/75" : "text-ink-muted"
-          }`}
-        >
-          Starts from
-        </span>
-      )}
-      <span className={`whitespace-nowrap font-serif text-h4 ${dark ? "text-white" : "text-heading"}`}>
-        {model.priceLabel}
-      </span>
-    </span>
-  );
-}
-
-function Location({ property, model }: { property: PublicPropertyWithMedia; model: CardModel }) {
-  return (
-    <p className="text-eyebrow flex items-center gap-1.5 font-sans font-semibold uppercase tracking-[0.14em] text-gold-deep">
-      {PIN}
-      <span className="truncate">
-        {locationLine(property)}
-        {model.projectName ? ` · ${model.projectName}` : ""}
-      </span>
-    </p>
-  );
-}
-
 /**
- * Listing card, redesigned (Sep 2026).
+ * Listing card, immersive (Sep 2026, the client's pick of three directions).
+ * One card for the landing page, the listings grid, the list view and area
+ * pages.
  *
- * Grid: the price sits on the photograph over a soft fade, so the two facts
- * a buyer scans a portal for — what it looks like and what it costs — read
- * in one glance; under it, where, what, and the spec icons, then one quiet
- * "View details" line. List: a real horizontal card — photograph, then the
- * story (location, title, project, a two-line description, specs), then a
- * price column with the actions.
+ * The photograph fills the card; everything a buyer scans for sits in white
+ * over a dark fade at its foot — build stage, title, where, the facts, the
+ * price. On a pointer device a "View details" bar slides up on hover; on
+ * touch, where there is no hover, it is simply always there. Across the top:
+ * the listing's kind and the enquiry toggle, nothing else.
  *
- * The whole card is the link; the enquiry toggle stops its own click.
+ * `list` is the same card as a wide banner, one per row, with room for the
+ * description.
  */
 export function ListingCard({
   property,
@@ -292,91 +152,111 @@ export function ListingCard({
   className = "",
 }: {
   property: PublicPropertyWithMedia;
-  /** `list` lays the card out horizontally for the listing page's list view. */
+  /** `list` renders the card as a wide banner for the listing page's list view. */
   variant?: "grid" | "list";
   className?: string;
 }) {
-  const model = cardModel(property);
-  const href = `/properties/${property.slug}`;
-  const frame =
-    "group flex overflow-hidden border border-border bg-white transition-[border-color,transform,box-shadow] duration-300 hover:-translate-y-1 hover:border-gold hover:shadow-[0_24px_48px_-28px_rgba(40,30,15,0.45)]";
+  const m = cardModel(property);
+  const isList = variant === "list";
 
-  if (variant === "list") {
-    return (
-      <Link href={href} className={`${frame} flex-col md:flex-row ${className}`}>
-        <CardImage
-          property={property}
-          model={model}
-          sizes="(min-width: 768px) 22rem, 100vw"
-          className="aspect-[4/3] shrink-0 md:aspect-auto md:w-[22rem] md:min-h-[15rem]"
+  return (
+    <Link
+      href={`/properties/${property.slug}`}
+      className={`group relative isolate block overflow-hidden bg-dark-deep shadow-[0_24px_48px_-30px_rgba(20,15,10,0.6)] transition-shadow ${MOTION} hover:shadow-[0_36px_70px_-30px_rgba(20,15,10,0.75)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-gold ${
+        isList ? "aspect-[4/5] sm:aspect-[16/9] lg:aspect-[21/8]" : "aspect-[4/5]"
+      } ${className}`}
+    >
+      {m.cover && (
+        <Image
+          src={m.cover.url}
+          alt={m.cover.alt || property.title}
+          fill
+          // Above Next's default of 75: these are the photographs a buyer
+          // judges a listing on. Allowed values live in next.config.ts.
+          quality={90}
+          sizes={
+            isList
+              ? "(min-width: 1024px) 90vw, 100vw"
+              : "(min-width: 1024px) 30vw, (min-width: 768px) 45vw, 100vw"
+          }
+          className="-z-10 object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:scale-[1.05]"
         />
+      )}
 
-        <div className="flex min-w-0 flex-1 flex-col gap-3 p-5 md:p-7">
-          <Location property={property} model={model} />
-          <h3 className="font-serif text-h3 leading-snug text-heading transition-colors duration-300 group-hover:text-gold-deep">
-            {property.title}
-          </h3>
-          {property.description && (
-            <p className="line-clamp-2 text-pretty text-meta font-sans leading-relaxed text-ink-muted">
-              {property.description}
-            </p>
-          )}
-          <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-2 pt-2">
-            <SpecRow specs={model.specs} />
-            {property.propertyType && (
-              <span className="text-meta border-l border-border pl-5 font-sans text-ink-muted">
-                {property.propertyType}
+      {/* The fade that carries the text: heavy at the foot, gone by the top,
+          and a whisper at the top edge so the tags read on a bright sky. */}
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_top,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0.6)_32%,rgba(0,0,0,0)_62%),linear-gradient(to_bottom,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0)_22%)] ${
+          isList
+            ? "sm:bg-[linear-gradient(to_right,rgba(0,0,0,0.85)_0%,rgba(0,0,0,0.5)_38%,rgba(0,0,0,0)_68%),linear-gradient(to_bottom,rgba(0,0,0,0.3)_0%,rgba(0,0,0,0)_22%)]"
+            : ""
+        }`}
+      />
+
+      <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-2">
+        <span className="text-eyebrow border border-white/35 bg-black/25 px-2.5 py-1 font-sans font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-[2px]">
+          {m.badge}
+        </span>
+        <EnquiryToggleButton
+          icon
+          item={toEnquiryCartItem(property)}
+          className={`flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/40 bg-black/25 text-white backdrop-blur-[2px] transition-colors ${MOTION} hover:border-cta hover:bg-cta hover:text-cta-ink aria-pressed:border-cta aria-pressed:bg-cta aria-pressed:text-cta-ink`}
+        />
+      </div>
+
+      <div
+        className={`absolute inset-x-0 bottom-0 flex flex-col p-5 md:p-6 ${
+          isList ? "sm:inset-y-0 sm:right-auto sm:w-[min(36rem,70%)] sm:justify-end sm:p-8" : ""
+        }`}
+      >
+        {m.possession && (
+          <span className="text-eyebrow mb-2 flex items-center gap-2 font-sans font-semibold uppercase tracking-[0.2em] text-cta">
+            <span aria-hidden className="h-px w-6 bg-cta" />
+            {m.possession}
+          </span>
+        )}
+        <h3
+          className={`text-balance font-serif leading-tight text-white ${
+            isList ? "text-h3" : "line-clamp-2 text-[1.45rem]"
+          }`}
+        >
+          {property.title}
+        </h3>
+        <p className="mt-2 flex items-center gap-1.5 font-sans text-meta text-white/80">
+          {PIN}
+          <span className="truncate">{m.where}</span>
+        </p>
+        {m.facts && <p className="mt-1 font-sans text-meta text-white/70">{m.facts}</p>}
+        {isList && property.description && (
+          <p className="mt-3 line-clamp-2 hidden text-pretty font-sans text-meta leading-relaxed text-white/70 sm:block">
+            {property.description}
+          </p>
+        )}
+
+        <div className="mt-4 flex items-end justify-between gap-3 border-t border-white/20 pt-4">
+          <span className="flex flex-col leading-tight">
+            {m.startsFrom && (
+              <span className="text-eyebrow font-sans font-semibold uppercase tracking-[0.18em] text-white/65">
+                Starts from
               </span>
             )}
-          </div>
-        </div>
-
-        {/* Price column: a clear endpoint to each row, the way a portal list
-            reads — scan down the right edge and compare. */}
-        <div className="flex shrink-0 flex-row items-center justify-between gap-4 border-t border-border bg-surface/60 p-5 md:w-64 md:flex-col md:items-start md:justify-center md:border-l md:border-t-0 md:p-7">
-          <Price model={model} tone="light" />
-          <span className="text-eyebrow inline-flex shrink-0 items-center gap-2 whitespace-nowrap bg-cta px-5 py-3 font-sans font-bold uppercase tracking-[0.14em] text-cta-ink transition-colors group-hover:bg-cta-hover">
+            <span
+              className={`whitespace-nowrap font-serif text-white ${
+                m.hasPrice ? "text-[1.6rem] leading-none" : "text-body"
+              }`}
+            >
+              {m.priceLabel}
+            </span>
+          </span>
+          {/* Always shown on touch; on a pointer device it rises on hover. */}
+          <span
+            className={`text-eyebrow inline-flex items-center gap-2 bg-cta px-4 py-2.5 font-sans font-bold uppercase tracking-[0.14em] text-cta-ink transition-[opacity,transform] ${MOTION} [@media(hover:hover)]:translate-y-2 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:translate-y-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-visible:translate-y-0 [@media(hover:hover)]:group-focus-visible:opacity-100`}
+          >
             View details
             {ARROW}
           </span>
         </div>
-      </Link>
-    );
-  }
-
-  return (
-    <Link href={href} className={`${frame} flex-col ${className}`}>
-      <CardImage
-        property={property}
-        model={model}
-        sizes="(min-width: 1024px) 30vw, (min-width: 768px) 42vw, 100vw"
-        className="aspect-[4/3]"
-      >
-        {/* The fade that carries the price: legible on any photograph. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/75 via-black/30 to-transparent"
-        />
-        <div className="absolute inset-x-4 bottom-3 flex items-end justify-between gap-3">
-          <Price model={model} tone="dark" />
-          {property.propertyType && (
-            <span className="text-eyebrow shrink-0 border border-white/40 bg-white/10 px-2.5 py-1 font-sans font-semibold uppercase tracking-[0.12em] text-white backdrop-blur-sm">
-              {property.propertyType}
-            </span>
-          )}
-        </div>
-      </CardImage>
-
-      <div className="flex flex-1 flex-col gap-2.5 p-5">
-        <Location property={property} model={model} />
-        <h3 className="line-clamp-2 font-serif text-h4 leading-snug text-heading transition-colors duration-300 group-hover:text-gold-deep">
-          {property.title}
-        </h3>
-        <SpecRow specs={model.specs} />
-        <span className="text-eyebrow mt-auto inline-flex items-center gap-2 border-t border-border pt-4 font-sans font-bold uppercase tracking-[0.16em] text-ink transition-colors duration-300 group-hover:text-gold-deep">
-          View details
-          {ARROW}
-        </span>
       </div>
     </Link>
   );
