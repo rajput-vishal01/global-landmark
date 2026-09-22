@@ -1,4 +1,4 @@
-import { asc } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { deals, properties } from "@/lib/db/schema";
 import { todayIST } from "@/lib/db/queries";
@@ -40,6 +40,14 @@ async function loadData() {
           location: properties.location,
         })
         .from(properties)
+        // Only what is on the website can be the deal — the homepage skips
+        // anything else, so offering drafts here would only mislead.
+        .where(
+          and(
+            eq(properties.publicationState, "published"),
+            eq(properties.listingStatus, "Available")
+          )
+        )
         .orderBy(asc(properties.title)),
     ]);
     return { dealRows, propertyRows };
@@ -87,6 +95,14 @@ export default async function AdminDealsPage() {
                   <p className="text-[11.5px] tabular-nums text-muted">
                     {deal.startsAt} → {deal.endsAt}
                   </p>
+                  {status !== "Expired" &&
+                    (deal.property.publicationState !== "published" ||
+                      deal.property.listingStatus !== "Available") && (
+                      <p className="text-[11.5px] text-error">
+                        This listing is not live on the website, so the homepage skips
+                        this deal. Publish it again or remove the deal.
+                      </p>
+                    )}
                 </Card>
               </li>
             );

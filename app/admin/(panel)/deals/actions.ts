@@ -4,7 +4,7 @@ import { idField } from "@/lib/admin/form-fields";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { deals } from "@/lib/db/schema";
+import { deals, properties } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
 import type { DeleteState } from "../properties/actions";
@@ -31,6 +31,13 @@ export async function createDeal(
   }
 
   try {
+    const [target] = await db
+      .select({ state: properties.publicationState, status: properties.listingStatus })
+      .from(properties)
+      .where(eq(properties.id, propertyId));
+    if (!target || target.state !== "published" || target.status !== "Available") {
+      return { error: "Only a listing that is live on the website can be the deal." };
+    }
     await db.insert(deals).values({ propertyId, startsAt, endsAt });
   } catch (err) {
     console.error("createDeal failed:", err);

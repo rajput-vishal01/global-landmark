@@ -558,7 +558,19 @@ export type ActiveDeal = Deal & { property: PublicPropertyWithMedia };
 const getActiveDealCached = unstable_cache(
   async (today: string): Promise<ActiveDeal | null> => {
     const row = await db.query.deals.findFirst({
-      where: and(lte(deals.startsAt, today), gte(deals.endsAt, today)),
+      where: and(
+        lte(deals.startsAt, today),
+        gte(deals.endsAt, today),
+        // The visibility gate. A relation join cannot carry a WHERE, so it
+        // lives here as a subquery: a deal on a draft, sold or archived
+        // listing is skipped and the next live window (if any) shows
+        // instead. Without it, a deal scheduled on an owner's unreviewed
+        // submission put that submission on the homepage.
+        inArray(
+          deals.propertyId,
+          db.select({ id: properties.id }).from(properties).where(publicVisibility())
+        )
+      ),
       orderBy: [asc(deals.startsAt)],
       with: {
         // Deal of the Week renders on the homepage, so the deal's property
