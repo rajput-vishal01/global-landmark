@@ -221,23 +221,26 @@ body.bg-cream:has(.admin-root) {
 
    ponytail: selector-driven, so a new band gets its gradient for free —
    the ceiling is a `div` band, which needs `data-band` to opt in. */
+/* Corner window light (Sep 2026, replacing a top-centre spotlight): warm
+   light enters through one corner and falls off diagonally across the band,
+   the way daylight crosses a room. Each variant takes a different corner, so
+   two dark bands on one page never read as the same band repeated. */
 :root {
+  /* Light from the top-left.  */
   --grad-graphite:
-    radial-gradient(ellipse 55% 75% at 50% -8%, rgb(245 217 139 / 0.22), rgb(201 153 46 / 0.07) 45%, transparent 75%),
-    linear-gradient(180deg, #3e3831 0%, #2d2924 50%, #1f1c18 100%);
-  /* Same graphite, light from the opposite side: the glow rises from the
-     bottom edge and the band darkens upward. Two dark bands on one page
-     read as the same band repeated when both are lit from the top. */
+    radial-gradient(ellipse 75% 95% at -8% -12%, rgb(245 217 139 / 0.24), rgb(201 153 46 / 0.08) 40%, transparent 72%),
+    linear-gradient(150deg, #423b33 0%, #2f2a25 55%, #1f1c18 100%);
+  /* Light from the bottom-right: the opposite corner, so a deep band next
+     to a standard one is clearly lit from elsewhere. */
   --grad-graphite-deep:
-    radial-gradient(ellipse 55% 75% at 50% 108%, rgb(245 217 139 / 0.2), rgb(201 153 46 / 0.06) 45%, transparent 75%),
-    linear-gradient(0deg, #3e3831 0%, #2d2924 50%, #1f1c18 100%);
-  /* And a third direction for a band that sits near both: light raking in
-     from the left, falling off to the right. Kept in the lighter half of
-     the graphite range (never below #2d2924): this band sits directly above
-     the footer, and a fall to near-black made the two read as one block. */
+    radial-gradient(ellipse 75% 95% at 108% 112%, rgb(245 217 139 / 0.2), rgb(201 153 46 / 0.07) 40%, transparent 72%),
+    linear-gradient(330deg, #3e3831 0%, #2d2924 55%, #1f1c18 100%);
+  /* Light from the top-right. Kept in the lighter half of the graphite
+     range (never below #2d2924): this band sits directly above the footer,
+     and a fall to near-black made the two read as one block. */
   --grad-graphite-side:
-    radial-gradient(ellipse 60% 90% at -6% 40%, rgb(245 217 139 / 0.2), rgb(201 153 46 / 0.06) 45%, transparent 75%),
-    linear-gradient(100deg, #48413a 0%, #3a352e 50%, #2d2924 100%);
+    radial-gradient(ellipse 75% 95% at 108% -12%, rgb(245 217 139 / 0.22), rgb(201 153 46 / 0.07) 40%, transparent 72%),
+    linear-gradient(210deg, #48413a 0%, #3a352e 55%, #2d2924 100%);
 }
 
 :where(section, main, aside, header, [data-band]).bg-navy {
