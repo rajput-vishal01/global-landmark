@@ -3,13 +3,14 @@ import { LegalPage } from "../_components/LegalPage";
 import { privacyPolicy } from "@/lib/legal";
 import { resolveCompany } from "@/lib/site-settings";
 import { COMPANY } from "@/lib/data";
-import { canonical } from "@/lib/seo";
+import { canonical, OG_DEFAULTS } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: privacyPolicy(COMPANY).title,
   description: privacyPolicy(COMPANY).description,
   alternates: { canonical: "/privacy" },
   openGraph: {
+    ...OG_DEFAULTS,
     type: "website",
     title: privacyPolicy(COMPANY).title,
     description: privacyPolicy(COMPANY).description,

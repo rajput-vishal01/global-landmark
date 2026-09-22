@@ -8,7 +8,7 @@ import { PageHeader } from "../_components/page-chrome";
 import { CONTACT_PAGE, WHATSAPP } from "@/lib/data";
 import { resolveCompany } from "@/lib/site-settings";
 import { whatsAppHref } from "@/lib/whatsapp";
-import { canonical } from "@/lib/seo";
+import { canonical, OG_DEFAULTS } from "@/lib/seo";
 
 const PAGE_TITLE = "Contact";
 const PAGE_DESCRIPTION =
@@ -19,6 +19,7 @@ export const metadata: Metadata = {
   description: PAGE_DESCRIPTION,
   alternates: { canonical: "/contact" },
   openGraph: {
+    ...OG_DEFAULTS,
     type: "website",
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,

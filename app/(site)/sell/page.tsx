@@ -3,7 +3,7 @@ import { Header } from "@/components/sections/Header";
 import { Footer } from "@/components/sections/Footer";
 import { SellPropertyForm } from "@/components/SellPropertyForm";
 import { PageHeader } from "../_components/page-chrome";
-import { canonical } from "@/lib/seo";
+import { canonical, OG_DEFAULTS } from "@/lib/seo";
 import { resolveCompany } from "@/lib/site-settings";
 
 const PAGE_TITLE = "Sell your property";
@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   description: PAGE_DESCRIPTION,
   alternates: { canonical: "/sell" },
   openGraph: {
+    ...OG_DEFAULTS,
     type: "website",
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,

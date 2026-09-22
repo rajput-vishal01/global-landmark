@@ -6,7 +6,7 @@ import { FoundersMessage } from "@/components/sections/FoundersMessage";
 import { Button } from "@/components/ui/Button";
 import { PageHeader, SectionHeading } from "../_components/page-chrome";
 import { ABOUT_PAGE, COMPANY } from "@/lib/data";
-import { canonical } from "@/lib/seo";
+import { canonical, OG_DEFAULTS } from "@/lib/seo";
 
 const PAGE_TITLE = "About";
 const PAGE_DESCRIPTION = `The group behind ${COMPANY.legalName} — its history, principals, and the standard it holds across the Tricity.`;
@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   description: PAGE_DESCRIPTION,
   alternates: { canonical: "/about" },
   openGraph: {
+    ...OG_DEFAULTS,
     type: "website",
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,

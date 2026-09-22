@@ -5,7 +5,7 @@ import { MotionProvider } from "@/components/MotionProvider";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { COMPANY, SEO } from "@/lib/data";
-import { jsonLdHtml, organizationJsonLd, SITE_URL } from "@/lib/seo";
+import { jsonLdHtml, OG_DEFAULTS, organizationJsonLd, SITE_URL } from "@/lib/seo";
 
 // Typeface pairing for the portal restyle. Prata (display serif, single
 // weight) and Manrope (geometric sans) gave the old editorial look; the
@@ -27,7 +27,9 @@ const nunitoSans = Nunito_Sans({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  alternates: { canonical: "/" },
+  // No canonical here: every page states its own. A root one was inherited
+  // by each page that did not — /offline, the soft-404s, the admin — and
+  // named the home page as their canonical.
   title: {
     default: SEO.title,
     // The short name: "| Global Landmark Realty Group" ate 31 of the ~60
@@ -37,12 +39,11 @@ export const metadata: Metadata = {
   },
   description: SEO.description,
   openGraph: {
+    ...OG_DEFAULTS,
     type: "website",
-    siteName: COMPANY.legalName,
     title: SEO.title,
     description: SEO.description,
     url: SITE_URL,
-    images: [{ url: SEO.ogImage, width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
@@ -100,7 +101,7 @@ export default async function RootLayout({
     // suppressHydrationWarning: the head script stamps .js on <html> before
     // hydration (deliberate — CSS pre-hide gate), which React would flag.
     <html
-      lang="en"
+      lang="en-IN"
       suppressHydrationWarning
       className={`${playfair.variable} ${nunitoSans.variable}`}
     >

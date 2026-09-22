@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Header } from "@/components/sections/Header";
 import { Hero } from "@/components/sections/Hero";
@@ -18,6 +19,9 @@ import {
   listLocationCards,
 } from "@/lib/db/queries";
 import { LANDING_LOCATIONS } from "@/lib/locations";
+
+// Title, description and Open Graph come from the root layout's defaults.
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   // Render per request (Docker builds have no DB to prerender against);

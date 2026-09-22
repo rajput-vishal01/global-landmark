@@ -3,13 +3,14 @@ import { LegalPage } from "../_components/LegalPage";
 import { dataDeletion } from "@/lib/legal";
 import { resolveCompany } from "@/lib/site-settings";
 import { COMPANY } from "@/lib/data";
-import { canonical } from "@/lib/seo";
+import { canonical, OG_DEFAULTS } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: dataDeletion(COMPANY).title,
   description: dataDeletion(COMPANY).description,
   alternates: { canonical: "/data-deletion" },
   openGraph: {
+    ...OG_DEFAULTS,
     type: "website",
     title: dataDeletion(COMPANY).title,
     description: dataDeletion(COMPANY).description,

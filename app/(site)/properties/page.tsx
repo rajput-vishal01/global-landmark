@@ -39,23 +39,39 @@ import {
   type PropertiesFilterParams,
 } from "@/lib/properties-url";
 import { COMPANY, PROPERTIES_PAGE } from "@/lib/data";
-import { canonical } from "@/lib/seo";
+import { breadcrumbJsonLd, canonical, jsonLdHtml, OG_DEFAULTS } from "@/lib/seo";
 
 const PAGE_TITLE = "Our Listings";
 const PAGE_DESCRIPTION = `The current portfolio of landmark residences represented by ${COMPANY.legalName}.`;
 
-export const metadata: Metadata = {
-  title: PAGE_TITLE,
-  description: PAGE_DESCRIPTION,
-  alternates: { canonical: "/properties" },
-  openGraph: {
-    type: "website",
-    title: PAGE_TITLE,
+/**
+ * Canonical policy: the plain grid is its own canonical, page by page
+ * (`?page=2` has listings page 1 does not). Any filter, search, sort or view
+ * points at /properties — they are for visitors, not pages meant to rank.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const { page, ...rest } = await searchParams;
+  const n = Math.max(1, Number.parseInt(typeof page === "string" ? page : "1", 10) || 1);
+  const path = n > 1 && Object.keys(rest).length === 0 ? `/properties?page=${n}` : "/properties";
+  const title = n > 1 ? `${PAGE_TITLE}, page ${n}` : PAGE_TITLE;
+  return {
+    title,
     description: PAGE_DESCRIPTION,
-    url: canonical("/properties"),
-  },
-  twitter: { card: "summary_large_image", title: PAGE_TITLE, description: PAGE_DESCRIPTION },
-};
+    alternates: { canonical: path },
+    openGraph: {
+      ...OG_DEFAULTS,
+      type: "website",
+      title,
+      description: PAGE_DESCRIPTION,
+      url: canonical(path),
+    },
+    twitter: { card: "summary_large_image", title, description: PAGE_DESCRIPTION },
+  };
+}
 
 // Filter-driven (reads searchParams), so this route renders per request.
 export const dynamic = "force-dynamic";
@@ -179,8 +195,28 @@ export default async function PropertiesPage({
     view: viewParam(view),
   };
 
+  // The listings on this page of the grid, numbered across pages.
+  const itemListLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    numberOfItems: totalCount,
+    itemListElement: properties.map((property, i) => ({
+      "@type": "ListItem",
+      position: firstOnPage + i,
+      url: canonical(`/properties/${property.slug}`),
+      name: property.title,
+    })),
+  };
+
   return (
     <>
+      {properties.length > 0 && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(itemListLd) }} />
+      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(breadcrumbJsonLd(BREADCRUMBS)) }}
+      />
       <Header />
       <main className="bg-surface">
         <PageHeader

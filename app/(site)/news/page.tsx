@@ -7,7 +7,7 @@ import { CTABand } from "@/components/sections/CTABand";
 import { PageHeader, SectionHeading, SECTION } from "../_components/page-chrome";
 import { fetchRealEstateNews } from "@/lib/news";
 import { NEWS_PAGE } from "@/lib/data";
-import { canonical } from "@/lib/seo";
+import { canonical, OG_DEFAULTS } from "@/lib/seo";
 
 const PAGE_TITLE = "Market News";
 const PAGE_DESCRIPTION =
@@ -18,6 +18,7 @@ export const metadata: Metadata = {
   description: PAGE_DESCRIPTION,
   alternates: { canonical: "/news" },
   openGraph: {
+    ...OG_DEFAULTS,
     type: "website",
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,

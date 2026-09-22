@@ -3,13 +3,14 @@ import { LegalPage } from "../_components/LegalPage";
 import { termsOfUse } from "@/lib/legal";
 import { resolveCompany } from "@/lib/site-settings";
 import { COMPANY } from "@/lib/data";
-import { canonical } from "@/lib/seo";
+import { canonical, OG_DEFAULTS } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: termsOfUse(COMPANY).title,
   description: termsOfUse(COMPANY).description,
   alternates: { canonical: "/terms" },
   openGraph: {
+    ...OG_DEFAULTS,
     type: "website",
     title: termsOfUse(COMPANY).title,
     description: termsOfUse(COMPANY).description,
