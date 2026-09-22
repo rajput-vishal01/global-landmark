@@ -23,13 +23,18 @@ import assert from "node:assert/strict";
 
 const out = mkdtempSync(join(tmpdir(), "gl-news-"));
 
-/** Off-topic or violent — must never reach the page. */
+/**
+ * Must never reach the page. Third column: the categories newsdata.io
+ * attaches — cricket and police stories arrive filed as sports / crime, and
+ * that label is what removes them now that a Tricity mention alone qualifies.
+ */
 const REJECT = [
-  ["India beat Australia in Mohali T20 thriller", "PCA Stadium hosted a full house."],
-  ["Cricket: Punjab Kings training camp begins in Mohali", null],
-  ["Chandigarh weather: heavy rain expected today", null],
-  ["Punjab politics heats up ahead of polls", "Chandigarh sees protests."],
-  ["Chandigarh college admissions open", null],
+  ["India beat Australia in Mohali T20 thriller", "PCA Stadium hosted a full house.", ["sports"]],
+  ["Cricket: Punjab Kings training camp begins in Mohali", null, ["sports"]],
+  ["Chandigarh police bust fake call centre", "Accused had bought property in Zirakpur.", ["crime"]],
+  ["Panchkula man cheated of Rs 20 lakh by online fraudsters", null, ["crime"]],
+  ["Chandigarh film festival opens", null, ["entertainment"]],
+  // Violence and sentencing, even when uncategorised.
   ["Man murdered in Zirakpur over land dispute", "The property dealer was attacked."],
   ["Property dealer shot dead in Mohali", null],
   ["Two arrested for assaulting realtor in Panchkula", null],
@@ -37,29 +42,39 @@ const REJECT = [
   ["Realtor murdered in Kharar plot row", null],
   ["Builder assaulted at Mohali site", null],
   ["Killings near Panchkula housing colony", null],
-  // A conviction that happens to name a Tricity city and a seized property.
+  ["Body found in Kharar under-construction building", null],
   ["Punjab: ED secures 18 months' jail for postal official", "Property attached in Chandigarh."],
   ["Mohali realtor convicted in cheating case, sentenced to 3 years", null],
   // Hospitality PR that calls a hotel a property.
   ["Lords Hotels & Resorts Showcases Bespoke Wedding Celebrations", "A luxury property near Chandigarh."],
-  // Crime that only mentions property in its SUMMARY — the headline is not about property.
-  ["Chandigarh police bust fake call centre", "Accused had bought property in Zirakpur."],
-  ["Panchkula man cheated of Rs 20 lakh by online fraudsters", "He had listed his property for sale."],
-  // Property, but not our market.
+  // Elsewhere, with only a passing Tricity mention in the summary.
+  ["Ubud Hotels for Indian Travelers Exploring Bali", "Popular with travellers from Chandigarh."],
+  ["NRI Milni in Amritsar on September 23", "Officials from Chandigarh will attend."],
+  // A UT headline that is not Chandigarh's.
+  ["UT administration revises Ladakh land rules", "Leh district notified."],
+  // Not the Tricity at all.
   ["Mumbai real estate hits record high", "Property prices in Mumbai surged."],
   ["Gurgaon township launched by builder", null],
 ];
 
-/** Genuine Tricity market coverage — including money-crime, which is news. */
+/** Tricity coverage the page keeps — property first, but civic news too now. */
 const KEEP = [
   ["GMADA announces new plots scheme in Mohali sector 88", null],
   ["Chandigarh property rates revised; collector rate up 10%", null],
   ["RERA orders Zirakpur builder to refund homebuyers", null],
   ["ED lens on Rs 40-crore GMADA land waiver", "The land pooling case widens."],
+  ["UT estate office to re-auction 8 residential properties", "The Chandigarh estate office said..."],
   ["Panchkula housing board opens flat applications", null],
   ["Stamp duty cut announced for Punjab, Mohali buyers gain", null],
   ["Tricity realty sees record registrations this quarter", null],
   ["Scam alert: fake builder booked for Zirakpur flat bookings", null],
+  // Kept since the property requirement went (Sep 2026).
+  ["UT plans split option for large industrial plots", "Chandigarh administration proposal.", ["politics"]],
+  ["Mohali civic body approves new sector roads", null],
+  ["Zirakpur flyover work to finish by March", null],
+  // Ordinary words that contain a crime stem.
+  ["GMADA extends deadline for Mohali plot allottees", null],
+  ["Panchkula governing body clears housing scheme", null],
 ];
 
 try {
@@ -85,34 +100,15 @@ try {
     );
   }
 
-  for (const [title, description] of REJECT) {
-    assert.equal(isMarketStory(title, description), false, `must reject: ${title}`);
+  for (const [title, description, categories] of REJECT) {
+    assert.equal(isMarketStory(title, description, categories), false, `must reject: ${title}`);
   }
-  for (const [title, description] of KEEP) {
-    assert.equal(isMarketStory(title, description), true, `must keep: ${title}`);
+  for (const [title, description, categories] of KEEP) {
+    assert.equal(isMarketStory(title, description, categories), true, `must keep: ${title}`);
   }
 
-  // newsdata.io's own category wins over any keyword.
-  assert.equal(
-    isMarketStory("Zirakpur builder booked for flat fraud", null, ["crime"]),
-    false,
-    "an article the API files under crime is dropped"
-  );
-  assert.equal(
-    isMarketStory("GMADA plots scheme opens in Mohali", null, ["business", "top"]),
-    true,
-    "a business-filed property story is kept"
-  );
-  // The property subject has to be in the headline, not just the summary.
-  assert.equal(
-    isMarketStory("Mohali civic body meeting held", "Discussed housing in sector 70."),
-    false,
-    "property in the summary alone is not enough"
-  );
-
-  // A story needs BOTH gates, not either.
-  assert.equal(isMarketStory("Mohali stadium renovated", null), false, "place alone is not enough");
-  assert.equal(isMarketStory("Property prices rise", null), false, "subject alone is not enough");
+  // The place is the one hard requirement.
+  assert.equal(isMarketStory("Property prices rise", null), false, "no Tricity place, no story");
 
   console.log("check-news: all assertions passed");
 } finally {
