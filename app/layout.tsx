@@ -30,7 +30,10 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   title: {
     default: SEO.title,
-    template: `%s | ${COMPANY.legalName}`,
+    // The short name: "| Global Landmark Realty Group" ate 31 of the ~60
+    // characters a results page shows. The full legal name stays in the
+    // default title, og:site_name and the JSON-LD.
+    template: `%s | ${COMPANY.name}`,
   },
   description: SEO.description,
   openGraph: {
