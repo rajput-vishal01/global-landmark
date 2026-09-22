@@ -51,7 +51,8 @@ export const metadata: Metadata = {
     description: SEO.description,
     images: [SEO.ogImage],
   },
-  robots: { index: true, follow: true },
+  // No robots default: "index, follow" is what a crawler assumes anyway, and
+  // a root one was printed beside Next's own "noindex" on every 404.
   // iOS reads almost none of the web app manifest. These are what make an
   // installed icon on an iPhone look like an app rather than a bookmark:
   // the touch icon, standalone display, a status bar, and the name under
