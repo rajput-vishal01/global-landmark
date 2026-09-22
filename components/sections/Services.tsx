@@ -19,64 +19,49 @@ export async function Services() {
   if (items.length === 0) return null;
 
   return (
-    <section className="bg-cream px-5 py-20 md:px-12 md:py-28">
-      <div className="mx-auto max-w-7xl">
-        <SectionHeading
-          eyebrow="What We Do"
-          title="Our Services"
-        />
+    <section className="bg-surface px-5 py-16 md:px-12 md:py-24">
+      <SectionHeading
+        align="center"
+        eyebrow="What We Do"
+        title="Our Services"
+      />
 
-        {/* Numbered cards rather than a hairline table: each service is a
-            thing you can ask for, and a card with a number, an icon and a
-            lift on hover says so. */}
-        <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((service, i) => {
-            const body = (
-              <>
-                <div className="flex items-start justify-between">
-                  <span
-                    aria-hidden
-                    className="flex h-14 w-14 items-center justify-center rounded-full border border-gold/50 bg-surface text-gold-deep transition-colors duration-300 group-hover:border-gold group-hover:bg-gold/10"
-                  >
-                    {SERVICE_ICONS[service.icon ?? ""] ?? SERVICE_ICON_FALLBACK}
-                  </span>
-                  <span aria-hidden className="font-serif text-h3 leading-none text-gold/40">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
+      {/* Hairline grid: the container draws top+left, each cell right+bottom,
+          so the rules meet cleanly however many rows the admin creates. */}
+      <ul className="grid grid-cols-1 border-l border-t border-border sm:grid-cols-2 lg:grid-cols-3">
+        {items.map((service) => {
+          const body = (
+            <>
+              <span className="text-gold-deep transition-colors duration-300 group-hover:text-ink">
+                {SERVICE_ICONS[service.icon ?? ""] ?? SERVICE_ICON_FALLBACK}
+              </span>
+              <h3 className="font-serif text-h4 text-heading">{service.title}</h3>
+              {service.description && (
+                <p className="text-pretty text-body font-sans text-ink-muted">
+                  {service.description}
+                </p>
+              )}
+            </>
+          );
+
+          return (
+            <li key={service.id} className="border-b border-r border-border">
+              {service.href ? (
+                <Link
+                  href={service.href}
+                  className="group flex h-full flex-col gap-4 p-7 transition-colors duration-300 hover:bg-cream md:p-9"
+                >
+                  {body}
+                </Link>
+              ) : (
+                <div className="group flex h-full flex-col gap-4 p-7 md:p-9">
+                  {body}
                 </div>
-                <h3 className="mt-6 font-serif text-h4 text-heading">{service.title}</h3>
-                {service.description && (
-                  <p className="mt-2 text-pretty text-meta font-sans leading-relaxed text-ink-muted">
-                    {service.description}
-                  </p>
-                )}
-                {service.href && (
-                  <span className="text-eyebrow mt-auto inline-flex items-center gap-2 pt-6 font-sans font-bold uppercase tracking-[0.16em] text-ink transition-colors group-hover:text-gold-deep">
-                    Learn more
-                    <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform duration-300 group-hover:translate-x-1">
-                      <path d="M5 12h14M13 6l6 6-6 6" />
-                    </svg>
-                  </span>
-                )}
-              </>
-            );
-            const card =
-              "group flex h-full flex-col border border-border bg-white p-7 transition-[border-color,transform,box-shadow] duration-300 hover:-translate-y-1 hover:border-gold hover:shadow-[0_24px_48px_-28px_rgba(40,30,15,0.45)] md:p-8";
-
-            return (
-              <li key={service.id}>
-                {service.href ? (
-                  <Link href={service.href} className={card}>
-                    {body}
-                  </Link>
-                ) : (
-                  <div className={card}>{body}</div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
