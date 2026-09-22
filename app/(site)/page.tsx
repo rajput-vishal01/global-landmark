@@ -12,6 +12,7 @@ import { TextTestimonials } from "@/components/sections/TextTestimonials";
 import { Services } from "@/components/sections/Services";
 import { Footer } from "@/components/sections/Footer";
 import { DealOfWeek } from "@/components/sections/DealOfWeek";
+import { SectionHeading } from "@/components/ui/SectionHeading";
 import {
   getActiveDeal,
   getFeaturedProperties,
@@ -43,13 +44,11 @@ export default async function Home() {
               micro-market, not a property type, and the type filters are
               one click away on /properties, which still leads with the
               collection grid. */}
-          <section className="bg-surface px-5 py-16 md:px-12 md:py-24">
-            <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
-              <h2 className="text-balance font-serif text-h2 uppercase tracking-[0.04em] text-ink">
-                Browse by Location
-              </h2>
+          <section className="bg-surface px-5 py-20 md:px-12 md:py-28">
+            <div className="mx-auto max-w-7xl">
+              <SectionHeading eyebrow="Where we work" title="Browse by Location" />
+              <LocationGrid cards={locationCards} />
             </div>
-            <LocationGrid cards={locationCards} />
           </section>
 
           <DealOfWeek deal={activeDeal} />

@@ -24,7 +24,8 @@ export function FeaturedListings({
   properties: PublicPropertyWithMedia[];
 }) {
   return (
-    <section id="listings" className="bg-cream px-5 py-16 md:px-12 md:py-24">
+    <section id="listings" className="bg-cream px-5 py-20 md:px-12 md:py-28">
+      <div className="mx-auto max-w-7xl">
       <SectionHeading
         eyebrow="Featured"
         title="Our Listings"
@@ -39,6 +40,7 @@ export function FeaturedListings({
         {properties.map((property) => (
           <ListingCard key={property.id} property={property} />
         ))}
+      </div>
       </div>
     </section>
   );

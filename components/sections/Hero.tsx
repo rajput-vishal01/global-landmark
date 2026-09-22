@@ -18,8 +18,10 @@ const CROSSFADE =
   "object-cover transition-opacity duration-[1200ms] ease-[cubic-bezier(0.23,1,0.32,1)]";
 
 /**
- * Portal-style hero: one full-bleed image, everything centred over it, and
- * the search bar as the single obvious thing to do.
+ * Editorial hero (Sep 2026 redesign): the headline and the search anchored
+ * bottom-left over the photograph, with slide markers on the right. It
+ * was centred portal-style before; the search bar is still the single
+ * obvious thing to do, it is just where the eye lands after the headline.
  *
  * This replaced an inset "cinematic" frame that put the headline bottom-left
  * with the search tucked underneath. The client compared us against a
@@ -103,11 +105,9 @@ export function Hero() {
     <section
       ref={scope}
       // No overflow-hidden here: the search bar's dropdowns are absolutely
-      // positioned children of this section and open past its bottom edge,
-      // so clipping the section cut every city / type / status list off
-      // mid-list. The clip belongs on the image layer, which is the only
-      // thing that actually needs it.
-      className="relative flex min-h-[92dvh] w-full items-center justify-center bg-dark-deep"
+      // positioned children of this section and open past its edge, so
+      // clipping the section cut every list off. The image layer clips.
+      className="relative flex min-h-[94dvh] w-full items-end bg-dark-deep"
     >
       <div className="hero-img absolute inset-0 overflow-hidden">
         {SLIDES.map(
@@ -126,31 +126,70 @@ export function Hero() {
         )}
       </div>
 
-      {/* One even scrim rather than a bottom gradient: the content is centred
-          now, so the darkening has to be centred too, or the headline lands
-          in the brightest part of the photograph. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-black/65" />
+      {/* Two fades instead of one flat wash: dark behind the text on the
+          left, dark along the bottom for the search, and the photograph
+          left clear on the right, where nothing sits on it. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/10"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30"
+      />
 
-      <div className="relative z-10 flex w-full max-w-5xl flex-col items-center px-5 pt-20 text-center md:px-8">
-        <h1 className="hero-heading text-balance font-serif text-h1 text-cream">
-          {HERO.headline.map((line, i) => (
-            <span key={line}>
-              {i > 0 && <br />}
-              {line}
-            </span>
-          ))}
-        </h1>
+      <div className="relative z-10 w-full px-5 pb-12 pt-32 md:px-12 md:pb-16">
+        <div className="max-w-4xl">
+          <p className="hero-cats text-eyebrow flex items-center gap-3 font-sans font-semibold uppercase tracking-[0.28em] text-cta">
+            <span aria-hidden className="h-px w-10 bg-cta" />
+            {HERO.sub}
+          </p>
+          <h1 className="hero-heading mt-6 text-balance font-serif text-[clamp(3rem,7vw+1rem,7.5rem)] leading-[0.95] text-cream">
+            {HERO.headline.map((line, i) => (
+              <span key={line} className="block">
+                {i === 1 ? <em className="font-serif italic text-gold-highlight">{line}</em> : line}
+              </span>
+            ))}
+          </h1>
+        </div>
 
-        <p className="hero-cats text-eyebrow mt-5 font-sans font-semibold uppercase tracking-[0.24em] text-cta">
-          {HERO.sub}
-        </p>
+        <div className="mt-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <PropertySearch
+            withFilters
+            placeholder={HERO.searchPlaceholder}
+            className="hero-search w-full max-w-4xl"
+            openUpward
+          />
 
-        <PropertySearch
-          withFilters
-          placeholder={HERO.searchPlaceholder}
-          className="hero-search mt-9 w-full"
-          openUpward
-        />
+          {/* Slide markers: which photograph this is, and a way to pick one.
+              The timer keeps running; a click just moves it along. */}
+          <div className="hero-cats flex shrink-0 items-end gap-5" aria-label="Choose a photograph">
+            {SLIDES.map((slide, i) => (
+              <button
+                key={slide.category}
+                type="button"
+                onClick={() => setActive(i)}
+                aria-label={`Show photograph ${i + 1}: ${slide.alt}`}
+                aria-pressed={i === active}
+                className="group flex cursor-pointer flex-col items-start gap-2"
+              >
+                <span
+                  className={`font-sans text-meta font-semibold tabular-nums transition-colors ${
+                    i === active ? "text-cream" : "text-cream/45 group-hover:text-cream/80"
+                  }`}
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span
+                  aria-hidden
+                  className={`h-px transition-all duration-500 ${
+                    i === active ? "w-12 bg-cta" : "w-6 bg-cream/40 group-hover:bg-cream/70"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
