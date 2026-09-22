@@ -92,8 +92,23 @@ export async function resolveCompany(): Promise<typeof COMPANY> {
     phoneAlt: override.phoneAlt ?? COMPANY.phoneAlt,
     phoneAltHref: override.phoneAltHref ?? COMPANY.phoneAltHref,
     email: override.email ?? COMPANY.email,
-    socials: override.socials?.length ? override.socials : COMPANY.socials,
+    socials: mergeSocials(override.socials),
   };
+}
+
+/**
+ * Per network, not all-or-nothing: a saved Instagram link used to replace
+ * the whole list, so a profile added in code (YouTube) never showed on a
+ * site whose settings had been saved once.
+ */
+function mergeSocials(saved: ContactOverride["socials"]): typeof COMPANY.socials {
+  if (!saved?.length) return COMPANY.socials;
+  const byLabel = new Map(saved.map((s) => [s.label, s.href]));
+  const known = new Set(COMPANY.socials.map((s) => s.label));
+  return [
+    ...COMPANY.socials.map((s) => ({ label: s.label, href: byLabel.get(s.label) ?? s.href })),
+    ...saved.filter((s) => !known.has(s.label)),
+  ];
 }
 
 /** CREDIBILITY merged with any saved override. */

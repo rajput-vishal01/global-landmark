@@ -35,7 +35,7 @@ import { deleteStoredFiles, storageKeyFromUrl } from "@/lib/storage";
  * 3. **Contact details go to `property_owners`**, the internal table the
  *    leak-check gate already asserts never reaches a public page.
  *
- * Same shape as tours/contact/newsletter: honeypot, rate limit, fail soft,
+ * Same shape as tours/contact: honeypot, rate limit, fail soft,
  * and nothing echoed back to the visitor.
  */
 

@@ -77,6 +77,14 @@ export const COMPANY = {
     "Zirakpur, SAS Nagar, Punjab 160104",
   ],
 
+  // The office's own Google Maps listing, by its CID (the 0x91eef547c417eb85
+  // in the share link the client sent, as a decimal). Opening the listing
+  // rather than a street address lands on the pin with its reviews and
+  // directions. The embed searches by name so it shows that same pin.
+  mapsUrl: "https://maps.google.com/?cid=10515611868538071941",
+  mapsEmbedUrl:
+    "https://www.google.com/maps?q=Global+Landmark+Realty+Group,+Peer+Muchalla,+Zirakpur&output=embed",
+
   // No founding year here, and none anywhere else on the site. The
   // certificate records one (and the terms page briefly printed it), but
   // the client does not want a founding date, a "years in the market" line,
@@ -101,7 +109,7 @@ export const COMPANY = {
     },
     { label: "X", href: "#" },
     { label: "LinkedIn", href: "#" },
-    { label: "YouTube", href: "#" },
+    { label: "YouTube", href: "https://www.youtube.com/@global_landmark" },
   ],
 };
 

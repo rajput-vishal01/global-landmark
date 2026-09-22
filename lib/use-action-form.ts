@@ -24,8 +24,8 @@ import {
  *
  *   - on an error, every field keeps what the user typed;
  *   - on success, the form resets only when `resetOnSuccess` is set — for the
- *     few forms that stay on screen to take another entry (Add payment,
- *     newsletter). Forms that redirect or swap in a thank-you screen leave it
+ *     few forms that stay on screen to take another entry (Add payment).
+ *     Forms that redirect or swap in a thank-you screen leave it
  *     off, since they are gone anyway.
  *
  * The browser's own `required` / `type="email"` checks still run first: the

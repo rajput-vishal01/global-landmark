@@ -13,7 +13,9 @@ const CSP = [
   `connect-src 'self'${isDev ? " ws:" : ""}`,
   // openstreetmap.org is the property-page map embed (Phase E) — a plain
   // iframe, no map library. Without this entry the frame renders blank.
-  "frame-src https://www.youtube-nocookie.com https://www.instagram.com https://www.openstreetmap.org",
+  // google.com is the footer office-map preview (display only; the link
+  // over it opens Google Maps in a new tab).
+  "frame-src https://www.youtube-nocookie.com https://www.instagram.com https://www.openstreetmap.org https://www.google.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

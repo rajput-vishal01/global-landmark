@@ -11,7 +11,7 @@ import { isTourTime, isTourType } from "@/lib/taxonomy/tours";
  * "Schedule a tour", submitted from a property detail page.
  *
  * A folder with no page.tsx — an action, not a route — matching
- * contact/actions.ts and newsletter/actions.ts.
+ * contact/actions.ts.
  *
  * What lands in `tour_requests` is INTERNAL: a name, a phone number and an
  * email belonging to someone who asked to visit a property. Nothing here

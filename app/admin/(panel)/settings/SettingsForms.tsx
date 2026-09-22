@@ -9,6 +9,7 @@ import {
   type SettingsFormState,
 } from "./actions";
 import type { ContactOverride, CredibilityOverride } from "@/lib/site-settings";
+import { COMPANY } from "@/lib/data";
 
 const initialState: SettingsFormState = {};
 
@@ -127,7 +128,7 @@ export function ContactSettingsForm({ initial }: { initial: ContactOverride | nu
             />
           </div>
         </div>
-        <p className={`${deskLabel} -mb-2`}>Social links (leave blank to keep hidden)</p>
+        <p className={`${deskLabel} -mb-2`}>Social links (blank falls back to the default profile)</p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {(
             [
@@ -138,7 +139,12 @@ export function ContactSettingsForm({ initial }: { initial: ContactOverride | nu
               ["socialFacebook", "Facebook"],
             ] as const
           ).map(([name, label]) => {
-            const existing = initial?.socials?.find((s) => s.label === label)?.href ?? "";
+            // Falls back to the link the site is already showing, so the
+            // form never reads blank for a profile that is live.
+            const existing =
+              initial?.socials?.find((s) => s.label === label)?.href ??
+              COMPANY.socials.find((s) => s.label === label)?.href ??
+              "";
             return (
               <div key={name} className={FIELD_ROW}>
                 <label htmlFor={name} className={deskLabel}>

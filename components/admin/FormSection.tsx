@@ -8,7 +8,7 @@ import { Req } from "@/components/ui/RequiredMark";
  * The field chrome every admin form wears, in one place.
  *
  * These replace `FIELD` / `LABEL` from components/form-classes.tsx, which is
- * shared with the PUBLIC contact and newsletter forms and therefore cannot be
+ * shared with the PUBLIC contact and sell forms and therefore cannot be
  * re-skinned to the desk. Same two names, admin-only values.
  */
 
