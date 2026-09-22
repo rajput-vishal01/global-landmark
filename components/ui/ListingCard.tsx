@@ -132,7 +132,6 @@ function SpecRow({ specs }: { specs: Spec[] }) {
  */
 const POSSESSION_ACCENT: Record<string, string> = {
   "New Launch": "border-gold text-gold-deep",
-  "Soft Launch": "border-gold text-gold-deep",
 };
 
 function PossessionBadge({ status }: { status: string }) {

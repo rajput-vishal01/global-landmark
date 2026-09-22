@@ -260,8 +260,8 @@ export function PropertySearch({
 
           The refinements are deliberately NOT inside the white bar. Four
           controls plus a button in one strip made every dropdown too narrow
-          to read its own longest option ("Panchkula Extension", "Mixed Use
-          Property"), and it hid the fact that they are optional — the
+          to read its own longest option ("New Chandigarh", "Under
+          Construction"), and it hid the fact that they are optional — the
           keyword alone is a valid search. */}
       <div className="flex flex-col bg-surface shadow-[0_24px_60px_-28px_rgba(20,20,20,0.55)] sm:flex-row sm:items-stretch">
         <div className="flex-1 px-4 py-1">{keywordField}</div>

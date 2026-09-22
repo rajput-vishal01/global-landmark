@@ -1,6 +1,6 @@
 /**
  * The "cardholder" axis the client asked for (R-04): Kothi, Plot, Projects,
- * Flats, Land, Commercial.
+ * Flats. (Land and Commercial were dropped with their property types.)
  *
  * This is orthogonal to the sale/purchase/lease/invest intent axis in
  * lib/categories.ts — a listing has both. It is DERIVED from property type
@@ -14,9 +14,7 @@ export const COLLECTIONS = [
   { value: "kothi", label: "Kothi", blurb: "Villas, kothis and independent houses" },
   { value: "plot", label: "Plot", blurb: "Residential plots across the Tricity" },
   { value: "projects", label: "Projects", blurb: "Societies and townships" },
-  { value: "flats", label: "Flats", blurb: "Apartments, builder floors and penthouses" },
-  { value: "land", label: "Land", blurb: "Agricultural, industrial and R-zone land" },
-  { value: "commercial", label: "Commercial", blurb: "Shops, offices, SCO and showrooms" },
+  { value: "flats", label: "Flats", blurb: "Apartments and penthouses" },
 ] as const;
 
 export type CollectionValue = (typeof COLLECTIONS)[number]["value"];
@@ -30,43 +28,17 @@ export function collectionLabel(value: CollectionValue): string {
 }
 
 /**
- * Every one of the 23 physical types maps to exactly one collection —
- * asserted in scripts/check-taxonomy.mjs, so adding a type without placing
- * it here fails the check rather than silently vanishing from every
- * collection page.
- *
- * "Commercial Plot" sits under Commercial rather than Plot: the client's
- * "Plot" cardholder means residential plots, which is what a Tricity buyer
- * browsing Plots is looking for.
+ * Every physical type maps to exactly one collection — asserted in
+ * scripts/check-taxonomy.mjs, so adding a type without placing it here
+ * fails the check rather than silently vanishing from every collection page.
+ * Land and Commercial went with the types the client dropped (Sep 2026).
  */
 const TYPE_TO_COLLECTION: Record<PropertyType, CollectionValue> = {
   "Independent House": "kothi",
   Villa: "kothi",
-  "Farm House": "kothi",
-
   "Residential Plot": "plot",
-
   "Flat/Apartment": "flats",
-  "Builder Floor": "flats",
   Penthouse: "flats",
-  "Studio Apartment": "flats",
-
-  "R Zone Land": "land",
-  "Industrial Plot": "land",
-
-  SCO: "commercial",
-  Booth: "commercial",
-  Shop: "commercial",
-  "Office Space": "commercial",
-  Showroom: "commercial",
-  Warehouse: "commercial",
-  "Industrial Shed": "commercial",
-  "Commercial Plot": "commercial",
-  Hotel: "commercial",
-  Hospital: "commercial",
-  "School Site": "commercial",
-  "Institutional Plot": "commercial",
-  "Mixed Use Property": "commercial",
 };
 
 /**

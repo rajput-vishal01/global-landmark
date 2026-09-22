@@ -5,11 +5,10 @@ import { PROPERTY_TYPES, type PropertyType } from "./property";
  * of them a given property type actually asks for (R-12).
  *
  * There is exactly ONE place a property type is looked up — `PROPERTY_SHAPE`
- * — which is what the requirement asks for. It maps to five shapes rather
- * than twenty-three hand-maintained section lists, because twenty-three
- * lists is twenty-three chances to get one wrong, and the shapes are what
- * the client's rules are actually about: a plot has no rooms, a tower unit
- * has a floor and a unit number, a warehouse has neither rooms nor amenities.
+ * — which is what the requirement asks for. It maps to shapes rather than
+ * per-type section lists, because the shapes are what the client's rules
+ * are actually about: a plot has no rooms, a tower unit has a floor and a
+ * unit number.
  *
  * Adding a property type without giving it a shape fails
  * scripts/check-taxonomy.mjs rather than silently showing every section.
@@ -42,12 +41,7 @@ export type SectionKey = (typeof SECTIONS)[number]["key"];
 
 export const ALL_SECTION_KEYS: SectionKey[] = SECTIONS.map((s) => s.key);
 
-export type Shape =
-  | "plot"
-  | "house"
-  | "tower_unit"
-  | "commercial_unit"
-  | "industrial";
+export type Shape = "plot" | "house" | "tower_unit";
 
 /** Fields a shape must have before it may be published. */
 export type FieldKey =
@@ -60,36 +54,14 @@ export type FieldKey =
 const PROPERTY_SHAPE: Record<PropertyType, Shape> = {
   // Land with no building on it — no rooms, no furnishing, no parking.
   "Residential Plot": "plot",
-  "Commercial Plot": "plot",
-  "Industrial Plot": "plot",
-  "Institutional Plot": "plot",
-  "School Site": "plot",
-  "R Zone Land": "plot",
 
   // A whole building on its own footprint: rooms yes, unit number no.
   "Independent House": "house",
   Villa: "house",
-  "Farm House": "house",
-  "Builder Floor": "house",
 
   // One unit inside a tower — floor and unit number are what identify it.
   "Flat/Apartment": "tower_unit",
   Penthouse: "tower_unit",
-  "Studio Apartment": "tower_unit",
-
-  // Commercial space: floor and unit matter, BHK does not.
-  SCO: "commercial_unit",
-  Booth: "commercial_unit",
-  Shop: "commercial_unit",
-  "Office Space": "commercial_unit",
-  Showroom: "commercial_unit",
-  Hotel: "commercial_unit",
-  Hospital: "commercial_unit",
-  "Mixed Use Property": "commercial_unit",
-
-  // Sheds and warehouses: ceiling height and access width are the spec.
-  Warehouse: "industrial",
-  "Industrial Shed": "industrial",
 };
 
 /**
@@ -115,15 +87,6 @@ const SHAPE_RULES: Record<Shape, { omit: SectionKey[]; required: FieldKey[] }> =
     omit: [],
     // Floor and unit are how a flat is identified at all.
     required: ["floorNumber", "unitNumber"],
-  },
-  commercial_unit: {
-    // BHK and bedroom counts mean nothing for a shop or an office.
-    omit: ["configuration"],
-    required: [],
-  },
-  industrial: {
-    omit: ["configuration", "furnishing", "amenities"],
-    required: [],
   },
 };
 

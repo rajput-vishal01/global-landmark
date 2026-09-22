@@ -28,9 +28,9 @@ const u = (id) =>
 // than imported since this script is plain .mjs run standalone with `node`,
 // not through the Next.js/TS toolchain.
 const CITY_CODES = {
-  Chandigarh: "CHD", Panchkula: "PKL", "Panchkula Extension": "PKX",
+  Chandigarh: "CHD", Panchkula: "PKL",
   Mohali: "MOH", Zirakpur: "ZKP", "New Chandigarh": "NCH",
-  Derabassi: "DRB", Kharar: "KHR", Mullanpur: "MLP",
+  Derabassi: "DRB", Kharar: "KHR",
 };
 const refCode = (city, year, seq) =>
   `GL-${(city && CITY_CODES[city]) || "GEN"}-${String(year % 100).padStart(2, "0")}-${String(seq).padStart(4, "0")}`;
@@ -68,7 +68,7 @@ const PROPERTIES = [
     slug: "grand-mega-township-plots",
     title: "Premium Plots, Grand Mega Township",
     kind: "project", category: "invest", project: "grand-mega-township",
-    location: "Panchkula Extension", city: "Panchkula Extension", propertyType: "Residential Plot", configuration: null,
+    location: "Panchkula Extension", city: "Panchkula", propertyType: "Residential Plot", configuration: null,
     beds: null, baths: null, area: 500, unit: "sqyd",
     facing: "North", possession: "New Launch", furnishing: null,
     amenities: ["Gated Community", "Club House", "Swimming Pool", "Children's Play Area", "Jogging Track", "Park Facing", "Wide Roads", "24/7 Water Supply"],
@@ -320,8 +320,6 @@ await section("videos", async () => {
 const AREAS = [
   ["Panchkula", "panchkula", "Panchkula", "Panchkula", null, IMG.whiteVilla,
    "Wide sector roads, mature trees and the Tricity's most settled family addresses."],
-  ["Panchkula Extension", "panchkula-extension", "Panchkula Extension", "Panchkula Extension", null, IMG.township,
-   "The region's fastest-growing edge — plotted townships and new launches."],
   ["Zirakpur", "zirakpur", "Zirakpur", "Zirakpur", null, IMG.apartments,
    "The airport-side corridor: ready-to-move apartments and strong rental demand."],
   ["Mohali", "mohali", "Mohali", "Mohali", null, IMG.towers,

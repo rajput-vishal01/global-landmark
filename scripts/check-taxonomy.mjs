@@ -43,7 +43,21 @@ try {
   const sections = load("taxonomy/sections.js");
 
   // --- CFF list completeness (section 2.2 of docs/REQUIREMENTS_V2.md) -------
-  assert.equal(property.PROPERTY_TYPES.length, 23, "23 physical property types");
+  // The client trimmed the lists (Sep 2026). Pinned so a removed value
+  // cannot drift back into a filter or the admin form.
+  assert.deepEqual(
+    [...property.PROPERTY_TYPES],
+    ["Residential Plot", "Independent House", "Villa", "Flat/Apartment", "Penthouse"],
+    "only the five property types the client deals in"
+  );
+  assert.deepEqual(
+    [...property.POSSESSION_STATUSES],
+    ["Ready to Move", "Under Construction", "New Launch"],
+    "Soft Launch, the 6-month / 1-year bands and Other stay removed"
+  );
+  for (const gone of ["Panchkula Extension", "Mullanpur"]) {
+    assert.ok(!locations.isCity(gone), `${gone} is no longer a city`);
+  }
   assert.equal(property.FACINGS.length, 8, "8 compass facings");
   assert.ok(property.FACINGS.includes("South-West"), "South-West present (R-17)");
   assert.equal(property.CONFIGURATIONS.length, 12, "12 configurations");
@@ -73,8 +87,7 @@ try {
   }
   assert.equal(collections.collectionOf("Villa", "unit"), "kothi");
   assert.equal(collections.collectionOf("Residential Plot", "unit"), "plot");
-  assert.equal(collections.collectionOf("Commercial Plot", "unit"), "commercial");
-  assert.equal(collections.collectionOf("R Zone Land", "unit"), "land");
+  assert.equal(collections.collectionOf("Commercial Plot", "unit"), null, "dropped type maps nowhere");
   assert.equal(collections.collectionOf("Flat/Apartment", "unit"), "flats");
   // kind wins: a whole society is a Project whatever its unit type.
   assert.equal(collections.collectionOf("Flat/Apartment", "project"), "projects");
@@ -82,7 +95,17 @@ try {
   const covered = collections.COLLECTIONS.filter((c) => c.value !== "projects").flatMap((c) =>
     collections.typesInCollection(c.value)
   );
-  assert.equal(covered.length, 23, "every physical type is reachable from a collection");
+  assert.equal(
+    covered.length,
+    property.PROPERTY_TYPES.length,
+    "every physical type is reachable from a collection"
+  );
+  for (const c of collections.COLLECTIONS) {
+    assert.ok(
+      c.value === "projects" || collections.typesInCollection(c.value).length > 0,
+      `collection "${c.value}" is not an empty page`
+    );
+  }
 
   // --- Area normalisation (R-11) -------------------------------------------
   assert.equal(area.toSqft(1, "sqft"), 1);
@@ -220,10 +243,6 @@ try {
   assert.ok(
     sections.sectionsFor("Independent House").includes("configuration"),
     "a house still has rooms to configure"
-  );
-  assert.ok(
-    !sections.sectionsFor("Warehouse").includes("amenities"),
-    "a warehouse has no society amenities"
   );
 
   // Unknown or unset type must not hide anything.

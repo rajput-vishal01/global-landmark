@@ -53,11 +53,6 @@ export const COUNTRIES: Country[] = [
         ],
       },
       {
-        name: "Panchkula Extension",
-        slug: "panchkula-extension",
-        localities: [{ name: "Sector Area", authority: "HUDA" }],
-      },
-      {
         name: "Zirakpur",
         slug: "zirakpur",
         localities: [
@@ -98,11 +93,8 @@ export const COUNTRIES: Country[] = [
           { name: "MC Area", authority: "MC" },
         ],
       },
-      {
-        name: "Mullanpur",
-        slug: "mullanpur",
-        localities: [{ name: "Sector Area", authority: "GMADA" }],
-      },
+      // Panchkula Extension and Mullanpur were dropped as cities by the
+      // client (Sep 2026). Mullanpur stays as a locality of New Chandigarh.
     ],
   },
   { name: "Dubai", cities: [] },

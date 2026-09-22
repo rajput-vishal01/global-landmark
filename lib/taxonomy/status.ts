@@ -67,13 +67,11 @@ export const OWNER_TYPES = ["Individual", "Builder", "Investor", "NRI"] as const
 const CITY_CODES: Record<string, string> = {
   Chandigarh: "CHD",
   Panchkula: "PKL",
-  "Panchkula Extension": "PKX",
   Mohali: "MOH",
   Zirakpur: "ZKP",
   "New Chandigarh": "NCH",
   Derabassi: "DRB",
   Kharar: "KHR",
-  Mullanpur: "MLP",
 };
 
 /** Unknown or missing city falls back to GEN rather than failing the save. */

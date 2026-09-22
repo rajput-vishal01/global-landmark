@@ -8,7 +8,11 @@
  */
 
 /**
- * CFF group 2. All 23 are BUILDING types.
+ * CFF group 2. The client trimmed the CFF's 23 types to the five they deal
+ * in (Sep 2026); builder floors, studios, farm houses, every commercial,
+ * industrial and institutional type, and R-zone land were dropped. Listings
+ * saved under a dropped type keep the stored text, but no filter or form
+ * offers it any more.
  *
  * The CFF also lists "Lease", "Pre-Leased Property" and "Investment
  * Property" here, but those describe the deal, not the structure — a
@@ -23,24 +27,6 @@ export const PROPERTY_TYPES = [
   "Villa",
   "Flat/Apartment",
   "Penthouse",
-  "Builder Floor",
-  "Studio Apartment",
-  "Farm House",
-  "SCO",
-  "Booth",
-  "Shop",
-  "Office Space",
-  "Showroom",
-  "Warehouse",
-  "Industrial Plot",
-  "Industrial Shed",
-  "Commercial Plot",
-  "Hotel",
-  "Hospital",
-  "School Site",
-  "Institutional Plot",
-  "Mixed Use Property",
-  "R Zone Land",
 ] as const;
 
 export type PropertyType = (typeof PROPERTY_TYPES)[number];
@@ -61,18 +47,13 @@ export const FACINGS = [
 ] as const;
 
 /**
- * CFF group 11. "New Launch" is not in the CFF list but three live listings
- * already use it, so dropping it would silently blank their possession —
- * kept until the client says otherwise.
+ * CFF group 11, trimmed by the client (Sep 2026): Soft Launch, the 6-month
+ * and 1-year possession bands, and Other were dropped.
  */
 export const POSSESSION_STATUSES = [
   "Ready to Move",
   "Under Construction",
   "New Launch",
-  "Soft Launch",
-  "Possession in 6 Months",
-  "Possession in 1 Year",
-  "Other",
 ] as const;
 
 /**
