@@ -4,7 +4,7 @@ import { Footer } from "@/components/sections/Footer";
 import { SellPropertyForm } from "@/components/SellPropertyForm";
 import { PageHeader } from "../_components/page-chrome";
 import { canonical } from "@/lib/seo";
-import { COMPANY } from "@/lib/data";
+import { resolveCompany } from "@/lib/site-settings";
 
 const PAGE_TITLE = "Sell your property";
 const PAGE_DESCRIPTION =
@@ -45,7 +45,9 @@ const STEPS: [string, string][] = [
  * graphite card, with a direct line to the office under it, beside the form
  * as a white card in three numbered parts. Wording unchanged.
  */
-export default function SellPage() {
+export default async function SellPage() {
+  // The numbers an admin may have changed in Settings, same as the footer.
+  const COMPANY = await resolveCompany();
   return (
     <>
       <Header />
@@ -95,12 +97,19 @@ export default function SellPage() {
                   <p className="text-eyebrow font-sans font-semibold uppercase tracking-[0.18em] text-gold-deep">
                     Prefer to talk?
                   </p>
-                  <a
-                    href={COMPANY.phoneHref}
-                    className="mt-1 block font-serif text-h4 text-heading transition-colors hover:text-gold-deep"
-                  >
-                    {COMPANY.phone}
-                  </a>
+                  {/* Both office lines, one per row, same as the footer. */}
+                  {[
+                    [COMPANY.phoneHref, COMPANY.phone],
+                    [COMPANY.phoneAltHref, COMPANY.phoneAlt],
+                  ].map(([href, label]) => (
+                    <a
+                      key={href}
+                      href={href}
+                      className="mt-1 block font-serif text-h4 text-heading transition-colors hover:text-gold-deep"
+                    >
+                      {label}
+                    </a>
+                  ))}
                 </div>
                 <span
                   aria-hidden
