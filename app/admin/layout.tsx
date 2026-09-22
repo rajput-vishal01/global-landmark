@@ -12,5 +12,7 @@ export const dynamic = "force-dynamic";
 export default function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return <div className="min-h-dvh bg-cream">{children}</div>;
+  // `admin-root` pins the pre-redesign light palette for every admin screen,
+  // login included — see globals.css.
+  return <div className="admin-root min-h-dvh bg-cream">{children}</div>;
 }

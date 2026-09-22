@@ -117,10 +117,13 @@
    Sizes are a conventional dense-dashboard scale: 14px body, 13px meta,
    22px page title. Headings also drop to the sans face: a serif is a
    voice, and a data tool should not have one. */
-.admin-panel {
-  /* The admin keeps its neutral working palette. The public site's warm
-     redesign redefined these shared tokens; pinning the old values here
-     leaves every admin screen exactly as it was. */
+/* The admin keeps its neutral light palette, at the client's request: the
+   public site's warm redesign (Sep 2026) redefined these shared tokens, and
+   pinning every one of them back to its pre-redesign value on the admin's
+   outermost wrapper (app/admin/layout.tsx, so the login page too) leaves
+   the desk exactly as it was. Add a token here if the public palette ever
+   changes another one the admin uses. */
+.admin-root {
   --color-ink: #141414;
   --color-ink-muted: #646464;
   --color-dark: #141414;
@@ -128,6 +131,19 @@
   --color-surface: #ffffff;
   --color-cream: #faf9f6;
   --color-border: #e6e6e3;
+  --color-navy: #252839;
+  --color-navy-deep: #1b1e2c;
+  --color-heading: #262838;
+}
+/* No brand gradients anywhere in the admin: flat colours only.  */
+.admin-root :is(section, main, aside, header, [data-band]) {
+  background-image: none;
+}
+body.bg-cream:has(.admin-root) {
+  background: #faf9f6;
+}
+
+.admin-panel {
 
   --text-h1: 1.75rem;
   --text-h1--line-height: 1.25;
