@@ -89,7 +89,9 @@ export async function Footer() {
   ];
 
   return (
-    <footer className="bg-navy text-cream">
+    // Deepest graphite plus a gold hairline: the band above it is dark too,
+    // and without a hard edge the two read as one section.
+    <footer className="border-t border-gold/40 bg-dark-deep text-cream">
       <div className="px-5 md:px-12">
         {/* Three columns on desktop: who we are, how to reach us, where we
             are. The newsletter that used to fill the right-hand column was

@@ -214,10 +214,12 @@
     radial-gradient(ellipse 55% 75% at 50% 108%, rgb(245 217 139 / 0.2), rgb(201 153 46 / 0.06) 45%, transparent 75%),
     linear-gradient(0deg, #3e3831 0%, #2d2924 50%, #1f1c18 100%);
   /* And a third direction for a band that sits near both: light raking in
-     from the left, falling off diagonally to the right. */
+     from the left, falling off to the right. Kept in the lighter half of
+     the graphite range (never below #2d2924): this band sits directly above
+     the footer, and a fall to near-black made the two read as one block. */
   --grad-graphite-side:
     radial-gradient(ellipse 60% 90% at -6% 40%, rgb(245 217 139 / 0.2), rgb(201 153 46 / 0.06) 45%, transparent 75%),
-    linear-gradient(100deg, #3e3831 0%, #2d2924 45%, #1f1c18 100%);
+    linear-gradient(100deg, #48413a 0%, #3a352e 50%, #2d2924 100%);
 }
 
 :where(section, main, aside, header, [data-band]).bg-navy {
@@ -232,7 +234,9 @@ section[data-glow="side"],
   background-image: var(--grad-graphite-side);
 }
 /* The footer is left out of every selector above on purpose: the client
-   wanted it a flat graphite, not a gradient (Sep 2026). */
+   wanted it flat, not a gradient (Sep 2026). It is the deepest graphite
+   with a gold hairline on top, so it always separates from the dark band
+   above it, whichever way that band is lit. */
 /* The translucent sticky header must stay translucent: no gradient. */
 header[class*="bg-surface/"] {
   background-image: none;
