@@ -53,13 +53,6 @@ export default async function NewsPage() {
           <SectionHeading
             eyebrow="Tricity property desk"
             title="Latest coverage"
-            aside={
-              articles.length > 0
-                ? // The feed is cached for 12 hours (lib/news.ts), so say so:
-                  // a reader seeing yesterday's stories should know why.
-                  `${articles.length} stor${articles.length === 1 ? "y" : "ies"} · refreshed twice a day`
-                : undefined
-            }
           />
 
           {articles.length === 0 ? (

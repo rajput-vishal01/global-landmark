@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useActionForm } from "@/lib/use-action-form";
-import { LABEL } from "@/components/form-classes";
+import { BOXED_FIELD as BOX, BOXED_SELECT as SELECT_BOX, LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
@@ -15,18 +15,6 @@ import { CITY_NAMES } from "@/lib/locations";
 const initialState: ListPropertyState = { status: "idle" };
 
 const OPTIONAL = <span className="font-normal normal-case tracking-normal text-ink-muted">(optional)</span>;
-
-/**
- * Boxed fields for this form. The site's shared FIELD is a bare underline,
- * which on a long form reads as a page of loose lines; a seller filling in
- * ten fields needs to see where each one starts and ends.
- */
-const BOX =
-  "w-full rounded-none border border-border bg-white px-4 py-3 font-sans text-body text-ink placeholder:text-ink-muted/60 transition-colors focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/20";
-
-/** The custom Select, boxed to match: its own trigger underline is dropped. */
-const SELECT_BOX =
-  "border border-border bg-white px-4 transition-colors focus-within:border-gold focus-within:ring-2 focus-within:ring-gold/20 [&>button]:border-b-0 [&>button]:py-3";
 
 const HINT = "text-meta font-sans text-ink-muted";
 

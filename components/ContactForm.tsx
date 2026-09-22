@@ -3,15 +3,15 @@
 import { useActionForm } from "@/lib/use-action-form";
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { LABEL } from "@/components/form-classes";
+import { BOXED_FIELD, BOXED_SELECT, LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
 import { submitInquiry, type InquiryState } from "@/app/(site)/contact/actions";
 
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"] as const;
 
-const FIELD_CLASSES =
-  "w-full appearance-none rounded-none border-b border-border bg-transparent py-3 font-sans text-body text-ink placeholder:text-ink-muted/60 focus:border-gold focus:outline-none";
+/** Boxed, like the Sell form: every enquiry form on the site looks the same. */
+const FIELD_CLASSES = BOXED_FIELD;
 
 const initialState: InquiryState = { status: "idle" };
 
@@ -60,9 +60,19 @@ export function ContactForm({
 
   if (state.status === "sent") {
     return (
-      <div className="flex flex-col gap-5 self-start border border-border bg-white p-8 md:p-12">
-        <span aria-hidden className="block h-px w-12 bg-gold" />
-        <h2 className="font-serif text-h3 text-ink">Your inquiry has been sent</h2>
+      <div
+        role="status"
+        className="flex flex-col items-start gap-5 self-start border border-border border-t-2 border-t-gold bg-white p-8 md:p-12"
+      >
+        <span
+          aria-hidden
+          className="flex h-12 w-12 items-center justify-center rounded-full border border-gold text-gold-deep"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M5 12.5l4.5 4.5L19 7.5" />
+          </svg>
+        </span>
+        <h2 className="font-serif text-h3 text-heading">Your inquiry has been sent</h2>
         <p className="max-w-md text-pretty text-body font-sans text-ink-muted">
           A confirmation is on its way. We respond within one business day.
         </p>
@@ -71,7 +81,7 @@ export function ContactForm({
   }
 
   return (
-    <form {...formProps} className="flex flex-col gap-8">
+    <form {...formProps} className="flex flex-col gap-5">
       {/* Honeypot — hidden from real users, tempting to bots */}
       <input
         type="text"
@@ -96,7 +106,7 @@ export function ContactForm({
         />
       ))}
 
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor={fid("name")} className={LABEL}>
             Name
@@ -112,7 +122,7 @@ export function ContactForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
           <label htmlFor={fid("phone")} className={LABEL}>
             Phone
@@ -135,6 +145,7 @@ export function ContactForm({
             id={fid("interest")}
             name="interest"
             defaultValue="buy"
+            className={BOXED_SELECT}
             options={[
               { value: "buy", label: "Buy" },
               { value: "sell", label: "Sell" },
@@ -150,28 +161,29 @@ export function ContactForm({
           Message
           <Req />
         </label>
-        <textarea id={fid("message")} name="message" rows={5} required className={FIELD_CLASSES} />
+        <textarea
+          id={fid("message")}
+          name="message"
+          rows={5}
+          required
+          className={`${FIELD_CLASSES} resize-y`}
+        />
       </div>
 
       {state.status === "error" && (
-        <p role="alert" className="text-meta font-sans text-error">
+        <p role="alert" className="border-l-2 border-error bg-error/5 px-4 py-3 text-meta font-sans text-error">
           {state.message}
         </p>
       )}
 
+      {/* The site's one primary action style (yellow on dark text), in place
+          of the old gold-corner frame, which read as decoration rather than
+          as the thing to press. */}
       <button
         type="submit"
         disabled={isPending}
-        className="group relative inline-flex w-fit cursor-pointer items-center px-10 py-5 text-eyebrow font-sans font-medium uppercase tracking-[0.22em] text-ink transition-transform duration-150 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
+        className="text-eyebrow mt-2 w-full cursor-pointer bg-cta px-10 py-4 font-sans font-semibold uppercase tracking-[0.18em] text-cta-ink transition-colors hover:bg-cta-hover disabled:cursor-wait disabled:opacity-60 sm:w-fit"
       >
-        <span
-          aria-hidden
-          className="absolute left-0 top-0 h-3 w-3 border-l border-t border-gold transition-all duration-500 ease-out group-hover:h-full group-hover:w-full"
-        />
-        <span
-          aria-hidden
-          className="absolute bottom-0 right-0 h-3 w-3 border-b border-r border-gold transition-all duration-500 ease-out group-hover:h-full group-hover:w-full"
-        />
         {isPending ? "Sending..." : "Send Inquiry"}
       </button>
     </form>
