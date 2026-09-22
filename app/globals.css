@@ -209,9 +209,17 @@
   --grad-graphite:
     radial-gradient(ellipse 55% 75% at 50% -8%, rgb(245 217 139 / 0.22), rgb(201 153 46 / 0.07) 45%, transparent 75%),
     linear-gradient(180deg, #3e3831 0%, #2d2924 50%, #1f1c18 100%);
+  /* Same graphite, light from the opposite side: the glow rises from the
+     bottom edge and the band darkens upward. Two dark bands on one page
+     read as the same band repeated when both are lit from the top. */
   --grad-graphite-deep:
-    radial-gradient(ellipse 45% 60% at 50% -10%, rgb(245 217 139 / 0.16), transparent 70%),
-    linear-gradient(180deg, #2d2924 0%, #1b1815 100%);
+    radial-gradient(ellipse 55% 75% at 50% 108%, rgb(245 217 139 / 0.2), rgb(201 153 46 / 0.06) 45%, transparent 75%),
+    linear-gradient(0deg, #3e3831 0%, #2d2924 50%, #1f1c18 100%);
+  /* And a third direction for a band that sits near both: light raking in
+     from the left, falling off diagonally to the right. */
+  --grad-graphite-side:
+    radial-gradient(ellipse 60% 90% at -6% 40%, rgb(245 217 139 / 0.2), rgb(201 153 46 / 0.06) 45%, transparent 75%),
+    linear-gradient(100deg, #3e3831 0%, #2d2924 45%, #1f1c18 100%);
 }
 
 :where(section, main, aside, header, [data-band]).bg-surface {
@@ -225,6 +233,11 @@
 }
 :where(section, main, aside, [data-band]):is(.bg-navy-deep, .bg-dark-deep) {
   background-image: var(--grad-graphite-deep);
+}
+/* Opt-in direction for a graphite band: <section data-glow="side">. */
+section[data-glow="side"],
+[data-band][data-glow="side"] {
+  background-image: var(--grad-graphite-side);
 }
 /* The footer is left out of every selector above on purpose: the client
    wanted it a flat graphite, not a gradient (Sep 2026). */
