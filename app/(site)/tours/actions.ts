@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { idField } from "@/lib/admin/form-fields";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
@@ -83,9 +84,10 @@ export async function requestTour(
     return { status: "error", message: "Something went wrong. Please try again." };
   }
 
-  // Saved first, emailed second: the request is already in Admin → Tour
-  // Requests, so a mail failure is logged and never shown as a failed visit.
-  try {
+  // Saved first, emailed after the response: the request is already in
+  // Admin → Tour Requests, and the visitor no longer waits on Gmail (17s).
+  // Mail trouble is a `[mail]` log line, never a failed visit.
+  after(async () => {
     const [property] = propertyId
       ? await db
           .select({ title: properties.title, refCode: properties.refCode, slug: properties.slug })
@@ -93,9 +95,7 @@ export async function requestTour(
           .where(eq(properties.id, propertyId))
       : [];
     await sendTourEmails({ ...request, property: property ?? null });
-  } catch (err) {
-    console.error("requestTour: email failed (request already saved):", err);
-  }
+  });
 
   return { status: "sent" };
 }

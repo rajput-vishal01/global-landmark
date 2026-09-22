@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { properties, propertyImages, propertyOwners } from "@/lib/db/schema";
@@ -231,13 +232,11 @@ export async function submitProperty(
     return { status: "error", message: "Something went wrong. Please try again." };
   }
 
-  // Saved first, emailed second, as for tours: the listing is already in
-  // Admin → Submissions, so mail trouble is logged and never shown here.
-  try {
-    await sendSubmissionEmail({ title, location: publicLocation, ownerName, mobile, email, photos: photos.length });
-  } catch (err) {
-    console.error("[mail] property submission: office notification failed:", err);
-  }
+  // Saved first, emailed after the response, as for tours: the listing is
+  // already in Admin → Submissions, so mail trouble is a `[mail]` log line.
+  after(() =>
+    sendSubmissionEmail({ title, location: publicLocation, ownerName, mobile, email, photos: photos.length })
+  );
 
   return { status: "sent" };
 }

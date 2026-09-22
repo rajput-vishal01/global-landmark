@@ -61,11 +61,13 @@ function getMailer(what: string): Mailer | null {
  * Sends one message; false on failure, logged as ONE line with nodemailer's
  * code, the SMTP step and Google's reply (`code=EAUTH command=AUTH PLAIN
  * response=535-5.7.8 Username and Password not accepted …`). No secrets:
- * `command` is the step's name, never the line that was sent.
+ * `command` is the step's name, never the line that was sent. Success is a
+ * line too: mail runs after the response, so the log is the only witness.
  */
 async function deliver(mailer: Mailer, what: string, message: SendMailOptions): Promise<boolean> {
   try {
     await mailer.transporter.sendMail(message);
+    console.info(`[mail] ${what} sent`);
     return true;
   } catch (err) {
     const e = (err ?? {}) as { code?: string; command?: string; response?: string; message?: string };
@@ -217,13 +219,13 @@ function renderThanksEmail(data: InquiryData, company: ResolvedCompany) {
 }
 
 /**
- * Sends the admin notification and the confirmation to the submitter.
- * False when the office was not notified — mail not configured or the send
- * failed, the reason already logged — so the caller can respond gracefully.
+ * The admin notification, then the confirmation to the submitter. Called
+ * from after() once the visitor has their answer, so nothing is returned:
+ * a skip or a failure is a `[mail]` line in the server log.
  */
-export async function sendContactEmails(data: InquiryData): Promise<boolean> {
+export async function sendContactEmails(data: InquiryData): Promise<void> {
   const mailer = getMailer("inquiry");
-  if (!mailer) return false;
+  if (!mailer) return;
 
   const company = await resolveCompany();
 
@@ -241,13 +243,11 @@ export async function sendContactEmails(data: InquiryData): Promise<boolean> {
     subject: `New inquiry from ${data.name}`,
     html: renderAdminEmail(data, company),
   });
-  if (!delivered) return false;
 
-  // Confirmation is best-effort: once the admin has the inquiry, a failed
-  // courtesy email must not make the submitter retry (and double-notify).
-  // No address given means there is simply nobody to confirm to — the
+  // The confirmation only follows an office notification that went. No
+  // address given means there is simply nobody to confirm to — the
   // enquiry still reached the agency, which is what matters.
-  if (!data.email) return true;
+  if (!delivered || !data.email) return;
 
   await deliver(mailer, "inquiry: confirmation to the enquirer", {
     from: `"${company.legalName}" <${from}>`,
@@ -255,8 +255,6 @@ export async function sendContactEmails(data: InquiryData): Promise<boolean> {
     subject: `Thank you for reaching out to ${company.name}`,
     html: renderThanksEmail(data, company),
   });
-
-  return true;
 }
 
 export type TourEmailData = {
@@ -293,12 +291,12 @@ function tourRows(data: TourEmailData): string {
  * A visitor asked to see a property. The office gets the request with a
  * call button (a tour is arranged by phone); the visitor, if they left an
  * email, gets a short confirmation. Same contract as sendContactEmails:
- * false when the office was not notified, and the confirmation is
- * best-effort once the office has it.
+ * runs after the response, logs rather than returns, and the confirmation
+ * only follows an office notification that went.
  */
-export async function sendTourEmails(data: TourEmailData): Promise<boolean> {
+export async function sendTourEmails(data: TourEmailData): Promise<void> {
   const mailer = getMailer("tour request");
-  if (!mailer) return false;
+  if (!mailer) return;
   const company = await resolveCompany();
   const from = mailer.from;
   const listingLink = data.property
@@ -327,9 +325,8 @@ export async function sendTourEmails(data: TourEmailData): Promise<boolean> {
       company
     ),
   });
-  if (!delivered) return false;
 
-  if (!data.email) return true;
+  if (!delivered || !data.email) return;
   await deliver(mailer, "tour request: confirmation to the visitor", {
     from: `"${company.legalName}" <${from}>`,
     to: data.email,
@@ -349,7 +346,6 @@ export async function sendTourEmails(data: TourEmailData): Promise<boolean> {
       company
     ),
   });
-  return true;
 }
 
 export type SubmissionEmailData = {
@@ -364,14 +360,15 @@ export type SubmissionEmailData = {
 /**
  * A seller listed a property through /sell. Office only: the listing is a
  * draft until someone reviews it, and the seller already saw the on-page
- * thank-you. Same shell and rows as the tour email.
+ * thank-you. Same shell and rows as the tour email, same after()
+ * contract as the other two.
  */
-export async function sendSubmissionEmail(data: SubmissionEmailData): Promise<boolean> {
+export async function sendSubmissionEmail(data: SubmissionEmailData): Promise<void> {
   const mailer = getMailer("property submission");
-  if (!mailer) return false;
+  if (!mailer) return;
   const company = await resolveCompany();
 
-  return deliver(mailer, "property submission: office notification", {
+  await deliver(mailer, "property submission: office notification", {
     from: `"${company.name} Website" <${mailer.from}>`,
     to: mailer.from,
     ...(data.email ? { replyTo: data.email } : {}),

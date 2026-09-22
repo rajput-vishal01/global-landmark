@@ -74,7 +74,7 @@ export function ContactForm({
         </span>
         <h2 className="font-serif text-h3 text-heading">Your inquiry has been sent</h2>
         <p className="max-w-md text-pretty text-body font-sans text-ink-muted">
-          A confirmation is on its way. We respond within one business day.
+          We respond within one business day.
         </p>
       </div>
     );

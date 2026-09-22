@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { after } from "next/server";
 import { inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { leads, properties } from "@/lib/db/schema";
@@ -127,23 +128,9 @@ export async function submitInquiry(
     };
   }
 
-  try {
-    const sent = await sendContactEmails(data);
-    if (!sent) {
-      // The lead is already saved — this is a courtesy-email failure, not
-      // a lost inquiry, so the copy must not imply the message vanished.
-      return {
-        status: "error",
-        message:
-          `Your inquiry was received. Our mail service is temporarily unavailable, so we could not send a confirmation — we'll still be in touch.`,
-      };
-    }
-    return { status: "sent" };
-  } catch (err) {
-    console.error("Inquiry email failed (lead already saved):", err);
-    return {
-      status: "error",
-      message: "Your inquiry was received, but the confirmation email failed to send.",
-    };
-  }
+  // The saved lead is the record, so the visitor gets their answer now and
+  // the mail goes out after the response: waiting on two Gmail sessions
+  // held this form for 11s. A skip or failure is a `[mail]` log line.
+  after(() => sendContactEmails(data));
+  return { status: "sent" };
 }
