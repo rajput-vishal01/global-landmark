@@ -49,3 +49,21 @@ Whatever you do not flag stays exactly as it is when we go live — so please go
 ---
 
 **Next step:** send the items above whenever they are ready and we will swap everything in and schedule go-live.
+
+## Demo listings
+
+The site currently shows about twenty demo listings and five demo projects
+so you can see how it looks when full. The project names are invented, the
+localities are real, and every photo is a free-licence stock image. None of
+them has a price. They come off in one step whenever you are ready to add
+your own listings.
+
+## What we still need from you
+
+- Your own photographs of the properties you represent.
+- Confirmation that WhatsApp enquiries should go to the office number shown
+  on the site.
+- Whether you want commercial (SCO, shop, office) and rental listings — the
+  current form covers residential sale listings only.
+- A lighter version of the logo file, if you have one (the current file is
+  1.4 MB).

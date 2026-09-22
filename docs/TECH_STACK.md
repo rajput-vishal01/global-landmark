@@ -79,3 +79,45 @@ Locked in for all future code in this repo, per [CLAUDE.md](../CLAUDE.md#skills-
 - **`// ponytail:` comments** for deliberate shortcuts with a named ceiling (e.g. hardcoded 3 featured listings until a CMS query exists — comment names the ceiling and the upgrade trigger).
 - **One runnable check per non-trivial piece of logic** (filter/sort logic, content-model parsing, form validation) — no test framework/fixtures unless the project later adopts one.
 - Default to Server Components; add `"use client"` only where interactivity/animation genuinely requires it (forms, GSAP/Framer-driven components, filter state).
+
+## Images
+
+Every image is served exactly as uploaded: `images.unoptimized: true` in
+`next.config.ts`, so `next/image` never resizes or re-encodes. This is the
+owner's rule (photos at 100% of uploaded quality) — don't turn optimisation
+back on. Uploads are capped at 20 MB (`MAX_UPLOAD_BYTES` in `lib/storage.ts`);
+the reverse proxy must allow it (nginx `client_max_body_size 20M` or more).
+Files are stored by content hash under `UPLOAD_DIR` (default `./uploads`).
+Brand marks are the exception: the header, menu and popup use
+`public/logo-mark.png` (256px, 22 KB) instead of the 1024px `logo.png`, which
+stays for structured data and share cards.
+
+## SEO
+
+- Title template `%s | Global Landmark`; the home/default title, `og:site_name`
+  and JSON-LD keep "Global Landmark Realty Group".
+- Listing and project titles/descriptions are built from the record in
+  `lib/page-meta.ts` — never with a price.
+- JSON-LD: RealEstateAgent (address and phones from Settings), BreadcrumbList,
+  the listing (no Offer price), ItemList on `/properties`.
+- `app/sitemap.ts` lists every public listing and project; `app/robots.ts`
+  keeps `/api/images/` crawlable and blocks `/admin` and other `/api` routes.
+- `www.` redirects to the bare domain (308).
+
+## Email
+
+Gmail via nodemailer (`lib/email.ts`): `GMAIL_USER` (the full address) and
+`GMAIL_APP_PASSWORD` (a 16-letter App Password; spaces are stripped). Office
+notifications go to the `GMAIL_USER` inbox. Contact, tour and `/sell`
+submissions save first, answer the visitor, then send mail with `after()`;
+every skip or failure logs one `[mail]` line naming the cause.
+`npm run mail:test -- you@example.com` checks the login and sends a test.
+
+## Production
+
+Hostinger VPS, pm2 app `globallandmarkrealty` on port 3003, deployed by
+GitHub Actions on every push to `main` (build on the runner, migrations on
+the server). `scripts/server-deploy.sh` sources `./.env` at the app root
+(override with `GL_ENV_FILE`); variables reach the app only after
+`pm2 restart globallandmarkrealty --update-env` from a shell that sourced
+that file. Seeding never runs on deploy.

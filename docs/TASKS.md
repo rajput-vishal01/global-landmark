@@ -99,3 +99,23 @@ step with it line by line.
 - MLS/IDX integration.
 - Buyer portal / saved searches (needs auth).
 - Multi-language i18n.
+
+## Shipped — Sep 2026 final pass
+
+- Property form cut down and regrouped; maps link instead of coordinates;
+  document vault with multi-upload and preview.
+- Builders and areas pages removed (redirected); projects pre-fill units.
+- Property page redesigned: gallery with full-quality viewer, sticky jump
+  bar, forms behind buttons, map beside the enquiry card; EMI calculator
+  removed.
+- Images served at uploaded quality everywhere.
+- Email: visible failures, `mail:test`, `/sell` notifications, mail sent
+  after the response; tour requests can be deleted.
+- SEO: title template, canonicals, share images, JSON-LD, sitemap, robots,
+  www redirect, per-listing titles and alt text.
+- Responsive fixes (jump bar on phones, stacked overlays, deal board, hero
+  overflow, 12px text floor); dead code removed.
+- Demo data seed (`npm run db:seed-demo`, removable with `--remove`).
+
+Open, waiting on the client: real photos to replace demo data, confirmation
+of the WhatsApp number, whether commercial and rental listings are needed.

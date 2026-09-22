@@ -1,15 +1,43 @@
 # Content Model
 
-> **Superseded for properties (Aug 2026):** the live schema is
-> [lib/db/schema.ts](../lib/db/schema.ts) (PostgreSQL via Drizzle) — projects,
-> properties (kind: project|unit, category: sale|purchase|lease|invest,
-> `demandPrice` captured in full, superseding the earlier "no price by
-> design" decision — published publicly only when `showPricePublicly` is
-> set, "Price on request" otherwise), property_images (filesystem storage
-> under `UPLOAD_DIR`, not Cloudinary — see [TECH_STACK.md](TECH_STACK.md)),
-> deals (date-windowed Deal of the Week queue). The shapes below remain the
-> reference for entities not yet built (agents, communities, journal,
-> offices).
+> **Superseded for properties.** The live schema is
+> [lib/db/schema.ts](../lib/db/schema.ts) (MySQL via Drizzle; migrations are
+> the plain SQL files in `drizzle/`, applied by `scripts/migrate.mjs`).
+> The shapes further down remain the reference only for entities never built
+> (agents, communities, journal, offices).
+>
+> **The listing model as it stands (Sep 2026):**
+> - **Properties** — `kind` project|unit. The admin form was cut down at the
+>   client's request: category and status, prices and charges, configuration,
+>   classification, unit sizes and specifications are no longer form fields.
+>   The columns remain, so older rows keep their data and an admin save never
+>   blanks them. `demand_price` has no form field, so new listings show
+>   "Price on request". There is no commercial property type and no
+>   sale/rent choice (the five types are Residential Plot, Independent House,
+>   Villa, Flat/Apartment, Penthouse).
+> - **Location** — the free-text address plus a Google Maps link (`maps_url`,
+>   Google hosts only, https). Latitude/longitude were retired (migration
+>   0004). City and locality are derived from the address
+>   (`placeFromAddress` in `lib/locations.ts`) and still drive the city filter.
+> - **Projects** carry the details every unit shares — address, maps link,
+>   amenities, legal and loan flags, banks on panel, RERA number (0005).
+>   Filing a unit under a project pre-fills those on the property form. A
+>   unit's tower must belong to its own project (0007 cleared cross-project
+>   links).
+> - **Images** — `property_images`, files on disk under `UPLOAD_DIR`, served
+>   untouched at `/api/images/<sha256>.<ext>` (see [TECH_STACK.md](TECH_STACK.md)).
+> - **Documents** — `property_documents`, private, one row per file, grouped by
+>   document type in the admin's document vault with inline preview; served
+>   only to admins at `/api/admin/documents/<key>`.
+> - **Owner submissions** from `/sell` land as draft properties; the seller's
+>   exact address goes to `property_owners.address` (private), never the
+>   public address line (0006).
+> - **Builders and areas** — their pages were removed (redirects to
+>   `/properties`); the tables stay so no stored data is lost.
+> - **Deals** — date-windowed Deal of the Week queue; only live listings qualify.
+> - **Demo data** — `scripts/seed-demo.mjs` adds invented projects and listings
+>   marked `addedBy = "Dealer"`, `sourceName = "Demo data"`; see
+>   [scripts/seed-demo/README.md](../scripts/seed-demo/README.md).
 
 Data shapes for the primary entities. Framework-agnostic (works whether content ends up in a headless CMS, MDX, or a typed local dataset) — defined here as the contract, implementation lands in `lib/content/` per [TECH_STACK.md](TECH_STACK.md#folder-structure).
 

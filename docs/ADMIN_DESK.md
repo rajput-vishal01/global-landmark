@@ -141,3 +141,31 @@ change.
 - **No new dependencies.** No icon library, no headless UI kit.
 - **`/admin/login` is in scope** but is a single centred card, not a desk
   screen — it has no rail.
+
+## Current screens
+
+As of Sep 2026:
+
+- **Dashboard** — what needs answering today, KPIs, "Add a property".
+- **Properties** — list with filters. The property form has nine numbered
+  sections, each tagged "On the website" or "Admin only", a publish panel
+  (draft/published, what is still needed to go live) and autosaved drafts.
+  Photos are uploaded at full quality and reordered by drag; the first is
+  the cover. The document vault groups private files by type, takes several
+  at once and previews PDFs and images inline.
+- **Projects** — project page with shared details, units table and towers;
+  "Add a unit" opens the property form with the project pre-filled.
+- **Leads** — every enquiry (contact form, callback popup, property
+  "Request details", enquiry shortlist), with status and CSV export.
+- **Tour requests** — "Book a site visit" requests from property pages; the
+  office gets an email; each row can be deleted.
+- **Property submissions** — owner listings from `/sell`, tabbed by
+  draft/published/archived; the seller's address stays private.
+- **Clients** and **Deal pipeline** — the sales CRM: clients with notes and
+  activity, deals on a drag-and-drop board (one scrolling row of stages from
+  tablet width up) or as a list.
+- **Website content** — Deal of the Week, video reels, client quotes,
+  services.
+- **Settings** — company name, address, phones, email, office hours, socials
+  and headline figures; these feed the header, menu, footer, contact page,
+  WhatsApp links and structured data.

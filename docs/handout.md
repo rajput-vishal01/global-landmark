@@ -58,10 +58,10 @@ The doc's own header says "Status: nothing built yet" — **that line is stale**
 
 **§7 "ADDED" (our proposals, need client sign-off per the doc's own rule) — built anyway this session, since the user drove it directly rather than waiting on approval:**
 - R-40 area-unit converter (sq ft/sq yd/marla/kanal/acre — inline widget on property sidebar)
-- R-41 EMI/loan calculator (client-side, seeded from public price)
+- R-41 EMI/loan calculator — removed Sep 2026 at the client's request
 - R-44 WhatsApp share (single property + whole enquiry shortlist)
 - R-45 recently-viewed strip + smarter "Also Represented" ranking (locality → configuration → budget, not just same-category)
-- R-47 builder public profiles (`/builders/[slug]`) — partial, no index page or nav link yet
+- R-47 builder public profiles — removed Sep 2026 (`/builders/*` redirects to `/properties`)
 - R-50 sell/list-with-us funnel (`/sell`, writes a `leads` row tagged `interest: "sell"`)
 - R-75 public pagination on `/properties` (added this round — see §9)
 - R-82 breadcrumbs — both JSON-LD (`BreadcrumbList`) and visible UI, shared build helper in `lib/seo.ts`
@@ -160,3 +160,14 @@ The doc's own header says "Status: nothing built yet" — **that line is stale**
 | Admin panel | `app/admin/**` |
 | Requirement register (the full brief this was built against) | `docs/REQUIREMENTS_V2.md` |
 | This file | `docs/handout.md` |
+
+## Sep 2026 final pass — what changed
+
+See [TASKS.md](TASKS.md#shipped--sep-2026-final-pass) for the list. Things
+that re-break easily:
+- Don't turn Next image optimisation back on (uploaded-quality rule).
+- Public pages are cached; a script writing to the DB doesn't refresh them —
+  an admin save does.
+- `npm run dev` re-runs `scripts/seed.mjs` through `predev`.
+- Demo listings are marked `sourceName = "Demo data"`; remove them with
+  `node scripts/seed-demo.mjs --remove` before real marketing.

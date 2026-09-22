@@ -178,3 +178,12 @@ The address, phone, email and socials can also be overridden through **Admin
 → Settings** without a deploy. Be careful there: an override outranks
 `lib/data.ts`, which is how a stale row kept the old Panchkula address live
 after the code was fixed. Migrations `0001` and `0002` clear those rows.
+
+## Still outstanding (Sep 2026)
+
+- Real listing photographs to replace the demo data.
+- WhatsApp number: WhatsApp links follow the phone number saved in admin
+  Settings — confirm it is on WhatsApp.
+- Commercial and rental listings: yes or no (not supported by the current form).
+- A lighter logo file (current `logo.png` is 1.4 MB; the site uses a 22 KB
+  copy for the header).
