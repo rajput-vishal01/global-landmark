@@ -19,7 +19,9 @@ export async function Services() {
   if (items.length === 0) return null;
 
   return (
-    <section className="bg-cream px-5 py-20 md:px-12 md:py-28">
+    // Ivory, not champagne: the About band that follows is champagne, and
+    // two champagne bands in a row read as one section.
+    <section className="bg-surface px-5 py-20 md:px-12 md:py-28">
       <div className="mx-auto max-w-7xl">
         <SectionHeading
           eyebrow="What We Do"
