@@ -41,6 +41,7 @@ type NewsdataResponse = {
     description?: string;
     image_url?: string;
     pubDate?: string;
+    category?: string[];
   }[];
 };
 
@@ -127,7 +128,7 @@ export async function fetchRealEstateNews(): Promise<NewsArticle[]> {
       if (data.status !== "success" || !Array.isArray(data.results)) continue;
       for (const item of data.results) {
         if (!item.title || !isSafeHttpUrl(item.link)) continue;
-        if (!isMarketStory(item.title, item.description ?? null)) continue;
+        if (!isMarketStory(item.title, item.description ?? null, item.category ?? [])) continue;
 
         const key = item.link.toLowerCase();
         const titleKey = item.title.trim().toLowerCase();

@@ -42,6 +42,9 @@ const REJECT = [
   ["Mohali realtor convicted in cheating case, sentenced to 3 years", null],
   // Hospitality PR that calls a hotel a property.
   ["Lords Hotels & Resorts Showcases Bespoke Wedding Celebrations", "A luxury property near Chandigarh."],
+  // Crime that only mentions property in its SUMMARY — the headline is not about property.
+  ["Chandigarh police bust fake call centre", "Accused had bought property in Zirakpur."],
+  ["Panchkula man cheated of Rs 20 lakh by online fraudsters", "He had listed his property for sale."],
   // Property, but not our market.
   ["Mumbai real estate hits record high", "Property prices in Mumbai surged."],
   ["Gurgaon township launched by builder", null],
@@ -88,6 +91,24 @@ try {
   for (const [title, description] of KEEP) {
     assert.equal(isMarketStory(title, description), true, `must keep: ${title}`);
   }
+
+  // newsdata.io's own category wins over any keyword.
+  assert.equal(
+    isMarketStory("Zirakpur builder booked for flat fraud", null, ["crime"]),
+    false,
+    "an article the API files under crime is dropped"
+  );
+  assert.equal(
+    isMarketStory("GMADA plots scheme opens in Mohali", null, ["business", "top"]),
+    true,
+    "a business-filed property story is kept"
+  );
+  // The property subject has to be in the headline, not just the summary.
+  assert.equal(
+    isMarketStory("Mohali civic body meeting held", "Discussed housing in sector 70."),
+    false,
+    "property in the summary alone is not enough"
+  );
 
   // A story needs BOTH gates, not either.
   assert.equal(isMarketStory("Mohali stadium renovated", null), false, "place alone is not enough");

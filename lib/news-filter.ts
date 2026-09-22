@@ -19,9 +19,24 @@
 const TRICITY_RE =
   /\b(chandigarh|panchkula|zirakpur|mohali|tricity|kharar|derabassi|mullanpur|banur|new chandigarh|gmada)\b/i;
 
-/** ...and about property, not merely mention a place in passing. */
+/**
+ * ...and be ABOUT property. This one is tested against the HEADLINE only.
+ *
+ * It used to be tested against headline + summary, which is how crime kept
+ * getting through: a court or police story names Chandigarh and mentions a
+ * seized "property" once in its summary, and passed. A story that is about
+ * the property market says so in its headline. Plurals are listed because
+ * the trailing \b stops "flat" from matching "flats".
+ */
 const PROPERTY_RE =
-  /\b(real[- ]estate|realty|property|properties|housing|homebuyer|builder|apartment|flat|plot|township|rera|gmada|residential|commercial space|land pooling|home loan|circle rate|collector rate|stamp duty|possession)\b/i;
+  /\b(real[- ]estate|realty|property|properties|housing|homebuyers?|homes|builders?|apartments?|flats?|plots?|villas?|townships?|rera|gmada|residential|commercial space|land pooling|home loans?|circle rates?|collector rates?|stamp duty|possession)\b/i;
+
+/**
+ * newsdata.io tags every article with categories. Anything it files under
+ * one of these is not market news whatever its words say, so it is dropped
+ * before any keyword is read.
+ */
+const EXCLUDED_CATEGORIES = new Set(["crime", "politics", "sports", "entertainment", "health"]);
 
 /**
  * Violent crime and casualty copy, excluded even from property stories.
@@ -62,11 +77,23 @@ const VIOLENT_RE =
  */
 const LIFESTYLE_RE = /\b(wedding|celebrat|banquet|honeymoon|staycation)/i;
 
-export function isMarketStory(title: string, description: string | null): boolean {
+/**
+ * Four gates, all required:
+ *   1. newsdata.io has not filed it under crime, politics, sports, etc.;
+ *   2. the HEADLINE is about property;
+ *   3. the headline or summary places it in the Tricity;
+ *   4. neither mentions violence, sentencing or hospitality PR.
+ */
+export function isMarketStory(
+  title: string,
+  description: string | null,
+  categories: readonly string[] = []
+): boolean {
+  if (categories.some((c) => EXCLUDED_CATEGORIES.has(c.toLowerCase()))) return false;
   const hay = `${title} ${description ?? ""}`;
   return (
+    PROPERTY_RE.test(title) &&
     TRICITY_RE.test(hay) &&
-    PROPERTY_RE.test(hay) &&
     !VIOLENT_RE.test(hay) &&
     !LIFESTYLE_RE.test(hay)
   );
