@@ -7,7 +7,7 @@ import { Footer } from "@/components/sections/Footer";
 import { CTABand } from "@/components/sections/CTABand";
 import { ContactForm } from "@/components/ContactForm";
 import { GalleryLightbox } from "@/components/gallery/GalleryLightbox";
-import { ListingCard, propertySpecs } from "@/components/ui/ListingCard";
+import { ListingCard, areaLabel, propertySpecs } from "@/components/ui/ListingCard";
 import { EnquiryToggleButton } from "@/components/EnquiryToggleButton";
 import { EmiCalculator } from "@/components/EmiCalculator";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
@@ -26,7 +26,7 @@ import { toEnquiryCartItem } from "@/lib/enquiry-cart-item";
 import { getPropertyBySlug, listProperties } from "@/lib/db/queries";
 import { getPropertyDetailExtras } from "@/lib/db/property-detail";
 import { categoryLabel } from "@/lib/categories";
-import { AMENITY_GROUPS, formatArea, formatIndianShort } from "@/lib/attributes";
+import { AMENITY_GROUPS, formatArea, formatIndianShort, headlineArea } from "@/lib/attributes";
 import { isAreaUnit } from "@/lib/taxonomy/area";
 import { rankSimilar } from "@/lib/similar";
 import { whatsAppHref, whatsAppShareHref, propertyShareMessage } from "@/lib/whatsapp";
@@ -108,6 +108,7 @@ export default async function PropertyDetailPage({
   const gallery = property.images.slice(1);
   const floorPlans = property.images.filter((img) => img.mediaKind === "floor_plan");
   const specs = propertySpecs(property);
+  const headline = headlineArea(property);
   // A document arrives here only when its own `isPublic` is true — gated in
   // SQL, see lib/db/property-detail.ts.
   const { unitSizes, documents } = await getPropertyDetailExtras(property.id);
@@ -147,9 +148,7 @@ export default async function PropertyDetailPage({
       ["Bathrooms", property.baths != null ? String(property.baths) : null],
       [
         "Area",
-        property.areaValue != null
-          ? formatArea(property.areaValue, property.areaUnit)
-          : null,
+        areaLabel(property),
       ],
     ] as [string, string | null | undefined][]
   ).filter((row): row is [string, string] => Boolean(row[1]));
@@ -626,8 +625,8 @@ export default async function PropertyDetailPage({
               </dl>
               {/* R-40: inline area-unit converter, only when we have a real
                   value + a recognised unit to convert from. */}
-              {property.areaValue != null && isAreaUnit(property.areaUnit) && (
-                <AreaConverter value={property.areaValue} unit={property.areaUnit} />
+              {headline && isAreaUnit(headline.unit) && (
+                <AreaConverter value={headline.value} unit={headline.unit} />
               )}
               <p className="mt-6 text-pretty text-meta font-sans leading-relaxed text-ink-muted">
                 {PROPERTY_DETAIL.sidebarNote}

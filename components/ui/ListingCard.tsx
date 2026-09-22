@@ -7,6 +7,7 @@ import {
   collectionLabel,
   formatArea,
   formatIndianShort,
+  headlineArea,
 } from "@/lib/attributes";
 import { EnquiryToggleButton } from "@/components/EnquiryToggleButton";
 import { toEnquiryCartItem } from "@/lib/enquiry-cart-item";
@@ -21,11 +22,16 @@ export function propertySpecs(property: PublicPropertyWithMedia): string {
       ]
         .filter(Boolean)
         .join(" · "),
-    property.areaValue != null && formatArea(property.areaValue, property.areaUnit),
+    areaLabel(property),
     property.possessionStatus,
   ]
     .filter(Boolean)
     .join(" · ");
+}
+
+export function areaLabel(property: PublicPropertyWithMedia): string | null {
+  const area = headlineArea(property);
+  return area ? formatArea(area.value, area.unit) : null;
 }
 
 /** Locality + sector reads better than the free-text address line on a card. */
@@ -59,9 +65,8 @@ function cardSpecs(property: PublicPropertyWithMedia): Spec[] {
       label: `${property.baths} Bath${property.baths === 1 ? "" : "s"}`,
     });
   }
-  if (property.areaValue != null) {
-    specs.push({ icon: "area", label: formatArea(property.areaValue, property.areaUnit) });
-  }
+  const area = areaLabel(property);
+  if (area) specs.push({ icon: "area", label: area });
   return specs;
 }
 

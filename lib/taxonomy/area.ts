@@ -82,3 +82,37 @@ export const AREA_MEASURES = [
 ] as const;
 
 export type AreaMeasureKey = (typeof AREA_MEASURES)[number]["key"];
+
+type AreaFields = {
+  areaValue: number | null;
+  areaUnit: string;
+  plotArea: number | null;
+  plotAreaUnit: string | null;
+  superArea: number | null;
+  superAreaUnit: string | null;
+  builtUpArea: number | null;
+  builtUpAreaUnit: string | null;
+  carpetArea: number | null;
+  carpetAreaUnit: string | null;
+};
+
+/**
+ * The one area a listing is shown with. The admin form fills the four
+ * measures (plot, super, built-up, carpet), never the legacy `areaValue`,
+ * so reading only `areaValue` left every admin-entered listing without a
+ * size on the card and the detail page. Legacy value first (seed and sell
+ * submissions set it), then the measures in the order a property is judged.
+ */
+export function headlineArea(p: AreaFields): { value: number; unit: string } | null {
+  if (p.areaValue != null) return { value: p.areaValue, unit: p.areaUnit };
+  const measures: [number | null, string | null][] = [
+    [p.plotArea, p.plotAreaUnit],
+    [p.superArea, p.superAreaUnit],
+    [p.builtUpArea, p.builtUpAreaUnit],
+    [p.carpetArea, p.carpetAreaUnit],
+  ];
+  for (const [value, unit] of measures) {
+    if (value != null && unit) return { value, unit };
+  }
+  return null;
+}

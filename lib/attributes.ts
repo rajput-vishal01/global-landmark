@@ -11,6 +11,7 @@ export {
   AREA_UNITS,
   AREA_MEASURES,
   formatArea,
+  headlineArea,
   toSqft,
   isAreaUnit,
   type AreaUnit,
