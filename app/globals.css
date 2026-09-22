@@ -32,7 +32,9 @@
   --color-gold-highlight: #f5d98b;
   --color-gold-deep: #8a5a22;
   --color-surface: #fdfaf4;
-  --color-cream: #f2e7d3;
+  /* Softened twice at the client's request: the deeper champagne tired the
+     eyes over a long session. Still a shade off ivory, so bands separate. */
+  --color-cream: #f7f2e9;
   --color-border: #e6dccb;
   --color-error: #9a2b2b;
 
@@ -247,7 +249,7 @@ header[class*="bg-surface/"] {
 body.bg-cream {
   background:
     radial-gradient(ellipse 80% 38rem at 50% 0%, rgb(245 217 139 / 0.14), transparent 75%) no-repeat,
-    linear-gradient(180deg, #faf5eb 0%, #f4ecdd 60rem, #f4ecdd 100%) no-repeat,
+    linear-gradient(180deg, #fcfaf5 0%, #f7f2e9 60rem, #f7f2e9 100%) no-repeat,
     var(--color-cream);
 }
 .admin-panel,

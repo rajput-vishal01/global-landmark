@@ -60,7 +60,7 @@ and the dark bands are never cool slate.
 | Ground | Utility on a band | Look |
 |---|---|---|
 | Ivory | `bg-surface` | flat warm near-white (#fdfaf4) |
-| Champagne | `bg-cream` | flat, visibly deeper (#f2e7d3) |
+| Champagne | `bg-cream` | flat, a soft shade off ivory (#f7f2e9) |
 | Graphite | `bg-navy` / `bg-navy-deep` | the logo's backdrop, gold halo at the top |
 
 Light bands are flat on purpose: a fade inside them made neighbouring
