@@ -6,9 +6,9 @@ import { PageHeader } from "../_components/page-chrome";
 import { canonical, OG_DEFAULTS } from "@/lib/seo";
 import { resolveCompany } from "@/lib/site-settings";
 
-const PAGE_TITLE = "Sell your property";
+const PAGE_TITLE = "Sell or List Your Property in the Tricity";
 const PAGE_DESCRIPTION =
-  "List a Tricity home, plot or commercial space with Global Landmark. Send the details and our team will call you.";
+  "Selling a flat, kothi or plot in Mohali, Zirakpur, Panchkula or Chandigarh? Send the details and our team calls you. Nothing is published until you approve it.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,
@@ -55,7 +55,7 @@ export default async function SellPage() {
       <main className="bg-surface">
         <PageHeader
           eyebrow="List with us"
-          title={PAGE_TITLE}
+          title="Sell your property"
           sub="Tell us what you have. Our team reads every submission personally — nothing is published until you have agreed what it says."
           breadcrumbs={BREADCRUMBS}
         />

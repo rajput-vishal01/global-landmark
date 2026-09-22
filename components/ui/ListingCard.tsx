@@ -174,7 +174,10 @@ export function ListingCard({
       {m.cover && (
         <Image
           src={m.cover.url}
-          alt={m.cover.alt || property.title}
+          // Empty unless the broker described the photo: the card's link
+          // already reads the title, and repeating it here made a screen
+          // reader say it twice.
+          alt={m.cover.alt && m.cover.alt !== property.title ? m.cover.alt : ""}
           fill
           // Above Next's default of 75: these are the photographs a buyer
           // judges a listing on. Allowed values live in next.config.ts.

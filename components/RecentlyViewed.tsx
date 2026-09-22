@@ -66,7 +66,8 @@ export function RecentlyViewed({ record }: { record?: EnquiryCartItem }) {
                 {item.thumbnail && (
                   <Image
                     src={item.thumbnail}
-                    alt={item.title}
+                    // The title is the link's own text, just below.
+                    alt=""
                     fill
                     sizes="(min-width: 768px) 16vw, 160px"
                     className="img-zoom"

@@ -8,8 +8,8 @@ import { PageHeader, SectionHeading } from "../_components/page-chrome";
 import { ABOUT_PAGE, COMPANY } from "@/lib/data";
 import { canonical, OG_DEFAULTS } from "@/lib/seo";
 
-const PAGE_TITLE = "About";
-const PAGE_DESCRIPTION = `The group behind ${COMPANY.legalName} — its history, principals, and the standard it holds across the Tricity.`;
+const PAGE_TITLE = "About Us: Founders Ashu & Divya Goyal";
+const PAGE_DESCRIPTION = `Meet Ashu and Divya Goyal, founders of ${COMPANY.legalName}, and the values of trust and transparency behind every property we represent in the Tricity.`;
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,

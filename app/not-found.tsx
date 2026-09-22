@@ -1,5 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+
+// Without this a 404 carried the home page's title.
+export const metadata: Metadata = { title: "Page not found" };
 
 export default function NotFound() {
   return (

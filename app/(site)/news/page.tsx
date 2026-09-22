@@ -9,9 +9,9 @@ import { fetchRealEstateNews } from "@/lib/news";
 import { NEWS_PAGE } from "@/lib/data";
 import { canonical, OG_DEFAULTS } from "@/lib/seo";
 
-const PAGE_TITLE = "Market News";
+const PAGE_TITLE = "Chandigarh Tricity Real Estate News";
 const PAGE_DESCRIPTION =
-  "Property and real-estate coverage from across the Tricity — Chandigarh, Panchkula, Mohali and Zirakpur.";
+  "Real estate and property news from Chandigarh, Mohali, Panchkula and Zirakpur, drawn from regional news outlets for buyers, sellers and investors.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,

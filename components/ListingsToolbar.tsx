@@ -39,9 +39,11 @@ export function ListingsToolbar({
 }) {
   return (
     <div className="mb-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 border-b border-border pb-5">
-      <p className="font-sans text-body text-ink">
+      {/* An h2, styled as body text: the listing cards' h3 titles sit under
+          it. Without it the page went straight from its h1 to the cards. */}
+      <h2 className="font-sans text-body text-ink">
         {summary ?? " "}
-      </p>
+      </h2>
 
       <div className="flex flex-wrap items-center gap-3">
         {/* Sort as one segmented group: four options read at a glance, and

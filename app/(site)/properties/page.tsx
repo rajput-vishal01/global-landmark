@@ -38,11 +38,12 @@ import {
   viewParam,
   type PropertiesFilterParams,
 } from "@/lib/properties-url";
-import { COMPANY, PROPERTIES_PAGE } from "@/lib/data";
+import { PROPERTIES_PAGE } from "@/lib/data";
 import { breadcrumbJsonLd, canonical, jsonLdHtml, OG_DEFAULTS } from "@/lib/seo";
 
-const PAGE_TITLE = "Our Listings";
-const PAGE_DESCRIPTION = `The current portfolio of landmark residences represented by ${COMPANY.legalName}.`;
+const PAGE_TITLE = "Property in Chandigarh, Mohali & Zirakpur";
+const PAGE_DESCRIPTION =
+  "Flats, kothis, villas and plots across Chandigarh, Mohali, Zirakpur, Panchkula and New Chandigarh, each seen first-hand by our team before it is listed.";
 
 /**
  * Canonical policy: the plain grid is its own canonical, page by page
@@ -57,7 +58,8 @@ export async function generateMetadata({
   const { page, ...rest } = await searchParams;
   const n = Math.max(1, Number.parseInt(typeof page === "string" ? page : "1", 10) || 1);
   const path = n > 1 && Object.keys(rest).length === 0 ? `/properties?page=${n}` : "/properties";
-  const title = n > 1 ? `${PAGE_TITLE}, page ${n}` : PAGE_TITLE;
+  // The full title has no room for a page number inside 60 characters.
+  const title = n > 1 ? `Tricity Property Listings, Page ${n}` : PAGE_TITLE;
   return {
     title,
     description: PAGE_DESCRIPTION,

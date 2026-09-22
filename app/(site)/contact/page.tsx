@@ -10,9 +10,9 @@ import { resolveCompany } from "@/lib/site-settings";
 import { whatsAppHref } from "@/lib/whatsapp";
 import { canonical, OG_DEFAULTS } from "@/lib/seo";
 
-const PAGE_TITLE = "Contact";
+const PAGE_TITLE = "Contact Our Zirakpur Office";
 const PAGE_DESCRIPTION =
-  "Speak with the group about buying, selling, or a private valuation across the Tricity.";
+  "Call, WhatsApp or email us, or visit our office in Zirakpur. Enquiries on buying, selling or valuing a Tricity property are answered within one business day.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,

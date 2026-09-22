@@ -279,7 +279,7 @@ export function termsOfUse(COMPANY: Company): LegalDocument {
   return {
   title: "Terms of use",
   description:
-    "The terms on which Global Landmark Realty Group makes this website and its property listings available.",
+    "The terms on which Global Landmark Realty Group makes this website and its Tricity property listings available, and what a listing does and does not promise.",
   intro:
     "These terms cover what this website is, what our listings are and are not, and what you can expect from us.",
   updated: UPDATED,
