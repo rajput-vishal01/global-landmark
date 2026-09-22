@@ -32,9 +32,17 @@
     "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Sector+82%2C+Airport+Road%2C+Mohali",
     "legalFlags": [],
     "reraNumber": null,
-    "loanFlags": ["Home Loan Available"],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
     "banksOnPanel": [],
-    "coverImage": null
+    "coverImage": {
+      "url": "https://images.unsplash.com/photo-1775582336464-7a5311bf6848?w=2400&q=90&fm=jpg&fit=max",
+      "alt": "White residential towers with balconies rising above trees against an evening sky",
+      "source": "https://unsplash.com/photos/tall-apartment-buildings-against-a-cloudy-sky-2Tlp4lcGcqo",
+      "author": "Ishaan Sen",
+      "licence": "Unsplash License"
+    }
   },
   {
     "slug": "kachnar-township",
@@ -69,7 +77,9 @@
     "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Peer+Muchalla%2C+Zirakpur",
     "legalFlags": [],
     "reraNumber": null,
-    "loanFlags": ["Home Loan Available"],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
     "banksOnPanel": [],
     "coverImage": null
   },
@@ -104,9 +114,11 @@
     ],
     "address": "Mullanpur, New Chandigarh",
     "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Mullanpur%2C+New+Chandigarh",
-    "legalFlags": ["Freehold"],
+    "legalFlags": [],
     "reraNumber": null,
-    "loanFlags": ["Home Loan Available"],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
     "banksOnPanel": [],
     "coverImage": null
   },
@@ -134,11 +146,19 @@
     ],
     "address": "Kharar–Landran Road, Kharar",
     "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Kharar+Landran+Road%2C+Kharar",
-    "legalFlags": ["Freehold"],
+    "legalFlags": [],
     "reraNumber": null,
-    "loanFlags": ["Home Loan Available"],
+    "loanFlags": [
+      "Home Loan Available"
+    ],
     "banksOnPanel": [],
-    "coverImage": null
+    "coverImage": {
+      "url": "https://images.unsplash.com/photo-1649858575417-349179f31539?w=2400&q=90&fm=jpg&fit=max",
+      "alt": "Mustard in flower across a field in Punjab under a clear sky",
+      "source": "https://unsplash.com/photos/a-field-full-of-yellow-flowers-under-a-blue-sky-bt14RFf-0ag",
+      "author": "Chirag Bhardwaj",
+      "licence": "Unsplash License"
+    }
   },
   {
     "slug": "copperleaf-square",

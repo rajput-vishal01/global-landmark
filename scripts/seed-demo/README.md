@@ -49,7 +49,9 @@ database overrides.)
 `--remove` deletes only listings whose slug is in `listings.json` **and** whose
 source name is still "Demo data" (with their photos, media links and deals), a
 project only when no other listing still points at it, and then every stored
-photo file that no row references any more. A demo listing an admin has
+photo file that no row references any more. Both keys, because either alone
+could match the office's own data: a real listing can share a demo title, and
+a real dealer could be entered with any name. A demo listing an admin has
 retitled (which changes its slug) or re-sourced is treated as the office's own
 and kept.
 
@@ -95,7 +97,14 @@ image file, `source` the photo's page.
 
 **deals.json** — `[{ listing, startsInDays, days }]`: the listing's slug, the
 first day counted from the day of the run (0 = today, in IST), and the length
-in days. A deal that would overlap any existing deal is skipped.
+in days. A deal never overlaps another one: a window that would is moved to
+the first free days after it (the home page shows the earliest deal covering
+today, so an overlap would hide one). A listing that already has a deal gets
+no second one, so re-running adds nothing.
 
 Anything outside the admin's own lists (a property type, an area unit, a
-checklist value) fails the run and names the slug and the field.
+checklist value) fails the run and names the slug and the field. The checks
+live in `manifest.mjs`, which carries copies of the admin's lists because the
+server runs this with plain Node; wherever Node can read TypeScript (any dev
+machine here) it compares those copies with `lib/` and refuses to run if they
+have drifted.
