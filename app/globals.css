@@ -210,7 +210,7 @@ body.bg-cream:has(.admin-root) {
    the way daylight crosses a room. Each variant takes a different corner, so
    two dark bands on one page never read as the same band repeated. */
 :root {
-  /* Light from the top-left.  */
+  /* Light from the top-left. */
   --grad-graphite:
     radial-gradient(ellipse 75% 95% at -8% -12%, rgb(245 217 139 / 0.24), rgb(201 153 46 / 0.08) 40%, transparent 72%),
     linear-gradient(150deg, #423b33 0%, #2f2a25 55%, #1f1c18 100%);

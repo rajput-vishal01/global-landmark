@@ -155,7 +155,9 @@ export function Select({
           Inline styles rather than utilities because the numbers come from
           getBoundingClientRect at runtime — a computed Tailwind class name is
           one Tailwind never sees in the source and so never generates.
-          `mounted` guards the first server render, which has no document. */}
+          `mounted` guards the first server render, which has no document.
+          z-[70]: above every modal (FormDialog is z-[60]), or a Select inside
+          one opens its list behind the dialog. */}
       {mounted &&
         createPortal(
           <AnimatePresence>
@@ -174,7 +176,7 @@ export function Select({
                   top: rect.bottom + 4,
                   width: rect.width,
                 }}
-                className="z-50 max-h-64 overflow-y-auto border border-border bg-white shadow-[0_18px_44px_-18px_rgba(20,20,20,0.3)]"
+                className="z-[70] max-h-64 overflow-y-auto border border-border bg-white shadow-[0_18px_44px_-18px_rgba(20,20,20,0.3)]"
               >
             {options.map((option, i) => {
               const isSelected = option.value === value;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * The property page's sticky jump bar. Plain anchors (they work before
@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
  */
 export function SectionNav({ items }: { items: { id: string; label: string }[] }) {
   const [active, setActive] = useState(items[0]?.id ?? "");
+  const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -25,14 +26,31 @@ export function SectionNav({ items }: { items: { id: string; label: string }[] }
     return () => observer.disconnect();
   }, [items]);
 
+  // On a phone the bar is wider than the screen: keep the highlighted item
+  // in view. Scrolls the list only — never the page.
+  useEffect(() => {
+    const list = listRef.current;
+    const link = list?.querySelector<HTMLElement>(`a[href="#${CSS.escape(active)}"]`);
+    if (!list || !link) return;
+    const left = link.offsetLeft;
+    const right = left + link.offsetWidth;
+    if (left < list.scrollLeft || right > list.scrollLeft + list.clientWidth) {
+      list.scrollTo({ left: Math.max(0, left - 20), behavior: "smooth" });
+    }
+  }, [active]);
+
   return (
     <nav
       aria-label="On this page"
-      // Flush under the site header (77px tall at every width) — any gap
-      // between the two lets the page scroll through visibly.
-      className="sticky top-[76px] z-30 mt-8 border-b border-border bg-surface md:mt-10"
+      // Flush under the site header — 65px below `sm`, 77px from `sm` up
+      // (components/sections/HeaderClient.tsx). Any gap between the two lets
+      // the page scroll through visibly.
+      className="sticky top-16 z-30 mt-8 border-b border-border bg-surface sm:top-[76px] md:mt-10"
     >
-      <ul className="flex gap-6 overflow-x-auto px-5 [scrollbar-width:none] md:gap-9 md:px-12 [&::-webkit-scrollbar]:hidden">
+      <ul
+        ref={listRef}
+        className="relative flex gap-6 overflow-x-auto px-5 [scrollbar-width:none] md:gap-9 md:px-12 [&::-webkit-scrollbar]:hidden"
+      >
         {items.map((item) => (
           <li key={item.id} className="shrink-0">
             <a
