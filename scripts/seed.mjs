@@ -426,13 +426,13 @@ const propId =
     await conn.execute(
       `insert into towers (project_id, name, total_floors, units_per_floor, total_units)
        select p.id, 'Tower A', 14, 4, 56 from projects p
-       where p.slug = 'homeland-urva-luxury'
+       where p.slug = 'imperial-residency'
          and not exists (select 1 from towers t where t.project_id = p.id and t.name = 'Tower A')`
     );
     const towerRow = await one(
       `select t.id from towers t
        join projects p on p.id = t.project_id
-       where p.slug = 'homeland-urva-luxury' and t.name = 'Tower A'`
+       where p.slug = 'imperial-residency' and t.name = 'Tower A'`
     );
     const towerId = towerRow?.id ?? null;
 
