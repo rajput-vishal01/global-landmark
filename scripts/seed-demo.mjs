@@ -24,6 +24,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import mysql from "mysql2/promise";
 import { MIN_PHOTOS, isPhotoHost, loadManifests, refCode, warnings } from "./seed-demo/manifest.mjs";
+import { KEY_PATTERN, referencedKeys, uploadDir } from "./upload-refs.mjs";
 
 try {
   process.loadEnvFile();
@@ -81,14 +82,7 @@ function addDays(ymd, days) {
 
 // ─── Photos ───────────────────────────────────────────────────────────────────
 
-/** lib/storage.ts uploadDirFor: climb out of .next/standalone, where the production server runs. */
-function uploadDirFor(cwd) {
-  const standalone = path.join(".next", "standalone");
-  const root = cwd.endsWith(path.sep + standalone) ? cwd.slice(0, -(standalone.length + 1)) : cwd;
-  return path.join(root, "uploads");
-}
-const UPLOAD_DIR = process.env.UPLOAD_DIR || uploadDirFor(process.cwd());
-const KEY_PATTERN = /^[a-f0-9]{64}\.(jpg|png|webp|avif|gif|bmp|tiff|heic|pdf|doc|docx)$/;
+const UPLOAD_DIR = uploadDir();
 /** <UPLOAD_DIR>/<public|private>/<first two hex>/<key>, as lib/storage.ts resolveStoragePath. */
 const storagePath = (key, visibility = "public") => path.join(UPLOAD_DIR, visibility, key.slice(0, 2), key);
 /** The stored key in a column value — a bare key or one of our /api/images/<key> URLs. */
@@ -496,24 +490,14 @@ async function seedDeals(deals, plannedListings) {
 }
 
 /**
- * Every stored key a row still points at: gallery rows, documents (a
- * published brochure also has a copy in public/), project covers, area
- * covers, testimonial photos and builder logos. `skip` leaves out rows a
- * dry run pretends are already gone.
+ * Deletes the demo rows, then the stored files they pointed at that no row
+ * of any table still names (upload-refs.mjs) — the same photo can back two
+ * listings, and an admin may have reused one.
+ *
+ * All in one transaction, so the reference scan sees the rows already gone.
+ * A dry run is the same work rolled back: its counts are exact, and nothing
+ * is kept.
  */
-async function referencedKeys(skip = { properties: [], projects: [] }) {
-  const except = (column, ids) => (ids.length ? ` where ${column} not in (${marks(ids)})` : "");
-  const rows = [
-    ...(await all(`select public_id a, url b from property_images${except("property_id", skip.properties)}`, skip.properties)),
-    ...(await all(`select storage_key a from property_documents${except("property_id", skip.properties)}`, skip.properties)),
-    ...(await all(`select cover_image a from projects${except("id", skip.projects)}`, skip.projects)),
-    ...(await all("select cover_image a, cover_image_key b from areas")),
-    ...(await all("select avatar_url a from text_testimonials")),
-    ...(await all("select logo_url a from builders")),
-  ];
-  return new Set(rows.flatMap((r) => [keyOf(r.a), keyOf(r.b)]).filter(Boolean));
-}
-
 async function removeDemo(listings, projects) {
   const removed = { listings: 0, deals: 0, projects: 0, files: 0, bytes: 0 };
   const slugs = listings?.map((l) => l.slug) ?? [];
@@ -521,81 +505,85 @@ async function removeDemo(listings, projects) {
     ? await all(`select id, slug from properties where source_name = ? and slug in (${marks(slugs)})`, [DEMO_SOURCE, ...slugs])
     : [];
   const ids = demo.map((r) => r.id);
-  /** The demo listings this run deletes — what a dry run pretends is already gone. */
-  const deleting = wants("listings") ? ids : [];
+  const inIds = `(${marks(ids)})`;
+  /** Stored files the deleted rows named: gallery photos, documents, project covers. */
   const candidates = new Set();
-  const documents = new Set();
+  const addKey = (value) => {
+    const key = keyOf(value);
+    if (key) candidates.add(key);
+  };
+  let referenced = new Set();
 
-  if (ids.length) {
-    removed.deals = (await one(`select count(*) n from deals where property_id in (${marks(ids)})`, ids)).n;
-  }
-  if (ONLY === "deals") {
-    console.log(`\ndeals: ${DRY ? "would remove" : "removing"} ${removed.deals} demo deal(s)`);
-    if (!DRY && ids.length) await conn.execute(`delete from deals where property_id in (${marks(ids)})`, ids);
-    return removed;
-  }
-
-  if (wants("listings")) {
-    console.log("\nlistings");
-    if (ids.length) {
-      for (const r of await all(`select public_id, url from property_images where property_id in (${marks(ids)})`, ids)) {
-        for (const key of [keyOf(r.public_id), keyOf(r.url)]) if (key) candidates.add(key);
-      }
-      for (const r of await all(`select storage_key from property_documents where property_id in (${marks(ids)})`, ids)) {
-        if (keyOf(r.storage_key)) documents.add(r.storage_key);
-      }
-      // Cascades to images, media, deals and every internal child table.
-      if (!DRY) await conn.execute(`delete from properties where id in (${marks(ids)})`, ids);
+  await conn.beginTransaction();
+  try {
+    if (ids.length) removed.deals = (await one(`select count(*) n from deals where property_id in ${inIds}`, ids)).n;
+    if (ONLY === "deals") {
+      console.log(`\ndeals: ${DRY ? "would remove" : "removing"} ${removed.deals} demo deal(s)`);
+      if (ids.length) await conn.execute(`delete from deals where property_id in ${inIds}`, ids);
     }
-    for (const r of demo) line("-", r.slug, DRY ? "would remove" : "removed");
-    for (const s of slugs.filter((s) => !demo.some((r) => r.slug === s))) line("=", s, "not there, or not demo data — kept");
-    removed.listings = demo.length;
-  }
 
-  const goneProjects = [];
-  if (wants("projects")) {
-    console.log("\nprojects");
-    for (const p of projects ?? []) {
-      const row = await one("select id, name, cover_image from projects where slug = ?", [p.slug]);
-      if (!row) {
-        line("=", p.slug, "not there");
-        continue;
+    if (wants("listings")) {
+      console.log("\nlistings");
+      if (ids.length) {
+        for (const r of await all(`select public_id, url from property_images where property_id in ${inIds}`, ids)) {
+          addKey(r.public_id);
+          addKey(r.url);
+        }
+        for (const r of await all(`select storage_key from property_documents where property_id in ${inIds}`, ids)) {
+          addKey(r.storage_key);
+        }
+        // Cascades to images, media, deals and every internal child table.
+        await conn.execute(`delete from properties where id in ${inIds}`, ids);
       }
-      if (row.name.toLowerCase() !== p.name.toLowerCase()) {
-        line("=", p.slug, `is "${row.name}", not the demo project — kept`);
-        continue;
-      }
-      const pending = DRY ? deleting : [];
-      const { n } = await one(
-        `select count(*) n from properties where project_id = ?${pending.length ? ` and id not in (${marks(pending)})` : ""}`,
-        [row.id, ...pending]
-      );
-      if (n > 0) {
-        line("=", p.slug, `kept — ${n} listing(s) still filed under it`);
-        continue;
-      }
-      if (!DRY) await conn.execute("delete from projects where id = ?", [row.id]);
-      if (keyOf(row.cover_image)) candidates.add(keyOf(row.cover_image));
-      goneProjects.push(row.id);
-      line("-", p.slug, DRY ? "would remove" : "removed");
+      for (const r of demo) line("-", r.slug, DRY ? "would remove" : "removed");
+      for (const s of slugs.filter((s) => !demo.some((r) => r.slug === s))) line("=", s, "not there, or not demo data — kept");
+      removed.listings = demo.length;
     }
-    removed.projects = goneProjects.length;
+
+    if (wants("projects")) {
+      console.log("\nprojects");
+      for (const p of projects ?? []) {
+        const row = await one("select id, name, cover_image from projects where slug = ?", [p.slug]);
+        if (!row) {
+          line("=", p.slug, "not there");
+          continue;
+        }
+        if (row.name.toLowerCase() !== p.name.toLowerCase()) {
+          line("=", p.slug, `is "${row.name}", not the demo project — kept`);
+          continue;
+        }
+        const { n } = await one("select count(*) n from properties where project_id = ?", [row.id]);
+        if (n > 0) {
+          line("=", p.slug, `kept — ${n} listing(s) still filed under it`);
+          continue;
+        }
+        await conn.execute("delete from projects where id = ?", [row.id]);
+        addKey(row.cover_image);
+        removed.projects++;
+        line("-", p.slug, DRY ? "would remove" : "removed");
+      }
+    }
+
+    if (candidates.size) referenced = await referencedKeys(conn);
+    if (DRY) await conn.rollback();
+    else await conn.commit();
+  } catch (err) {
+    await conn.rollback().catch(() => {});
+    throw err;
   }
 
-  // Files last, and only those no row anywhere still points at: the same
-  // photo can back two listings, and an admin may have reused one.
-  const referenced = await referencedKeys(DRY ? { properties: deleting, projects: goneProjects } : undefined);
-  const sweep = new Map([
-    ...[...candidates].map((key) => [storagePath(key), key]),
-    ...[...documents].flatMap((key) => [[storagePath(key, "private"), key], [storagePath(key), key]]),
-  ]);
-  for (const [file, key] of sweep) {
+  // Files only after the commit: a failed delete must never leave a live row
+  // pointing at a photo that is already gone. A published document has a
+  // copy in public/ as well as private/, so both go.
+  for (const key of candidates) {
     if (referenced.has(key)) continue;
-    const info = await stat(file).catch(() => null);
-    if (!info) continue;
-    if (!DRY) await unlink(file);
-    removed.files++;
-    removed.bytes += info.size;
+    for (const file of [storagePath(key), storagePath(key, "private")]) {
+      const info = await stat(file).catch(() => null);
+      if (!info) continue;
+      if (!DRY) await unlink(file);
+      removed.files++;
+      removed.bytes += info.size;
+    }
   }
   return removed;
 }

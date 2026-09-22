@@ -49,7 +49,9 @@ database overrides.)
 `--remove` deletes only listings whose slug is in `listings.json` **and** whose
 source name is still "Demo data" (with their photos, media links and deals), a
 project only when no other listing still points at it, and then every stored
-photo file that no row references any more. Both keys, because either alone
+photo file that no row in any table still names (`scripts/upload-refs.mjs`
+scans every text and json column, the same check `npm run sweep:uploads`
+uses). Both keys, because either alone
 could match the office's own data: a real listing can share a demo title, and
 a real dealer could be entered with any name. A demo listing an admin has
 retitled (which changes its slug) or re-sourced is treated as the office's own

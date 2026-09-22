@@ -15,7 +15,7 @@
 //
 // SAFETY
 // ------
-// Two rules, both load-bearing:
+// Three rules, all load-bearing:
 //
 //   1. Dry run by default. It prints what it would delete and exits. Pass
 //      --delete to actually remove anything.
@@ -23,11 +23,16 @@
 //      because "no row references it" is exactly what a half-filled form
 //      looks like from here — the seller may still be typing. Override with
 //      --hours=N.
+//   3. "Referenced" means mentioned by ANY row of ANY table, in any text or
+//      json column (upload-refs.mjs). This used to read property_images and
+//      property_documents only, so it listed project covers and testimonial
+//      photos as orphans; a scan of every column cannot miss a table.
 //
 // Run: node scripts/sweep-orphan-uploads.mjs [--delete] [--hours=24]
 import { readdir, stat, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import mysql from "mysql2/promise";
+import { referencedKeys, uploadDir } from "./upload-refs.mjs";
 
 try {
   process.loadEnvFile();
@@ -43,34 +48,26 @@ if (!process.env.DATABASE_URL) {
 const args = process.argv.slice(2);
 const doDelete = args.includes("--delete");
 const hours = Number(args.find((a) => a.startsWith("--hours="))?.split("=")[1] ?? 24);
+const root = uploadDir();
 
-// Mirrors the default in lib/storage.ts, including the standalone-cwd climb:
-// Next's production server chdir()s into .next/standalone, so a plain
-// process.cwd() here would look in the wrong place on the server.
-const uploadDir =
-  process.env.UPLOAD_DIR ??
-  (process.cwd().endsWith(join(".next", "standalone"))
-    ? join(process.cwd(), "..", "..", "uploads")
-    : join(process.cwd(), "uploads"));
-
-/** Every file under <uploadDir>/<visibility>, which is sharded by 2 hex chars. */
+/** Every file under <root>/<visibility>, which is sharded by 2 hex chars. */
 async function listStored(visibility) {
-  const root = join(uploadDir, visibility);
+  const dir = join(root, visibility);
   const found = [];
   let shards;
   try {
-    shards = await readdir(root);
+    shards = await readdir(dir);
   } catch {
     return found; // bucket does not exist yet
   }
   for (const shard of shards) {
     let files;
     try {
-      files = await readdir(join(root, shard));
+      files = await readdir(join(dir, shard));
     } catch {
       continue;
     }
-    for (const name of files) found.push({ key: name, path: join(root, shard, name) });
+    for (const name of files) found.push({ key: name, path: join(dir, shard, name) });
   }
   return found;
 }
@@ -78,42 +75,16 @@ async function listStored(visibility) {
 const conn = await mysql.createConnection({ uri: process.env.DATABASE_URL });
 
 try {
-  // Everything the database still considers live. Documents are checked
-  // against BOTH buckets: publishing one copies it into public/, so a
-  // published document legitimately exists in each.
-  // property_images stores the key in `public_id`, not `storage_key` — the
-  // column kept its Cloudinary-era name through the move to local storage
-  // (schema.ts maps storageKey -> public_id). Also read `url`, because a
-  // row written before that column existed carries the key only in its
-  // /api/images/<key> URL, and sweeping those would delete live photos.
-  const [imageRows] = await conn.query(
-    "select public_id, url from property_images"
-  );
-  const [docRows] = await conn.query(
-    "select storage_key from property_documents where storage_key is not null"
-  );
-  const keyFromUrl = (url) =>
-    typeof url === "string" && url.startsWith("/api/images/")
-      ? url.slice("/api/images/".length)
-      : null;
-
-  const referencedPublic = new Set(
-    [
-      ...imageRows.flatMap((r) => [r.public_id, keyFromUrl(r.url)]),
-      ...docRows.map((r) => r.storage_key),
-    ].filter(Boolean)
-  );
-  const referencedPrivate = new Set(docRows.map((r) => r.storage_key));
+  // One set for both buckets: a published document legitimately exists in
+  // public/ and private/, and a file named anywhere is never an orphan.
+  const referenced = await referencedKeys(conn);
 
   const cutoff = Date.now() - hours * 60 * 60 * 1000;
   let swept = 0;
   let bytes = 0;
   let young = 0;
 
-  for (const [visibility, referenced] of [
-    ["public", referencedPublic],
-    ["private", referencedPrivate],
-  ]) {
+  for (const visibility of ["public", "private"]) {
     for (const { key, path } of await listStored(visibility)) {
       if (referenced.has(key)) continue;
 
@@ -132,7 +103,8 @@ try {
 
   const mb = (bytes / 1024 / 1024).toFixed(1);
   console.log(
-    `\nsweep: ${swept} orphan(s), ${mb} MB${doDelete ? " deleted" : " — dry run, pass --delete"}` +
+    `\nsweep: ${root} — ${referenced.size} stored key(s) referenced by the database; ` +
+      `${swept} orphan(s), ${mb} MB${doDelete ? " deleted" : " — dry run, pass --delete"}` +
       (young ? `; ${young} skipped as newer than ${hours}h` : "")
   );
 } finally {
