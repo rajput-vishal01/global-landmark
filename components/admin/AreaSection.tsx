@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Select } from "@/components/ui/Select";
 import { Req } from "@/components/ui/RequiredMark";
-import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+import { deskFieldFull, deskLabel } from "./FormSection";
 
 import { ChecklistField } from "./ChecklistField";
 import {
@@ -79,20 +79,9 @@ export function AreaSection({
     setMeasures((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
   }
 
-  const filled = countFilled([
-    ...AREA_MEASURES.map((m) => measures[m.key].value),
-    frontFeet,
-    depthFeet,
-    initialPlc,
-  ]);
 
   return (
-    <FormSection
-      title="Area"
-      hint="Each measure carries its own unit — the plot in marla, the flat in sq.ft"
-      filled={filled}
-      total={7}
-    >
+    <>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         {AREA_MEASURES.map((measure) => {
           const state = measures[measure.key];
@@ -210,7 +199,7 @@ export function AreaSection({
           allowCustom={false}
         />
       </div>
-    </FormSection>
+    </>
   );
 }
 

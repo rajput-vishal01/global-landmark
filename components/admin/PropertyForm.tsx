@@ -8,7 +8,7 @@ import {
   saveDraft,
   type PropertyFormState,
 } from "@/app/admin/(panel)/properties/actions";
-import { PROPERTY_TYPES, withEmptyOption } from "@/lib/attributes";
+import { DOCUMENTATION_FLAGS, PROPERTY_TYPES, withEmptyOption } from "@/lib/attributes";
 import { requiredFieldsFor, sectionsFor } from "@/lib/taxonomy/sections";
 import { placeFromAddress } from "@/lib/locations";
 import { FormSection, deskFieldFull, deskHint, deskLabel } from "./FormSection";
@@ -16,9 +16,9 @@ import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
 import { cardChrome } from "@/components/admin/desk";
 
-import { RequiredFieldsPanel } from "./RequiredFieldsPanel";
 import { SaveBar, type AutosaveStatus } from "./SaveBar";
-import { BasicDetailsSection } from "./BasicDetailsSection";
+import { PublishPanel, SourceFields, type Requirement } from "./BasicDetailsSection";
+import { ChecklistField } from "./ChecklistField";
 import { AreaSection } from "./AreaSection";
 import { FeaturesSection } from "./FeaturesSection";
 import { LegalLoanSection } from "./LegalLoanSection";
@@ -79,10 +79,15 @@ type PropertyWithChildren = AdminProperty & {
 /**
  * The property form, cut down to what the client actually uses (Sep 2026).
  *
- * The essentials sit in one card that never collapses — title, type,
- * address, map link, description — because a required field inside a closed
- * <details> cannot be focused, and the browser then refuses the submit
- * without saying why. Everything optional folds away under "More details".
+ * Nine numbered sections in the order a broker describes a property —
+ * what it is, where, how big, what it looks like, then the details — each
+ * tagged "On the website" or "Admin only", so public and internal data never
+ * share a box. Publishing lives in the side panel beside the save button,
+ * with a live "to go live" checklist, instead of as a field among the data.
+ *
+ * The two required fields (title, address) are in sections that open by
+ * default: a required field inside a closed <details> cannot be focused, and
+ * the browser then refuses the submit without saying why.
  *
  * Removed at the client's request, and now neither shown nor written:
  * category, status, price and charges, configuration, classification, unit
@@ -117,7 +122,9 @@ export function PropertyForm({
   });
   const [isUploading, setIsUploading] = useState(false);
   const [propertyType, setPropertyType] = useState(property?.propertyType ?? "");
+  const [title, setTitle] = useState(property?.title ?? "");
   const [address, setAddress] = useState(property?.location ?? "");
+  const [photoCount, setPhotoCount] = useState(property?.images.length ?? 0);
   const [autosave, setAutosave] = useState<AutosaveStatus>({ kind: "idle" });
 
   const visible = useMemo(() => new Set(sectionsFor(propertyType)), [propertyType]);
@@ -206,6 +213,22 @@ export function PropertyForm({
     return () => window.removeEventListener("beforeunload", warn);
   }, [isEditing]);
 
+  const isPlot = requiredToPublish.has("plotArea");
+  const requirements: Requirement[] = [
+    { label: "A title", done: title.trim() !== "" },
+    { label: "An address", done: address.trim() !== "" },
+    { label: "At least one photo", done: photoCount > 0 },
+    ...(isPlot ? [{ label: "The plot size (section 3)", done: null }] : []),
+  ];
+
+  const saveProps = {
+    isPending,
+    isUploading,
+    isEditing,
+    autosave,
+    error: state.error,
+  };
+
   return (
     // Submits through useActionForm, never <form action={...}>: React would
     // reset the form on a validation error, wiping the broker's input. See
@@ -219,201 +242,219 @@ export function PropertyForm({
         dirtyRef.current = false;
         formProps.onSubmit(event);
       }}
-      className="flex flex-col gap-5"
+      className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_17.5rem]"
     >
       {property && <input type="hidden" name="id" value={property.id} />}
       {/* One-time key for a new listing: the server creates at most one row
           per key, so a double click or a retry cannot insert twice. */}
       {submissionKey && <input type="hidden" name="submissionKey" value={submissionKey} />}
 
-      <RequiredFieldsPanel propertyType={propertyType} />
-
-      {/* The essentials. Never collapsed — see the note on the component. */}
-      <div className={`${cardChrome} flex flex-col gap-5 px-4 py-5`}>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="title" className={deskLabel}>
-            Title
-            <Req />
-          </label>
-          <input
-            id="title"
-            name="title"
-            type="text"
-            required
-            maxLength={200}
-            defaultValue={property?.title}
-            className={deskFieldFull}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div className="flex min-w-0 flex-col gap-4">
+        <FormSection
+          id="section-listing"
+          index={1}
+          title="The listing"
+          hint="What it is and what it is called — the first thing a buyer reads."
+          visibility="public"
+          defaultOpen
+        >
           <div className="flex flex-col gap-2">
-            <label htmlFor="kind" className={deskLabel}>
-              Unit or project
+            <label htmlFor="title" className={deskLabel}>
+              Title
+              <Req />
             </label>
-            <Select
-              id="kind"
-              name="kind"
-              defaultValue={property?.kind ?? "unit"}
-              options={[
-                { value: "unit", label: "One unit (flat / villa / kothi)" },
-                { value: "project", label: "Whole project (society / township)" },
-              ]}
+            <input
+              id="title"
+              name="title"
+              type="text"
+              required
+              maxLength={200}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="3 BHK corner flat in Green Lotus Saksham"
+              className={deskFieldFull}
             />
           </div>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="propertyType" className={deskLabel}>
+                Property type
+              </label>
+              <Select
+                id="propertyType"
+                name="propertyType"
+                defaultValue={propertyType}
+                onValueChange={setPropertyType}
+                options={withEmptyOption("— Select a type —", PROPERTY_TYPES)}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="kind" className={deskLabel}>
+                Single unit or whole project
+              </label>
+              <Select
+                id="kind"
+                name="kind"
+                defaultValue={property?.kind ?? "unit"}
+                options={[
+                  { value: "unit", label: "One unit (flat / villa / kothi)" },
+                  { value: "project", label: "Whole project (society / township)" },
+                ]}
+              />
+            </div>
+          </div>
+
           <div className="flex flex-col gap-2">
-            <label htmlFor="propertyType" className={deskLabel}>
-              Property type
+            <label htmlFor="projectName" className={deskLabel}>
+              Project / society <span className="normal-case tracking-normal text-muted">(optional)</span>
             </label>
-            <Select
-              id="propertyType"
-              name="propertyType"
-              defaultValue={propertyType}
-              onValueChange={setPropertyType}
-              options={withEmptyOption("— Select a type —", PROPERTY_TYPES)}
+            <ProjectSuggestInput
+              id="projectName"
+              suggestions={projects.map((p) => p.name)}
+              defaultValue={property?.project?.name ?? ""}
             />
           </div>
-        </div>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="projectName" className={deskLabel}>
-            Project / society <span className="normal-case text-muted">(optional)</span>
-          </label>
-          <ProjectSuggestInput
-            id="projectName"
-            suggestions={projects.map((p) => p.name)}
-            defaultValue={property?.project?.name ?? ""}
-          />
-        </div>
+          <div className="flex flex-col gap-2">
+            <label htmlFor="description" className={deskLabel}>
+              Description
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              rows={6}
+              defaultValue={property?.description}
+              placeholder="What makes it worth a visit — layout, light, the view, what is nearby."
+              className={deskFieldFull}
+            />
+          </div>
+        </FormSection>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="location" className={deskLabel}>
-            Address
-            <Req />
-          </label>
-          <input
-            id="location"
-            name="location"
-            type="text"
-            required
-            maxLength={300}
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Sector 62, Phase 8, Mohali"
-            className={deskFieldFull}
-          />
-          <p className={deskHint}>
-            Shown on the card and the property page, exactly as written. End it
-            with the city so the listing shows under the right city filter
-            {address.trim() && (
-              <>
-                {" — "}
-                {place ? (
-                  <span className="font-semibold text-gold-deep">
+        <FormSection
+          id="section-location"
+          index={2}
+          title="Location"
+          hint="The address sets the city filter; the map link puts a map on the property page."
+          visibility="public"
+          defaultOpen
+        >
+          <div className="flex flex-col gap-2">
+            <label htmlFor="location" className={deskLabel}>
+              Address
+              <Req />
+            </label>
+            <input
+              id="location"
+              name="location"
+              type="text"
+              required
+              maxLength={300}
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Sector 62, Phase 8, Mohali"
+              className={deskFieldFull}
+            />
+            <div className="flex flex-wrap items-center gap-2 text-[11.5px] text-muted">
+              <span>Shown exactly as written. End it with the city.</span>
+              {address.trim() &&
+                (place ? (
+                  <span className="rounded-full bg-gold/12 px-2 py-[2px] font-semibold text-gold-deep">
                     City: {place.city}
                     {place.locality ? ` · ${place.locality}` : ""}
                   </span>
                 ) : (
-                  <span className="text-ink">
-                    no city recognised{property?.city ? `, stays ${property.city}` : ""}
+                  <span className="rounded-full bg-raise px-2 py-[2px] font-semibold text-soft">
+                    No city recognised{property?.city ? ` — stays ${property.city}` : ""}
                   </span>
-                )}
-              </>
-            )}
-            .
-          </p>
-        </div>
+                ))}
+            </div>
+          </div>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="mapsUrl" className={deskLabel}>
-            Google Maps link <span className="normal-case text-muted">(optional)</span>
-          </label>
-          <input
-            id="mapsUrl"
-            name="mapsUrl"
-            type="url"
-            inputMode="url"
-            maxLength={1000}
-            defaultValue={property?.mapsUrl ?? ""}
-            placeholder="https://maps.app.goo.gl/…"
-            className={deskFieldFull}
+          <div className="flex flex-col gap-2">
+            <label htmlFor="mapsUrl" className={deskLabel}>
+              Google Maps link <span className="normal-case tracking-normal text-muted">(optional)</span>
+            </label>
+            <input
+              id="mapsUrl"
+              name="mapsUrl"
+              type="url"
+              inputMode="url"
+              maxLength={1000}
+              defaultValue={property?.mapsUrl ?? ""}
+              placeholder="https://maps.app.goo.gl/…"
+              className={deskFieldFull}
+            />
+            <p className={deskHint}>
+              In Google Maps, open the spot, press Share, then Copy link. Leave
+              empty for no map.
+            </p>
+          </div>
+        </FormSection>
+
+        {visible.has("area") && (
+          <FormSection
+            id="section-size"
+            index={3}
+            title="Size"
+            hint={
+              isPlot
+                ? "A plot needs its plot size to go live. Each measure keeps its own unit."
+                : "Each measure keeps its own unit — the plot in marla, the flat in sq.ft."
+            }
+            visibility="public"
+            defaultOpen
+          >
+            <AreaSection
+              requiredToPublish={requiredToPublish}
+              plotArea={property?.plotArea}
+              plotAreaUnit={property?.plotAreaUnit}
+              builtUpArea={property?.builtUpArea}
+              builtUpAreaUnit={property?.builtUpAreaUnit}
+              superArea={property?.superArea}
+              superAreaUnit={property?.superAreaUnit}
+              carpetArea={property?.carpetArea}
+              carpetAreaUnit={property?.carpetAreaUnit}
+              frontFeet={property?.frontFeet}
+              depthFeet={property?.depthFeet}
+              plcAttributes={property?.plcAttributes ?? []}
+            />
+          </FormSection>
+        )}
+
+        <FormSection
+          id="section-photos"
+          index={4}
+          title="Photos & video"
+          hint="At least one photo to go live — the first is the cover. Video and tour links below."
+          visibility="public"
+          required
+          defaultOpen
+        >
+          <ImageUploader
+            onBusyChange={setIsUploading}
+            onCountChange={setPhotoCount}
+            initial={
+              property?.images.map((img) => ({
+                url: img.url,
+                storageKey: img.storageKey,
+                alt: img.alt,
+              })) ?? []
+            }
           />
-          <p className={deskHint}>
-            In Google Maps, open the spot, press Share, then Copy link, and paste
-            it here. The property page then shows a map that opens this link.
-            Leave it empty for no map.
-          </p>
-        </div>
+          <div className="flex flex-col gap-4 border-t border-line-soft pt-5">
+            <span className={deskLabel}>Video, drone and tour links</span>
+            <MediaLinksSection initial={property?.media ?? []} />
+          </div>
+        </FormSection>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="description" className={deskLabel}>
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            rows={5}
-            defaultValue={property?.description}
-            className={deskFieldFull}
-          />
-        </div>
-      </div>
-
-      <BasicDetailsSection
-        refCode={property?.refCode}
-        listedAt={property?.listedAt}
-        updatedAt={property?.updatedAt}
-        publicationState={property?.publicationState}
-        listingStatus={property?.listingStatus}
-        addedBy={property?.addedBy}
-        sourceName={property?.sourceName}
-      />
-
-      {visible.has("area") && (
-        <AreaSection
-          requiredToPublish={requiredToPublish}
-          plotArea={property?.plotArea}
-          plotAreaUnit={property?.plotAreaUnit}
-          builtUpArea={property?.builtUpArea}
-          builtUpAreaUnit={property?.builtUpAreaUnit}
-          superArea={property?.superArea}
-          superAreaUnit={property?.superAreaUnit}
-          carpetArea={property?.carpetArea}
-          carpetAreaUnit={property?.carpetAreaUnit}
-          frontFeet={property?.frontFeet}
-          depthFeet={property?.depthFeet}
-          plcAttributes={property?.plcAttributes ?? []}
-        />
-      )}
-
-      <FormSection
-        title="Photos"
-        hint="At least one to publish · the first image is the cover"
-        required
-        defaultOpen
-      >
-        <ImageUploader
-          onBusyChange={setIsUploading}
-          initial={
-            property?.images.map((img) => ({
-              url: img.url,
-              storageKey: img.storageKey,
-              alt: img.alt,
-            })) ?? []
-          }
-        />
-      </FormSection>
-
-      {/* Everything else, folded into one switch. Nothing here is needed to
-          save or publish. The sections stay mounted inside <details>, so
-          whatever is filled in still submits while it is folded away. */}
-      <FormSection
-        title="More details"
-        hint="Optional · owners, features, legal and loan, documents, media links"
-      >
-        <div className="flex flex-col gap-5">
-          <OwnersEditor initial={property?.owners ?? []} />
-
+        <FormSection
+          id="section-features"
+          index={5}
+          title="Features"
+          hint="Furnishing, amenities and parking."
+          visibility="public"
+        >
           <FeaturesSection
             furnishing={property?.furnishing}
             furnishingInventory={property?.furnishingInventory ?? []}
@@ -424,44 +465,128 @@ export function PropertyForm({
             showAmenities={visible.has("amenities")}
             showParking={visible.has("parking")}
           />
+        </FormSection>
 
+        <FormSection
+          id="section-legal"
+          index={6}
+          title="Legal & loan"
+          hint="Approvals, RERA and which banks lend on it — shown to buyers as trust signals."
+          visibility="public"
+        >
           <LegalLoanSection
             legalFlags={property?.legalFlags ?? []}
             reraNumber={property?.reraNumber}
             loanFlags={property?.loanFlags ?? []}
             banksOnPanel={property?.banksOnPanel ?? []}
-            documentationFlags={property?.documentationFlags ?? []}
           />
+        </FormSection>
 
-          {/* Uploads the actual PDF/scan for the paperwork ticked above. */}
-          <DocumentVault initial={property?.documents ?? []} />
-
-          <MediaLinksSection initial={property?.media ?? []} />
-
-          <FormSection
-            title="Additional details"
-            hint="Anything the fields above do not cover"
-          >
-            <ExtrasEditor initial={property?.extras ?? []} />
-          </FormSection>
-        </div>
-      </FormSection>
-
-      {state.error && (
-        <p
-          role="alert"
-          className={`${cardChrome} border-l-[3px] border-l-error px-4 py-3 text-[12px] text-error`}
+        <FormSection
+          id="section-owner"
+          index={7}
+          title="Owner & source"
+          hint="Who the listing came from and how to reach the owner."
+          visibility="internal"
         >
-          {state.error}
-        </p>
-      )}
+          <SourceFields addedBy={property?.addedBy} sourceName={property?.sourceName} />
+          <div className="flex flex-col gap-5 border-t border-line-soft pt-5">
+            <OwnersEditor initial={property?.owners ?? []} />
+          </div>
+        </FormSection>
 
-      <SaveBar
-        isPending={isPending}
-        isUploading={isUploading}
-        isEditing={isEditing}
-        autosave={autosave}
-      />
+        <FormSection
+          id="section-paperwork"
+          index={8}
+          title="Paperwork"
+          hint="Which documents exist, and the files themselves. Private unless you publish a file."
+          visibility="internal"
+        >
+          <div className="flex flex-col gap-2">
+            <span className={deskLabel}>Documents available</span>
+            <ChecklistField
+              name="documentationFlagsJson"
+              options={DOCUMENTATION_FLAGS}
+              initial={property?.documentationFlags ?? []}
+              allowCustom={false}
+            />
+          </div>
+          <div className="flex flex-col gap-4 border-t border-line-soft pt-5">
+            <span className={deskLabel}>Files</span>
+            <DocumentVault initial={property?.documents ?? []} />
+          </div>
+        </FormSection>
+
+        <FormSection
+          id="section-extra"
+          index={9}
+          title="Anything else"
+          hint="Your own title and text, for anything the sections above do not cover."
+          visibility="public"
+        >
+          <ExtrasEditor initial={property?.extras ?? []} />
+        </FormSection>
+
+        <SaveBar {...saveProps} className="lg:hidden" />
+      </div>
+
+      <aside className="flex flex-col gap-4 max-lg:order-first lg:sticky lg:top-6 lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto">
+        <div className={`${cardChrome} flex flex-col gap-4 p-5`}>
+          <h2 className="text-[14.5px] font-semibold text-ink">Publish</h2>
+          <PublishPanel
+            refCode={property?.refCode}
+            listedAt={property?.listedAt}
+            updatedAt={property?.updatedAt}
+            publicationState={property?.publicationState}
+            listingStatus={property?.listingStatus}
+            requirements={requirements}
+          >
+            <SaveBar {...saveProps} variant="panel" className="max-lg:hidden" />
+          </PublishPanel>
+        </div>
+
+        <nav aria-label="Form sections" className={`${cardChrome} hidden p-3 lg:block`}>
+          <ol className="flex flex-col">
+            {SECTION_LINKS.filter((s) => s.id !== "section-size" || visible.has("area")).map((s) => (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  onClick={() => jumpTo(s.id)}
+                  className="flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-[12.5px] text-soft transition-colors hover:bg-raise hover:text-ink"
+                >
+                  <span className="w-4 text-right text-[11px] tabular-nums text-muted">{s.n}</span>
+                  {s.label}
+                  {s.internal && (
+                    <span className="ml-auto text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">
+                      Admin
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      </aside>
     </form>
   );
+}
+
+const SECTION_LINKS = [
+  { n: 1, id: "section-listing", label: "The listing" },
+  { n: 2, id: "section-location", label: "Location" },
+  { n: 3, id: "section-size", label: "Size" },
+  { n: 4, id: "section-photos", label: "Photos & video" },
+  { n: 5, id: "section-features", label: "Features" },
+  { n: 6, id: "section-legal", label: "Legal & loan" },
+  { n: 7, id: "section-owner", label: "Owner & source", internal: true },
+  { n: 8, id: "section-paperwork", label: "Paperwork", internal: true },
+  { n: 9, id: "section-extra", label: "Anything else" },
+];
+
+/** Opens a folded section (its `toggle` syncs FormSection's state) and scrolls to it. */
+function jumpTo(id: string) {
+  const el = document.getElementById(id);
+  if (!(el instanceof HTMLDetailsElement)) return;
+  el.open = true;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
 }

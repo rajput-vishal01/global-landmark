@@ -17,10 +17,10 @@ export default async function NewPropertyPage() {
   const projects = await listProjectsForAdmin();
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
       <PageHead
         title="Add property"
-        sub="Fill in the essentials and press Create. Everything under More details is optional and can be added later."
+        sub="Title and address are all it takes to save. Sections 5 to 9 are optional and can be filled in later."
         actions={
           <Link href="/admin/properties" className={deskButton}>
             Cancel

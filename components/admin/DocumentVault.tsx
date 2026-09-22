@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Select } from "@/components/ui/Select";
 import { deskButton } from "@/components/admin/desk";
-import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+import { deskFieldFull, deskLabel } from "./FormSection";
 
 import { DOCUMENTATION_FLAGS } from "@/lib/taxonomy/features";
 
@@ -148,18 +148,9 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
     }
   }
 
-  // Every row already points at a real uploaded file; the field still
-  // missing on a fresh row is docType, so that is what "filled" tracks here
-  // — the badge reaches N/N once every attached document has been classified.
-  const filled = countFilled(rows.map((row) => row.docType));
 
   return (
-    <FormSection
-      title="Documents"
-      hint="Private unless a file is explicitly published"
-      filled={filled}
-      total={rows.length}
-    >
+    <>
       {/* Whole list travels as one hidden field, exactly like mediaJson in
           MediaLinksSection. parseDocuments() on the server re-validates
           every row (docType against DOCUMENTATION_FLAGS, storageKey against
@@ -335,6 +326,6 @@ export function DocumentVault({ initial }: { initial: DocumentInput[] }) {
           {error}
         </p>
       )}
-    </FormSection>
+    </>
   );
 }

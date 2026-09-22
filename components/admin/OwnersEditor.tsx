@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Select } from "@/components/ui/Select";
 import { deskButton, deskButtonSmall } from "@/components/admin/desk";
-import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+import { deskFieldFull, deskLabel } from "./FormSection";
 
 import { SELLER_CATEGORIES, OWNER_TYPES, withEmptyOption } from "@/lib/attributes";
 
@@ -144,17 +144,9 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
     );
   }
 
-  // A row is "filled" once it has a name — that is also the row the server
-  // keeps, so the count matches what actually saves.
-  const filled = countFilled(rows.map((row) => row.name));
 
   return (
-    <FormSection
-      title="Ownership"
-      hint="Internal only — owner contacts never appear on the public site"
-      filled={filled}
-      total={rows.length}
-    >
+    <>
       {/* Deliberately loud. This is the one section where a mistaken
           assumption about visibility would publish a private person's phone
           number, so the warning is not a muted hint like the other groups. */}
@@ -370,6 +362,6 @@ export function OwnersEditor({ initial }: { initial: OwnerInput[] }) {
       <p className="text-[11.5px] text-muted">
         Rows without a name are discarded on save.
       </p>
-    </FormSection>
+    </>
   );
 }

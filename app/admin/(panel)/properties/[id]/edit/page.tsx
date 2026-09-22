@@ -40,10 +40,10 @@ export default async function EditPropertyPage({
   if (!property) notFound();
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
       <PageHead
         title="Edit property"
-        sub="The full listing form. Changes autosave as a draft every twenty seconds."
+        sub="Changes autosave every twenty seconds. Publish from the panel on the right."
         actions={
           <Link href="/admin/properties" className={deskButton}>
             Cancel

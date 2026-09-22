@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Select } from "@/components/ui/Select";
-import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+import { deskFieldFull, deskLabel } from "./FormSection";
 
 import { ChecklistField } from "./ChecklistField";
 import {
@@ -83,26 +83,9 @@ export function FeaturesSection({
    */
   const showInventory = furnishing !== "" && furnishing !== UNFURNISHED;
 
-  // Only count fields this shape actually asks for — a warehouse should not
-  // read as "2 of 5 filled" for three fields it will never be shown.
-  const filled = countFilled([
-    ...(showFurnishing ? [furnishing] : []),
-    ...(showFurnishing && showInventory ? [initialInventory] : []),
-    ...(showAmenities ? [initialAmenities] : []),
-    ...(showParking ? [initialParkingTypes, parkingSlots] : []),
-  ]);
-  const total =
-    (showFurnishing ? (showInventory ? 2 : 1) : 0) +
-    (showAmenities ? 1 : 0) +
-    (showParking ? 2 : 0);
 
   return (
-    <FormSection
-      title="Features"
-      hint="Furnishing, amenities and parking — all shown on the public listing"
-      filled={filled}
-      total={total}
-    >
+    <>
       {showFurnishing && (
       <div className="flex flex-col gap-2">
         <label htmlFor="furnishing" className={deskLabel}>
@@ -199,6 +182,6 @@ export function FeaturesSection({
           </div>
         </>
       )}
-    </FormSection>
+    </>
   );
 }

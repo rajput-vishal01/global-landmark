@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+import { deskFieldFull, deskLabel } from "./FormSection";
 
 import { ChecklistField } from "./ChecklistField";
 import {
-  DOCUMENTATION_FLAGS,
   LEGAL_FLAGS,
   LOAN_FLAGS,
 } from "@/lib/attributes";
@@ -23,25 +22,20 @@ const RERA_FLAG = "RERA Registered";
 const NO_FIXED_OPTIONS: readonly string[] = [];
 
 /**
- * CFF groups 13, 14 and 17 — loan, legal and documentation.
- *
- * Legal and loan are public trust signals. Documentation is internal: the
- * client asked for the paper trail so an agent can answer a buyer's question
- * on a call, not so a listing page can publish which certificates a seller
- * is missing.
+ * Legal and loan (CFF 13, 14) — public trust signals. The internal
+ * documentation checklist lives with the document uploads instead, in the
+ * form’s Paperwork section, so public and internal data never share a box.
  */
 export function LegalLoanSection({
   legalFlags,
   reraNumber: initialReraNumber,
   loanFlags,
   banksOnPanel,
-  documentationFlags,
 }: {
   legalFlags?: string[] | null;
   reraNumber?: string | null;
   loanFlags?: string[] | null;
   banksOnPanel?: string[] | null;
-  documentationFlags?: string[] | null;
 }) {
   // The checklists own their own state behind hidden JSON inputs, so these
   // initial values are what the header count reads. A progress hint, not a
@@ -49,7 +43,6 @@ export function LegalLoanSection({
   const initialLegalFlags = legalFlags ?? [];
   const initialLoanFlags = loanFlags ?? [];
   const initialBanks = banksOnPanel ?? [];
-  const initialDocumentation = documentationFlags ?? [];
 
   const [hasRera, setHasRera] = useState(initialLegalFlags.includes(RERA_FLAG));
   const [reraNumber, setReraNumber] = useState(initialReraNumber ?? "");
@@ -75,23 +68,9 @@ export function LegalLoanSection({
     }
   }
 
-  // The RERA number only counts toward the total when it is actually asked
-  // for — the same treatment sourceName gets in Basic details.
-  const filled = countFilled([
-    initialLegalFlags,
-    ...(hasRera ? [reraNumber] : []),
-    initialLoanFlags,
-    initialBanks,
-    initialDocumentation,
-  ]);
 
   return (
-    <FormSection
-      title="Legal, loan & documentation"
-      hint="Legal and loan are public; documentation stays internal"
-      filled={filled}
-      total={hasRera ? 5 : 4}
-    >
+    <>
       <div className="flex flex-col gap-2" onChange={onLegalToggle}>
         <span className={deskLabel}>Legal</span>
         {/* Public, and deliberately short. A RERA registration number is
@@ -165,21 +144,6 @@ export function LegalLoanSection({
         />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <span className={deskLabel}>Documentation</span>
-        {/* Internal by default. The count of ticks here is what an agent
-            answers a buyer's paperwork question from; publishing the gaps
-            would advertise exactly which certificate a seller is missing. */}
-        <p className="rounded-lg border border-line-soft bg-raise px-4 py-3 text-[11.5px] text-muted">
-          Internal only — this checklist is not shown on the public listing.
-        </p>
-        <ChecklistField
-          name="documentationFlagsJson"
-          options={DOCUMENTATION_FLAGS}
-          initial={initialDocumentation}
-          allowCustom={false}
-        />
-      </div>
-    </FormSection>
+    </>
   );
 }

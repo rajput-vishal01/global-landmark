@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Select } from "@/components/ui/Select";
 import { deskButton } from "@/components/admin/desk";
-import { FormSection, countFilled, deskFieldFull, deskLabel } from "./FormSection";
+import { deskFieldFull, deskLabel } from "./FormSection";
 
 
 /**
@@ -106,15 +106,9 @@ export function MediaLinksSection({ initial }: { initial: MediaInput[] }) {
     );
   }
 
-  const filled = countFilled(rows.map((row) => row.url));
 
   return (
-    <FormSection
-      title="Media links"
-      hint="Videos are YouTube and Instagram links — nothing is uploaded here"
-      filled={filled}
-      total={rows.length}
-    >
+    <>
       {/* Emits every row that has a URL, including ones flagged above: the
           inline error tells the broker, and parseMedia() is what actually
           decides. Silently dropping a row the admin can still see on screen
@@ -231,6 +225,6 @@ export function MediaLinksSection({ initial }: { initial: MediaInput[] }) {
       <p className="text-[11.5px] text-muted">
         Rows without a link are discarded on save.
       </p>
-    </FormSection>
+    </>
   );
 }

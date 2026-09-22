@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { deskButton } from "@/components/admin/desk";
 import { deskFieldFull } from "./FormSection";
 
@@ -28,12 +28,20 @@ const MAX_IMAGES = 20;
 export function ImageUploader({
   initial,
   onBusyChange,
+  onCountChange,
 }: {
   initial: UploaderImage[];
   /** Lets the parent form block submit while uploads are in flight. */
   onBusyChange?: (busy: boolean) => void;
+  /** How many photos the list holds — the form’s publish checklist reads it. */
+  onCountChange?: (count: number) => void;
 }) {
   const [images, setImages] = useState<UploaderImage[]>(initial);
+  // An effect rather than a call at each of the five places that change the
+  // list: one line, and it cannot miss one.
+  useEffect(() => {
+    onCountChange?.(images.length);
+  }, [images.length, onCountChange]);
   const [pasteUrl, setPasteUrl] = useState("");
   const [busy, setBusyState] = useState(false);
   const [error, setError] = useState<string | null>(null);
