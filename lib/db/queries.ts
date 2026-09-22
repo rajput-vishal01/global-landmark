@@ -21,7 +21,7 @@ import {
 import type { CategoryValue } from "@/lib/categories";
 import { typesInCollection, type CollectionValue } from "@/lib/attributes";
 import { PUBLIC_STATUSES } from "@/lib/taxonomy/status";
-import { isLocalityIn } from "@/lib/locations";
+import { isCity, isLocalityIn } from "@/lib/locations";
 import { DEFAULT_SORT, type PropertySort } from "@/lib/properties-url";
 
 /**
@@ -354,8 +354,10 @@ const listCityCountsCached = unstable_cache(
       .from(properties)
       .where(and(publicVisibility(), sql`${properties.city} is not null`))
       .groupBy(properties.city);
+    // Only cities still on the list: a row saved under a city the client
+    // has since dropped must not bring that city back as a filter option.
     return rows
-      .filter((r): r is { city: string; count: number } => r.city !== null)
+      .filter((r): r is { city: string; count: number } => r.city !== null && isCity(r.city))
       .sort((a, b) => b.count - a.count);
   },
   ["listCityCounts"],
