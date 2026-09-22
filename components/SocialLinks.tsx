@@ -110,3 +110,52 @@ export function SocialLinks({
     </ul>
   );
 }
+
+/**
+ * The same links as labelled pills: brand disc plus the network's name.
+ * For the contact page, where the profiles are a destination in their own
+ * right and an unlabelled row of discs undersells them.
+ */
+export function SocialPills({
+  socials,
+  brand,
+}: {
+  socials: readonly { label: string; href: string }[];
+  brand: string;
+}) {
+  const links = [
+    ...socials.filter((s) => s.href.startsWith("http")),
+    { label: "WhatsApp", href: whatsAppHref(WHATSAPP.defaultMessage) },
+  ];
+  return (
+    <ul className="flex flex-wrap justify-center gap-3">
+      {links.map((social) => {
+        const style = SOCIAL_STYLE[social.label];
+        return (
+          <li key={social.label}>
+            <a
+              href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={
+                social.label === "WhatsApp" ? "Chat with us on WhatsApp" : `${brand} on ${social.label}`
+              }
+              className="group flex items-center gap-3 rounded-full border border-border bg-white py-1.5 pl-1.5 pr-5 transition-[border-color,transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:border-gold hover:shadow-[0_14px_30px_-18px_rgba(40,30,15,0.45)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+            >
+              <span
+                aria-hidden
+                // Hairline ring so the white YouTube disc still reads on the white pill.
+                className={`flex h-10 w-10 items-center justify-center rounded-full text-white ring-1 ring-black/10 ${
+                  style?.bg ?? "border border-border text-ink"
+                }`}
+              >
+                {style?.icon}
+              </span>
+              <span className="font-sans text-meta font-semibold text-ink">{social.label}</span>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
