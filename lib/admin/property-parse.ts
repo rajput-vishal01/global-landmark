@@ -598,10 +598,6 @@ export function parseProperty(
         "Image list is invalid — upload files, or paste an images.unsplash.com URL.",
     };
   }
-  if (mode === "publish" && !images.length) {
-    return { ok: false, error: "Add at least one image before publishing." };
-  }
-
   const beds = parseOptionalInt(formData.get("beds"));
   const baths = parseOptionalInt(formData.get("baths"));
   const areaValue = parseOptionalInt(formData.get("areaValue"));
@@ -623,14 +619,20 @@ export function parseProperty(
   // The conditional rules (R-12): a tower flat cannot publish without a floor
   // and a unit; a plot cannot publish without a plot size. Draft saves skip
   // this entirely.
+  // Everything publishing needs, reported together. This used to stop at the
+  // first gap — add a photo, resubmit, only then hear about the plot area —
+  // which turned one fix into a round trip per missing field.
   if (mode === "publish") {
-    const missing = requiredFieldsFor(propertyType).filter(
-      (field) => !String(formData.get(field) ?? "").trim()
-    );
+    const missing = [
+      ...(images.length ? [] : ["at least one photo"]),
+      ...requiredFieldsFor(propertyType)
+        .filter((field) => !String(formData.get(field) ?? "").trim())
+        .map((field) => FIELD_LABELS[field]),
+    ];
     if (missing.length) {
       return {
         ok: false,
-        error: `A ${propertyType} needs ${missing.map((f) => FIELD_LABELS[f]).join(" and ")} before it can be published.`,
+        error: `To publish this listing, add ${missing.join(" and ")}. Or set Publication to Draft to save it for now.`,
       };
     }
   }
