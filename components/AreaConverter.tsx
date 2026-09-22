@@ -17,7 +17,7 @@ export function AreaConverter({ value, unit }: { value: number; unit: AreaUnit }
 
   return (
     <div className="mt-3 border-t border-border pt-3">
-      <div className="flex flex-wrap gap-x-4 gap-y-2" role="group" aria-label="Convert area to">
+      <div className="flex flex-wrap gap-x-4" role="group" aria-label="Convert area to">
         {CONVERTER_UNITS.map((u) => {
           const isActive = u.value === selected;
           return (
@@ -26,14 +26,14 @@ export function AreaConverter({ value, unit }: { value: number; unit: AreaUnit }
               type="button"
               onClick={() => setSelected(u.value)}
               aria-pressed={isActive}
-              className={`text-eyebrow relative pb-0.5 font-sans font-medium uppercase tracking-[0.12em] transition-colors duration-300 ${
+              className={`text-eyebrow relative py-2 font-sans font-medium uppercase tracking-[0.12em] transition-colors duration-300 ${
                 isActive ? "text-ink" : "text-ink-muted hover:text-ink"
               }`}
             >
               {u.label}
               <span
                 aria-hidden
-                className={`absolute bottom-0 left-0 h-px w-full origin-left bg-gold transition-transform duration-500 ease-out ${
+                className={`absolute bottom-1 left-0 h-px w-full origin-left bg-gold transition-transform duration-500 ease-out ${
                   isActive ? "scale-x-100" : "scale-x-0"
                 }`}
               />

@@ -84,7 +84,7 @@
   --color-line-soft: rgb(20 20 20 / 0.07);
 
   /* Fluid type scale */
-  --text-eyebrow: clamp(0.6875rem, 0.6vw + 0.55rem, 0.875rem);
+  --text-eyebrow: clamp(0.75rem, 0.6vw + 0.55rem, 0.875rem);
   --text-eyebrow--line-height: 1.2;
   --text-body: clamp(1rem, 0.2vw + 0.95rem, 1.125rem);
   --text-body--line-height: 1.65;
