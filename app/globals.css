@@ -19,16 +19,21 @@
      restricted to rules, hover, focus and active states — never a fill and
      never large text. `gold-highlight` is legitimate on dark surfaces
      (menu, deal band, ticker), where pale gold is the readable choice. */
-  --color-ink: #141414;
-  --color-ink-muted: #646464;
-  --color-dark: #141414;
-  --color-dark-deep: #0f0f0f;
+  /* Warmed in the Sep 2026 redesign: the client found the site "too white
+     and black". Every neutral now leans toward the logo — champagne gold
+     glowing on warm taupe-grey — instead of pure white and cool slate. The
+     flat colours here are what small elements and text use; large bands
+     get the gradients defined under "Brand grounds" below. */
+  --color-ink: #1d1a16;
+  --color-ink-muted: #6b6358;
+  --color-dark: #1d1a16;
+  --color-dark-deep: #161310;
   --color-gold: #c9992e;
   --color-gold-highlight: #f5d98b;
   --color-gold-deep: #8a5a22;
-  --color-surface: #ffffff;
-  --color-cream: #faf9f6;
-  --color-border: #e6e6e3;
+  --color-surface: #fdfaf4;
+  --color-cream: #f6efe2;
+  --color-border: #e6dccb;
   --color-error: #9a2b2b;
 
   /* Portal chrome (redesign round 2).
@@ -40,8 +45,10 @@
      while these two carry the chrome and the one action per screen we
      actually want clicked. Yellow is a FILL colour and needs dark text on
      it; `cta-ink` exists so nobody has to guess the contrast. */
-  --color-navy: #252839;
-  --color-navy-deep: #1b1e2c;
+  /* Still called navy for the call sites, but now the logo's warm graphite:
+     the cool slate read as black next to the gold. */
+  --color-navy: #332e28;
+  --color-navy-deep: #221e1a;
   --color-cta: #ffdf00;
   --color-cta-hover: #eccd00;
   /* Black, not navy: the reference sets black on yellow, and it measures
@@ -53,7 +60,7 @@
   --color-whatsapp: #25d366;
   /* Headings sit slightly warm-navy rather than the near-black body ink,
      which is what stops a white page of serif headings reading as harsh. */
-  --color-heading: #262838;
+  --color-heading: #2b251d;
 
   /* ── Admin desk tokens ───────────────────────────────────────────────
      The admin is a working tool and needs a denser vocabulary than the
@@ -109,6 +116,17 @@
    22px page title. Headings also drop to the sans face: a serif is a
    voice, and a data tool should not have one. */
 .admin-panel {
+  /* The admin keeps its neutral working palette. The public site's warm
+     redesign redefined these shared tokens; pinning the old values here
+     leaves every admin screen exactly as it was. */
+  --color-ink: #141414;
+  --color-ink-muted: #646464;
+  --color-dark: #141414;
+  --color-dark-deep: #0f0f0f;
+  --color-surface: #ffffff;
+  --color-cream: #faf9f6;
+  --color-border: #e6e6e3;
+
   --text-h1: 1.75rem;
   --text-h1--line-height: 1.25;
   --text-h2: 1.5rem;
@@ -161,6 +179,70 @@
    settled by which one Tailwind writes into the stylesheet last, which is not
    something a reader of either file can see. It made the 30px header row
    depend on emission order. Deleted rather than reconciled: one owner. */
+
+/* ───────────────────────────────────────────────────────────────────────
+   Brand grounds (Sep 2026 redesign).
+
+   Drawn from the logo: a champagne-gold glow on warm taupe-grey. Three
+   grounds, each a soft glow over a gentle vertical fall:
+
+     ivory      light bands (`bg-surface`)  near-white, gold light from above
+     champagne  alternate bands (`bg-cream`) deeper, glow from the corners
+     graphite   dark bands (`bg-navy`, `bg-navy-deep`) the logo's own backdrop
+
+   Applied by selector rather than by editing every section: a band that
+   uses the colour utility picks up its gradient automatically, and the
+   flat colour stays underneath as the fallback. Scoped to layout elements
+   so a small `bg-surface` chip or input stays flat. Gold stays out of the
+   fills themselves; it is only the light falling on them.
+
+   ponytail: selector-driven, so a new band gets its gradient for free —
+   the ceiling is a `div` band, which needs `data-band` to opt in. */
+:root {
+  --grad-ivory:
+    radial-gradient(ellipse 90% 55% at 50% 0%, rgb(245 217 139 / 0.18), transparent 70%),
+    linear-gradient(180deg, #fefcf8 0%, #f7f0e3 100%);
+  --grad-champagne:
+    radial-gradient(ellipse 70% 60% at 100% 0%, rgb(201 153 46 / 0.16), transparent 65%),
+    radial-gradient(ellipse 60% 55% at 0% 100%, rgb(138 90 34 / 0.09), transparent 65%),
+    linear-gradient(165deg, #f9f2e5 0%, #efe3cc 100%);
+  --grad-graphite:
+    radial-gradient(ellipse 55% 75% at 50% -8%, rgb(245 217 139 / 0.22), rgb(201 153 46 / 0.07) 45%, transparent 75%),
+    linear-gradient(180deg, #3e3831 0%, #2d2924 50%, #1f1c18 100%);
+  --grad-graphite-deep:
+    radial-gradient(ellipse 45% 60% at 50% -10%, rgb(245 217 139 / 0.16), transparent 70%),
+    linear-gradient(180deg, #2d2924 0%, #1b1815 100%);
+}
+
+:where(section, footer, main, aside, header, [data-band]).bg-surface {
+  background-image: var(--grad-ivory);
+}
+:where(section, footer, main, aside, [data-band]).bg-cream {
+  background-image: var(--grad-champagne);
+}
+:where(section, footer, main, aside, header, [data-band]).bg-navy {
+  background-image: var(--grad-graphite);
+}
+:where(section, footer, main, aside, [data-band]):is(.bg-navy-deep, .bg-dark-deep) {
+  background-image: var(--grad-graphite-deep);
+}
+/* The translucent sticky header must stay translucent: no gradient. */
+header[class*="bg-surface/"] {
+  background-image: none;
+}
+
+/* The page itself: champagne, with the logo's glow only at the top so a
+   long page does not stretch one gradient across ten thousand pixels. */
+body.bg-cream {
+  background:
+    radial-gradient(ellipse 80% 38rem at 50% 0%, rgb(245 217 139 / 0.14), transparent 75%) no-repeat,
+    linear-gradient(180deg, #faf5eb 0%, #f4ecdd 60rem, #f4ecdd 100%) no-repeat,
+    var(--color-cream);
+}
+.admin-panel,
+body:has(.admin-panel) {
+  background-image: none;
+}
 
 body {
   background: var(--color-surface);

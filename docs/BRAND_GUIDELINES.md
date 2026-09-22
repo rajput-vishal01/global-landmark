@@ -50,3 +50,21 @@ Refined, confident, understated luxury — never salesy, never exclamatory.
 - **Don't:** exclamation points, ALL CAPS for emphasis (reserve caps for tracked eyebrow labels only, which is a typographic device, not shouting), stock real-estate clichés ("won't last long," "must see"), emoji.
 - Headlines are short and declarative. Body copy is informative, not persuasive-pushy — let the imagery and stats persuade.
 - CTAs are calm and specific: "Request a Private Viewing," "Speak with an Agent," "Request a Valuation" — not "Buy Now" or "Click Here."
+
+## Grounds (Sep 2026 redesign)
+
+The client found the site "too white and black". Backgrounds now follow the
+logo: a champagne-gold glow on warm taupe-grey. The page is never pure white
+and the dark bands are never cool slate.
+
+| Ground | Utility on a band | Look |
+|---|---|---|
+| Ivory | `bg-surface` | near-white, soft gold light from above |
+| Champagne | `bg-cream` | deeper warm band, glow from the corners |
+| Graphite | `bg-navy` / `bg-navy-deep` | the logo's backdrop, gold halo at the top |
+
+The gradients live in `app/globals.css` ("Brand grounds") and attach by
+selector to `section`, `footer`, `main`, `aside` and `[data-band]`. So a new band
+gets them by using the colour utility, and small chips stay flat. Cards stay
+pure `bg-white` so they lift off the ground. The admin panel pins the old
+neutral tokens and is unaffected.
