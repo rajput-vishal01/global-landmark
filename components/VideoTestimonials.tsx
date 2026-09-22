@@ -19,10 +19,7 @@ export function VideoTestimonials({ videos }: { videos: TestimonialVideo[] }) {
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
 
-  useModalLock(
-    openVideo !== null,
-    useCallback(() => setOpenVideo(null), [])
-  );
+  const closeVideo = useCallback(() => setOpenVideo(null), []);
 
   /**
    * Arrow controls, because a hidden scrollbar left the rail with no way to
@@ -52,8 +49,6 @@ export function VideoTestimonials({ videos }: { videos: TestimonialVideo[] }) {
     // reel rather than an arbitrary distance.
     el.scrollBy({ left: direction * (el.clientWidth * 0.6), behavior: "smooth" });
   }
-
-  const isInstagram = openVideo?.provider === "instagram";
 
   return (
     <>
@@ -141,61 +136,79 @@ export function VideoTestimonials({ videos }: { videos: TestimonialVideo[] }) {
         </ul>
       </div>
 
-      <AnimatePresence>
-        {openVideo && (
-          <m.div
-            role="dialog"
-            aria-modal="true"
-            aria-label={openVideo.caption || "Video"}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: EASE }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-dark-deep/95 p-4 backdrop-blur-xl md:p-12"
-            onClick={() => setOpenVideo(null)}
-          >
-            <button
-              type="button"
-              onClick={() => setOpenVideo(null)}
-              aria-label="Close video"
-              className="absolute right-5 top-5 cursor-pointer p-2 text-cream/80 transition-colors hover:text-cream"
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
-                <path d="M4 4l16 16M20 4L4 20" />
-              </svg>
-            </button>
-            <m.div
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, ease: EASE }}
-              onClick={(e) => e.stopPropagation()}
-              className={
-                isInstagram
-                  ? "relative aspect-[9/16] w-[min(480px,92vw,48dvh)] overflow-hidden bg-black"
-                  : "aspect-video w-full max-w-4xl bg-black"
-              }
-            >
-              {/* Instagram's embed ships its own header and like/comment
-                  footer. The frame is sized to the 9:16 media exactly and
-                  the iframe overdrawn past both edges, so only the video
-                  shows. */}
-              <iframe
-                src={videoEmbed(openVideo.provider, openVideo.videoId)}
-                title={openVideo.caption || "Video"}
-                sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-                allow="autoplay; encrypted-media; picture-in-picture"
-                allowFullScreen
-                scrolling="no"
-                className={
-                  isInstagram
-                    ? "absolute left-0 top-[-58px] h-[calc(100%+290px)] w-full"
-                    : "h-full w-full"
-                }
-              />
-            </m.div>
-          </m.div>
-        )}
-      </AnimatePresence>
+      <VideoLightbox video={openVideo} onClose={closeVideo} />
     </>
   );
+}
+
+/**
+ * The player overlay, shared by the reel rail and the 3D ring
+ * (components/VideoRing.tsx). No player JS loads until a video is opened.
+ */
+export function VideoLightbox({
+  video,
+  onClose,
+}: {
+  video: TestimonialVideo | null;
+  onClose: () => void;
+}) {
+  useModalLock(video !== null, onClose);
+  const isInstagram = video?.provider === "instagram";
+
+  return (
+    <AnimatePresence>
+      {video && (
+        <m.div
+          role="dialog"
+          aria-modal="true"
+          aria-label={video.caption || "Video"}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.4, ease: EASE }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-dark-deep/95 p-4 backdrop-blur-xl md:p-12"
+          onClick={() => onClose()}
+        >
+          <button
+            type="button"
+            onClick={() => onClose()}
+            aria-label="Close video"
+            className="absolute right-5 top-5 cursor-pointer p-2 text-cream/80 transition-colors hover:text-cream"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25">
+              <path d="M4 4l16 16M20 4L4 20" />
+            </svg>
+          </button>
+          <m.div
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: EASE }}
+            onClick={(e) => e.stopPropagation()}
+            className={
+              isInstagram
+                ? "relative aspect-[9/16] w-[min(480px,92vw,48dvh)] overflow-hidden bg-black"
+                : "aspect-video w-full max-w-4xl bg-black"
+            }
+          >
+            {/* Instagram's embed ships its own header and like/comment
+                footer. The frame is sized to the 9:16 media exactly and
+                the iframe overdrawn past both edges, so only the video
+                shows. */}
+            <iframe
+              src={videoEmbed(video.provider, video.videoId)}
+              title={video.caption || "Video"}
+              sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+              allow="autoplay; encrypted-media; picture-in-picture"
+              allowFullScreen
+              scrolling="no"
+              className={
+                isInstagram
+                  ? "absolute left-0 top-[-58px] h-[calc(100%+290px)] w-full"
+                  : "h-full w-full"
+              }
+            />
+          </m.div>
+        </m.div>
+      )}
+    </AnimatePresence>  );
 }
