@@ -80,9 +80,9 @@ const CHIP = "border border-border bg-white px-3.5 py-2 font-sans text-meta text
 const ANCHOR = "scroll-mt-36";
 
 const RAIL_PRIMARY =
-  "text-eyebrow inline-flex w-full justify-center bg-cta px-6 py-4 text-center font-sans font-bold uppercase tracking-[0.18em] text-cta-ink transition-colors duration-200 hover:bg-cta-hover";
+  "text-eyebrow inline-flex w-full justify-center bg-cta px-6 py-[1.125rem] text-center font-sans font-bold uppercase tracking-[0.18em] text-cta-ink transition-colors duration-200 hover:bg-cta-hover";
 const RAIL_SECONDARY =
-  "text-eyebrow inline-flex w-full items-center justify-center gap-2 border border-border px-6 py-3.5 text-center font-sans font-semibold uppercase tracking-[0.16em] text-ink transition-colors hover:border-gold";
+  "text-eyebrow inline-flex w-full items-center justify-center gap-2 border border-border px-6 py-4 text-center font-sans font-semibold uppercase tracking-[0.16em] text-ink transition-colors hover:border-gold";
 const LINK_BUTTON =
   "text-eyebrow inline-flex items-center gap-2 border border-border bg-white px-5 py-3 font-sans font-semibold uppercase tracking-[0.15em] text-ink transition-colors hover:border-gold";
 
@@ -397,7 +397,7 @@ export default async function PropertyDetailPage({
         <SectionNav items={nav} />
 
         <div className="bg-surface px-5 py-12 md:px-12 md:py-16">
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-20">
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,1fr)_27rem] lg:gap-16 xl:grid-cols-[minmax(0,1fr)_30rem] xl:gap-20">
             <div className="flex min-w-0 flex-col gap-12">
               <Section id="overview" eyebrow="Overview" title="About this property">
                 {property.description ? (
@@ -573,7 +573,7 @@ export default async function PropertyDetailPage({
               {hasLocation && (
                 <Section id="location" eyebrow="Where it is" title="Location">
                   {property.mapsUrl && (
-                    <div className="relative aspect-[16/10] w-full overflow-hidden border border-border bg-cream md:aspect-[16/8]">
+                    <div className="relative h-72 w-full overflow-hidden border border-border bg-cream md:h-80">
                       <iframe
                         src={mapEmbedSrc(property.mapsUrl, property.location)}
                         title={`Map showing the location of ${property.title}`}
@@ -614,11 +614,17 @@ export default async function PropertyDetailPage({
 
             {/* The enquiry card: price and every way to act, always in reach. */}
             <aside className="lg:sticky lg:top-36 lg:self-start">
-              <div className="border border-border bg-white p-7 shadow-[0_24px_48px_-36px_rgba(40,30,15,0.45)]">
+              <div className="border border-border bg-white p-8 shadow-[0_24px_48px_-36px_rgba(40,30,15,0.45)] xl:p-10">
                 <p className="text-eyebrow font-sans font-semibold uppercase tracking-[0.2em] text-ink-muted">
                   {startsFrom ? "Starts from" : "Price"}
                 </p>
-                <p className="mt-1 font-serif text-h3 text-heading">{priceLabel}</p>
+                <p
+                  className={`mt-2 font-serif leading-tight text-heading ${
+                    property.publicPrice != null ? "text-h2" : "text-h3"
+                  }`}
+                >
+                  {priceLabel}
+                </p>
                 {property.publicPrice == null && (
                   <p className="mt-2 text-pretty font-sans text-meta text-ink-muted">
                     {PROPERTY_DETAIL.sidebarNote}
