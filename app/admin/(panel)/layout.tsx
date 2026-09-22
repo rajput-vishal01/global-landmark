@@ -31,8 +31,6 @@ const NAV: NavGroup[] = [
     items: [
       { label: "Properties", href: "/admin/properties" },
       { label: "Projects", href: "/admin/projects" },
-      { label: "Builders", href: "/admin/builders" },
-      { label: "Areas", href: "/admin/areas" },
     ],
   },
   {

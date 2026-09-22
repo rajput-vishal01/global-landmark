@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { listPropertySlugs, listProjectSlugs, listBuilderSlugs } from "@/lib/db/queries";
+import { listPropertySlugs, listProjectSlugs } from "@/lib/db/queries";
 import { SITE_URL } from "@/lib/seo";
 
 // Evaluated per request, not at build — Docker builds have no database, and
@@ -7,11 +7,7 @@ import { SITE_URL } from "@/lib/seo";
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [slugs, projectSlugs, builderSlugs] = await Promise.all([
-    listPropertySlugs(),
-    listProjectSlugs(),
-    listBuilderSlugs(),
-  ]);
+  const [slugs, projectSlugs] = await Promise.all([listPropertySlugs(), listProjectSlugs()]);
 
   return [
     { url: SITE_URL, changeFrequency: "weekly", priority: 1 },
@@ -26,11 +22,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${SITE_URL}/projects/${row.slug}`,
       changeFrequency: "weekly" as const,
       priority: 0.8,
-    })),
-    ...builderSlugs.map((row) => ({
-      url: `${SITE_URL}/builders/${row.slug}`,
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
     })),
     { url: `${SITE_URL}/news`, changeFrequency: "daily", priority: 0.7 },
     { url: `${SITE_URL}/about`, changeFrequency: "monthly", priority: 0.7 },

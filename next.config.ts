@@ -49,6 +49,15 @@ const nextConfig: NextConfig = {
     // browsers that cannot take it are served the WebP.
     formats: ["image/avif", "image/webp"],
   },
+  // Builder and area pages were removed (Sep 2026). Anything still linking
+  // to them lands on the listings instead of a 404.
+  async redirects() {
+    return [
+      { source: "/areas", destination: "/properties", permanent: true },
+      { source: "/areas/:slug", destination: "/properties", permanent: true },
+      { source: "/builders/:slug", destination: "/properties", permanent: true },
+    ];
+  },
   async headers() {
     return [
       // Every page but the admin document route gets the site CSP. That route

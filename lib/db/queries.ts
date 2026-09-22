@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { and, asc, desc, eq, like, lte, gte, or, sql, inArray, count } from "drizzle-orm";
 import { db } from "./index";
-import { builders, deals, projects, properties, propertyImages, propertyMedia, testimonialVideos } from "./schema";
+import { deals, projects, properties, propertyImages, propertyMedia, testimonialVideos } from "./schema";
 import type { Deal, TestimonialVideo } from "./schema";
 import {
   PUBLIC_BUILDER_COLUMNS,
@@ -629,37 +629,3 @@ export async function listPropertySlugs(): Promise<
   }
 }
 
-/** Builder profile page's shape (R-47) — public builder facts plus their public projects. */
-export type PublicBuilderDetail = PublicBuilder & { projects: PublicProject[] };
-
-/**
- * `/builders/[slug]` (R-47): a developer's public profile plus every
- * project they're linked to, allowlisted the same way `/projects/[slug]`
- * allowlists its builder join.
- */
-const getBuilderBySlugCached = unstable_cache(
-  async (slug: string): Promise<PublicBuilderDetail | null> => {
-    const builder = await db.query.builders.findFirst({
-      columns: PUBLIC_BUILDER_COLUMNS,
-      where: eq(builders.slug, slug),
-      with: {
-        projects: { columns: PUBLIC_PROJECT_COLUMNS, orderBy: [asc(projects.name)] },
-      },
-    });
-    return builder ?? null;
-  },
-  ["getBuilderBySlug"],
-  CACHE_OPTS
-);
-
-export const getBuilderBySlug = failSoft(getBuilderBySlugCached, "getBuilderBySlug", null);
-
-/** Sitemap source — every builder gets a page regardless of current project count. */
-export async function listBuilderSlugs(): Promise<{ slug: string }[]> {
-  try {
-    return await db.select({ slug: builders.slug }).from(builders);
-  } catch (err) {
-    console.error("listBuilderSlugs failed:", err);
-    return [];
-  }
-}

@@ -192,14 +192,7 @@ export default async function ProjectDetailPage({
                 <span className="mb-4 block text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-ink-muted">
                   Developed By
                 </span>
-                <h2 className="font-serif text-h4 text-heading">
-                  <Link
-                    href={`/builders/${project.builder.slug}`}
-                    className="underline decoration-border underline-offset-4 transition-colors hover:decoration-gold"
-                  >
-                    {project.builder.name}
-                  </Link>
-                </h2>
+                <h2 className="font-serif text-h4 text-heading">{project.builder.name}</h2>
                 {project.builder.belongsTo && (
                   <p className="mt-1 text-meta font-sans text-ink-muted">
                     {project.builder.belongsTo}
