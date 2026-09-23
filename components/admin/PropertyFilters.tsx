@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LISTING_STATUSES, PUBLICATION_STATES } from "@/lib/taxonomy/status";
+import { PUBLICATION_STATES } from "@/lib/taxonomy/status";
 import { PROPERTY_TYPES } from "@/lib/attributes";
 import { CITY_NAMES } from "@/lib/locations";
 import { Select } from "@/components/ui/Select";
@@ -25,7 +25,6 @@ import { useAutoSubmit } from "@/components/admin/use-auto-submit";
 
 export type PropertyFilterValues = {
   q: string;
-  status: string;
   publication: string;
   type: string;
   city: string;
@@ -115,14 +114,6 @@ export function PropertyFilters({
 
         {/* One column at 360px, two from 640px, four from 1024px. */}
         <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-4">
-          <FilterSelect
-            name="status"
-            label="Listing status"
-            anyLabel="Any status"
-            options={LISTING_STATUSES}
-            value={values.status}
-            onChange={submitNow}
-          />
           <FilterSelect
             name="publication"
             label="Publication"

@@ -7,7 +7,6 @@ import { AnimatePresence, m } from "framer-motion";
 import Link from "next/link";
 import { useModalLock } from "@/lib/hooks";
 import { EASE } from "@/lib/motion";
-import { StatusBadge } from "@/components/admin/BasicDetailsSection";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import {
   Chip,
@@ -183,7 +182,6 @@ export function PropertiesTable({
                   </td>
                   <td>
                     <div className="flex flex-col items-start gap-1.5">
-                      <StatusBadge status={p.listingStatus} />
                       <Chip tone={PUBLICATION_TONE[p.publicationState] ?? "neutral"}>
                         <span className="capitalize">{p.publicationState}</span>
                       </Chip>

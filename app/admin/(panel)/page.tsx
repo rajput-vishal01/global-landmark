@@ -25,7 +25,7 @@ import {
   tourRequests,
 } from "@/lib/db/schema";
 import { getActiveDeal, todayIST } from "@/lib/db/queries";
-import { LISTING_STATUSES, PUBLICATION_STATES } from "@/lib/taxonomy/status";
+import { PUBLICATION_STATES } from "@/lib/taxonomy/status";
 import {
   CLOSED_STAGES,
   DEAL_STAGES,
@@ -68,21 +68,6 @@ async function counts() {
     return { properties: p.n, projects: j.n, deals: d.n };
   } catch {
     return { properties: 0, projects: 0, deals: 0 };
-  }
-}
-
-/** R-35: active listings grouped by status, each linking to the filtered admin list. */
-async function listingsByStatus(): Promise<{ status: string; n: number }[]> {
-  try {
-    const rows = await db
-      .select({ status: properties.listingStatus, n: count() })
-      .from(properties)
-      .groupBy(properties.listingStatus);
-    const byStatus = new Map(rows.map((r) => [r.status, r.n]));
-    return LISTING_STATUSES.map((status) => ({ status, n: byStatus.get(status) ?? 0 }));
-  } catch (err) {
-    console.error("listingsByStatus failed:", err);
-    return LISTING_STATUSES.map((status) => ({ status, n: 0 }));
   }
 }
 
@@ -421,11 +406,10 @@ type Tile = {
 type AttentionRow = { href: string; label: string; note: string; n: number };
 
 export default async function AdminDashboard() {
-  const [stats, activeDeal, byStatus, leadStats, book, staleCount, todo, feed, health] =
+  const [stats, activeDeal, leadStats, book, staleCount, todo, feed, health] =
     await Promise.all([
       counts(),
       getActiveDeal(),
-      listingsByStatus(),
       leadCounts(),
       pipeline(),
       staleListingCount(),
@@ -511,7 +495,6 @@ export default async function AdminDashboard() {
     },
   ].filter((row) => row.n > 0);
 
-  const withListings = byStatus.filter(({ n }) => n > 0);
   const incompleteShown = health.incomplete.slice(0, 4);
   const incompleteCount =
     health.incomplete.length > INCOMPLETE_CAP
@@ -682,52 +665,11 @@ export default async function AdminDashboard() {
         </div>
 
         <div>
-          <p className="desk-eyebrow">Listings by status</p>
-          {withListings.length === 0 ? (
-            <EmptyState
-              title="No listings yet"
-              note="Nothing is on the book at all, so there is no breakdown to draw. Add the first property and this table fills itself in."
-              action={
-                <Link href="/admin/properties/new" className={deskButton}>
-                  Add a property
-                </Link>
-              }
-            />
-          ) : (
-            <TableWrap>
-              <Table>
-                <thead>
-                  <tr>
-                    <th scope="col">Status</th>
-                    <th scope="col" className={numericCell}>
-                      Listings
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {withListings.map(({ status, n }) => (
-                    <tr key={status}>
-                      <td>
-                        <Link
-                          href={`/admin/properties?status=${encodeURIComponent(status)}`}
-                          className={deskRowLink}
-                        >
-                          {status}
-                        </Link>
-                      </td>
-                      <td className={numericCell}>{n}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </TableWrap>
-          )}
-
           {/* An available listing nobody has touched in a month is genuinely
               wrong, which is the one thing `alert` is for. */}
           {staleCount > 0 && (
             <Link
-              href="/admin/properties?status=Available&sort=dom"
+              href="/admin/properties?sort=dom"
               className={`mt-3 inline-block ${focusRing}`}
             >
               <Chip tone="alert">
