@@ -38,7 +38,7 @@ const NAV: NavGroup[] = [
     ],
   },
   {
-    heading: "People who contacted us",
+    heading: "Enquiries",
     items: [
       { label: "Leads", href: "/admin/leads" },
       { label: "Tour Requests", href: "/admin/tours" },
@@ -56,16 +56,15 @@ const NAV: NavGroup[] = [
       { label: "Deal Pipeline", href: "/admin/crm/deals" },
     ],
   },
-  // Video Reels, Client Quotes and Services sit behind
-  // /admin/website. Four rows named after their tables told a broker nothing
-  // about which part of the public page each one moved; the hub says it, and
-  // carries the live count of what is on each strip. Their routes are
-  // unchanged — only the way in is.
+  // Video Reels, Client Quotes and Services sit behind /admin/website. Rows
+  // named after their tables told a broker nothing about which part of the
+  // public page each one moved; the hub says it, and carries the live count
+  // of what is on each strip. Their routes are unchanged — only the way in.
   //
-  // No heading over it, because a heading above a single row is a section
-  // label for a section that does not exist. It joins Settings in the loose
-  // run at the bottom, where the two site-wide rows belong.
+  // Headed like every other group: an unlabelled pair at the bottom read as
+  // a gap in the list rather than a section.
   {
+    heading: "The site",
     items: [
       { label: "Website content", href: "/admin/website" },
       { label: "Settings", href: "/admin/settings" },
