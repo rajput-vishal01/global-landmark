@@ -70,6 +70,14 @@ if (!to) {
   console.log("No address given, so nothing was sent.");
   process.exit(0);
 }
+// Catch the copied-placeholder case here: nodemailer would otherwise get as
+// far as the send and answer "EENVELOPE: No recipients defined", which reads
+// like a fault in the mail setup rather than a typo in the argument.
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(to)) {
+  console.error(`"${to}" is not an email address. Pass a real one:`);
+  console.error("  node scripts/mail-test.mjs you@example.com");
+  process.exit(1);
+}
 
 try {
   const info = await transporter.sendMail({
