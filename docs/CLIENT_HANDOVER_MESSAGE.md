@@ -58,6 +58,19 @@ localities are real, and every photo is a free-licence stock image. None of
 them has a price. They come off in one step whenever you are ready to add
 your own listings.
 
+## Deal of the Week
+
+Under **Deal of the Week** in the admin: pick the property, the day the deal
+opens and the day it closes — any length, not only a week — and how many
+times to repeat it, so a standing deal is one save rather than one a week.
+Two deals can never cover the same day, and the landing page swaps them over
+on its own.
+
+If the sale is on something you do not want in your listings, use **Add a
+property for a deal**: that opens the property form with "keep out of the
+listings page" already ticked, so it shows in the deal strip and has its own
+page, but never appears in the listings, the search or Google.
+
 ## What we still need from you
 
 - Your own photographs of the properties you represent.

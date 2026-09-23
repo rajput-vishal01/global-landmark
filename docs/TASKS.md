@@ -117,5 +117,18 @@ step with it line by line.
   overflow, 12px text floor); dead code removed.
 - Demo data seed (`npm run db:seed-demo`, removable with `--remove`).
 
+Also shipped, 23 Sep:
+
+- Deal of the Week given its own sidebar row, scheduling by real dates of any
+  length, Repeat for up to 12 runs, an overlap guard, photos on the cards and
+  in the picker.
+- `hide_from_listings` (0008): a listing can carry a deal and keep its own
+  page while staying out of the listings, search, home strips and sitemap.
+- Cross-project tower links cleared (0007).
+- Admin filter dropdowns fixed — they were submitting the previous value.
+- Listing-status filters removed; the form no longer sets that field.
+- Videos play on the property page, with full screen.
+- Deleting a listing keeps files another listing still uses.
+
 Open, waiting on the client: real photos to replace demo data, confirmation
 of the WhatsApp number, whether commercial and rental listings are needed.

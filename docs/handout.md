@@ -171,3 +171,11 @@ that re-break easily:
 - `npm run dev` re-runs `scripts/seed.mjs` through `predev`.
 - Demo listings are marked `sourceName = "Demo data"`; remove them with
   `node scripts/seed-demo.mjs --remove` before real marketing.
+- Uploaded files are named by content hash, so one file can serve several
+  rows. Anything that deletes a file goes through `lib/upload-cleanup.ts`,
+  which checks every table first. Keep `lib/storage.ts` free of database
+  imports — `scripts/check-storage.mjs` compiles it on its own, and a
+  `@/lib/db` import there fails CI before the deploy runs.
+- Admin filter bars submit from `Select`'s `onValueChange`, which runs before
+  React re-renders. `Select` writes its hidden input imperatively for exactly
+  that reason; don't remove it.
