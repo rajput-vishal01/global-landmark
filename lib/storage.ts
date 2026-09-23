@@ -3,6 +3,7 @@
 // and a client component needs them without node:fs coming along.
 export { isStorageKey, isLocalImageUrl, storageKeyFromUrl } from "./storage-keys";
 import { isStorageKey, imageUrl } from "./storage-keys";
+import { stillReferenced } from "./storage-refs";
 
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
@@ -417,8 +418,15 @@ export async function deleteStoredFiles(
   storageKeys: string[],
   visibility: "public" | "private" = "public"
 ): Promise<void> {
+  // The filename is the hash of the bytes, so the same file can serve
+  // several rows — a photo used by two listings, or a project cover that is
+  // also one of its units' photos, exists once on disk. Call this AFTER the
+  // rows are gone: whatever still names the key is somebody else's, and its
+  // file stays.
+  const keep = await stillReferenced(storageKeys);
   await Promise.all(
     storageKeys.map(async (key) => {
+      if (keep.has(key)) return;
       const target = resolveStoragePath(key, visibility);
       if (!target) return;
       try {
