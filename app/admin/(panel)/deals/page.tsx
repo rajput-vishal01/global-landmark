@@ -6,8 +6,9 @@ import { DeleteButton } from "@/components/admin/DeleteButton";
 import { Card, Chip, EmptyState, PageHead, type ChipTone } from "@/components/admin/desk";
 import { DealCreateForm } from "./DealCreateForm";
 import { deleteDeal } from "./actions";
+import { nextFreeWeek, weekLabel } from "@/lib/week";
 
-export const metadata = { title: "Deals" };
+export const metadata = { title: "Deal of the Week" };
 
 type Status = "Live" | "Queued" | "Expired";
 
@@ -68,7 +69,7 @@ export default async function AdminDealsPage() {
         sub="Whichever window covers today is the deal on the landing page — queue the next one and the handover happens on its own."
       />
 
-      <DealCreateForm items={propertyRows} />
+      <DealCreateForm items={propertyRows} defaultWeek={nextFreeWeek(today, dealRows)} />
 
       {dealRows.length === 0 ? (
         <EmptyState
@@ -92,9 +93,7 @@ export default async function AdminDealsPage() {
                     />
                   </div>
                   <p className="text-[13px] font-medium text-ink">{deal.property.title}</p>
-                  <p className="text-[11.5px] tabular-nums text-muted">
-                    {deal.startsAt} → {deal.endsAt}
-                  </p>
+                  <p className="text-[11.5px] tabular-nums text-muted">{weekLabel(deal.startsAt)}</p>
                   {status !== "Expired" &&
                     (deal.property.publicationState !== "published" ||
                       deal.property.listingStatus !== "Available") && (

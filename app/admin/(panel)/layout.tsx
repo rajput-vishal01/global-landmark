@@ -63,6 +63,7 @@ const NAV: NavGroup[] = [
   // run at the bottom, where the two site-wide rows belong.
   {
     items: [
+      { label: "Deal of the Week", href: "/admin/deals" },
       { label: "Website content", href: "/admin/website" },
       { label: "Settings", href: "/admin/settings" },
     ],

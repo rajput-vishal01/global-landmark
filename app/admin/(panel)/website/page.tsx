@@ -77,7 +77,7 @@ export default async function AdminWebsiteContentPage() {
   const cards: HubCard[] = [
     {
       href: "/admin/deals",
-      label: "Featured Deal",
+      label: "Deal of the Week",
       what: "The Deal of the Week strip on the landing page.",
       value: featuredDeals,
       note:

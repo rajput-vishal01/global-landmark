@@ -7,28 +7,40 @@ import { db } from "@/lib/db";
 import { deals, properties } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
+import { isDate, overlaps, weekLabel, weeksFrom } from "@/lib/week";
 import type { DeleteState } from "../properties/actions";
 
 export type DealFormState = { error?: string };
 
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+/** At most three months queued at once — beyond that it is guesswork, not planning. */
+const MAX_WEEKS = 12;
 
+/**
+ * Schedules one listing as the Deal of the Week, for one week or several in
+ * a row.
+ *
+ * A week, not two loose dates: the strip is called Deal of the WEEK, every
+ * window runs Monday to Sunday, and picking a start and an end by hand is
+ * where off-by-one windows come from. The form sends the week the admin
+ * clicked and how many weeks to repeat; the Monday and the Sunday are worked
+ * out from that.
+ */
 export async function createDeal(
   _prev: DealFormState,
   formData: FormData
 ): Promise<DealFormState> {
   await requireAdmin();
   const propertyId = idField(formData, "propertyId");
-  const startsAt = String(formData.get("startsAt") ?? "");
-  const endsAt = String(formData.get("endsAt") ?? "");
+  const weekStart = String(formData.get("weekStart") ?? "");
+  const weeks = Number(formData.get("weeks") ?? 1);
 
   if (propertyId === null) return { error: "Choose a property." };
-  if (!DATE_RE.test(startsAt) || !DATE_RE.test(endsAt)) {
-    return { error: "Both dates are required." };
+  if (!isDate(weekStart)) return { error: "Pick the week this deal runs." };
+  if (!Number.isInteger(weeks) || weeks < 1 || weeks > MAX_WEEKS) {
+    return { error: `Repeat between 1 and ${MAX_WEEKS} weeks.` };
   }
-  if (endsAt < startsAt) {
-    return { error: "The end date must be on or after the start date." };
-  }
+
+  const windows = weeksFrom(weekStart, weeks);
 
   try {
     const [target] = await db
@@ -38,7 +50,21 @@ export async function createDeal(
     if (!target || target.state !== "published" || target.status !== "Available") {
       return { error: "Only a listing that is live on the website can be the deal." };
     }
-    await db.insert(deals).values({ propertyId, startsAt, endsAt });
+
+    // One deal per week. The landing page shows whichever window covers
+    // today, so two overlapping windows mean one of them silently never
+    // appears. Refused with the week named, rather than quietly moved.
+    const booked = await db
+      .select({ startsAt: deals.startsAt, endsAt: deals.endsAt })
+      .from(deals);
+    const clash = windows.find((w) => booked.some((b) => overlaps(w, b)));
+    if (clash) {
+      return {
+        error: `${weekLabel(clash.startsAt)} already has a deal. Remove that one first, or start a week later.`,
+      };
+    }
+
+    await db.insert(deals).values(windows.map((w) => ({ propertyId, ...w })));
   } catch (err) {
     console.error("createDeal failed:", err);
     return { error: "Could not save the deal. Try again." };
