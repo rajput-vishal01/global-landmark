@@ -13,7 +13,8 @@ import { isConfiguration, PROPERTY_TYPES } from "@/lib/taxonomy/property";
 import { CITY_NAMES, placeFromAddress } from "@/lib/locations";
 import { parseMapsUrl } from "@/lib/admin/property-parse";
 import { parseSellPhotos } from "@/lib/sell-photos";
-import { deleteStoredFiles, storageKeyFromUrl } from "@/lib/storage";
+import { storageKeyFromUrl } from "@/lib/storage";
+import { deleteUnusedFiles } from "@/lib/upload-cleanup";
 import { sendSubmissionEmail } from "@/lib/email";
 
 /**
@@ -221,7 +222,7 @@ export async function submitProperty(
     // the error they need, and scripts/sweep-orphan-uploads.mjs is the
     // backstop for anything this misses.
     try {
-      await deleteStoredFiles(
+      await deleteUnusedFiles(
         photos.map(storageKeyFromUrl).filter((k): k is string => Boolean(k)),
         "public"
       );

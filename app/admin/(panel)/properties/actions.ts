@@ -18,7 +18,8 @@ import {
 } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
-import { deleteStoredFiles, syncPublicDocumentFile } from "@/lib/storage";
+import { syncPublicDocumentFile } from "@/lib/storage";
+import { deleteUnusedFiles } from "@/lib/upload-cleanup";
 import { refCode as buildRefCode } from "@/lib/attributes";
 import { parseProperty, type ParseMode } from "@/lib/admin/property-parse";
 import { slugify } from "@/lib/slugify";
@@ -340,12 +341,12 @@ export async function updateProperty(
   // an orphaned file on disk (logged) but can never leave the live site
   // pointing at bytes that are already gone.
   try {
-    await deleteStoredFiles(removedImages, "public");
+    await deleteUnusedFiles(removedImages, "public");
   } catch (err) {
     console.error("updateProperty: replaced image files not removed:", removedImages, err);
   }
   try {
-    await deleteStoredFiles(removedDocuments, "private");
+    await deleteUnusedFiles(removedDocuments, "private");
   } catch (err) {
     console.error(
       "updateProperty: replaced document files not removed:",
@@ -476,7 +477,7 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
 
     if (removedDocs.length) {
       try {
-        await deleteStoredFiles(removedDocs, "private");
+        await deleteUnusedFiles(removedDocs, "private");
       } catch (err) {
         console.error("saveDraft: removed document files not swept:", removedDocs, err);
       }
@@ -633,15 +634,15 @@ export async function deleteProperty(
     // sweepable; a row pointing at a file that is already gone renders a
     // broken image on the live site.
     await db.delete(properties).where(eq(properties.id, id));
-    await deleteStoredFiles(imageKeys, "public");
-    await deleteStoredFiles(documentKeys, "private");
+    await deleteUnusedFiles(imageKeys, "public");
+    await deleteUnusedFiles(documentKeys, "private");
     // Publishing a brochure COPIES it into public/ (syncPublicDocumentFile),
     // and /api/images/<key> serves anything sitting there without consulting
     // the database. Sweeping only private/ therefore left a published
     // document downloadable forever — cached immutably, no row left to
     // un-publish it. A key that was never published simply is not there,
     // and deleteStoredFiles treats a missing file as a no-op.
-    await deleteStoredFiles(documentKeys, "public");
+    await deleteUnusedFiles(documentKeys, "public");
   } catch (err) {
     console.error("deleteProperty failed:", err);
     return { error: "Delete failed. Try again." };
@@ -681,15 +682,15 @@ export async function bulkDeleteProperties(
         .where(eq(propertyDocuments.propertyId, id));
 
       await db.delete(properties).where(eq(properties.id, id));
-      await deleteStoredFiles(
+      await deleteUnusedFiles(
         images.map((r) => r.storageKey).filter((k): k is string => Boolean(k)),
         "public"
       );
       const documentKeys = documents.map((r) => r.storageKey);
-      await deleteStoredFiles(documentKeys, "private");
+      await deleteUnusedFiles(documentKeys, "private");
       // See deleteProperty: a published document also has a copy in public/,
       // which /api/images serves with no database check.
-      await deleteStoredFiles(documentKeys, "public");
+      await deleteUnusedFiles(documentKeys, "public");
     } catch (err) {
       console.error(`bulkDeleteProperties failed for id ${id}:`, err);
       failed++;
