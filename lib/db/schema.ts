@@ -144,6 +144,13 @@ export const properties = mysqlTable(
     /** draft | published | archived. Only published + Available is public. */
     publicationState: varchar("publication_state", { length: 40 }).notNull().default("draft"),
     listingStatus: varchar("listing_status", { length: 40 }).notNull().default("Available"),
+    /**
+     * Live, but not in the listings grid: the listing keeps its own page and
+     * can be the Deal of the Week, while staying out of /properties, the
+     * search, the home strips and the sitemap. For a sale the office runs
+     * without putting the property on the market.
+     */
+    hideFromListings: boolean("hide_from_listings").notNull().default(false),
     /** Global Landmark | Dealer | Owner, with `sourceName` naming which. */
     addedBy: text("added_by").notNull().default("Global Landmark"),
     sourceName: text("source_name"),

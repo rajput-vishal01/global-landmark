@@ -7,23 +7,21 @@ import { db } from "@/lib/db";
 import { deals, properties } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import { revalidatePublicSite } from "@/lib/admin/revalidate";
-import { isDate, overlaps, weekLabel, weeksFrom } from "@/lib/week";
+import { isDate, overlaps, rangeLabel, repeatWindow } from "@/lib/week";
 import type { DeleteState } from "../properties/actions";
 
 export type DealFormState = { error?: string };
 
-/** At most three months queued at once — beyond that it is guesswork, not planning. */
-const MAX_WEEKS = 12;
+/** At most a dozen runs queued at once — beyond that it is guesswork, not planning. */
+const MAX_RUNS = 12;
 
 /**
  * Schedules one listing as the Deal of the Week, for one week or several in
  * a row.
  *
- * A week, not two loose dates: the strip is called Deal of the WEEK, every
- * window runs Monday to Sunday, and picking a start and an end by hand is
- * where off-by-one windows come from. The form sends the week the admin
- * clicked and how many weeks to repeat; the Monday and the Sunday are worked
- * out from that.
+ * The dates are the admin's own: a sale can open on any day and run for
+ * as long as it runs. Repeat queues the same length again, back to back, so
+ * a standing weekly deal is one save rather than one a week.
  */
 export async function createDeal(
   _prev: DealFormState,
@@ -31,16 +29,18 @@ export async function createDeal(
 ): Promise<DealFormState> {
   await requireAdmin();
   const propertyId = idField(formData, "propertyId");
-  const weekStart = String(formData.get("weekStart") ?? "");
-  const weeks = Number(formData.get("weeks") ?? 1);
+  const startsAt = String(formData.get("startsAt") ?? "");
+  const endsAt = String(formData.get("endsAt") ?? "");
+  const repeat = Number(formData.get("repeat") ?? 1);
 
   if (propertyId === null) return { error: "Choose a property." };
-  if (!isDate(weekStart)) return { error: "Pick the week this deal runs." };
-  if (!Number.isInteger(weeks) || weeks < 1 || weeks > MAX_WEEKS) {
-    return { error: `Repeat between 1 and ${MAX_WEEKS} weeks.` };
+  if (!isDate(startsAt) || !isDate(endsAt)) return { error: "Pick the dates this deal runs." };
+  if (endsAt < startsAt) return { error: "The end date must be on or after the start date." };
+  if (!Number.isInteger(repeat) || repeat < 1 || repeat > MAX_RUNS) {
+    return { error: `Repeat between 1 and ${MAX_RUNS} times.` };
   }
 
-  const windows = weeksFrom(weekStart, weeks);
+  const windows = repeatWindow(startsAt, endsAt, repeat);
 
   try {
     const [target] = await db
@@ -60,7 +60,7 @@ export async function createDeal(
     const clash = windows.find((w) => booked.some((b) => overlaps(w, b)));
     if (clash) {
       return {
-        error: `${weekLabel(clash.startsAt)} already has a deal. Remove that one first, or start a week later.`,
+        error: `${rangeLabel(clash.startsAt, clash.endsAt)} already has a deal. Remove that one first, or pick other dates.`,
       };
     }
 

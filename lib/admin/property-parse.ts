@@ -423,6 +423,7 @@ export function parseMapsUrl(value: FormDataEntryValue | null): string | null | 
 export type ParsedProperty = {
   title: string;
   publicationState: string;
+  hideFromListings: boolean;
   addedBy: string;
   sourceName: string | null;
   kind: "project" | "unit";
@@ -563,6 +564,9 @@ export function parseProperty(
       // the save: a broker mid-call should not lose a listing to a stale select.
       publicationState:
         parseChoice(formData.get("publicationState"), PUBLICATION_STATES) ?? "draft",
+      // Live but unlisted — a Deal of the Week the office does not want on
+      // the market. An unchecked box posts nothing, which reads as false.
+      hideFromListings: formData.get("hideFromListings") === "1",
       addedBy: parseChoice(formData.get("addedBy"), ADDED_BY) ?? "Global Landmark",
       sourceName: String(formData.get("sourceName") ?? "").trim().slice(0, 200) || null,
       kind,

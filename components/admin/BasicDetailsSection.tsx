@@ -34,6 +34,7 @@ export function PublishPanel({
   updatedAt,
   publicationState: initialPublicationState,
   listingStatus,
+  hideFromListings: initialHideFromListings,
   requirements,
   children,
 }: {
@@ -42,12 +43,14 @@ export function PublishPanel({
   updatedAt?: Date | null;
   publicationState?: string | null;
   listingStatus?: string | null;
+  hideFromListings?: boolean | null;
   requirements: Requirement[];
   children?: React.ReactNode;
 }) {
   const [publicationState, setPublicationState] = useState(
     initialPublicationState ?? "draft"
   );
+  const [hideFromListings, setHideFromListings] = useState(Boolean(initialHideFromListings));
   const status = listingStatus ?? "Available";
   // Mirrors isPubliclyVisible() in lib/taxonomy/status.ts.
   const isLive = publicationState === "published" && status === "Available";
@@ -98,6 +101,28 @@ export function PublishPanel({
         />
         {message}
       </p>
+
+      {/* For a Deal of the Week on a property the office does not want on the
+          market: published, so the strip and its own page work, but kept out
+          of the listings. */}
+      <label className="flex cursor-pointer items-start gap-2.5 border-t border-line-soft pt-4 text-[12.5px] text-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-gold">
+        <input
+          type="checkbox"
+          name="hideFromListings"
+          value="1"
+          checked={hideFromListings}
+          onChange={(e) => setHideFromListings(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-gold"
+        />
+        <span>
+          Keep out of the listings page
+          <span className="mt-0.5 block text-[11.5px] leading-snug text-muted">
+            {hideFromListings
+              ? "Reachable by link and usable as the Deal of the Week, but not in the listings, search or sitemap."
+              : "Leave off for a normal listing."}
+          </span>
+        </span>
+      </label>
 
       <div className="flex flex-col gap-2 border-t border-line-soft pt-4">
         <span className={deskLabel}>To go live</span>

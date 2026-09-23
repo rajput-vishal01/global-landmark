@@ -35,15 +35,26 @@ try {
   assert.equal(week.mondayOf("2027-01-01"), "2026-12-28", "a Friday in January belongs to a December Monday");
   assert.equal(week.addDays("2028-02-28", 1), "2028-02-29", "leap day exists");
 
-  // Repeat scheduling: consecutive, never overlapping.
-  const four = week.weeksFrom("2026-10-07", 4);
-  assert.equal(four.length, 4);
-  assert.equal(four[0].startsAt, "2026-10-05");
-  assert.equal(four[3].endsAt, "2026-11-01");
-  for (let i = 1; i < four.length; i++) {
-    assert.equal(week.addDays(four[i - 1].endsAt, 1), four[i].startsAt, "weeks run back to back");
-    assert.equal(week.overlaps(four[i - 1], four[i]), false, "and never overlap");
+  // Repeat scheduling keeps the run's own length and start day — a sale can
+  // open on any date, so nothing is snapped to a Monday here.
+  const thu = week.repeatWindow("2026-10-08", "2026-10-14", 4);
+  assert.equal(thu.length, 4);
+  assert.deepEqual(thu[0], { startsAt: "2026-10-08", endsAt: "2026-10-14" }, "the first run is what was asked for");
+  assert.deepEqual(thu[1], { startsAt: "2026-10-15", endsAt: "2026-10-21" }, "the next starts the day after");
+  assert.equal(thu[3].endsAt, "2026-11-04");
+  for (let i = 1; i < thu.length; i++) {
+    assert.equal(week.addDays(thu[i - 1].endsAt, 1), thu[i].startsAt, "runs go back to back");
+    assert.equal(week.overlaps(thu[i - 1], thu[i]), false, "and never overlap");
   }
+
+  // Any length, including a single day and a fortnight over a month end.
+  assert.equal(week.lengthInDays("2026-10-08", "2026-10-08"), 1, "one day counts as one");
+  assert.equal(week.lengthInDays("2026-10-08", "2026-10-14"), 7);
+  const oneDay = week.repeatWindow("2026-10-31", "2026-10-31", 3);
+  assert.deepEqual(oneDay.map((w) => w.startsAt), ["2026-10-31", "2026-11-01", "2026-11-02"], "single days repeat daily");
+  const fortnight = week.repeatWindow("2026-12-24", "2027-01-06", 2);
+  assert.deepEqual(fortnight[1], { startsAt: "2027-01-07", endsAt: "2027-01-20" }, "a run across new year repeats cleanly");
+  assert.equal(week.rangeLabel("2026-10-08", "2026-10-14").includes("Oct"), true);
 
   // Overlap is inclusive at both ends — a shared day is a clash.
   assert.equal(

@@ -107,12 +107,15 @@ export function PropertyForm({
   property,
   submissionKey,
   initialProjectId,
+  startsUnlisted = false,
 }: {
   action: Action;
   /** Every project, with the details a unit filed under it inherits. */
   projects: ProjectPrefill[];
   /** Add page opened from a project ("Add a unit"): start filed under it. */
   initialProjectId?: number;
+  /** A new listing opened from the Deal of the Week page: live, but not listed. */
+  startsUnlisted?: boolean;
   /**
    * The admin form is the one place that legitimately sees the full row —
    * the public types deliberately cannot express it.
@@ -654,6 +657,7 @@ export function PropertyForm({
             updatedAt={property?.updatedAt}
             publicationState={property?.publicationState}
             listingStatus={property?.listingStatus}
+            hideFromListings={property?.hideFromListings ?? startsUnlisted}
             requirements={requirements}
           >
             <SaveBar {...saveProps} variant="panel" className="max-lg:hidden" />

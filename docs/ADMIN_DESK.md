@@ -164,8 +164,12 @@ As of Sep 2026:
 - **Clients** and **Deal pipeline** — the sales CRM: clients with notes and
   activity, deals on a drag-and-drop board (one scrolling row of stages from
   tablet width up) or as a list.
-- **Website content** — Deal of the Week, video reels, client quotes,
-  services.
+- **Deal of the Week** — its own sidebar row. Pick the listing, the start and
+  end dates (any length, not only a week), and how many times to repeat it;
+  a window that would overlap another is refused. "Add a property for a deal"
+  opens the property form with "keep out of the listings page" already ticked.
+- **Website content** — video reels, client quotes, services (and the same
+  Deal of the Week card).
 - **Settings** — company name, address, phones, email, office hours, socials
   and headline figures; these feed the header, menu, footer, contact page,
   WhatsApp links and structured data.

@@ -1,12 +1,13 @@
 import { and, asc, eq } from "drizzle-orm";
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { deals, properties } from "@/lib/db/schema";
 import { todayIST } from "@/lib/db/queries";
 import { DeleteButton } from "@/components/admin/DeleteButton";
-import { Card, Chip, EmptyState, PageHead, type ChipTone } from "@/components/admin/desk";
+import { Card, Chip, EmptyState, PageHead, deskButton, type ChipTone } from "@/components/admin/desk";
 import { DealCreateForm } from "./DealCreateForm";
 import { deleteDeal } from "./actions";
-import { nextFreeWeek, weekLabel } from "@/lib/week";
+import { nextFreeWeek, rangeLabel } from "@/lib/week";
 
 export const metadata = { title: "Deal of the Week" };
 
@@ -67,6 +68,15 @@ export default async function AdminDealsPage() {
       <PageHead
         title="Deal of the Week"
         sub="Whichever window covers today is the deal on the landing page — queue the next one and the handover happens on its own."
+        actions={
+          // The deal is sometimes a property the office does not want on the
+          // market. This opens the property form with "keep out of the
+          // listings" already ticked: live enough for the strip and its own
+          // page, absent from /properties.
+          <Link href="/admin/properties/new?unlisted=1" className={deskButton}>
+            Add a property for a deal
+          </Link>
+        }
       />
 
       <DealCreateForm items={propertyRows} defaultWeek={nextFreeWeek(today, dealRows)} />
@@ -93,7 +103,7 @@ export default async function AdminDealsPage() {
                     />
                   </div>
                   <p className="text-[13px] font-medium text-ink">{deal.property.title}</p>
-                  <p className="text-[11.5px] tabular-nums text-muted">{weekLabel(deal.startsAt)}</p>
+                  <p className="text-[11.5px] tabular-nums text-muted">{rangeLabel(deal.startsAt, deal.endsAt)}</p>
                   {status !== "Expired" &&
                     (deal.property.publicationState !== "published" ||
                       deal.property.listingStatus !== "Available") && (

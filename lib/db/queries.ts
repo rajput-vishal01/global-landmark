@@ -222,6 +222,8 @@ function buildPropertyConditions(filters: PropertyFilters) {
 
   return [
     publicVisibility(),
+    // Deal-only listings stay out of every list; their own page still opens.
+    eq(properties.hideFromListings, false),
     filters.category ? eq(properties.category, filters.category) : undefined,
     filters.collection ? collectionCondition(filters.collection) : undefined,
     filters.propertyType ? eq(properties.propertyType, filters.propertyType) : undefined,
@@ -644,7 +646,9 @@ export async function listPropertySlugs(): Promise<
     return await db
       .select({ slug: properties.slug, updatedAt: properties.updatedAt })
       .from(properties)
-      .where(publicVisibility());
+      // A deal-only listing is reachable by link but not advertised, so it
+      // stays out of the sitemap too.
+      .where(and(publicVisibility(), eq(properties.hideFromListings, false)));
   } catch (err) {
     console.error("listPropertySlugs failed:", err);
     return [];

@@ -34,7 +34,14 @@
 >   public address line (0006).
 > - **Builders and areas** — their pages were removed (redirects to
 >   `/properties`); the tables stay so no stored data is lost.
-> - **Deals** — date-windowed Deal of the Week queue; only live listings qualify.
+> - **Deals** — the Deal of the Week queue. Each row is a start and an end
+>   date, any length, and windows may not overlap: the landing page shows
+>   whichever covers today. Scheduling repeats queues the same length again,
+>   back to back. Only a published listing qualifies — including one flagged
+>   `hide_from_listings`, which keeps its own page and can carry a deal while
+>   staying out of the listings page, the search, the home strips and the
+>   sitemap (0008). That is for a sale on a property the office does not want
+>   on the market.
 > - **Demo data** — `scripts/seed-demo.mjs` adds invented projects and listings
 >   marked `addedBy = "Dealer"`, `sourceName = "Demo data"`; see
 >   [scripts/seed-demo/README.md](../scripts/seed-demo/README.md).

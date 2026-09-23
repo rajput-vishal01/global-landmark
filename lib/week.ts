@@ -39,23 +39,47 @@ export function weekOf(iso: string): { startsAt: string; endsAt: string } {
   return { startsAt, endsAt: addDays(startsAt, 6) };
 }
 
-/** `n` consecutive weeks from the Monday of `iso`. */
-export function weeksFrom(iso: string, count: number): { startsAt: string; endsAt: string }[] {
-  const first = mondayOf(iso);
-  return Array.from({ length: count }, (_, i) => weekOf(addDays(first, i * 7)));
+/** Whole days covered by a window, counting both ends: Mon–Sun is 7. */
+export function lengthInDays(startsAt: string, endsAt: string): number {
+  return Math.round((toUtc(endsAt) - toUtc(startsAt)) / DAY_MS) + 1;
 }
 
-/** "Mon 5 Oct — Sun 11 Oct 2026", for confirming the week before saving it. */
+/**
+ * `count` runs of the same length, back to back, the first being the window
+ * given. A sale can start on any date — the repeat simply keeps its length,
+ * so a Thursday-to-Wednesday deal repeats Thursday to Wednesday.
+ */
+export function repeatWindow(
+  startsAt: string,
+  endsAt: string,
+  count: number
+): { startsAt: string; endsAt: string }[] {
+  const span = lengthInDays(startsAt, endsAt);
+  return Array.from({ length: count }, (_, i) => ({
+    startsAt: addDays(startsAt, i * span),
+    endsAt: addDays(endsAt, i * span),
+  }));
+}
+
+function dayLabel(iso: string): string {
+  return new Date(toUtc(iso)).toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+}
+
+/** "Thu, 8 Oct — Wed, 14 Oct 2026", for confirming a run before saving it. */
+export function rangeLabel(startsAt: string, endsAt: string): string {
+  if (startsAt === endsAt) return `${dayLabel(startsAt)} ${endsAt.slice(0, 4)}`;
+  return `${dayLabel(startsAt)} — ${dayLabel(endsAt)} ${endsAt.slice(0, 4)}`;
+}
+
+/** The same, for a Monday-to-Sunday week named by any day inside it. */
 export function weekLabel(iso: string): string {
   const { startsAt, endsAt } = weekOf(iso);
-  const day = (value: string) =>
-    new Date(toUtc(value)).toLocaleDateString("en-IN", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      timeZone: "UTC",
-    });
-  return `${day(startsAt)} — ${day(endsAt)} ${endsAt.slice(0, 4)}`;
+  return rangeLabel(startsAt, endsAt);
 }
 
 /** True when two closed date ranges share a day. */

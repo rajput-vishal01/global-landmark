@@ -5,7 +5,7 @@ import { FIELD, LABEL } from "@/components/form-classes";
 import { Req } from "@/components/ui/RequiredMark";
 import { useState } from "react";
 import { createDeal, type DealFormState } from "./actions";
-import { addDays, mondayOf, weekLabel } from "@/lib/week";
+import { addDays, lengthInDays, rangeLabel } from "@/lib/week";
 
 const initialState: DealFormState = {};
 
@@ -32,8 +32,13 @@ export function DealCreateForm({
   const { state, isPending, formProps } = useActionForm(createDeal, initialState);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [week, setWeek] = useState(defaultWeek);
-  const [weeks, setWeeks] = useState(1);
+  const [startsAt, setStartsAt] = useState(defaultWeek);
+  // A week is the common case, so the end follows the start until it is set
+  // by hand — a sale that runs three days or a fortnight just changes it.
+  const [endsAt, setEndsAt] = useState(addDays(defaultWeek, 6));
+  const [repeat, setRepeat] = useState(1);
+  const valid = Boolean(startsAt && endsAt && endsAt >= startsAt);
+  const span = valid ? lengthInDays(startsAt, endsAt) : 0;
 
   const q = query.trim().toLowerCase();
   const matches = q
@@ -104,31 +109,48 @@ export function DealCreateForm({
       </div>
 
       <div className="flex flex-wrap items-end gap-4">
-        {/* ponytail: the native date picker, snapped to the week it lands in
-            — <input type="week"> is unsupported in Safari and Firefox, and a
-            calendar library for one field is not worth shipping. */}
+        {/* ponytail: the browser's own date picker. A sale can open on any
+            day, so these are two plain dates; the end follows the start by a
+            week until it is changed. */}
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="weekStart" className={LABEL}>Week<Req /></label>
+          <label htmlFor="startsAt" className={LABEL}>Starts<Req /></label>
           <input
-            id="weekStart"
-            name="weekStart"
+            id="startsAt"
+            name="startsAt"
             type="date"
             required
-            value={week}
-            onChange={(e) => setWeek(e.target.value)}
+            value={startsAt}
+            onChange={(e) => {
+              const next = e.target.value;
+              if (next && (!endsAt || endsAt < next)) setEndsAt(addDays(next, 6));
+              setStartsAt(next);
+            }}
             className={FIELD}
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <label htmlFor="weeks" className={LABEL}>Repeat</label>
+          <label htmlFor="endsAt" className={LABEL}>Ends<Req /></label>
           <input
-            id="weeks"
-            name="weeks"
+            id="endsAt"
+            name="endsAt"
+            type="date"
+            required
+            min={startsAt || undefined}
+            value={endsAt}
+            onChange={(e) => setEndsAt(e.target.value)}
+            className={FIELD}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="repeat" className={LABEL}>Repeat</label>
+          <input
+            id="repeat"
+            name="repeat"
             type="number"
             min={1}
             max={12}
-            value={weeks}
-            onChange={(e) => setWeeks(Math.min(12, Math.max(1, Number(e.target.value) || 1)))}
+            value={repeat}
+            onChange={(e) => setRepeat(Math.min(12, Math.max(1, Number(e.target.value) || 1)))}
             className={`${FIELD} w-24`}
           />
         </div>
@@ -140,22 +162,22 @@ export function DealCreateForm({
           {isPending ? "Scheduling..." : "Schedule deal"}
         </button>
       </div>
-      {/* Says back what will be saved. Any date works; the week it belongs to
-          is what runs, so "Fri the 9th" schedules Mon 5 – Sun 11. */}
+      {/* Says back exactly what will be saved, repeats included. */}
       <p className="font-sans text-meta text-ink-muted">
-        {week ? (
+        {valid ? (
           <>
-            Runs <span className="text-ink">{weekLabel(week)}</span>
-            {weeks > 1 && (
+            Runs <span className="text-ink">{rangeLabel(startsAt, endsAt)}</span> ({span}{" "}
+            {span === 1 ? "day" : "days"})
+            {repeat > 1 && (
               <>
-                , then {weeks - 1} more {weeks === 2 ? "week" : "weeks"}, ending{" "}
-                <span className="text-ink">{weekLabel(addDays(mondayOf(week), (weeks - 1) * 7))}</span>
+                , then {repeat - 1} more of the same length, the last ending{" "}
+                <span className="text-ink">{addDays(endsAt, (repeat - 1) * span)}</span>
               </>
             )}
             .
           </>
         ) : (
-          "Pick any day and the whole week it falls in runs, Monday to Sunday."
+          "Pick the day the deal opens and the day it closes."
         )}
       </p>
 

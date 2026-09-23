@@ -11,11 +11,16 @@ export const metadata = { title: "Add property" };
 export default async function NewPropertyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string }>;
+  searchParams: Promise<{ project?: string; unlisted?: string }>;
 }) {
   // "Add a unit" on a project page lands here with ?project=<id>, and the
   // form starts filed under that project with its details filled in.
-  const projectParam = Number((await searchParams).project);
+  const params = await searchParams;
+  // "Add a deal-only property" on the Deal of the Week page lands here with
+  // ?unlisted=1, so the listing is live for the strip without joining the
+  // listings page.
+  const startsUnlisted = params.unlisted === "1";
+  const projectParam = Number(params.project);
   const initialProjectId = Number.isInteger(projectParam) ? projectParam : undefined;
   // Render per request, stated here rather than inherited from the panel
   // layout: the submission key below must be new on every load. A cached page
@@ -38,6 +43,7 @@ export default async function NewPropertyPage({
       <PropertyForm
         action={createProperty}
         projects={projects}
+        startsUnlisted={startsUnlisted}
         // New per page load: one form, at most one listing.
         submissionKey={randomUUID()}
         initialProjectId={initialProjectId}
