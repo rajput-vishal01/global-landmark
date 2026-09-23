@@ -16,6 +16,7 @@ import { PropertyGallery } from "@/components/property/PropertyGallery";
 import { SectionNav } from "@/components/property/SectionNav";
 import { TourRequestForm } from "@/components/property/TourRequestForm";
 import { FormDialog } from "@/components/property/FormDialog";
+import { VideoPlayer } from "@/components/property/VideoPlayer";
 import { amenityIcon } from "@/components/amenity-icons";
 import { SectionHeading, SECTION } from "../../_components/page-chrome";
 import { toEnquiryCartItem } from "@/lib/enquiry-cart-item";
@@ -594,13 +595,7 @@ export default async function PropertyDetailPage({
 
               {tourMedia.length > 0 && (
                 <Section id="videos" eyebrow="See it moving" title="Videos &amp; tours">
-                  <div className="flex flex-wrap gap-3">
-                    {tourMedia.map((m) => (
-                      <a key={m.id} href={m.url} target="_blank" rel="noopener noreferrer" className={LINK_BUTTON}>
-                        {m.label || MEDIA_LABELS[m.kind] || "Watch"} ↗
-                      </a>
-                    ))}
-                  </div>
+                  <VideoPlayer items={tourMedia} labels={MEDIA_LABELS} />
                 </Section>
               )}
 
@@ -702,7 +697,18 @@ export default async function PropertyDetailPage({
                   <EnquiryToggleButton item={toEnquiryCartItem(property)} className={RAIL_SECONDARY} />
                 </div>
                 <p className="mt-4 text-center font-sans text-meta text-ink-muted">
-                  or call <a href={company.phoneHref} className="text-ink underline-offset-4 hover:underline">{company.phone}</a>
+                  or call{" "}
+                  <a href={company.phoneHref} className="text-ink underline-offset-4 hover:underline">
+                    {company.phone}
+                  </a>
+                  {company.phoneAlt && (
+                    <>
+                      {" or "}
+                      <a href={company.phoneAltHref} className="text-ink underline-offset-4 hover:underline">
+                        {company.phoneAlt}
+                      </a>
+                    </>
+                  )}
                 </p>
 
                 {/* Published documents only — gated in SQL. */}
