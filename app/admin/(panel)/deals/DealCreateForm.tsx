@@ -14,6 +14,7 @@ export type DealPickerItem = {
   title: string;
   kind: "project" | "unit";
   location: string;
+  coverUrl: string | null;
 };
 
 /**
@@ -84,7 +85,13 @@ export function DealCreateForm({
                       isSelected ? "bg-cream" : "bg-white hover:bg-cream/60"
                     }`}
                   >
-                    <span className="min-w-0">
+                    <span className="h-9 w-12 shrink-0 overflow-hidden rounded-[4px] bg-raise">
+                      {item.coverUrl && (
+                        // eslint-disable-next-line @next/next/no-img-element -- arbitrary admin-entered hosts
+                        <img src={item.coverUrl} alt="" className="h-full w-full object-cover" />
+                      )}
+                    </span>
+                    <span className="min-w-0 flex-1">
                       <span className={`block truncate font-sans text-meta ${isSelected ? "font-medium text-gold-deep" : "text-ink"}`}>
                         {item.title}
                       </span>

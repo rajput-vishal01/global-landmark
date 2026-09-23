@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { deals, properties } from "@/lib/db/schema";
@@ -27,6 +27,19 @@ const STATUS_TONE: Record<Status, ChipTone> = {
   Expired: "neutral",
 };
 
+/**
+ * Cover photo per listing, the same one the properties list shows. Written as
+ * literal table names for the reason documented in the properties page: once
+ * properties.id is also selected, Drizzle renders a second reference to it
+ * unqualified and the subquery silently matches nothing.
+ */
+const coverUrl = sql<string | null>`(
+    select url from property_images
+    where property_images.property_id = properties.id
+    order by property_images.sort_order asc, property_images.id asc
+    limit 1
+  )`.as("cover_url");
+
 async function loadData() {
   try {
     const [dealRows, propertyRows] = await Promise.all([
@@ -40,6 +53,7 @@ async function loadData() {
           title: properties.title,
           kind: properties.kind,
           location: properties.location,
+          coverUrl,
         })
         .from(properties)
         // Only what is on the website can be the deal — the homepage skips
@@ -62,6 +76,10 @@ async function loadData() {
 export default async function AdminDealsPage() {
   const { dealRows, propertyRows } = await loadData();
   const today = todayIST();
+  // Every deal's listing is in the picker rows, so one lookup covers both.
+  const covers = new Map(
+    propertyRows.flatMap((p) => (p.coverUrl ? [[p.id, p.coverUrl] as const] : []))
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -102,8 +120,23 @@ export default async function AdminDealsPage() {
                       confirmText={`Remove this deal for "${deal.property.title}"?`}
                     />
                   </div>
-                  <p className="text-[13px] font-medium text-ink">{deal.property.title}</p>
-                  <p className="text-[11.5px] tabular-nums text-muted">{rangeLabel(deal.startsAt, deal.endsAt)}</p>
+                  <div className="flex items-start gap-2.5">
+                    <div className="h-12 w-16 shrink-0 overflow-hidden rounded-[4px] bg-raise">
+                      {covers.get(deal.propertyId) && (
+                        // eslint-disable-next-line @next/next/no-img-element -- arbitrary admin-entered hosts
+                        <img src={covers.get(deal.propertyId)!} alt="" className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                    {/* Title and dates share the column beside the photo:
+                        the dates on their own line left a gap under the
+                        thumbnail and made every card taller than its content. */}
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <p className="text-[13px] font-medium text-ink">{deal.property.title}</p>
+                      <p className="text-[11.5px] tabular-nums text-muted">
+                        {rangeLabel(deal.startsAt, deal.endsAt)}
+                      </p>
+                    </div>
+                  </div>
                   {status !== "Expired" &&
                     (deal.property.publicationState !== "published" ||
                       deal.property.listingStatus !== "Available") && (
