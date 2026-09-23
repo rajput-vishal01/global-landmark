@@ -39,6 +39,7 @@ export function Select({
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
   const rootRef = useRef<HTMLDivElement>(null);
+  const hiddenRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
   /**
@@ -91,8 +92,14 @@ export function Select({
 
   function choose(index: number) {
     if (options[index]) {
-      setValue(options[index].value);
-      onValueChange?.(options[index].value);
+      const chosen = options[index].value;
+      setValue(chosen);
+      // Write the hidden input directly before telling the caller. The admin
+      // filter bars submit their form inside onValueChange, which runs before
+      // React has re-rendered this input — so the form used to post the
+      // PREVIOUS value and the filter looked like it did nothing.
+      if (hiddenRef.current) hiddenRef.current.value = chosen;
+      onValueChange?.(chosen);
     }
     setIsOpen(false);
   }
@@ -126,7 +133,7 @@ export function Select({
 
   return (
     <div ref={rootRef} className={`relative ${className}`}>
-      <input type="hidden" name={name} value={value} />
+      <input ref={hiddenRef} type="hidden" name={name} value={value} />
       <button
         type="button"
         id={id}
