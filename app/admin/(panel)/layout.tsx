@@ -12,12 +12,13 @@ import { AdminSidebar, type NavGroup } from "@/components/admin/AdminSidebar";
  * who contacted us, and which are website content. The groups below are
  * the four jobs, in the order a broker works through them.
  *
- * Two renames matter more than they look:
+ * Two naming decisions matter more than they look:
  *
- * - "Deal of the Week" is now "Featured Deal". The panel had TWO unrelated
- *   things called deals — this one (a listing promoted on the landing page)
- *   and the CRM sales pipeline — and a broker being told to "check the
- *   deals" had no way to know which was meant.
+ * - The landing-page strip is "Deal of the Week" and the CRM pipeline is
+ *   "Deal Pipeline". The panel has TWO unrelated things called deals, so
+ *   neither may be called just "Deals": a broker told to "check the deals"
+ *   would have no way to know which was meant. The strip sits under
+ *   Properties, because picking one starts from that list.
  * - "Testimonials" / "Written Quotes" are now "Video Reels" / "Client
  *   Quotes", because both were testimonials and neither name said which
  *   one held videos.
@@ -30,6 +31,9 @@ const NAV: NavGroup[] = [
     heading: "Portfolio",
     items: [
       { label: "Properties", href: "/admin/properties" },
+      // Directly under Properties: choosing the deal starts from the same
+      // list, and it is portfolio work rather than a site-wide setting.
+      { label: "Deal of the Week", href: "/admin/deals" },
       { label: "Projects", href: "/admin/projects" },
     ],
   },
@@ -52,7 +56,7 @@ const NAV: NavGroup[] = [
       { label: "Deal Pipeline", href: "/admin/crm/deals" },
     ],
   },
-  // Featured Deal, Video Reels, Client Quotes and Services now sit behind
+  // Video Reels, Client Quotes and Services sit behind
   // /admin/website. Four rows named after their tables told a broker nothing
   // about which part of the public page each one moved; the hub says it, and
   // carries the live count of what is on each strip. Their routes are
@@ -63,7 +67,6 @@ const NAV: NavGroup[] = [
   // run at the bottom, where the two site-wide rows belong.
   {
     items: [
-      { label: "Deal of the Week", href: "/admin/deals" },
       { label: "Website content", href: "/admin/website" },
       { label: "Settings", href: "/admin/settings" },
     ],
