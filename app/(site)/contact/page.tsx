@@ -129,7 +129,7 @@ export default async function ContactPage() {
             >
               <a
                 href={COMPANY.phoneHref}
-                className="block font-serif text-h4 text-heading transition-colors hover:text-gold-deep"
+                className="tel block font-serif text-h4 text-heading transition-colors hover:text-gold-deep"
               >
                 {COMPANY.phone}
               </a>

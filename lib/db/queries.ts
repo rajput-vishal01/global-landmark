@@ -367,6 +367,42 @@ const listCityCountsCached = unstable_cache(
 
 export const listCityCounts = failSoft(listCityCountsCached, "listCityCounts", []);
 
+/**
+ * Distinct property types on public listings, custom ones included, so a
+ * type the broker typed in becomes a filter option like any built-in.
+ */
+const listPropertyTypesInUseCached = unstable_cache(
+  async (): Promise<string[]> => {
+    const rows = await db
+      .selectDistinct({ type: properties.propertyType })
+      .from(properties)
+      .where(and(publicVisibility(), sql`${properties.propertyType} is not null`));
+    return rows.flatMap((r) => (r.type ? [r.type] : []));
+  },
+  ["listPropertyTypesInUse"],
+  CACHE_OPTS
+);
+
+export const listPropertyTypesInUse = failSoft(
+  listPropertyTypesInUseCached,
+  "listPropertyTypesInUse",
+  []
+);
+
+/** The same list for the admin, where drafts and sold rows count too. */
+export async function listAllPropertyTypes(): Promise<string[]> {
+  try {
+    const rows = await db
+      .selectDistinct({ type: properties.propertyType })
+      .from(properties)
+      .where(sql`${properties.propertyType} is not null`);
+    return rows.flatMap((r) => (r.type ? [r.type] : []));
+  } catch (err) {
+    console.error("listAllPropertyTypes failed:", err);
+    return [];
+  }
+}
+
 const getFeaturedPropertiesCached = unstable_cache(
   async (limit = 6): Promise<PublicPropertyWithMedia[]> =>
     db.query.properties.findMany({

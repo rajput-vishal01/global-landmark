@@ -52,6 +52,7 @@ const NAV: NavGroup[] = [
   {
     heading: "Sales",
     items: [
+      { label: "Follow-ups", href: "/admin/crm/follow-ups" },
       { label: "Clients", href: "/admin/crm" },
       { label: "Deal Pipeline", href: "/admin/crm/deals" },
     ],

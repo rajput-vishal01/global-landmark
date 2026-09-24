@@ -138,7 +138,7 @@ export function FullscreenMenu({
               <span className="text-eyebrow font-sans font-medium uppercase tracking-[0.2em] text-cream/50">
                 Contact
               </span>
-              <p className="text-meta font-sans text-cream/80">
+              <p className="tel text-meta font-sans text-cream/80">
                 {COMPANY.email}
                 <br />
                 {COMPANY.phone} · {COMPANY.phoneAlt}

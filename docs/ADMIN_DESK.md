@@ -161,6 +161,11 @@ As of Sep 2026:
   office gets an email; each row can be deleted.
 - **Property submissions** — owner listings from `/sell`, tabbed by
   draft/published/archived; the seller's address stays private.
+- **Follow-ups** — the call-back queue, first row under Sales. Every client
+  whose most recently logged activity carries a follow-up date, bucketed
+  overdue / today / next 7 days / later. Logging a new activity on a client
+  replaces their reminder, so the queue clears itself; set a date on the new
+  entry and they come back for the next round.
 - **Clients** and **Deal pipeline** — the sales CRM: clients with notes and
   activity, deals on a drag-and-drop board (one scrolling row of stages from
   tablet width up) or as a list.

@@ -12,9 +12,10 @@ import {
   saveDraft,
   type PropertyFormState,
 } from "@/app/admin/(panel)/properties/actions";
-import { DOCUMENTATION_FLAGS, PROPERTY_TYPES, withEmptyOption } from "@/lib/attributes";
+import { DOCUMENTATION_FLAGS } from "@/lib/attributes";
+import { MAX_PROPERTY_TYPE, mergePropertyTypes } from "@/lib/taxonomy/property";
 import { requiredFieldsFor, sectionsFor } from "@/lib/taxonomy/sections";
-import { placeFromAddress } from "@/lib/locations";
+import { CITY_NAMES, localitiesIn, placeFromAddress } from "@/lib/locations";
 import { FormSection, deskFieldFull, deskHint, deskLabel } from "./FormSection";
 import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
@@ -108,6 +109,7 @@ export function PropertyForm({
   submissionKey,
   initialProjectId,
   startsUnlisted = false,
+  types = [],
 }: {
   action: Action;
   /** Every project, with the details a unit filed under it inherits. */
@@ -116,6 +118,8 @@ export function PropertyForm({
   initialProjectId?: number;
   /** A new listing opened from the Deal of the Week page: live, but not listed. */
   startsUnlisted?: boolean;
+  /** Types already stored, so a custom one typed on another listing is offered here too. */
+  types?: string[];
   /**
    * The admin form is the one place that legitimately sees the full row —
    * the public types deliberately cannot express it.
@@ -225,6 +229,21 @@ export function PropertyForm({
   // The same read the server makes, shown live so the admin can see which
   // city filter the listing will land under before saving.
   const place = placeFromAddress(address);
+  // What the listing is FILED under, which is what the public city filter
+  // and the location cards read. Seeded from the row, else from the
+  // address — but chosen explicitly, because a listing that never shows up
+  // under its own city is the failure the address guess produces, and the
+  // broker has no way to see it from this form.
+  const [city, setCity] = useState(property?.city ?? place?.city ?? "");
+  const [locality, setLocality] = useState(property?.locality ?? place?.locality ?? "");
+  // Typing an address only ever FILLS EMPTY fields; it never overwrites a
+  // choice already made.
+  const suggest = (next: string) => {
+    const guess = placeFromAddress(next);
+    if (!guess) return;
+    setCity((current) => current || guess.city);
+    setLocality((current) => current || guess.locality || "");
+  };
 
   // Last successfully-autosaved snapshot of the form's data, so a tick with
   // nothing new to say is a no-op rather than an identical round trip. A
@@ -369,13 +388,27 @@ export function PropertyForm({
               <label htmlFor="propertyType" className={deskLabel}>
                 Property type
               </label>
-              <Select
+              {/* ponytail: a native datalist, not the Select. The client
+                  sells things the list does not name yet, so the field has
+                  to accept a typed-in type — and the browser's own combobox
+                  does both without a custom "Other..." branch. */}
+              <input
                 id="propertyType"
                 name="propertyType"
-                defaultValue={propertyType}
-                onValueChange={setPropertyType}
-                options={withEmptyOption("— Select a type —", PROPERTY_TYPES)}
+                type="text"
+                list="property-type-options"
+                autoComplete="off"
+                maxLength={MAX_PROPERTY_TYPE}
+                placeholder="Pick one, or type your own"
+                value={propertyType}
+                onChange={(e) => setPropertyType(e.target.value)}
+                className={deskFieldFull}
               />
+              <datalist id="property-type-options">
+                {mergePropertyTypes(types).map((t) => (
+                  <option key={t} value={t} />
+                ))}
+              </datalist>
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="kind" className={deskLabel}>
@@ -463,25 +496,66 @@ export function PropertyForm({
               required
               maxLength={300}
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={(e) => {
+                setAddress(e.target.value);
+                suggest(e.target.value);
+              }}
               placeholder="Sector 62, Phase 8, Mohali"
               className={deskFieldFull}
             />
-            <div className="flex flex-wrap items-center gap-2 text-[11.5px] text-muted">
-              <span>Shown exactly as written. End it with the city.</span>
-              {address.trim() &&
-                (place ? (
-                  <span className="rounded-full bg-gold/12 px-2 py-[2px] font-semibold text-gold-deep">
-                    City: {place.city}
-                    {place.locality ? ` · ${place.locality}` : ""}
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-raise px-2 py-[2px] font-semibold text-soft">
-                    No city recognised{property?.city ? ` — stays ${property.city}` : ""}
-                  </span>
-                ))}
-            </div>
+            <p className={deskHint}>
+              Shown on the site exactly as written. The city and locality below
+              are what the listing is filed under.
+            </p>
           </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="city" className={deskLabel}>
+                City
+                <Req />
+              </label>
+              <Select
+                // Select reads defaultValue once, at mount, so a value filled
+                // in from the address after that only lands via a remount.
+                key={`city-${city}`}
+                id="city"
+                name="city"
+                options={[{ value: "", label: "— Select a city —" }, ...CITY_NAMES.map((c) => ({ value: c, label: c }))]}
+                defaultValue={city}
+                onValueChange={(value) => {
+                  setCity(value);
+                  // A locality belongs to one city, so it cannot survive a
+                  // change of city.
+                  setLocality("");
+                }}
+              />
+              <p className={deskHint}>
+                Drives the city filter and the location cards on the website.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="locality" className={deskLabel}>
+                Locality <span className="normal-case tracking-normal text-muted">(optional)</span>
+              </label>
+              <Select
+                key={`locality-${city}-${locality}`}
+                id="locality"
+                name="locality"
+                options={[
+                  { value: "", label: city ? "— Any part of the city —" : "— Pick a city first —" },
+                  ...localitiesIn(city).map((l) => ({ value: l.name, label: l.name })),
+                ]}
+                defaultValue={locality}
+                onValueChange={setLocality}
+              />
+              <p className={deskHint}>
+                {city
+                  ? "Narrows the listing inside the city, e.g. Peer Muchalla in Zirakpur."
+                  : "The list fills in once a city is chosen."}
+              </p>
+            </div>          </div>
 
           <div className="flex flex-col gap-2">
             <label htmlFor="mapsUrl" className={deskLabel}>

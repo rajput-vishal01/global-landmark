@@ -8,9 +8,9 @@ import { BOXED_SELECT } from "@/components/form-classes";
 import {
   COLLECTIONS,
   CONFIGURATIONS,
-  PROPERTY_TYPES,
   withEmptyOption as withAll,
 } from "@/lib/attributes";
+import { mergePropertyTypes } from "@/lib/taxonomy/property";
 import { CATEGORIES } from "@/lib/categories";
 import type { PropertiesFilterParams } from "@/lib/properties-url";
 
@@ -37,9 +37,12 @@ const LABEL =
 export function FilterBar({
   current,
   cityCounts,
+  types = [],
 }: {
   current: PropertiesFilterParams;
   cityCounts: { city: string; count: number }[];
+  /** Types stored on live listings, so a custom one filters like a built-in. */
+  types?: string[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -172,7 +175,7 @@ export function FilterBar({
             aria-label="Property type"
             defaultValue={current.type ?? ""}
             className={BOXED_SELECT}
-            options={withAll("All types", PROPERTY_TYPES)}
+            options={withAll("All types", mergePropertyTypes(types))}
             onValueChange={(v) => apply({ type: v })}
           />
         </Field>

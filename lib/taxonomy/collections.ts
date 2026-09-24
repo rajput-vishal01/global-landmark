@@ -1,6 +1,7 @@
 /**
  * The "cardholder" axis the client asked for (R-04): Kothi, Plot, Projects,
- * Flats. (Land and Commercial were dropped with their property types.)
+ * Flats, Commercial. Commercial came back in Sep 2026 with the commercial
+ * property types, so a shop has somewhere to sort itself into.
  *
  * This is orthogonal to the sale/purchase/lease/invest intent axis in
  * lib/categories.ts — a listing has both. It is DERIVED from property type
@@ -12,9 +13,10 @@ import { PROPERTY_TYPES, type PropertyType } from "./property";
 
 export const COLLECTIONS = [
   { value: "kothi", label: "Kothi", blurb: "Villas, kothis and independent houses" },
-  { value: "plot", label: "Plot", blurb: "Residential plots across the Tricity" },
+  { value: "plot", label: "Plot", blurb: "Plots and land across the Tricity" },
   { value: "projects", label: "Projects", blurb: "Societies and townships" },
-  { value: "flats", label: "Flats", blurb: "Apartments and penthouses" },
+  { value: "flats", label: "Flats", blurb: "Apartments, builder floors and penthouses" },
+  { value: "commercial", label: "Commercial", blurb: "Shops, showrooms, SCOs and offices" },
 ] as const;
 
 export type CollectionValue = (typeof COLLECTIONS)[number]["value"];
@@ -31,14 +33,27 @@ export function collectionLabel(value: CollectionValue): string {
  * Every physical type maps to exactly one collection — asserted in
  * scripts/check-taxonomy.mjs, so adding a type without placing it here
  * fails the check rather than silently vanishing from every collection page.
- * Land and Commercial went with the types the client dropped (Sep 2026).
+ * A type typed in by hand belongs to no collection, which is why collectionOf
+ * falls back to null rather than guessing.
  */
 const TYPE_TO_COLLECTION: Record<PropertyType, CollectionValue> = {
   "Independent House": "kothi",
   Villa: "kothi",
+
   "Residential Plot": "plot",
+  "Commercial Plot": "plot",
+  "Agricultural Land": "plot",
+
   "Flat/Apartment": "flats",
   Penthouse: "flats",
+  "Builder Floor": "flats",
+  "Studio / SOHO": "flats",
+
+  Shop: "commercial",
+  Showroom: "commercial",
+  "SCO (Shop-cum-Office)": "commercial",
+  "Office Space": "commercial",
+  "Commercial Site": "commercial",
 };
 
 /**

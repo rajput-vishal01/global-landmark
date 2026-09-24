@@ -41,7 +41,7 @@ export default async function OfflinePage() {
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <Button href={COMPANY.phoneHref} variant="primary">
-                Call {COMPANY.phone}
+                Call <span className="tel">{COMPANY.phone}</span>
               </Button>
               <a
                 href={`mailto:${COMPANY.email}`}

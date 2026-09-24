@@ -8,7 +8,8 @@ import {
   type PropertyFilterValues,
 } from "@/components/admin/PropertyFilters";
 import { PUBLICATION_STATES } from "@/lib/taxonomy/status";
-import { PROPERTY_TYPES } from "@/lib/attributes";
+import { normalisePropertyType } from "@/lib/taxonomy/property";
+import { listAllPropertyTypes } from "@/lib/db/queries";
 import { CITY_NAMES } from "@/lib/locations";
 import {
   EmptyState,
@@ -194,7 +195,8 @@ export default async function AdminPropertiesPage({
   const values: PropertyFilterValues = {
     q: (params.q ?? "").trim().slice(0, 100),
     publication: pick(params.publication, PUBLICATION_STATES),
-    type: pick(params.type, PROPERTY_TYPES),
+    // A typed-in custom type is a real type; same validation as the write path.
+    type: normalisePropertyType(params.type) ?? "",
     city: pick(params.city, CITY_NAMES),
     sort: params.sort && isSortKey(params.sort) ? params.sort : "updated",
   };
@@ -206,7 +208,10 @@ export default async function AdminPropertiesPage({
   );
 
   const requestedPage = Math.max(1, Number(params.page) || 1);
-  const { rows, total } = await listPage(values, requestedPage);
+  const [{ rows, total }, types] = await Promise.all([
+    listPage(values, requestedPage),
+    listAllPropertyTypes(),
+  ]);
   const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(requestedPage, lastPage);
   const firstRow = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
@@ -227,6 +232,7 @@ export default async function AdminPropertiesPage({
         values={values}
         sortOptions={SORT_OPTIONS}
         isFiltered={isFiltered}
+        types={types}
       />
 
       {/* What came back. Reading "1–25 of 60 matching" under the filters you

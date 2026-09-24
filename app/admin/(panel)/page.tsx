@@ -2,19 +2,16 @@ import Link from "next/link";
 import {
   and,
   count,
-  countDistinct,
   desc,
   eq,
   gte,
   isNotNull,
   isNull,
   lt,
-  notInArray,
   or,
 } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
-  crmActivities,
   crmDeals,
   crmPayments,
   deals,
@@ -25,9 +22,9 @@ import {
   tourRequests,
 } from "@/lib/db/schema";
 import { getActiveDeal, todayIST } from "@/lib/db/queries";
+import { countOverdueFollowUps } from "@/lib/admin/follow-ups";
 import { PUBLICATION_STATES } from "@/lib/taxonomy/status";
 import {
-  CLOSED_STAGES,
   DEAL_STAGES,
   brokerageAmount,
   brokeragePending,
@@ -212,8 +209,7 @@ async function attention(): Promise<{
 }> {
   const zero = { newLeads: 0, newTours: 0, submissions: 0, overdueFollowUps: 0 };
   try {
-    const now = new Date();
-    const [[l], [t], [s], [f]] = await Promise.all([
+    const [[l], [t], [s], f] = await Promise.all([
       // "Not contacted" is status = 'new', the same reading /admin/leads uses
       // for its unread badge — a lead has no separate read flag.
       db.select({ n: count() }).from(leads).where(eq(leads.status, "new")),
@@ -226,26 +222,17 @@ async function attention(): Promise<{
         .where(
           and(isNotNull(properties.submittedAt), eq(properties.publicationState, "draft"))
         ),
-      // Distinct deals, not activities: three overdue reminders on one deal
-      // are one phone call. Settled deals are excluded, otherwise a reminder
-      // logged before a deal closed would nag forever.
-      //
-      // ponytail: an activity has no "done" flag, so a follow-up date in the
-      // past counts as outstanding until the deal leaves the board. Add a
-      // completed_at column if brokers start ignoring this number.
-      db
-        .select({ n: countDistinct(crmActivities.dealId) })
-        .from(crmActivities)
-        .innerJoin(crmDeals, eq(crmDeals.id, crmActivities.dealId))
-        .where(
-          and(lt(crmActivities.followUpAt, now), notInArray(crmDeals.stage, [...CLOSED_STAGES]))
-        ),
+      // One per client, deal or no deal: the old query inner-joined
+      // crm_deals, so a reminder set on a client who has nothing on the board
+      // yet — the common case early on — never showed up here at all. The
+      // "still open" rule is shared with /admin/crm/follow-ups.
+      countOverdueFollowUps(todayIST()),
     ]);
     return {
       newLeads: l?.n ?? 0,
       newTours: t?.n ?? 0,
       submissions: s?.n ?? 0,
-      overdueFollowUps: f?.n ?? 0,
+      overdueFollowUps: f,
     };
   } catch (err) {
     console.error("attention failed:", err);
@@ -488,8 +475,8 @@ export default async function AdminDashboard() {
       n: todo.submissions,
     },
     {
-      href: "/admin/crm/deals?view=list&open=1",
-      label: "Deals with a follow-up now due",
+      href: "/admin/crm/follow-ups",
+      label: "Clients with a follow-up now due",
       note: "The reminder date on the last activity has passed",
       n: todo.overdueFollowUps,
     },

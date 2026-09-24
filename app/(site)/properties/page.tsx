@@ -16,6 +16,7 @@ import {
   countProperties,
   listCityCounts,
   listLocationCards,
+  listPropertyTypesInUse,
   PROPERTIES_PAGE_SIZE,
 } from "@/lib/db/queries";
 import type { PublicPropertyWithMedia } from "@/lib/db/public-columns";
@@ -23,11 +24,11 @@ import { isCategory } from "@/lib/categories";
 import {
   FURNISHINGS,
   POSSESSION_STATUSES,
-  PROPERTY_TYPES,
   CONFIGURATIONS,
   isCollection,
 } from "@/lib/attributes";
 import { isCity } from "@/lib/locations";
+import { normalisePropertyType } from "@/lib/taxonomy/property";
 import {
   DEFAULT_SORT,
   DEFAULT_VIEW,
@@ -138,7 +139,10 @@ export default async function PropertiesPage({
   const category =
     params.category && isCategory(params.category) ? params.category : undefined;
   const group = params.group && isCollection(params.group) ? params.group : undefined;
-  const propertyType = pick(params.type, PROPERTY_TYPES);
+  // Not `pick` against the built-in list: a type the broker typed in is a
+  // real type, so the URL has to carry it. normalisePropertyType is the same
+  // validation the admin write path uses.
+  const propertyType = normalisePropertyType(params.type) ?? undefined;
   const possessionStatus = pick(params.possession, POSSESSION_STATUSES);
   const furnishing = pick(params.furnishing, FURNISHINGS);
   const configuration = pick(params.configuration, CONFIGURATIONS);
@@ -165,11 +169,12 @@ export default async function PropertiesPage({
     q,
   };
 
-  const [properties, totalCount, cityCounts, locationCards] = await Promise.all([
+  const [properties, totalCount, cityCounts, locationCards, typesInUse] = await Promise.all([
     listProperties(activeFilters, page, sort),
     countProperties(activeFilters),
     listCityCounts(),
     listLocationCards(LANDING_LOCATIONS),
+    listPropertyTypesInUse(),
   ]);
   const totalPages = Math.max(1, Math.ceil(totalCount / PROPERTIES_PAGE_SIZE));
   // The "Showing 25-48 of 112" orientation line every portal carries above
@@ -235,7 +240,7 @@ export default async function PropertiesPage({
         {/* The search console lifts over the header's bottom edge, so the
             first thing under the title is the way to narrow the portfolio. */}
         <div className="relative z-10 -mt-10 px-5 md:-mt-14 md:px-12">
-          <FilterBar current={current} cityCounts={cityCounts} />
+          <FilterBar current={current} cityCounts={cityCounts} types={typesInUse} />
         </div>
 
         <section id="listings" className="scroll-mt-24 px-5 pb-16 pt-10 md:px-12 md:pb-24 md:pt-12">

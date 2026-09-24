@@ -39,7 +39,7 @@ export async function CTABand() {
               <span className="text-eyebrow font-sans font-semibold uppercase tracking-[0.18em] text-cream/60">
                 Or call us
               </span>
-              <span className="font-serif text-h4 text-cream transition-colors group-hover:text-cta">
+              <span className="tel font-serif text-h4 text-cream transition-colors group-hover:text-cta">
                 {COMPANY.phone}
               </span>
             </span>

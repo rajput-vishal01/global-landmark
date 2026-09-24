@@ -49,14 +49,28 @@ export type FieldKey = "plotArea";
 const PROPERTY_SHAPE: Record<PropertyType, Shape> = {
   // Land with no building on it — no rooms, no furnishing, no parking.
   "Residential Plot": "plot",
+  "Commercial Plot": "plot",
+  "Agricultural Land": "plot",
+  // A commercial site is land sold for building on, so it behaves as a plot
+  // even though what goes up on it will not be a house.
+  "Commercial Site": "plot",
 
   // A whole building on its own footprint: rooms yes, unit number no.
   "Independent House": "house",
   Villa: "house",
+  // An SCO is a small building the buyer owns outright, floors included.
+  "SCO (Shop-cum-Office)": "house",
 
-  // One unit inside a tower — floor and unit number are what identify it.
+  // One unit inside a bigger building — the floor is what identifies it.
   "Flat/Apartment": "tower_unit",
   Penthouse: "tower_unit",
+  "Builder Floor": "tower_unit",
+  "Studio / SOHO": "tower_unit",
+  // Commercial units: they still have a floor, a carpet area and parking,
+  // and the configuration section is where a broker records the layout.
+  Shop: "tower_unit",
+  Showroom: "tower_unit",
+  "Office Space": "tower_unit",
 };
 
 /**

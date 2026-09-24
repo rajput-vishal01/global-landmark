@@ -698,13 +698,13 @@ export default async function PropertyDetailPage({
                 </div>
                 <p className="mt-4 text-center font-sans text-meta text-ink-muted">
                   or call{" "}
-                  <a href={company.phoneHref} className="text-ink underline-offset-4 hover:underline">
+                  <a href={company.phoneHref} className="tel text-ink underline-offset-4 hover:underline">
                     {company.phone}
                   </a>
                   {company.phoneAlt && (
                     <>
                       {" or "}
-                      <a href={company.phoneAltHref} className="text-ink underline-offset-4 hover:underline">
+                      <a href={company.phoneAltHref} className="tel text-ink underline-offset-4 hover:underline">
                         {company.phoneAlt}
                       </a>
                     </>

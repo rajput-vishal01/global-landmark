@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { PUBLICATION_STATES } from "@/lib/taxonomy/status";
-import { PROPERTY_TYPES } from "@/lib/attributes";
+import { mergePropertyTypes } from "@/lib/taxonomy/property";
 import { CITY_NAMES } from "@/lib/locations";
 import { Select } from "@/components/ui/Select";
 import { Card, deskField, deskLinkButton } from "@/components/admin/desk";
@@ -87,10 +87,13 @@ export function PropertyFilters({
   values,
   sortOptions,
   isFiltered,
+  types = [],
 }: {
   values: PropertyFilterValues;
   sortOptions: { value: string; label: string }[];
   isFiltered: boolean;
+  /** Types stored on any listing, drafts included, so a custom one is filterable. */
+  types?: string[];
 }) {
   const { formRef, submitNow, submitSoon } = useAutoSubmit();
 
@@ -129,7 +132,7 @@ export function PropertyFilters({
             name="type"
             label="Property type"
             anyLabel="Any type"
-            options={PROPERTY_TYPES}
+            options={mergePropertyTypes(types)}
             value={values.type}
             onChange={submitNow}
           />

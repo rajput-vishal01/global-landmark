@@ -54,9 +54,6 @@ export function LocationGrid({ cards }: { cards: LocationCard[] }) {
             />
             <span aria-hidden className="absolute inset-x-4 top-4 h-px bg-gold/40" />
 
-            <span className="text-eyebrow relative font-sans font-semibold uppercase tracking-[0.18em] text-cta">
-              {card.count} {card.count === 1 ? "listing" : "listings"}
-            </span>
             <h3
               className={`relative font-serif text-cream ${feature ? "text-h3" : "text-h4"}`}
             >

@@ -161,6 +161,23 @@ body.bg-cream:has(.admin-root) {
   --text-eyebrow--line-height: 1.35;
 }
 
+/* Phone numbers.
+
+   The display serif draws its figures old-style — 9, 8 and 4 drop below the
+   baseline — which the client found hard to read at a glance, and a phone
+   number is the one string on the page that has to be read digit by digit.
+   So numbers get the sans face with lining, tabular figures wherever they
+   appear, at whatever size the surrounding design set.
+
+   A class rather than swapping utilities at each call site: the serif is a
+   deliberate part of those headings, and `font-sans` alone would not fix the
+   figures anyway. */
+.tel {
+  font-family: var(--font-sans);
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: 0.01em;
+}
+
 /* Beats the `font-serif` utility on specificity (0,1,1 vs 0,1,0), so the
    32 pages that ask for a serif title get the sans one without edits. */
 .admin-panel h1,

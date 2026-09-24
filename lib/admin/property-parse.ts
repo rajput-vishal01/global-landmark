@@ -2,10 +2,10 @@ import {
   ADDED_BY,
   AREA_UNITS,
   FURNISHINGS,
-  PROPERTY_TYPES,
   PUBLICATION_STATES,
 } from "../attributes";
-import { placeFromAddress } from "../locations";
+import { normalisePropertyType } from "../taxonomy/property";
+import { isCity, isLocalityIn, placeFromAddress } from "../locations";
 import {
   isBundledImageUrl,
   isLocalImageUrl,
@@ -468,6 +468,27 @@ export type ParsedProperty = {
   documents: ParsedDocument[];
 };
 
+/**
+ * Where the listing is filed: the city and locality the form sent, falling
+ * back to what the address reads like.
+ *
+ * The form used to send neither, and the city was guessed from the address
+ * text alone. An address the parser did not recognise — a locality spelled
+ * differently, a missing city — left the row with no city at all, and a
+ * listing with no city appears under no city filter and on no location card,
+ * with nothing in the admin to show why. The dropdowns make it explicit; the
+ * guess stays as their default.
+ */
+function chosenPlace(
+  formData: FormData,
+  location: string
+): { city: string; locality: string | null } | null {
+  const city = String(formData.get("city") ?? "").trim();
+  if (!city || !isCity(city)) return placeFromAddress(location);
+  const locality = String(formData.get("locality") ?? "").trim();
+  return { city, locality: locality && isLocalityIn(city, locality) ? locality : null };
+}
+
 export function parseProperty(
   formData: FormData,
   mode: ParseMode = "publish"
@@ -504,7 +525,10 @@ export function parseProperty(
     };
   }
 
-  const propertyType = parseChoice(formData.get("propertyType"), PROPERTY_TYPES);
+  // Not parseChoice: the field is a datalist, so a type the broker typed in
+  // is legitimate. normalisePropertyType keeps the known ones exact and
+  // accepts a clean custom one, dropping anything else.
+  const propertyType = normalisePropertyType(String(formData.get("propertyType") ?? ""));
 
   // Everything publishing needs, reported together rather than one per
   // round trip. Draft saves skip this entirely.
@@ -575,7 +599,7 @@ export function parseProperty(
       description: String(formData.get("description") ?? "").trim().slice(0, 10_000),
       location,
       mapsUrl,
-      place: placeFromAddress(location),
+      place: chosenPlace(formData, location),
       propertyType,
       plotArea,
       plotAreaUnit,

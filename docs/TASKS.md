@@ -130,5 +130,26 @@ Also shipped, 23 Sep:
 - Videos play on the property page, with full screen.
 - Deleting a listing keeps files another listing still uses.
 
+Also shipped, 24 Sep (the client's six-item round):
+
+- Phone numbers everywhere use the sans face with tabular lining figures
+  (`.tel` in `app/globals.css`) — the serif numerals were hard to read.
+- Property types widened back out to 14, grouped residential / commercial /
+  land (Studio / SOHO, Shop, Showroom, SCO, Office Space, Commercial Site,
+  Commercial Plot, Agricultural Land are the new ones), and the type field is
+  now a datalist: pick one or type your own. A typed-in type is stored as
+  written and becomes a filter option on the listings page and in the admin
+  once a listing carries it.
+- Browse-by-location cards no longer print a listing count.
+- The property form has explicit City and Locality dropdowns, defaulted from
+  the address. A Peer Muchalla listing that never got a city now files under
+  Zirakpur because the broker can see and set it.
+- **Follow-ups** (`/admin/crm/follow-ups`): every client with a call-back
+  date, bucketed overdue / today / next 7 days / later, with what they said
+  last time and an inline box to log what they said this time and set the next
+  date. The dashboard's "follow-up now due" count now includes clients with no
+  deal on the board.
+
 Open, waiting on the client: real photos to replace demo data, confirmation
-of the WhatsApp number, whether commercial and rental listings are needed.
+of the WhatsApp number, the full list of property types they want as
+built-ins, whether rental listings are needed.

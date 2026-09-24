@@ -91,11 +91,22 @@ export async function updateClient(
  * client wrapper, no error state; a bad kind is dropped rather than surfaced,
  * matching that low-stakes-inline-form precedent).
  */
-/** `<input type="date">` gives "YYYY-MM-DD" or "" — never a garbage string, but still user-editable text. */
+/**
+ * `<input type="date">` gives "YYYY-MM-DD" or "" — never a garbage string,
+ * but still user-editable text.
+ *
+ * Midday, not midnight. The column is a TIMESTAMP, which MySQL converts
+ * through the server's timezone (UTC here) on the way in and out: local
+ * midnight in IST is 18:30 the PREVIOUS day in UTC, so "follow up on the
+ * 20th" came back — and rendered everywhere — as the 19th. Noon leaves
+ * 12 hours of slack either side, so no timezone the site is ever run in can
+ * shift the day. A date-only column would be the tidier fix and needs a
+ * migration; this is one line and the value is a reminder date, never a time.
+ */
 function dateField(formData: FormData, key: string): Date | null {
   const raw = String(formData.get(key) ?? "").trim();
   if (!raw) return null;
-  const d = new Date(`${raw}T00:00:00`);
+  const d = new Date(`${raw}T12:00:00`);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
@@ -151,6 +162,9 @@ export async function addActivity(
     return { error: "Could not log the activity. Try again." };
   }
   revalidatePath(`/admin/crm/${clientId}`);
+  revalidatePath("/admin/crm/follow-ups");
+  revalidatePath("/admin/crm");
+  revalidatePath("/admin");
   return {};
 }
 

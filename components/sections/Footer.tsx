@@ -49,10 +49,10 @@ export async function Footer() {
             <div className="flex flex-col gap-2">
               <h3 className={BLOCK_HEADING}>Call</h3>
               <p className="flex flex-col gap-1">
-                <a href={COMPANY.phoneHref} className={FOOTER_LINK}>
+                <a href={COMPANY.phoneHref} className={`${FOOTER_LINK} tel`}>
                   {COMPANY.phone}
                 </a>
-                <a href={COMPANY.phoneAltHref} className={FOOTER_LINK}>
+                <a href={COMPANY.phoneAltHref} className={`${FOOTER_LINK} tel`}>
                   {COMPANY.phoneAlt}
                 </a>
               </p>

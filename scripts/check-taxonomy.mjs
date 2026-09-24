@@ -43,13 +43,52 @@ try {
   const sections = load("taxonomy/sections.js");
 
   // --- CFF list completeness (section 2.2 of docs/REQUIREMENTS_V2.md) -------
-  // The client trimmed the lists (Sep 2026). Pinned so a removed value
-  // cannot drift back into a filter or the admin form.
+  // Trimmed to five in Sep 2026, widened again when the client started
+  // listing commercial space. Pinned so a type cannot quietly disappear from
+  // the form and strand the listings stored under it.
   assert.deepEqual(
     [...property.PROPERTY_TYPES],
-    ["Residential Plot", "Independent House", "Villa", "Flat/Apartment", "Penthouse"],
-    "only the five property types the client deals in"
+    [
+      "Flat/Apartment",
+      "Independent House",
+      "Villa",
+      "Builder Floor",
+      "Penthouse",
+      "Studio / SOHO",
+      "Shop",
+      "Showroom",
+      "SCO (Shop-cum-Office)",
+      "Office Space",
+      "Commercial Site",
+      "Residential Plot",
+      "Commercial Plot",
+      "Agricultural Land",
+    ],
+    "the residential, commercial and land types the client deals in"
   );
+  // Every type sits in exactly one group, and the groups cover the list.
+  assert.deepEqual(
+    property.PROPERTY_TYPE_GROUPS.flatMap((g) => g.types).sort(),
+    [...property.PROPERTY_TYPES].sort(),
+    "the groups cover every type exactly once"
+  );
+
+  // --- Types the broker types in themselves -------------------------------
+  assert.equal(property.normalisePropertyType("Farm House"), "Farm House", "a plain custom type is kept");
+  assert.equal(property.normalisePropertyType("  Cold   Storage "), "Cold Storage", "trimmed and single-spaced");
+  assert.equal(property.normalisePropertyType("Flat/Apartment"), "Flat/Apartment", "a known type passes through");
+  for (const bad of [
+    "",
+    " ",
+    "A",
+    "<script>alert(1)</script>",
+    "Shop\nOffice",
+    "x".repeat(41),
+  ]) {
+    assert.equal(property.normalisePropertyType(bad), null, `refused: ${JSON.stringify(bad)}`);
+  }
+  assert.equal(sections.shapeOf("Farm House"), null, "a custom type has no shape, so every section shows");
+  assert.deepEqual(sections.requiredFieldsFor("Farm House"), [], "and nothing is required to publish it");
   assert.deepEqual(
     [...property.POSSESSION_STATUSES],
     ["Ready to Move", "Under Construction", "New Launch"],
@@ -87,7 +126,10 @@ try {
   }
   assert.equal(collections.collectionOf("Villa", "unit"), "kothi");
   assert.equal(collections.collectionOf("Residential Plot", "unit"), "plot");
-  assert.equal(collections.collectionOf("Commercial Plot", "unit"), null, "dropped type maps nowhere");
+  assert.equal(collections.collectionOf("Commercial Plot", "unit"), "plot", "land of any kind sorts into Plot");
+  assert.equal(collections.collectionOf("Shop", "unit"), "commercial");
+  assert.equal(collections.collectionOf("Builder Floor", "unit"), "flats");
+  assert.equal(collections.collectionOf("Farm House", "unit"), null, "a custom type belongs to no collection");
   assert.equal(collections.collectionOf("Flat/Apartment", "unit"), "flats");
   // kind wins: a whole society is a Project whatever its unit type.
   assert.equal(collections.collectionOf("Flat/Apartment", "project"), "projects");
