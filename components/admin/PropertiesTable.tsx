@@ -37,6 +37,8 @@ type Row = {
   updatedAt: Date;
   projectName: string | null;
   coverUrl: string | null;
+  /** Ready-made WhatsApp share link; null while the listing is not published. */
+  shareHref?: string | null;
 };
 
 type BulkAction = (prev: DeleteState, formData: FormData) => Promise<DeleteState>;
@@ -197,6 +199,20 @@ export function PropertiesTable({
                       <Link href={`/admin/properties/${p.id}/edit`} className={deskRowLink}>
                         Edit
                       </Link>
+                      {/* Forwarding a listing to a buyer is the single most
+                          common thing a broker does with this list, and it
+                          used to mean opening the public page to find the
+                          share icon. Absent on a draft: its page is a 404. */}
+                      {p.shareHref && (
+                        <a
+                          href={p.shareHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={deskRowLink}
+                        >
+                          Share
+                        </a>
+                      )}
                       {/* R-12: the 2nd-10th flat in a tower starts from a clone, not a blank form. */}
                       <form action={duplicateAction}>
                         <input type="hidden" name="id" value={p.id} />

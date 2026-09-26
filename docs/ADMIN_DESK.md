@@ -147,7 +147,9 @@ change.
 As of Sep 2026:
 
 - **Dashboard** — what needs answering today, KPIs, "Add a property".
-- **Properties** — list with filters. The property form has nine numbered
+- **Properties** — list with filters, and a Share link per published row
+  that hands the listing to WhatsApp ready to forward. The type and locality
+  fields are ComboBoxes: search the list, or type a new one and press Add. The property form has nine numbered
   sections, each tagged "On the website" or "Admin only", a publish panel
   (draft/published, what is still needed to go live) and autosaved drafts.
   Photos are uploaded at full quality and reordered by drag; the first is
@@ -156,7 +158,8 @@ As of Sep 2026:
 - **Projects** — project page with shared details, units table and towers;
   "Add a unit" opens the property form with the project pre-filled.
 - **Leads** — every enquiry (contact form, callback popup, property
-  "Request details", enquiry shortlist), with status and CSV export.
+  "Request details", enquiry shortlist), with status and CSV export, plus
+  "Add lead" for the ones that arrive by phone or in person.
 - **Tour requests** — "Book a site visit" requests from property pages; the
   office gets an email; each row can be deleted.
 - **Property submissions** — owner listings from `/sell`, tabbed by

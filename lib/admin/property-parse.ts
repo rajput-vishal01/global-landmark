@@ -5,7 +5,7 @@ import {
   PUBLICATION_STATES,
 } from "../attributes";
 import { normalisePropertyType } from "../taxonomy/property";
-import { isCity, isLocalityIn, placeFromAddress } from "../locations";
+import { isCity, normaliseLocality, placeFromAddress } from "../locations";
 import {
   isBundledImageUrl,
   isLocalImageUrl,
@@ -485,8 +485,10 @@ function chosenPlace(
 ): { city: string; locality: string | null } | null {
   const city = String(formData.get("city") ?? "").trim();
   if (!city || !isCity(city)) return placeFromAddress(location);
-  const locality = String(formData.get("locality") ?? "").trim();
-  return { city, locality: locality && isLocalityIn(city, locality) ? locality : null };
+  // The locality may be one the broker typed — the client's list never named
+  // every colony they sell in. normaliseLocality keeps a known name exact and
+  // accepts a clean new one.
+  return { city, locality: normaliseLocality(city, formData.get("locality") as string) };
 }
 
 export function parseProperty(

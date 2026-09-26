@@ -232,6 +232,17 @@ try {
   assert.ok(!locations.isLocalityIn("Chandigarh", "Peer Muchalla"), "localities narrow by city");
   assert.deepEqual(locations.localitiesIn("Nowhere"), [], "unknown city yields none");
   assert.deepEqual(locations.localitiesIn(null), []);
+
+  // A locality the broker types (Sep 2026). Known names stay exact; a clean
+  // new one is kept as written; junk is dropped rather than stored.
+  assert.equal(locations.normaliseLocality("Zirakpur", "Peer Muchalla"), "Peer Muchalla");
+  assert.equal(locations.normaliseLocality("Zirakpur", "Dhakoli"), "Dhakoli");
+  assert.equal(locations.normaliseLocality("Zirakpur", "  Baltana   Colony "), "Baltana Colony");
+  assert.equal(locations.normaliseLocality("Zirakpur", ""), null, "blank is no locality");
+  assert.equal(locations.normaliseLocality("Zirakpur", "  "), null);
+  assert.equal(locations.normaliseLocality("Zirakpur", "A"), null, "one letter is a typo");
+  assert.equal(locations.normaliseLocality("Zirakpur", "<script>alert(1)</script>"), null);
+  assert.equal(locations.normaliseLocality("Zirakpur", "a".repeat(61)), null, "capped at 60");
   // Every city the ref-code table knows must exist in the taxonomy, or a
   // listing could carry a code for a city no filter can select.
   for (const c of locations.CITIES) {

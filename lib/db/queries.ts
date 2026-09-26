@@ -389,6 +389,23 @@ export const listPropertyTypesInUse = failSoft(
   []
 );
 
+/**
+ * City + locality pairs already stored, so a locality the broker typed on one
+ * listing is offered back on the next one in that city.
+ */
+export async function listAllPlaces(): Promise<{ city: string; locality: string }[]> {
+  try {
+    const rows = await db
+      .selectDistinct({ city: properties.city, locality: properties.locality })
+      .from(properties)
+      .where(sql`${properties.city} is not null and ${properties.locality} is not null`);
+    return rows.flatMap((r) => (r.city && r.locality ? [{ city: r.city, locality: r.locality }] : []));
+  } catch (err) {
+    console.error("listAllPlaces failed:", err);
+    return [];
+  }
+}
+
 /** The same list for the admin, where drafts and sold rows count too. */
 export async function listAllPropertyTypes(): Promise<string[]> {
   try {

@@ -7,6 +7,8 @@
  * write, and unknown values are dropped rather than saved.
  */
 
+import { isCustomLabel, normaliseCustomLabel } from "./label";
+
 /**
  * CFF group 2, as the client uses it.
  *
@@ -78,12 +80,7 @@ export function isPropertyType(value: string): value is PropertyType {
  * pasted paragraph cannot become a filter option.
  */
 export function isCustomPropertyType(value: string): boolean {
-  const trimmed = value.trim();
-  return (
-    trimmed.length > 1 &&
-    trimmed.length <= MAX_PROPERTY_TYPE &&
-    /^[\p{L}\p{N}][\p{L}\p{N} ./&()'-]*$/u.test(trimmed)
-  );
+  return isCustomLabel(value, MAX_PROPERTY_TYPE);
 }
 
 /** The stored value for a submitted type: a known one, a clean custom one, or nothing. */
@@ -91,7 +88,7 @@ export function normalisePropertyType(raw: string | null | undefined): string | 
   const value = (raw ?? "").trim();
   if (!value) return null;
   if (isPropertyType(value)) return value;
-  return isCustomPropertyType(value) ? value.replace(/\s+/g, " ") : null;
+  return normaliseCustomLabel(value, MAX_PROPERTY_TYPE);
 }
 
 /**

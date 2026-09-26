@@ -9,6 +9,8 @@ import {
 } from "@/components/admin/PropertyFilters";
 import { PUBLICATION_STATES } from "@/lib/taxonomy/status";
 import { normalisePropertyType } from "@/lib/taxonomy/property";
+import { propertyShareMessage, whatsAppShareHref } from "@/lib/whatsapp";
+import { canonical } from "@/lib/seo";
 import { listAllPropertyTypes } from "@/lib/db/queries";
 import { CITY_NAMES } from "@/lib/locations";
 import {
@@ -62,6 +64,11 @@ type AdminRow = {
   id: number;
   refCode: string | null;
   title: string;
+  // Only the share link needs these four; the table never renders them.
+  slug: string;
+  location: string;
+  demandPrice: number | null;
+  showPricePublicly: boolean;
   city: string | null;
   locality: string | null;
   listingStatus: string;
@@ -136,6 +143,10 @@ async function listPage(
           id: properties.id,
           refCode: properties.refCode,
           title: properties.title,
+          slug: properties.slug,
+          location: properties.location,
+          demandPrice: properties.demandPrice,
+          showPricePublicly: properties.showPricePublicly,
           city: properties.city,
           locality: properties.locality,
           listingStatus: properties.listingStatus,
@@ -208,10 +219,27 @@ export default async function AdminPropertiesPage({
   );
 
   const requestedPage = Math.max(1, Number(params.page) || 1);
-  const [{ rows, total }, types] = await Promise.all([
+  const [{ rows: found, total }, types] = await Promise.all([
     listPage(values, requestedPage),
     listAllPropertyTypes(),
   ]);
+  // The WhatsApp message a broker forwards. Built here, not in the table:
+  // it needs the absolute URL, and only a published listing has a page to
+  // send anyone to.
+  const rows = found.map((row) => ({
+    ...row,
+    shareHref:
+      row.publicationState === "published"
+        ? whatsAppShareHref(
+            propertyShareMessage({
+              title: row.title,
+              location: row.location,
+              publicPrice: row.showPricePublicly ? row.demandPrice : null,
+              url: canonical(`/properties/${row.slug}`),
+            })
+          )
+        : null,
+  }));
   const lastPage = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(requestedPage, lastPage);
   const firstRow = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;

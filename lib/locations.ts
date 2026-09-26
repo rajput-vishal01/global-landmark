@@ -7,9 +7,13 @@
  *
  * ponytail: a typed list, not a `locations` table. The client's list is
  * stable and short, and a table would mean CRUD screens nobody asked for.
- * CONFIRM whether they need to add localities themselves — if yes, this
- * promotes to a table and these values become its seed.
+ * They did ask to add their own (Sep 2026): a locality typed on the property
+ * form is stored as written (see `normaliseLocality`) and offered back on
+ * every later listing in that city. This list is the seed, not the limit —
+ * still no table, still no CRUD screen.
  */
+
+import { normaliseCustomLabel } from "./taxonomy/label";
 
 /** Which authority planned the area — a real buying consideration locally. */
 export const AREA_AUTHORITIES = ["GMADA", "HUDA", "MC", "Other"] as const;
@@ -133,6 +137,28 @@ export function localitiesIn(city: string | null | undefined): Locality[] {
 
 export function isLocalityIn(city: string | null | undefined, locality: string): boolean {
   return localitiesIn(city).some((l) => l.name === locality);
+}
+
+/** Longest a typed-in locality may be — it has to fit a card's meta line. */
+export const MAX_LOCALITY = 60;
+
+/**
+ * The stored locality for a submitted one: a known name for that city, a
+ * clean typed-in one, or nothing.
+ *
+ * The list above is the client's own and was never complete — they sell in
+ * colonies it does not name. Rather than promote localities to a table (the
+ * CONFIRM at the top of this file), a typed-in name is stored as written and
+ * offered back on every later listing in that city; the list stays the seed.
+ */
+export function normaliseLocality(
+  city: string | null | undefined,
+  raw: string | null | undefined
+): string | null {
+  const value = (raw ?? "").trim();
+  if (!value) return null;
+  if (isLocalityIn(city, value)) return value;
+  return normaliseCustomLabel(value, MAX_LOCALITY);
 }
 
 /** Where `name` occurs in `text` as a whole word (case-insensitive), or -1. */

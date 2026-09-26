@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { leads, properties } from "@/lib/db/schema";
 import { isLeadStatus } from "@/lib/taxonomy/leads";
 import { LeadFilters, type LeadFilterValues } from "./LeadFilters";
+import { LeadCreateForm } from "./LeadCreateForm";
+import { AddRecordDialog } from "@/components/admin/AddRecordDialog";
 import { LeadEditForm } from "./LeadEditForm";
 import { convertLead, deleteLead } from "./actions";
 import { formatDateTime } from "@/lib/dates";
@@ -206,9 +208,18 @@ export default async function AdminLeadsPage({
         title="Leads"
         sub="Every enquiry the public site has sent in, who it belongs to, and how far it got."
         actions={
-          <a href="/api/admin/leads/export" className={deskButton}>
-            Export CSV
-          </a>
+          <div className="flex items-center gap-3">
+            <a href="/api/admin/leads/export" className={deskButton}>
+              Export CSV
+            </a>
+            <AddRecordDialog
+              label="Add lead"
+              title="Add a lead"
+              description="A walk-in, a phone call, a referral — anything that did not come through the website."
+            >
+              <LeadCreateForm />
+            </AddRecordDialog>
+          </div>
         }
       />
 

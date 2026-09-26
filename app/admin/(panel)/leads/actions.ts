@@ -1,7 +1,8 @@
 "use server";
 
-import { idField } from "@/lib/admin/form-fields";
+import { idField, textField } from "@/lib/admin/form-fields";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { leads } from "@/lib/db/schema";
@@ -41,6 +42,55 @@ export async function updateLead(
   }
   revalidatePath("/admin/leads");
   return {};
+}
+
+/**
+ * A lead typed in by the office — a walk-in, a phone call, a referral.
+ *
+ * The table was built for the public forms to write into, so everything
+ * except the name is optional here too: a broker who has a name and a number
+ * on a scrap of paper must be able to get it in and move on. `source`
+ * defaults to "Added by hand" so the inbox says where it came from, and it
+ * joins the source filter's dropdown on its own (that list is distinct values
+ * from the rows, not a fixed vocabulary).
+ */
+export async function createLead(
+  _prev: LeadFormState,
+  formData: FormData
+): Promise<LeadFormState> {
+  await requireAdmin();
+
+  const name = String(formData.get("name") ?? "").trim().slice(0, 255);
+  if (!name) return { error: "A name is the one thing this needs." };
+
+  const phone = textField(formData, "phone", 40);
+  const email = textField(formData, "email", 255);
+  if (!phone && !email) {
+    return { error: "Add a phone number or an email — otherwise nobody can call them back." };
+  }
+
+  const status = String(formData.get("status") ?? "new");
+
+  try {
+    await db.insert(leads).values({
+      name,
+      phone,
+      email,
+      interest: textField(formData, "interest", 500),
+      message: textField(formData, "message", 4000),
+      assignedTo: textField(formData, "assignedTo", 200),
+      source: textField(formData, "source", 100) ?? "Added by hand",
+      status: isLeadStatus(status) ? status : "new",
+    });
+  } catch (err) {
+    console.error("createLead failed:", err);
+    return { error: "Could not save the lead. Try again." };
+  }
+
+  revalidatePath("/admin");
+  // Same contract as createService: the redirect is what closes the dialog
+  // and lands the broker on the inbox with the new row already in it.
+  redirect("/admin/leads");
 }
 
 /**

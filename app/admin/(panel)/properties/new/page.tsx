@@ -1,4 +1,4 @@
-import { listAllPropertyTypes, listProjectsForAdmin } from "@/lib/db/queries";
+import { listAllPlaces, listAllPropertyTypes, listProjectsForAdmin } from "@/lib/db/queries";
 import { PropertyForm } from "@/components/admin/PropertyForm";
 import { createProperty } from "../actions";
 import Link from "next/link";
@@ -27,9 +27,10 @@ export default async function NewPropertyPage({
   // would hand every broker the same key, and the second listing created with
   // it would be taken for a double click and silently not saved.
   await connection();
-  const [projects, types] = await Promise.all([
+  const [projects, types, places] = await Promise.all([
     listProjectsForAdmin(),
     listAllPropertyTypes(),
+    listAllPlaces(),
   ]);
 
   return (
@@ -47,6 +48,7 @@ export default async function NewPropertyPage({
         action={createProperty}
         projects={projects}
         types={types}
+        places={places}
         startsUnlisted={startsUnlisted}
         // New per page load: one form, at most one listing.
         submissionKey={randomUUID()}

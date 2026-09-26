@@ -15,10 +15,11 @@ import {
 import { DOCUMENTATION_FLAGS } from "@/lib/attributes";
 import { MAX_PROPERTY_TYPE, mergePropertyTypes } from "@/lib/taxonomy/property";
 import { requiredFieldsFor, sectionsFor } from "@/lib/taxonomy/sections";
-import { CITY_NAMES, localitiesIn, placeFromAddress } from "@/lib/locations";
+import { CITY_NAMES, MAX_LOCALITY, localitiesIn, placeFromAddress } from "@/lib/locations";
 import { FormSection, deskFieldFull, deskHint, deskLabel } from "./FormSection";
 import { Req } from "@/components/ui/RequiredMark";
 import { Select } from "@/components/ui/Select";
+import { ComboBox } from "@/components/ui/ComboBox";
 import { cardChrome } from "@/components/admin/desk";
 
 import { SaveBar, type AutosaveStatus } from "./SaveBar";
@@ -110,6 +111,7 @@ export function PropertyForm({
   initialProjectId,
   startsUnlisted = false,
   types = [],
+  places = [],
 }: {
   action: Action;
   /** Every project, with the details a unit filed under it inherits. */
@@ -120,6 +122,8 @@ export function PropertyForm({
   startsUnlisted?: boolean;
   /** Types already stored, so a custom one typed on another listing is offered here too. */
   types?: string[];
+  /** City/locality pairs already stored — same idea, for typed-in localities. */
+  places?: { city: string; locality: string }[];
   /**
    * The admin form is the one place that legitimately sees the full row —
    * the public types deliberately cannot express it.
@@ -244,6 +248,14 @@ export function PropertyForm({
     setCity((current) => current || guess.city);
     setLocality((current) => current || guess.locality || "");
   };
+
+  // The client's own list for this city, plus every locality already typed on
+  // a listing in it — the second is how a new colony spreads to later
+  // listings instead of being retyped each time.
+  const localityOptions = useMemo(() => {
+    const stored = places.filter((p) => p.city === city).map((p) => p.locality);
+    return [...new Set([...localitiesIn(city).map((l) => l.name), ...stored])];
+  }, [city, places]);
 
   // Last successfully-autosaved snapshot of the form's data, so a tick with
   // nothing new to say is a no-op rather than an identical round trip. A
@@ -388,27 +400,21 @@ export function PropertyForm({
               <label htmlFor="propertyType" className={deskLabel}>
                 Property type
               </label>
-              {/* ponytail: a native datalist, not the Select. The client
-                  sells things the list does not name yet, so the field has
-                  to accept a typed-in type — and the browser's own combobox
-                  does both without a custom "Other..." branch. */}
-              <input
+              {/* A datalist did this first, and the broker could not see that
+                  typing was allowed — it looked like a plain dropdown. The
+                  ComboBox says it: a search box at the top, and an "Add …"
+                  row for whatever has been typed. */}
+              <ComboBox
                 id="propertyType"
                 name="propertyType"
-                type="text"
-                list="property-type-options"
-                autoComplete="off"
+                options={mergePropertyTypes(types).map((t) => ({ value: t, label: t }))}
+                defaultValue={propertyType}
+                onValueChange={setPropertyType}
+                placeholder="Pick one, or add your own"
+                searchPlaceholder="Search types"
+                allowCustom
                 maxLength={MAX_PROPERTY_TYPE}
-                placeholder="Pick one, or type your own"
-                value={propertyType}
-                onChange={(e) => setPropertyType(e.target.value)}
-                className={deskFieldFull}
               />
-              <datalist id="property-type-options">
-                {mergePropertyTypes(types).map((t) => (
-                  <option key={t} value={t} />
-                ))}
-              </datalist>
             </div>
             <div className="flex flex-col gap-2">
               <label htmlFor="kind" className={deskLabel}>
@@ -539,20 +545,25 @@ export function PropertyForm({
               <label htmlFor="locality" className={deskLabel}>
                 Locality <span className="normal-case tracking-normal text-muted">(optional)</span>
               </label>
-              <Select
+              {/* Typed, not only picked: the client's locality list never
+                  named every colony they sell in, and a missing one used to
+                  be silently dropped on save. */}
+              <ComboBox
                 key={`locality-${city}-${locality}`}
                 id="locality"
                 name="locality"
-                options={[
-                  { value: "", label: city ? "— Any part of the city —" : "— Pick a city first —" },
-                  ...localitiesIn(city).map((l) => ({ value: l.name, label: l.name })),
-                ]}
+                options={localityOptions.map((l) => ({ value: l, label: l }))}
                 defaultValue={locality}
                 onValueChange={setLocality}
+                emptyLabel={city ? "— Any part of the city —" : "— Pick a city first —"}
+                placeholder="— Any part of the city —"
+                searchPlaceholder="Search localities"
+                allowCustom={Boolean(city)}
+                maxLength={MAX_LOCALITY}
               />
               <p className={deskHint}>
                 {city
-                  ? "Narrows the listing inside the city, e.g. Peer Muchalla in Zirakpur."
+                  ? "Narrows the listing inside the city, e.g. Peer Muchalla in Zirakpur. Not on the list? Type it and press Add."
                   : "The list fills in once a city is chosen."}
               </p>
             </div>          </div>

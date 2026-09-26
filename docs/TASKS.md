@@ -150,6 +150,21 @@ Also shipped, 24 Sep (the client's six-item round):
   date. The dashboard's "follow-up now due" count now includes clients with no
   deal on the board.
 
+Also shipped, 26 Sep:
+
+- **Share on WhatsApp** from the properties list: one link per published row
+  that opens WhatsApp's own contact picker with the title, address, price and
+  the listing's public URL. Drafts have no link — their page is a 404.
+- **Add lead** on the leads inbox: a dialog for the walk-in, the phone call,
+  the referral. Name plus a phone or an email; it lands in the same inbox,
+  filters, converts and exports like any other lead, with source "Added by
+  hand" unless one is typed.
+- **ComboBox** (`components/ui/ComboBox.tsx`) replaces the datalist on
+  Property type and the dropdown on Locality: a search box at the top and an
+  "Add …" row for whatever was typed. Localities are no longer a closed list
+  — a typed-in one is stored as written and offered on every later listing in
+  that city (`normaliseLocality` in lib/locations.ts).
+
 Open, waiting on the client: real photos to replace demo data, confirmation
 of the WhatsApp number, the full list of property types they want as
 built-ins, whether rental listings are needed.
