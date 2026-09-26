@@ -85,7 +85,7 @@ type PropertyWithChildren = AdminProperty & {
 /**
  * The property form, cut down to what the client actually uses (Sep 2026).
  *
- * Nine numbered sections in the order a broker describes a property —
+ * Ten numbered sections in the order a broker describes a property —
  * what it is, where, how big, what it looks like, then the details — each
  * tagged "On the website" or "Admin only", so public and internal data never
  * share a box. Publishing lives in the side panel beside the save button,
@@ -620,9 +620,43 @@ export function PropertyForm({
           </FormSection>
         )}
 
+        {/* Price sits between Size and Photos: it is the next thing a broker
+            says about a property, and it is theirs alone — the website keeps
+            saying "Price on request" until show_price_publicly is turned on,
+            which no screen does yet. */}
+        <FormSection
+          id="section-price"
+          index={4}
+          title="Price"
+          hint="What the office is asking. Shown in the admin only — the website says “Price on request”."
+          visibility="internal"
+          defaultOpen
+        >
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="demandPrice" className={deskLabel}>
+                Asking price <span className="normal-case tracking-normal text-muted">(₹)</span>
+              </label>
+              <input
+                id="demandPrice"
+                name="demandPrice"
+                type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                defaultValue={property?.demandPrice ?? ""}
+                placeholder="9500000"
+                className={deskFieldFull}
+              />
+              <p className={deskHint}>
+                Rupees, digits only — 95 lakh is 9500000. Commas and spaces are ignored.
+              </p>
+            </div>
+          </div>
+        </FormSection>
+
         <FormSection
           id="section-photos"
-          index={4}
+          index={5}
           title="Photos & video"
           hint="At least one photo to go live — the first is the cover. Video and tour links below."
           visibility="public"
@@ -648,7 +682,7 @@ export function PropertyForm({
 
         <FormSection
           id="section-features"
-          index={5}
+          index={6}
           title="Features"
           hint="Furnishing, amenities and parking."
           visibility="public"
@@ -668,7 +702,7 @@ export function PropertyForm({
 
         <FormSection
           id="section-legal"
-          index={6}
+          index={7}
           title="Legal & loan"
           hint="Approvals, RERA and which banks lend on it — shown to buyers as trust signals."
           visibility="public"
@@ -684,7 +718,7 @@ export function PropertyForm({
 
         <FormSection
           id="section-owner"
-          index={7}
+          index={8}
           title="Owner & source"
           hint="Who the listing came from and how to reach the owner."
           visibility="internal"
@@ -697,7 +731,7 @@ export function PropertyForm({
 
         <FormSection
           id="section-paperwork"
-          index={8}
+          index={9}
           title="Paperwork"
           hint="Pick what each document is and upload its files. Private unless you put a file on the website."
           visibility="internal"
@@ -722,7 +756,7 @@ export function PropertyForm({
 
         <FormSection
           id="section-extra"
-          index={9}
+          index={10}
           title="Anything else"
           hint="Your own title and text, for anything the sections above do not cover."
           visibility="public"
@@ -779,12 +813,13 @@ const SECTION_LINKS = [
   { n: 1, id: "section-listing", label: "The listing" },
   { n: 2, id: "section-location", label: "Location" },
   { n: 3, id: "section-size", label: "Size" },
-  { n: 4, id: "section-photos", label: "Photos & video" },
-  { n: 5, id: "section-features", label: "Features" },
-  { n: 6, id: "section-legal", label: "Legal & loan" },
-  { n: 7, id: "section-owner", label: "Owner & source", internal: true },
-  { n: 8, id: "section-paperwork", label: "Paperwork", internal: true },
-  { n: 9, id: "section-extra", label: "Anything else" },
+  { n: 4, id: "section-price", label: "Price", internal: true },
+  { n: 5, id: "section-photos", label: "Photos & video" },
+  { n: 6, id: "section-features", label: "Features" },
+  { n: 7, id: "section-legal", label: "Legal & loan" },
+  { n: 8, id: "section-owner", label: "Owner & source", internal: true },
+  { n: 9, id: "section-paperwork", label: "Paperwork", internal: true },
+  { n: 10, id: "section-extra", label: "Anything else" },
 ];
 
 /** Opens a folded section (its `toggle` syncs FormSection's state) and scrolls to it. */

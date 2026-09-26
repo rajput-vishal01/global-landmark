@@ -147,7 +147,8 @@ change.
 As of Sep 2026:
 
 - **Dashboard** — what needs answering today, KPIs, "Add a property".
-- **Properties** — list with filters, and a Share link per published row
+- **Properties** — list with a Price column (admin-only — the site says
+  "Price on request"), filters, and a Share link per published row
   that hands the listing to WhatsApp ready to forward. The type and locality
   fields are ComboBoxes: search the list, or type a new one and press Add. The property form has nine numbered
   sections, each tagged "On the website" or "Admin only", a publish panel

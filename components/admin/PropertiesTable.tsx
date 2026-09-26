@@ -23,6 +23,7 @@ import {
 import { daysOnMarket } from "@/lib/taxonomy/status";
 import type { DeleteState } from "@/app/admin/(panel)/properties/actions";
 import { formatDate } from "@/lib/dates";
+import { formatIndianShort } from "@/lib/attributes";
 
 type Row = {
   id: number;
@@ -37,6 +38,7 @@ type Row = {
   updatedAt: Date;
   projectName: string | null;
   coverUrl: string | null;
+  demandPrice: number | null;
   /** Ready-made WhatsApp share link; null while the listing is not published. */
   shareHref?: string | null;
 };
@@ -55,7 +57,7 @@ const PUBLICATION_TONE: Record<string, ChipTone> = {
 };
 
 /** Right-aligned in both the heading and the cell, so the column reads straight. */
-const NUMERIC_HEADS = new Set(["Reference", "Days"]);
+const NUMERIC_HEADS = new Set(["Reference", "Price", "Days"]);
 
 /**
  * The properties list table, plus multi-select + bulk delete. Selection
@@ -131,7 +133,7 @@ export function PropertiesTable({
                   className="h-4 w-4 accent-gold"
                 />
               </th>
-              {["Reference", "Property", "Status", "City", "Updated", "Days", ""].map((h, i) => (
+              {["Reference", "Property", "Status", "City", "Price", "Updated", "Days", ""].map((h, i) => (
                 <th
                   key={i}
                   scope="col"
@@ -190,6 +192,11 @@ export function PropertiesTable({
                     </div>
                   </td>
                   <td className="whitespace-nowrap text-soft">{p.city ?? "—"}</td>
+                  {/* The asking price, for the desk only — the website shows
+                      "Price on request" whatever is entered here. */}
+                  <td className={`whitespace-nowrap text-soft ${numericCell}`}>
+                    {p.demandPrice ? formatIndianShort(p.demandPrice) : "—"}
+                  </td>
                   <td className="whitespace-nowrap text-muted">{formatDate(p.updatedAt)}</td>
                   <td className={`whitespace-nowrap text-muted ${numericCell}`}>
                     {days === null ? "—" : days}

@@ -333,7 +333,7 @@ try {
   const parsed = parse.parseProperty(fd, "draft");
   assert.ok(parsed.ok, "title + address is enough for a draft");
   for (const gone of [
-    "category", "listingStatus", "demandPrice", "perSqftRate", "showPricePublicly",
+    "category", "listingStatus", "perSqftRate", "showPricePublicly",
     "isNegotiable", "configuration", "beds", "baths", "balconies", "facing",
     "possessionStatus", "propertyAge", "dealAttributes", "roadWidth", "isCorner",
     "isParkFacing", "sector", "block", "society", "floorNumber", "unitNumber",
@@ -341,6 +341,24 @@ try {
   ]) {
     assert.ok(!(gone in parsed.data), `${gone} is not written by the form`);
   }
+  // demandPrice came BACK in Sep 2026 (its own admin-only section), so it
+  // must be in the parse result — and null when left blank, which is what
+  // clearing the field has to mean.
+  assert.equal(parsed.data.demandPrice, null, "a blank price clears the column");
+  const priced = (value) => {
+    const f = new FormData();
+    f.set("title", "Test");
+    f.set("location", "Sector 20, Panchkula");
+    f.set("demandPrice", value);
+    return parse.parseProperty(f, "draft").data.demandPrice;
+  };
+  assert.equal(priced("9500000"), 9_500_000);
+  assert.equal(priced("1,25,00,000"), 12_500_000, "commas are how a broker types it");
+  assert.equal(priced(" 95 00 000 "), 9_500_000);
+  assert.equal(priced("95.5"), null, "rupees, not paise");
+  assert.equal(priced("-500"), null);
+  assert.equal(priced("abc"), null);
+  assert.equal(priced("9".repeat(15)), null, "capped at 1,000 crore");
   assert.deepEqual(parsed.data.place, { city: "Panchkula", locality: null });
   const noAddress = new FormData();
   noAddress.set("title", "Test");

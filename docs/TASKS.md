@@ -159,6 +159,11 @@ Also shipped, 26 Sep:
   the referral. Name plus a phone or an email; it lands in the same inbox,
   filters, converts and exports like any other lead, with source "Added by
   hand" unless one is typed.
+- **Price** is back on the property form as its own section (4 of 10),
+  tagged ADMIN: the asking price is stored on `demand_price`, shown as a
+  column on the properties list, and never published — `show_price_publicly`
+  stays off, so every listing still reads "Price on request". Commas and
+  spaces are stripped; the cap is ₹1,000 Cr.
 - **ComboBox** (`components/ui/ComboBox.tsx`) replaces the datalist on
   Property type and the dropdown on Locality: a search box at the top and an
   "Add …" row for whatever was typed. Localities are no longer a closed list

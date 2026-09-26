@@ -37,7 +37,7 @@ export default async function NewPropertyPage({
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
       <PageHead
         title="Add property"
-        sub="Title and address are all it takes to save. Sections 5 to 9 are optional and can be filled in later."
+        sub="Title and address are all it takes to save. Sections 5 to 10 are optional and can be filled in later."
         actions={
           <Link href="/admin/properties" className={deskButton}>
             Cancel

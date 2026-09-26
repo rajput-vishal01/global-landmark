@@ -447,6 +447,12 @@ export type ParsedProperty = {
   carpetArea: number | null;
   carpetAreaUnit: string | null;
   areaSqft: number | null;
+  /**
+   * What the office is asking, in rupees. Internal: the public queries read
+   * it through `showPricePublicly`, which is off by default, so a listing
+   * still says "Price on request" until someone deliberately turns it on.
+   */
+  demandPrice: number | null;
   frontFeet: number | null;
   depthFeet: number | null;
   plcAttributes: string[];
@@ -570,6 +576,15 @@ export function parseProperty(
     return v === "invalid" ? null : v;
   };
   const unit = (name: string) => parseChoice(formData.get(name), areaUnitValues);
+  // Not `num`: that caps at 10 crore, which a Tricity villa passes. The cap
+  // here is 1,000 crore — high enough for anything real, low enough that a
+  // pasted phone number or a fat-fingered extra zero is refused.
+  const price = (name: string) => {
+    const raw = String(formData.get(name) ?? "").trim().replace(/[,\s]/g, "");
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isInteger(n) && n >= 0 && n <= 100_000_000_000 ? n : null;
+  };
   const list = (name: string, allowed: readonly string[] | null, max?: number) =>
     parseList(String(formData.get(name) ?? "[]"), allowed, max) ?? [];
 
@@ -620,6 +635,7 @@ export function parseProperty(
         [builtUpArea, builtUpAreaUnit],
         [carpetArea, carpetAreaUnit],
       ]),
+      demandPrice: price("demandPrice"),
       frontFeet: num("frontFeet"),
       depthFeet: num("depthFeet"),
       plcAttributes: list("plcAttributesJson", PLC_ATTRIBUTES),
