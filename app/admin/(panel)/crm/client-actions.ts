@@ -2,9 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { count, eq } from "drizzle-orm";
+import { count, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { crmActivities, crmClients, crmDeals, leads } from "@/lib/db/schema";
+import { crmActivities, crmClients, crmDeals, leads, properties } from "@/lib/db/schema";
 import { requireAdmin } from "@/lib/admin/session";
 import type { DeleteState } from "@/app/admin/(panel)/properties/actions";
 import { DEAL_STAGES } from "@/lib/taxonomy/brokerage";
@@ -106,15 +106,22 @@ export async function updateClient(
 function dateField(formData: FormData, key: string): Date | null {
   const raw = String(formData.get(key) ?? "").trim();
   if (!raw) return null;
-  const d = new Date(`${raw}T12:00:00`);
+  // Midday in India, stated outright: the server runs on UTC, so a bare
+  // "T12:00:00" meant noon UTC in production and noon IST on a laptop.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const d = new Date(`${raw}T12:00:00+05:30`);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
 /** `<input type="datetime-local">` gives "YYYY-MM-DDTHH:mm" or "". */
 function dateTimeField(formData: FormData, key: string): Date | null {
   const raw = String(formData.get(key) ?? "").trim();
-  if (!raw) return null;
-  const d = new Date(raw);
+  // datetime-local has no zone. The broker typed Indian time; parsed bare it
+  // was read as the server's (UTC in production), so "called at 2:30 pm"
+  // showed as 8:00 pm.
+  const m = raw.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})(:\d{2})?$/);
+  if (!m) return null;
+  const d = new Date(`${m[1]}${m[2] ?? ":00"}+05:30`);
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
@@ -188,7 +195,19 @@ export async function convertLeadToClient(leadId: number): Promise<void> {
         })
         .$returningId();
 
-      const propertyIds = lead.propertyIds ?? [];
+      // Only listings that still exist. A lead keeps the ids it was sent with,
+      // and one pointing at a since-deleted listing failed the insert — the
+      // whole conversion rolled back and dropped the broker on the inbox with
+      // no word of why.
+      const shortlisted = lead.propertyIds ?? [];
+      const propertyIds = shortlisted.length
+        ? (
+            await tx
+              .select({ id: properties.id })
+              .from(properties)
+              .where(inArray(properties.id, shortlisted))
+          ).map((r) => r.id)
+        : [];
       if (propertyIds.length) {
         await tx.insert(crmDeals).values(
           propertyIds.map((propertyId) => ({

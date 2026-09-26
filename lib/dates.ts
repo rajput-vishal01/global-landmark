@@ -16,6 +16,13 @@
 
 type DateInput = Date | string | null | undefined;
 
+/**
+ * India time, always. The production server runs on UTC, and without a zone
+ * Intl formats in the server's own — every time in the panel read 5½ hours
+ * early and anything logged before 5:30 am landed on the previous day.
+ */
+const ZONE = "Asia/Kolkata";
+
 /** e.g. "3 Sep 2026". Em dash when there is no date — never "Invalid Date". */
 export function formatDate(value: DateInput): string {
   if (!value) return "—";
@@ -23,6 +30,7 @@ export function formatDate(value: DateInput): string {
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: ZONE,
   }).format(new Date(value));
 }
 
@@ -35,5 +43,6 @@ export function formatDateTime(value: DateInput): string {
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    timeZone: ZONE,
   }).format(new Date(value));
 }

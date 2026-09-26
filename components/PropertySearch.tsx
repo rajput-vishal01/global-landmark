@@ -203,7 +203,7 @@ export function PropertySearch({
               </li>
             ) : (
               results.map((result, i) => (
-                <li key={result.slug} role="option" aria-selected={i === activeIndex}>
+                <li key={`${result.type}-${result.slug}`} role="option" aria-selected={i === activeIndex}>
                   <button
                     type="button"
                     onClick={() => go(result)}

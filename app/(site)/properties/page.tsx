@@ -29,6 +29,7 @@ import {
 } from "@/lib/attributes";
 import { isCity } from "@/lib/locations";
 import { normalisePropertyType } from "@/lib/taxonomy/property";
+import { firstValues } from "@/lib/search-params";
 import {
   DEFAULT_SORT,
   DEFAULT_VIEW,
@@ -118,23 +119,9 @@ const pick = (value: string | undefined, allowed: readonly string[]) =>
 export default async function PropertiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    category?: string;
-    group?: string;
-    type?: string;
-    possession?: string;
-    furnishing?: string;
-    city?: string;
-    locality?: string;
-    sector?: string;
-    configuration?: string;
-    q?: string;
-    sort?: string;
-    view?: string;
-    page?: string;
-  }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const params = await searchParams;
+  const params = firstValues(await searchParams);
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const category =
     params.category && isCategory(params.category) ? params.category : undefined;

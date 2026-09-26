@@ -4,15 +4,22 @@
 >
 > The Phase A motion cull removed ScrollTrigger and Lenis from the project
 > at the client's request ("less animations"). Neither is a dependency any
-> more, and `lib/gsap.ts` registers only `useGSAP` (SplitText went too, once
-> the hero stopped splitting its headline).
+> more.
 >
 > What actually ships today:
-> - **GSAP**: the hero load-in only — a fade-and-rise timeline that runs once
->   on mount. Nothing is driven by scroll position.
+> - **GSAP**: nothing. `gsap` and `@gsap/react` stay installed for the
+>   day scroll work comes back, but no file imports them, so they add
+>   nothing to any bundle. The hero load-in they used to run is CSS now
+>   (Sep 2026): the GSAP version waited for hydration, then hid the hero
+>   photograph — the page's LCP element — and faded it back, over a second
+>   on every visit. `lib/gsap.ts` went with it; recreate it when GSAP is
+>   actually used again.
 > - **Framer Motion**: everything else (enter/exit, modals, hover states),
 >   through `LazyMotion` with the `m.*` components.
-> - **CSS**: the marquees and the testimonial wall.
+> - **CSS**: the hero load-in (`.hero-img` / `.hero-heading` /
+>   `.hero-cats` / `.hero-search` in `app/globals.css`, reduced-motion
+>   gated; the photograph only scales, it never fades), the marquees and the
+>   testimonial wall.
 >
 > Every ScrollTrigger row in the catalogue below is therefore a REJECTED
 > pattern, kept for the rationale and easing values rather than as

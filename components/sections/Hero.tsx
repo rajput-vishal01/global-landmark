@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { PropertySearch } from "@/components/PropertySearch";
-import { useGSAP, gsap, EASE_HEAVY } from "@/lib/gsap";
 import { HERO } from "@/lib/data";
 
 const SLIDES = HERO.slides;
@@ -34,7 +33,6 @@ const CROSSFADE =
  * so the feature is kept rather than dropped for symmetry.
  */
 export function Hero() {
-  const scope = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
   const [warm, setWarm] = useState(false);
 
@@ -56,52 +54,11 @@ export function Hero() {
     return () => clearInterval(id);
   }, []);
 
-  // Load-in only. Nothing here is scroll-driven — the scroll engine went in
-  // the Phase A motion cull and must not creep back.
-  useGSAP(
-    () => {
-      const mm = gsap.matchMedia();
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
-        gsap
-          .timeline({ defaults: { ease: EASE_HEAVY } })
-          .fromTo(
-            ".hero-img",
-            { scale: 1.08, autoAlpha: 0 },
-            { scale: 1, autoAlpha: 1, duration: 1.2 },
-            0
-          )
-          // fromTo, not from: a `from` tween that is interrupted before it
-          // plays — a killed context on a fast re-render, a throttled
-          // background tab — leaves its target parked at the FROM values,
-          // which here means an invisible headline and an invisible search
-          // bar over a photograph. Naming the end state explicitly means the
-          // worst case is an un-animated hero rather than an empty one.
-          .fromTo(
-            ".hero-heading",
-            { autoAlpha: 0, y: 18 },
-            { autoAlpha: 1, y: 0, duration: 0.9 },
-            0.35
-          )
-          .fromTo(
-            ".hero-cats",
-            { autoAlpha: 0, y: 12 },
-            { autoAlpha: 1, y: 0, duration: 0.7 },
-            0.6
-          )
-          .fromTo(
-            ".hero-search",
-            { autoAlpha: 0, y: 16 },
-            { autoAlpha: 1, y: 0, duration: 0.8 },
-            0.75
-          );
-      });
-    },
-    { scope }
-  );
+  // The load-in is CSS (.hero-img / .hero-heading / .hero-cats / .hero-search
+  // in globals.css): it runs on first paint, before any of this hydrates.
 
   return (
     <section
-      ref={scope}
       // No overflow-hidden here: the search bar's dropdowns are absolutely
       // positioned children of this section and open past its bottom edge,
       // so clipping the section cut every city / type / status list off

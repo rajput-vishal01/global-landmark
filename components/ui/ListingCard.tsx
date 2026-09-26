@@ -179,9 +179,9 @@ export function ListingCard({
           // reader say it twice.
           alt={m.cover.alt && m.cover.alt !== property.title ? m.cover.alt : ""}
           fill
-          // Above Next's default of 75: these are the photographs a buyer
-          // judges a listing on. Allowed values live in next.config.ts.
-          quality={90}
+          // No `quality`: images are served exactly as uploaded
+          // (next.config.ts, unoptimized), so it did nothing but log a
+          // warning on every render.
           sizes={
             isList
               ? "(min-width: 1024px) 90vw, 100vw"

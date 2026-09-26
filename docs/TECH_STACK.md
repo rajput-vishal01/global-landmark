@@ -19,8 +19,8 @@ No component library decided yet. Recommendation: hand-build components against 
 
 ## GSAP + Framer Motion integration
 
-- GSAP: use the `useGSAP()` hook from `@gsap/react` (never raw `useEffect` for GSAP setup) — plugins are registered once in the client-only `lib/gsap.ts`. All GSAP code is client-only, never called during SSR.
-- Post-Phase-A, GSAP covers exactly one thing: the hero's load-in (a plain timeline; SplitText is no longer registered). ScrollTrigger was culled and is not registered — see the banner in [ANIMATION_GUIDELINES.md](ANIMATION_GUIDELINES.md).
+- GSAP: use the `useGSAP()` hook from `@gsap/react` (never raw `useEffect` for GSAP setup), with plugins registered once in a client-only `lib/gsap.ts`. All GSAP code is client-only, never called during SSR.
+- Today GSAP covers nothing: the hero load-in it used to run is CSS (Sep 2026) and `lib/gsap.ts` was removed. The packages stay installed for when scroll work returns; unimported, they cost no bundle. See the banner in [ANIMATION_GUIDELINES.md](ANIMATION_GUIDELINES.md).
 - Framer Motion: `m.*` components (not `motion.*`) under app-wide `LazyMotion strict` (`components/MotionProvider.tsx`) — `strict` throws if a full `motion.*` import sneaks back in, keeping only the ~6KB LazyMotion entry in the shared bundle. Used inside client components (`"use client"`) only. Server Components stay animation-free by default; a page is a Server Component unless it needs client interactivity.
 - Both libraries coexist per the division of labor in [ANIMATION_GUIDELINES.md](ANIMATION_GUIDELINES.md#division-of-labor) — do not duplicate the same interaction in both.
 
@@ -59,7 +59,6 @@ components/
   listing/                     listing-grid, property-card, filter-bar
   gallery/                     lightbox, image-reveal, gallery-grid
 lib/
-  gsap.ts                      GSAP plugin registration, shared eases/timing constants
   motion.ts                    Framer Motion variants shared across components
   content/                     content-model types, fetch/query helpers (see CONTENT_MODEL.md)
 public/

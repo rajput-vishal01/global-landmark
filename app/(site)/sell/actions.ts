@@ -189,6 +189,10 @@ export async function submitProperty(
           photos.map((url, i) => ({
             propertyId: row.id,
             url,
+            // The delete handle. Without it every delete and edit of this
+            // listing skipped the photo (they sweep by storageKey), and the
+            // owner's files stayed on disk after the listing was gone.
+            storageKey: storageKeyFromUrl(url),
             // No alt text from a public form: it is a free-text field on a
             // page that renders it, and the broker writes a real one when
             // they review the submission.

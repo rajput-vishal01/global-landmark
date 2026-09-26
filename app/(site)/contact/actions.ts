@@ -111,7 +111,9 @@ export async function submitInquiry(
   try {
     await db.insert(leads).values({
       name: data.name,
-      email: data.email,
+      // Null, not "": email is optional, and a blank string reads back as an
+      // address that is present but empty.
+      email: data.email || null,
       phone: data.phone || null,
       interest: data.interest,
       message: data.message,

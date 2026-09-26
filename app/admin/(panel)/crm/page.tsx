@@ -18,7 +18,7 @@ import {
 } from "@/components/admin/desk";
 
 function formatShortDate(value: Date | string): string {
-  return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short" }).format(
+  return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" }).format(
     new Date(value)
   );
 }

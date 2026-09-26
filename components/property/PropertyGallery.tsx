@@ -101,7 +101,6 @@ export function PropertyGallery({ images, title }: { images: PublicImage[]; titl
                 alt={img.alt || `${title} — photo ${i + 1}`}
                 fill
                 priority={isLead}
-                quality={95}
                 sizes={
                   isLead || layout < 3
                     ? "(min-width: 768px) 60vw, 100vw"

@@ -5,6 +5,7 @@ import {
   PUBLICATION_STATES,
 } from "../attributes";
 import { normalisePropertyType } from "../taxonomy/property";
+import { moneyField } from "./form-fields";
 import { isCity, normaliseLocality, placeFromAddress } from "../locations";
 import {
   isBundledImageUrl,
@@ -578,13 +579,9 @@ export function parseProperty(
   const unit = (name: string) => parseChoice(formData.get(name), areaUnitValues);
   // Not `num`: that caps at 10 crore, which a Tricity villa passes. The cap
   // here is 1,000 crore — high enough for anything real, low enough that a
-  // pasted phone number or a fat-fingered extra zero is refused.
-  const price = (name: string) => {
-    const raw = String(formData.get(name) ?? "").trim().replace(/[,\s]/g, "");
-    if (!raw) return null;
-    const n = Number(raw);
-    return Number.isInteger(n) && n >= 0 && n <= 100_000_000_000 ? n : null;
-  };
+  // pasted phone number or a fat-fingered extra zero is refused. moneyField
+  // also ignores the commas a broker types.
+  const price = (name: string) => moneyField(formData, name, 100_000_000_000);
   const list = (name: string, allowed: readonly string[] | null, max?: number) =>
     parseList(String(formData.get(name) ?? "[]"), allowed, max) ?? [];
 

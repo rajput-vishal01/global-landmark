@@ -170,6 +170,34 @@ Also shipped, 26 Sep:
   — a typed-in one is stored as written and offered on every later listing in
   that city (`normaliseLocality` in lib/locations.ts).
 
+Also shipped, 26 Sep — full read-through, bugs and speed:
+
+- **Deal-only listings leaked.** "Keep out of the listings page" was only
+  enforced on the grid and the sitemap; the home page's "Our Listings", the
+  search box, the city and type filters, location covers and project unit
+  tables all showed them. One `listedVisibility()` gate in
+  `lib/db/queries.ts` now covers every list.
+- **Admin times were UTC in production.** Every date/time in the panel is
+  formatted in Asia/Kolkata now, activity times typed into the CRM are read
+  as IST, and the dashboard's "leads today" starts at IST midnight.
+- **Autosave on open.** Opening a listing's edit page saved it 20 seconds
+  later with no change — bumping updatedAt and purging the public cache on
+  every visit to a published listing. It now saves only real edits.
+- **Photo files leaked** when autosave replaced photos, and on every
+  /sell submission (saved without a storage key, so a delete skipped them).
+- A failed settings read was cached as "no settings" for an hour; a lead
+  whose shortlisted listing had been deleted could not be converted; a
+  duplicated /sell submission re-entered the Submissions queue; CRM money
+  fields dropped amounts typed with commas and let negatives through; a
+  repeated query key (`?q=a&q=b`) crashed /properties; custom localities
+  did not filter the grid; blocked site storage crashed every page with a
+  listing card.
+- **Faster:** the hero no longer ships GSAP or hides its photo until
+  hydration; the property page's four reads run in parallel instead of one
+  after another; the Deal of the Week strip loads its cover instead of the
+  whole gallery; location tiles make one query each instead of two;
+  settings are one cached read instead of two.
+
 Open, waiting on the client: real photos to replace demo data, confirmation
 of the WhatsApp number, the full list of property types they want as
 built-ins, whether rental listings are needed.

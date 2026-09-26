@@ -43,13 +43,20 @@ export function intField(
   return Number.isInteger(n) && n >= 0 && n <= max ? n : null;
 }
 
-/** Whole rupees. Same rules as intField, with a cap that fits a deal value. */
+/**
+ * Whole rupees. Same rules as intField, with a cap that fits a deal value —
+ * and commas and spaces ignored, because "1,50,00,000" is how a broker types
+ * an amount, and Number() read it as NaN: the budget was silently dropped.
+ */
 export function moneyField(
   formData: FormData,
   key: string,
   max = 1_000_000_000
 ): number | null {
-  return intField(formData, key, max);
+  const raw = String(formData.get(key) ?? "").replace(/[,\s]/g, "");
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 0 && n <= max ? n : null;
 }
 
 /**

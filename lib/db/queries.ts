@@ -22,7 +22,7 @@ import {
 import type { CategoryValue } from "@/lib/categories";
 import { typesInCollection, type CollectionValue } from "@/lib/attributes";
 import { PUBLIC_STATUSES } from "@/lib/taxonomy/status";
-import { isCity, isLocalityIn } from "@/lib/locations";
+import { isCity, normaliseLocality } from "@/lib/locations";
 import { DEFAULT_SORT, type PropertySort } from "@/lib/properties-url";
 
 /**
@@ -73,6 +73,21 @@ const publicVisibility = () =>
     eq(properties.publicationState, "published"),
     inArray(properties.listingStatus, [...PUBLIC_STATUSES])
   );
+
+/**
+ * Public AND listed. A deal-only listing (`hideFromListings`) is public —
+ * its own page opens from the Deal of the Week strip — but it must not turn
+ * up in anything that LISTS properties: the grid, the home strip, search,
+ * the city and type filters, location covers, a project's unit table, the
+ * sitemap. Only the two single-row lookups (the detail page and the deal
+ * itself) use publicVisibility() alone.
+ *
+ * This used to be an extra condition added by hand in two places, and every
+ * other list — the home page's "Our Listings" among them — showed the
+ * listings the office had asked to keep off the market.
+ */
+const listedVisibility = () =>
+  and(publicVisibility(), eq(properties.hideFromListings, false));
 
 /**
  * Price resolution happens in SQL, not in a component.
@@ -215,15 +230,13 @@ function buildPropertyConditions(filters: PropertyFilters) {
   // A locality is only meaningful under its own city — the same rule the
   // admin form enforces, so a stray `?locality=` from a stale link can't
   // silently narrow to nothing.
-  const locality =
-    filters.city && filters.locality && isLocalityIn(filters.city, filters.locality)
-      ? filters.locality
-      : undefined;
+  //
+  // normaliseLocality, not isLocalityIn: brokers add their own localities now,
+  // and a link to one of those must narrow the grid like a built-in does.
+  const locality = filters.city ? normaliseLocality(filters.city, filters.locality) : null;
 
   return [
-    publicVisibility(),
-    // Deal-only listings stay out of every list; their own page still opens.
-    eq(properties.hideFromListings, false),
+    listedVisibility(),
     filters.category ? eq(properties.category, filters.category) : undefined,
     filters.collection ? collectionCondition(filters.collection) : undefined,
     filters.propertyType ? eq(properties.propertyType, filters.propertyType) : undefined,
@@ -289,7 +302,8 @@ export const countProperties = failSoft(countPropertiesCached, "countProperties"
 
 /**
  * The landing page's location grid: one tile per micro-market the client
- * sells in, each with a live count and a real listing photo.
+ * sells in, each with a real listing photo. (It carried a live count until
+ * the client had it taken off the tiles, Sep 2026.)
  *
  * Unlike listCityCounts below, the tile list is FIXED — a market with
  * nothing published yet still gets its tile (and its "0 listings"), because
@@ -301,7 +315,6 @@ export type LocationCard = {
   city: string;
   locality?: string;
   label: string;
-  count: number;
   coverUrl: string | null;
 };
 
@@ -311,30 +324,21 @@ const listLocationCardsCached = unstable_cache(
   ): Promise<LocationCard[]> =>
     Promise.all(
       targets.map(async ({ city, locality }) => {
-        const where = and(
-          publicVisibility(),
-          eq(properties.city, city),
-          locality ? eq(properties.locality, locality) : undefined
-        );
+        const cover = await db
+          .select({ url: propertyImages.url })
+          .from(propertyImages)
+          .innerJoin(properties, eq(propertyImages.propertyId, properties.id))
+          .where(
+            and(
+              listedVisibility(),
+              eq(properties.city, city),
+              locality ? eq(properties.locality, locality) : undefined
+            )
+          )
+          .orderBy(...IMAGE_ORDER)
+          .limit(1);
 
-        const [[{ n }], cover] = await Promise.all([
-          db.select({ n: count() }).from(properties).where(where),
-          db
-            .select({ url: propertyImages.url })
-            .from(propertyImages)
-            .innerJoin(properties, eq(propertyImages.propertyId, properties.id))
-            .where(where)
-            .orderBy(...IMAGE_ORDER)
-            .limit(1),
-        ]);
-
-        return {
-          city,
-          locality,
-          label: locality ?? city,
-          count: n,
-          coverUrl: cover[0]?.url ?? null,
-        };
+        return { city, locality, label: locality ?? city, coverUrl: cover[0]?.url ?? null };
       })
     ),
   ["listLocationCards"],
@@ -353,7 +357,7 @@ const listCityCountsCached = unstable_cache(
     const rows = await db
       .select({ city: properties.city, count: count() })
       .from(properties)
-      .where(and(publicVisibility(), sql`${properties.city} is not null`))
+      .where(and(listedVisibility(), sql`${properties.city} is not null`))
       .groupBy(properties.city);
     // Only cities still on the list: a row saved under a city the client
     // has since dropped must not bring that city back as a filter option.
@@ -376,7 +380,7 @@ const listPropertyTypesInUseCached = unstable_cache(
     const rows = await db
       .selectDistinct({ type: properties.propertyType })
       .from(properties)
-      .where(and(publicVisibility(), sql`${properties.propertyType} is not null`));
+      .where(and(listedVisibility(), sql`${properties.propertyType} is not null`));
     return rows.flatMap((r) => (r.type ? [r.type] : []));
   },
   ["listPropertyTypesInUse"],
@@ -425,7 +429,7 @@ const getFeaturedPropertiesCached = unstable_cache(
     db.query.properties.findMany({
       columns: PUBLIC_PROPERTY_COLUMNS,
       extras: PUBLIC_PRICE_EXTRA,
-      where: publicVisibility(),
+      where: listedVisibility(),
       with: { images: coverImageJoin, project: PUBLIC_PROJECT_JOIN },
       orderBy: [desc(properties.createdAt)],
       limit,
@@ -474,7 +478,7 @@ export const getPropertyBySlug = failSoft(
 const towerUnitsJoin = {
   columns: PUBLIC_PROPERTY_COLUMNS,
   extras: PUBLIC_PRICE_EXTRA,
-  where: publicVisibility(),
+  where: listedVisibility(),
   with: { images: coverImageJoin },
   orderBy: [desc(properties.floorNumber), asc(properties.unitNumber)],
 };
@@ -514,7 +518,7 @@ const getProjectBySlugCached = unstable_cache(
     const units = await db.query.properties.findMany({
       columns: PUBLIC_PROPERTY_COLUMNS,
       extras: PUBLIC_PRICE_EXTRA,
-      where: and(eq(properties.projectId, project.id), sql`${properties.towerId} is null`, publicVisibility()),
+      where: and(eq(properties.projectId, project.id), sql`${properties.towerId} is null`, listedVisibility()),
       with: { images: coverImageJoin },
     });
 
@@ -571,7 +575,7 @@ export async function searchProperties(
       extras: PUBLIC_PRICE_EXTRA,
       // This feeds /api/search, a public JSON endpoint — the visibility gate
       // matters more here than anywhere else.
-      where: and(publicVisibility(), ...tokenConditions),
+      where: and(listedVisibility(), ...tokenConditions),
       with: { images: coverImageJoin, project: PUBLIC_PROJECT_JOIN },
       // Relevance: whole-phrase title hits first, then location hits,
       // then newest.
@@ -631,8 +635,10 @@ const getActiveDealCached = unstable_cache(
         // other public read — a sold property must not resurface here.
         property: {
           columns: PUBLIC_PROPERTY_COLUMNS,
-      extras: PUBLIC_PRICE_EXTRA,
-          with: { images: galleryJoin, project: PUBLIC_PROJECT_JOIN },
+          extras: PUBLIC_PRICE_EXTRA,
+          // The strip shows the cover and nothing else; the gallery lives
+          // on the detail page this links to.
+          with: { images: coverImageJoin, project: PUBLIC_PROJECT_JOIN },
         },
       },
     });
@@ -699,9 +705,7 @@ export async function listPropertySlugs(): Promise<
     return await db
       .select({ slug: properties.slug, updatedAt: properties.updatedAt })
       .from(properties)
-      // A deal-only listing is reachable by link but not advertised, so it
-      // stays out of the sitemap too.
-      .where(and(publicVisibility(), eq(properties.hideFromListings, false)));
+      .where(listedVisibility());
   } catch (err) {
     console.error("listPropertySlugs failed:", err);
     return [];

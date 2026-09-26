@@ -39,7 +39,15 @@ let cachedRaw: string | null = null;
 let cachedItems: EnquiryCartItem[] = EMPTY;
 
 function getSnapshot(): EnquiryCartItem[] {
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  // Merely touching window.localStorage throws a SecurityError when the
+  // visitor blocks site data, and this runs during render — every page with
+  // a listing card would have crashed for them. An empty cart instead.
+  let raw: string | null;
+  try {
+    raw = window.localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return EMPTY;
+  }
   if (raw !== cachedRaw) {
     cachedRaw = raw;
     cachedItems = parseCart(raw);
@@ -60,7 +68,14 @@ function subscribe(listener: () => void): () => void {
 }
 
 function writeCart(items: EnquiryCartItem[]): void {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  } catch {
+    // Quota full or storage blocked (older Safari private mode throws on any
+    // write): the tap does nothing rather than throwing out of a click
+    // handler — recently-viewed makes the same trade.
+    return;
+  }
   cachedRaw = null; // force getSnapshot to re-read on next call
   listeners.forEach((l) => l());
 }

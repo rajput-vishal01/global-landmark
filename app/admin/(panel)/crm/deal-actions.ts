@@ -1,6 +1,6 @@
 "use server";
 
-import { idField } from "@/lib/admin/form-fields";
+import { idField, moneyField } from "@/lib/admin/form-fields";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
@@ -16,13 +16,13 @@ function isDealStage(v: string): v is DealStage {
   return (DEAL_STAGES as readonly string[]).includes(v);
 }
 
-/** Whole-rupee money field. Empty box -> null, never NaN. */
-function parseMoney(formData: FormData, name: string): number | null {
-  const raw = String(formData.get(name) ?? "").trim();
-  if (!raw) return null;
-  const n = Math.round(Number(raw));
-  return Number.isFinite(n) ? n : null;
-}
+/**
+ * Whole rupees through the shared reader, with a cap that fits a deal. The
+ * local version read "1,25,00,000" as NaN and dropped it, and let a
+ * negative deal value through.
+ */
+const parseMoney = (formData: FormData, name: string) =>
+  moneyField(formData, name, 100_000_000_000);
 
 /**
  * R-31: `closedAt` is set only on the specific transition INTO "Closed",
@@ -46,7 +46,13 @@ function parseSharedFields(formData: FormData) {
   const propertyId = propertyIdRaw ? Number(propertyIdRaw) : null;
 
   const percentRaw = String(formData.get("brokeragePercent") ?? "").trim();
-  const brokeragePercentBp = percentRaw ? percentToBp(Number(percentRaw)) : null;
+  // A typo ("2..5") went through as NaN into an INT column, and the save
+  // failed with nothing but "Could not create the deal".
+  const percent = Number(percentRaw);
+  const brokeragePercentBp =
+    percentRaw && Number.isFinite(percent) && percent >= 0 && percent <= 100
+      ? percentToBp(percent)
+      : null;
 
   return {
     propertyId,
@@ -191,7 +197,7 @@ export async function addPayment(
   if (amount == null || amount <= 0) return { error: "Enter a valid amount." };
 
   const paidAt = String(formData.get("paidAt") ?? "").trim();
-  if (!paidAt) return { error: "Enter the payment date." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(paidAt)) return { error: "Enter the payment date." };
 
   const mode = String(formData.get("mode") ?? "").trim().slice(0, 60) || null;
   const note = String(formData.get("note") ?? "").trim().slice(0, 500) || null;

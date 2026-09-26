@@ -296,8 +296,43 @@ body {
 
 /* Scroll-reveal pre-hide removed with the scroll engine itself (Phase A).
    Nothing may hide content pending a scroll listener any more: content is
-   painted as it arrives. The `.hero-img` pre-hide stays retired too — the
-   hero fades its own slides in on load. */
+   painted as it arrives. */
+
+/* Hero load-in. CSS rather than the GSAP timeline it replaced: that one
+   waited for hydration, then snapped the server-rendered hero to invisible
+   and faded it back — the photograph (the page's LCP element) was hidden
+   for over a second on every visit, and GSAP shipped to every visitor for
+   this one effect. These run on first paint with no JavaScript at all.
+
+   The photograph only settles (a scale, never an opacity), so it counts as
+   painted immediately. `backwards`, not `both`: the start state holds
+   through each delay, and nothing is left behind once it ends — a lingering
+   transform would make the search bar a containing block for its lists. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-img {
+    animation: hero-settle 1.2s cubic-bezier(0.65, 0, 0.35, 1) backwards;
+  }
+  .hero-heading {
+    animation: hero-rise 0.9s cubic-bezier(0.65, 0, 0.35, 1) 0.35s backwards;
+  }
+  .hero-cats {
+    animation: hero-rise 0.7s cubic-bezier(0.65, 0, 0.35, 1) 0.6s backwards;
+  }
+  .hero-search {
+    animation: hero-rise 0.8s cubic-bezier(0.65, 0, 0.35, 1) 0.75s backwards;
+  }
+}
+@keyframes hero-settle {
+  from {
+    transform: scale(1.08);
+  }
+}
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
 
 /* Loading rule sweep */
 @keyframes rule-sweep {

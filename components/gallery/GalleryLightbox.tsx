@@ -105,10 +105,6 @@ export function GalleryLightbox({
               src={img.url}
               alt={img.alt || `${title} — image ${i + 1}`}
               fill
-              // 95, not the default 75. The gallery is the reason someone
-              // books a viewing; softening it to save bytes is the wrong
-              // trade on this page. Declared in next.config.ts's qualities.
-              quality={95}
               sizes={
                 i % 3 === 0
                   ? "(min-width: 1024px) 60vw, 100vw"
@@ -165,8 +161,6 @@ export function GalleryLightbox({
                 src={visible[openIndex].url}
                 alt={visible[openIndex].alt || `${title} — image ${openIndex + 1}`}
                 fill
-                // The full-screen view. Anything softer than this is visible.
-                quality={95}
                 sizes="100vw"
                 className="object-contain"
               />

@@ -8,7 +8,7 @@ import { formatIndianShort } from "@/lib/attributes";
 import { brokerageAmount, brokeragePending } from "@/lib/taxonomy/brokerage";
 import { updateClient } from "../client-actions";
 import { ActivityForm } from "./ActivityForm";
-import { formatDateTime } from "@/lib/dates";
+import { formatDate, formatDateTime } from "@/lib/dates";
 import {
   Card,
   Chip,
@@ -60,13 +60,6 @@ const STAGE_TONES: Record<string, ChipTone> = {
   Lost: "alert",
 };
 
-function formatDateOnly(value: Date | string): string {
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
-}
 
 /**
  * The client "everything on one screen" detail page (R-30) — same philosophy
@@ -200,7 +193,7 @@ export default async function ClientDetailPage({
                     {a.followUpAt && (
                       <p className="mt-2">
                         <Chip tone={new Date(a.followUpAt) < new Date() ? "alert" : "live"}>
-                          Follow up · {formatDateOnly(a.followUpAt)}
+                          Follow up · {formatDate(a.followUpAt)}
                         </Chip>
                       </p>
                     )}

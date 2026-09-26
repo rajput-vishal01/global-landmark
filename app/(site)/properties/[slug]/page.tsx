@@ -163,13 +163,18 @@ export default async function PropertyDetailPage({
   const property = await getPropertyBySlug(slug);
   if (!property) notFound();
 
-  const company = await resolveCompany();
-  // A document arrives here only when its own `isPublic` is true — gated in
-  // SQL, see lib/db/property-detail.ts.
-  const { unitSizes, documents } = await getPropertyDetailExtras(property.id);
-  // R-45: ranked on locality → configuration → budget, from the same cached
-  // pool /properties already warms.
-  const similar = rankSimilar(property, await listProperties(), 3);
+  // Three independent reads, in parallel — they ran one after the other,
+  // three round trips in a row on every uncached render.
+  //   - a document arrives only when its own `isPublic` is true, gated in SQL
+  //     (lib/db/property-detail.ts);
+  //   - R-45: similar listings are ranked on locality → configuration →
+  //     budget, from the same cached pool /properties already warms.
+  const [company, { unitSizes, documents }, pool] = await Promise.all([
+    resolveCompany(),
+    getPropertyDetailExtras(property.id),
+    listProperties(),
+  ]);
+  const similar = rankSimilar(property, pool, 3);
   const cityListings = property.city && isCity(property.city) ? property.city : null;
 
   const specs = propertySpecs(property);

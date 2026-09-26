@@ -72,8 +72,10 @@ async function counts() {
 async function leadCounts(): Promise<{ today: number; week: number }> {
   try {
     const now = new Date();
-    const startOfToday = new Date(now);
-    startOfToday.setHours(0, 0, 0, 0);
+    // Midnight in India, not in the server's zone: the VPS runs on UTC, so
+    // setHours(0) made "today" start at 5:30 in the morning here and every
+    // lead from the small hours counted as yesterday's.
+    const startOfToday = new Date(`${todayIST()}T00:00:00+05:30`);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 86_400_000);
     const [[t], [w]] = await Promise.all([
       db.select({ n: count() }).from(leads).where(gte(leads.createdAt, startOfToday)),

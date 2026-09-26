@@ -450,6 +450,22 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
       .map((row) => row.storageKey)
       .filter((key) => !keepDocs.has(key));
 
+    // Same for photos, whenever this tick replaces them. Without it a photo
+    // removed mid-edit lost its row here and its file nowhere: by the time
+    // Save changes ran, the row was already gone, so updateProperty had
+    // nothing to compare against and the file stayed on disk for good.
+    let removedImages: string[] = [];
+    if (images.length) {
+      const existingImages = await db
+        .select({ storageKey: propertyImages.storageKey })
+        .from(propertyImages)
+        .where(eq(propertyImages.propertyId, existingId));
+      const keepImages = new Set(images.map((img) => img.storageKey).filter(Boolean));
+      removedImages = existingImages
+        .map((row) => row.storageKey)
+        .filter((key): key is string => Boolean(key) && !keepImages.has(key));
+    }
+
     const slug = await uniqueSlug(fields.title, existingId);
     await db.transaction(async (tx) => {
       await tx
@@ -480,6 +496,13 @@ export async function saveDraft(formData: FormData): Promise<SaveDraftState> {
         await deleteUnusedFiles(removedDocs, "private");
       } catch (err) {
         console.error("saveDraft: removed document files not swept:", removedDocs, err);
+      }
+    }
+    if (removedImages.length) {
+      try {
+        await deleteUnusedFiles(removedImages, "public");
+      } catch (err) {
+        console.error("saveDraft: removed image files not swept:", removedImages, err);
       }
     }
     await syncDocumentFiles(documents, removedDocs);
@@ -560,6 +583,10 @@ export async function duplicateProperty(formData: FormData): Promise<void> {
       // coordinates themselves ARE copied (same building), so ticking the
       // box on the copy is one click, not a re-entry.
       "showMapPublicly",
+      // A copy of an owner's /sell submission is the office's own listing,
+      // not a second submission — copied, it sat in the Submissions queue
+      // looking like the owner had sent it twice.
+      "submittedAt",
       "createdAt",
       "updatedAt",
     ]);

@@ -272,6 +272,15 @@ export function PropertyForm({
     // page asks first.
     if (!isEditing) return;
 
+    // Opening a listing is not an edit. The snapshot used to start empty, so
+    // the first tick always "found" a change and saved: every visit to the
+    // edit page bumped updatedAt (hiding the listing from the stale-listings
+    // count) and, on a published listing, purged the whole public cache.
+    // Child effects have already run, so the form holds its loaded state.
+    if (lastSavedRef.current === null && formRef.current) {
+      lastSavedRef.current = snapshotFormData(new FormData(formRef.current));
+    }
+
     // ponytail: 20s fixed interval. No debounce-on-idle, no beforeunload
     // flush — add either if brokers report losing the last few seconds of
     // typing before a tab close.

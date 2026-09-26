@@ -44,11 +44,16 @@ export const SETTING_KEYS = {
   credibility: "credibility",
 } as const;
 
-/** Every row, keyed — used by both the admin form (uncached, always fresh) and the cached public helpers below. */
+/** Every row, keyed. Throws on a DB failure — callers choose their fallback. */
+async function readSettings(): Promise<Record<string, unknown>> {
+  const rows = await db.select().from(siteSettings);
+  return Object.fromEntries(rows.map((r) => [r.key, r.value]));
+}
+
+/** The admin form's read: uncached, always fresh, empty on failure. */
 async function getAllSiteSettings(): Promise<Record<string, unknown>> {
   try {
-    const rows = await db.select().from(siteSettings);
-    return Object.fromEntries(rows.map((r) => [r.key, r.value]));
+    return await readSettings();
   } catch (err) {
     console.error("getAllSiteSettings failed:", err);
     return {};
@@ -68,21 +73,30 @@ export async function getCredibilityOverride(): Promise<CredibilityOverride | nu
 // ─── Public, cached reads — merged with lib/data.ts's static defaults ──────
 // Same tag as lib/db/queries.ts's public reads, so an admin save (which
 // calls revalidatePublicSite()) busts both in one pass.
-
-const getContactOverrideCached = unstable_cache(getContactOverride, ["contactOverride"], {
+//
+// One cached read of the whole (tiny) table, and it THROWS on failure: the
+// old version caught inside the cache, so one DB blip was stored as "no
+// settings" for an hour and the site showed the code defaults the whole
+// time. unstable_cache never stores a thrown error; the fallback is taken
+// out here, per render, instead. It also used to read the table twice, once
+// per key.
+const readSettingsCached = unstable_cache(readSettings, ["siteSettings"], {
   revalidate: 3600,
   tags: [SITE_DATA_TAG],
 });
 
-const getCredibilityOverrideCached = unstable_cache(
-  getCredibilityOverride,
-  ["credibilityOverride"],
-  { revalidate: 3600, tags: [SITE_DATA_TAG] }
-);
+async function cachedSetting<T>(key: string): Promise<T | null> {
+  try {
+    return ((await readSettingsCached())[key] as T) ?? null;
+  } catch (err) {
+    console.error(`site setting "${key}" unavailable, using defaults:`, err);
+    return null;
+  }
+}
 
 /** COMPANY merged with any saved override — undefined/missing fields fall through to the static default. */
 export async function resolveCompany(): Promise<typeof COMPANY> {
-  const override = await getContactOverrideCached();
+  const override = await cachedSetting<ContactOverride>(SETTING_KEYS.contact);
   if (!override) return COMPANY;
   return {
     ...COMPANY,
@@ -116,7 +130,7 @@ function mergeSocials(saved: ContactOverride["socials"]): typeof COMPANY.socials
 
 /** CREDIBILITY merged with any saved override. */
 export async function resolveCredibility(): Promise<typeof CREDIBILITY> {
-  const override = await getCredibilityOverrideCached();
+  const override = await cachedSetting<CredibilityOverride>(SETTING_KEYS.credibility);
   if (!override) return CREDIBILITY;
   return {
     ...CREDIBILITY,
