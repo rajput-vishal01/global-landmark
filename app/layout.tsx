@@ -1,3 +1,4 @@
+
 import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Nunito_Sans } from "next/font/google";
 import "./globals.css";
@@ -27,6 +28,12 @@ const nunitoSans = Nunito_Sans({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+
+  // Google Search Console verification
+  verification: {
+    google: "TgBlmtYHv8876IHhvrfVrmqJnnNRgFT2Zj-fcG8DlXY",
+  },
+
   // No canonical here: every page states its own. A root one was inherited
   // by each page that did not — /offline, the soft-404s, the admin — and
   // named the home page as their canonical.
@@ -98,6 +105,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const orgJsonLd = await organizationJsonLd();
+
   return (
     // suppressHydrationWarning: the head script stamps .js on <html> before
     // hydration (deliberate — CSS pre-hide gate), which React would flag.
@@ -114,18 +122,66 @@ export default async function RootLayout({
             __html: `document.documentElement.classList.add("js")`,
           }}
         />
+
+        {/* Google Analytics */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-ZYZNK58P01"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-ZYZNK58P01');
+            `,
+          }}
+        />
+
+        {/* Google Tag Manager */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(w,d,s,l,i){
+                w[l]=w[l]||[];
+                w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+                var f=d.getElementsByTagName(s)[0],
+                j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';
+                j.async=true;
+                j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+                f.parentNode.insertBefore(j,f);
+              })(window,document,'script','dataLayer','GTM-TR33KWDD');
+            `,
+          }}
+        />
       </head>
+
       <body className="bg-cream font-sans text-ink antialiased">
+
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-TR33KWDD"
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
+
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: jsonLdHtml(orgJsonLd) }}
         />
+
         <MotionProvider>
           {children}
+
           {/* Root layout, not the site group: the panel is where installing
               actually pays off, so admins get the offer too. */}
           <InstallPrompt />
         </MotionProvider>
+
         <ServiceWorker />
       </body>
     </html>
