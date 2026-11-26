@@ -43,10 +43,11 @@ import {
 import { PROPERTIES_PAGE } from "@/lib/data";
 import { breadcrumbJsonLd, canonical, jsonLdHtml, OG_DEFAULTS } from "@/lib/seo";
 
-const PAGE_TITLE = "Property in Chandigarh, Mohali & Zirakpur";
-const PAGE_DESCRIPTION =
-  "Flats, kothis, villas and plots across Chandigarh, Mohali, Zirakpur, Panchkula and New Chandigarh, each seen first-hand by our team before it is listed.";
+const PAGE_TITLE =
+  "Property Dealers in Panchkula | Global Landmark | 9882084786";
 
+const PAGE_DESCRIPTION =
+  "Global Landmark is among the trusted Property Dealers in Panchkula, offering premium property options and expert assistance for buyers and investors.";
 /**
  * Canonical policy: the plain grid is its own canonical, page by page
  * (`?page=2` has listings page 1 does not). Any filter, search, sort or view
