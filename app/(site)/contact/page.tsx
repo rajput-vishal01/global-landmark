@@ -10,9 +10,11 @@ import { resolveCompany } from "@/lib/site-settings";
 import { whatsAppHref } from "@/lib/whatsapp";
 import { canonical, OG_DEFAULTS } from "@/lib/seo";
 
-const PAGE_TITLE = "Contact Our Zirakpur Office";
+const PAGE_TITLE =
+  "Best Real Estate Company in Panchkula | Global Landmark | 9882084786";
+
 const PAGE_DESCRIPTION =
-  "Call, WhatsApp or email us, or visit our office in Zirakpur. Enquiries on buying, selling or valuing a Tricity property are answered within one business day.";
+  "Find your dream property with Global Landmark, the Best Real Estate Company in Panchkula, offering expert assistance and trusted property solutions.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,
