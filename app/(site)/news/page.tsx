@@ -9,9 +9,11 @@ import { fetchRealEstateNews } from "@/lib/news";
 import { NEWS_PAGE } from "@/lib/data";
 import { canonical, OG_DEFAULTS } from "@/lib/seo";
 
-const PAGE_TITLE = "Chandigarh Tricity Real Estate News";
+const PAGE_TITLE =
+  "Property Consultant in Panchkula | Global Landmark | 9882084786";
+
 const PAGE_DESCRIPTION =
-  "Real estate and property news from Chandigarh, Mohali, Panchkula and Zirakpur, drawn from regional news outlets for buyers, sellers and investors.";
+  "Find the right property with Global Landmark, a reliable Property Consultant in Panchkula offering expert guidance and tailored property solutions for buyers.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,

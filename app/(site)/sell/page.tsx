@@ -6,9 +6,11 @@ import { PageHeader } from "../_components/page-chrome";
 import { canonical, OG_DEFAULTS } from "@/lib/seo";
 import { resolveCompany } from "@/lib/site-settings";
 
-const PAGE_TITLE = "Sell or List Your Property in the Tricity";
+const PAGE_TITLE =
+  "Property for Sale in Panchkula | Global Landmark | 9882084786";
+
 const PAGE_DESCRIPTION =
-  "Selling a flat, kothi or plot in Mohali, Zirakpur, Panchkula or Chandigarh? Send the details and our team calls you. Nothing is published until you approve it.";
+  "Discover the best Property for Sale in Panchkula with Global Landmark. Explore prime locations, premium properties, and expert real estate guidance today.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,

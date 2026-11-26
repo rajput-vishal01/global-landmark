@@ -8,8 +8,11 @@ import { PageHeader, SectionHeading } from "../_components/page-chrome";
 import { ABOUT_PAGE, COMPANY } from "@/lib/data";
 import { canonical, OG_DEFAULTS } from "@/lib/seo";
 
-const PAGE_TITLE = "About Us: Founders Ashu & Divya Goyal";
-const PAGE_DESCRIPTION = `Meet Ashu and Divya Goyal, founders of ${COMPANY.legalName}, and the values of trust and transparency behind every property we represent in the Tricity.`;
+const PAGE_TITLE =
+  "Real Estate Agent in Panchkula | Global Landmark | 9882084786";
+
+const PAGE_DESCRIPTION =
+  "Choose Global Landmark, a trusted Real Estate Agent in Panchkula, to explore premium properties and get expert guidance for your dream home or investment.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,
