@@ -21,7 +21,12 @@ import {
 import { LANDING_LOCATIONS } from "@/lib/locations";
 
 // Title, description and Open Graph come from the root layout's defaults.
-export const metadata: Metadata = { alternates: { canonical: "/" } };
+export const metadata: Metadata = {
+  title: "Real Estate Company in Panchkula | Global Landmark | 9882084786",
+  description:
+    "Looking for a trusted Real Estate Company in Panchkula? Global Landmark offers premium properties, expert guidance, and reliable real estate solutions.",
+  alternates: { canonical: "/" },
+};
 
 export default async function Home() {
   // Render per request (Docker builds have no DB to prerender against);
